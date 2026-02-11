@@ -1,1 +1,49 @@
-/* You can add global styles to this file, and also import other style files */
+/* 1. Importación del Core de Tailwind v4 */
+@import "tailwindcss";
+
+/* 2. Definición del TEMA AWAKIN (Sunrise Tech) */
+@theme {
+  /* El Sol (Sistema / Core) */
+  --color-awakin-sun: #FE970A;      /* Tu Naranja Principal */
+  --color-awakin-sun-dim: #E58500;  /* Hover más oscuro */
+
+  /* La Base (Texto / UI Neutra) */
+  --color-awakin-stone: #93918B;    /* Gris Muted */
+  --color-awakin-base: #FAFAF9;     /* Fondo Blanco Hueso */
+  --color-awakin-surface: #F3F4F6;  /* Gris Nube (Tarjetas) */
+
+  /* Los Módulos (Semánticos) */
+  --color-module-intake: #3E9F31;   /* Verde Naturaleza */
+  --color-module-workout: #1E74B2;  /* Azul Oxígeno */
+  --color-module-kin: #8E44AD;      /* Violeta Tribu */
+  --color-module-avatar: #C0392B;   /* Terracota Identidad */
+}
+
+/* 3. Mapeo de PrimeNG a tu Paleta */
+/* Esto engaña a PrimeNG para que crea que sus colores por defecto son los tuyos */
+:root {
+    /* Mapeo del Color Primario (Naranja Awakin) */
+    --p-primary-50: #fff7ed;
+    --p-primary-100: #ffedd5;
+    --p-primary-200: #fed7aa;
+    --p-primary-300: #fdba74;
+    --p-primary-400: #fb923c;
+    --p-primary-500: #FE970A; /* <--- TU COLOR BASE (El Sol) */
+    --p-primary-600: #ea580c;
+    --p-primary-700: #c2410c;
+    --p-primary-800: #9a3412;
+    --p-primary-900: #7c2d12;
+    --p-primary-950: #431407;
+
+    /* Fondo y Texto Base */
+    --p-content-background: #FAFAF9; /* Tu blanco hueso */
+    --p-text-color: #1f2937;         /* Gris muy oscuro para lectura */
+    --p-text-muted-color: #93918B;   /* Tu gris piedra */
+}
+
+/* Opcional: Ajustes finos para que se sienta más "App Nativa" */
+body {
+    background-color: var(--color-awakin-base);
+    color: #1f2937;
+    -webkit-font-smoothing: antialiased;
+}
