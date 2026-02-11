@@ -1,0 +1,10 @@
+/* Permitir que el botón central flote fuera del contenedor */
+.awakin-dock-container .p-dock-list-container {
+    overflow: visible !important;
+}
+
+/* Ajuste para distribuir el espacio uniformemente */
+.awakin-dock-container .p-dock-list {
+    justify-content: space-around;
+    width: 100%;
+}

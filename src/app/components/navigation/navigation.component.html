@@ -1,0 +1,61 @@
+<div class="fixed bottom-0 left-0 right-0 h-auto bg-white/90 backdrop-blur-md  shadow-2xl border border-b-0 pb-1 border-4 border-[var(--p-primary-100)] flex justify-around items-center z-50">
+
+  <button (click)="selectModule('intake')" class="flex flex-col items-center">
+    <img 
+      [src]="activeTab() === 'intake' ? 'icons/intake-active.png' : 'icons/intake-gray.png'"
+      class="w-16 h-16 object-contain"
+      alt="Intake">
+    <span class="text-[10px] -mt-1 font-extrabold" [ngClass]="activeTab() === 'intake' ? 'text-awakin-sun' : 'hidden'">
+       INTAKE
+    </span>
+  </button>
+
+  <button (click)="selectModule('workout')" class="flex flex-col items-center ">
+    <img 
+      [src]="activeTab() === 'workout' ? 'icons/workout-active.png' : 'icons/workout-gray.png'"
+      class="w-16 h-16 object-contain"
+      alt="Workout">
+    <span class="text-[10px] -mt-1 font-extrabold" [ngClass]="activeTab() === 'workout' ? 'text-awakin-sun' : 'hidden'">
+       WORKOUT
+    </span>
+  </button>
+
+ <button (click)="selectModule('core')" class="relative -top-8 transition-transform duration-300 active:scale-95">
+  
+  <div 
+    class="w-22 h-22 rounded-full border-4 shadow-2xl flex items-center justify-center transition-all duration-300"
+    [ngClass]="activeTab() === 'core' 
+      ? 'bg-awakin-sun border-white shadow-orange-200/50 scale-105'  
+      : 'bg-[var(--p-primary-100)] border-[var(--p-primary-100)]'                              
+    ">
+
+    <img 
+      [src]="activeTab() === 'core' ? 'icons/home-active.png' : 'icons/home-gray.png'"
+      class="w-20 h-20 object-contain transition-all duration-300"
+      [class.animate-pulse-slow]="activeTab() === 'core'"
+      alt="Core Home">
+      
+  </div>
+</button>
+
+  <button (click)="selectModule('kin')" class="flex flex-col items-center ">
+    <img 
+      [src]="activeTab() === 'kin' ? 'icons/kin-active.png' : 'icons/kin-gray.png'"
+      class="w-16 h-16 object-contain"
+      alt="Kin">
+    <span class="text-[10px] -mt-1 font-extrabold" [ngClass]="activeTab() === 'kin' ? 'text-awakin-sun' : 'hidden'">
+       KIN
+    </span>
+  </button>
+
+  <button (click)="selectModule('avatar')" class="flex flex-col items-center ">
+    <img 
+      [src]="activeTab() === 'avatar' ? 'icons/avatar-active.png' : 'icons/avatar-gray.png'"
+      class="w-16 h-16 object-contain "
+      alt="Me">
+    <span class="-mt-1 text-[10px] font-extrabold" [ngClass]="activeTab() === 'avatar' ? 'text-awakin-sun' : 'hidden'">
+       AVATAR
+    </span>
+  </button>
+
+</div>

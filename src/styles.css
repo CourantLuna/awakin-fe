@@ -4,9 +4,11 @@
 /* 2. Definición del TEMA AWAKIN (Sunrise Tech) */
 @theme {
   /* El Sol (Sistema / Core) */
-  --color-awakin-sun: #FE970A;      /* Tu Naranja Principal */
-  --color-awakin-sun-dim: #E58500;  /* Hover más oscuro */
-
+  /* Tu Naranja Principal */
+  --color-awakin-sun: #fe970a;  
+  /* Hover más oscuro */
+    
+  --color-awakin-sun-dim: #E58500;  
   /* La Base (Texto / UI Neutra) */
   --color-awakin-stone: #93918B;    /* Gris Muted */
   --color-awakin-base: #FAFAF9;     /* Fondo Blanco Hueso */

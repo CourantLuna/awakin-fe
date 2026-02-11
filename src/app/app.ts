@@ -2,12 +2,13 @@ import { Component, signal } from '@angular/core';
 import { CommonModule } from '@angular/common'; // Importante para que [ngClass] funcione
 import { RouterOutlet } from '@angular/router';
 import { PrimeNGModule } from './shared/prime-ng.module';
+import { NavigationComponent } from './components/navigation/navigation.component';
 
 @Component({
   selector: 'app-root',
   standalone: true,
   // Agregamos CommonModule aquí para habilitar las directivas como [ngClass]
-  imports: [CommonModule, RouterOutlet, PrimeNGModule], 
+  imports: [CommonModule, RouterOutlet, PrimeNGModule, NavigationComponent], 
   templateUrl: './app.html',
   styleUrl: './app.css'
 })

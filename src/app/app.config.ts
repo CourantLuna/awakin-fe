@@ -5,6 +5,7 @@ import { providePrimeNG } from 'primeng/config'; // IMPORTANTE
 import { routes } from './app.routes';
 import { provideServiceWorker } from '@angular/service-worker';
 import Aura from '@primeuix/themes/aura';
+import { AwakinPreset } from './theme/awakin-preset';
 
 
 export const appConfig: ApplicationConfig = {
@@ -15,13 +16,14 @@ export const appConfig: ApplicationConfig = {
             registrationStrategy: 'registerWhenStable:30000'
           }),
     // 2. Configurar el Tema Aura (Moderno)
-    providePrimeNG({
-        theme: {
-            preset: Aura,
-             options: {
-                darkModeSelector: '.dark', // Para controlar modo oscuro manual
-            }
+   providePrimeNG({
+      theme: {
+        preset: AwakinPreset,
+        options: {
+          darkModeSelector: '.my-app-dark', // O 'system' si quieres detectar el SO
+          ripple: true
         }
+      }
     })
     
   ]
