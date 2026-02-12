@@ -1,0 +1,67 @@
+<div class="p-4 pb-32 bg-awakin-base min-h-screen">
+  <header class="mb-6">
+    <h1 class="text-2xl font-bold text-gray-800">Mi Ingesta</h1>
+    <p class="text-awakin-stone text-sm">Jueves, 12 de Febrero</p>
+  </header>
+
+  <div class="bg-white rounded-3xl p-6 shadow-sm border border-stone-100 mb-6">
+    <div class="flex items-center justify-between mb-4">
+      <h2 class="font-bold text-lg">Resumen de Macros</h2>
+      <span class="text-xs bg-awakin-sun/10 text-awakin-sun px-2 py-1 rounded-full font-bold">85% Completado</span>
+    </div>
+    
+    <div class="relative flex justify-center items-center mb-6">
+      <p-chart type="doughnut" [data]="macroData" [options]="macroOptions" class="w-48 h-48"></p-chart>
+      <div class="absolute flex flex-col items-center">
+        <span class="text-3xl font-black text-gray-800">1,850</span>
+        <span class="text-[10px] text-awakin-stone uppercase font-bold">kcal restantes</span>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-3 gap-4 border-t border-stone-50 pt-4">
+      <div class="flex flex-col items-center">
+        <span class="text-module-intake font-bold">120g</span>
+        <span class="text-[10px] text-awakin-stone uppercase">Prot</span>
+      </div>
+      <div class="flex flex-col items-center border-x border-stone-100">
+        <span class="text-awakin-sun font-bold">210g</span>
+        <span class="text-[10px] text-awakin-stone uppercase">Carbs</span>
+      </div>
+      <div class="flex flex-col items-center">
+        <span class="text-module-avatar font-bold">45g</span>
+        <span class="text-[10px] text-awakin-stone uppercase">Grasas</span>
+      </div>
+    </div>
+  </div>
+
+  <button class="w-full bg-awakin-sun hover:bg-awakin-sun-dim text-white rounded-2xl p-4 flex items-center justify-center gap-3 shadow-lg shadow-orange-200/50 transition-all active:scale-95 mb-8">
+    <i class="pi pi-plus-circle text-xl"></i>
+    <span class="font-bold tracking-wide">REGISTRAR COMIDA</span>
+  </button>
+
+  <section>
+    <h3 class="font-bold text-gray-700 mb-4 px-1">Comidas de Hoy</h3>
+    
+    <div class="bg-white rounded-2xl p-4 flex items-center gap-4 border border-stone-100 mb-3">
+      <div class="w-12 h-12 bg-awakin-surface rounded-xl flex items-center justify-center text-2xl">
+        🍳
+      </div>
+      <div class="flex-1">
+        <h4 class="font-bold text-gray-800 text-sm">Huevos con Aguacate</h4>
+        <p class="text-xs text-awakin-stone">08:30 AM • 450 kcal</p>
+      </div>
+      <i class="pi pi-chevron-right text-stone-300"></i>
+    </div>
+
+    <div class="bg-awakin-surface/50 border-2 border-dashed border-stone-200 rounded-2xl p-4 flex items-center gap-4 mb-3">
+      <div class="w-12 h-12 bg-white rounded-xl flex items-center justify-center text-2xl opacity-50">
+        🥗
+      </div>
+      <div class="flex-1">
+        <h4 class="font-bold text-stone-400 text-sm italic">Almuerzo Planificado</h4>
+        <p class="text-xs text-awakin-stone">Toca: Pollo con Quinoa</p>
+      </div>
+      <button class="text-awakin-sun font-bold text-xs">REGISTRAR</button>
+    </div>
+  </section>
+</div>

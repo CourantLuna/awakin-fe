@@ -3,12 +3,13 @@ import { CommonModule } from '@angular/common'; // Importante para que [ngClass]
 import { RouterOutlet } from '@angular/router';
 import { PrimeNGModule } from './shared/prime-ng.module';
 import { NavigationComponent } from './components/navigation/navigation.component';
+import { IntakeUserComponent } from "./features/intake/intake-user.component";
 
 @Component({
   selector: 'app-root',
   standalone: true,
   // Agregamos CommonModule aquí para habilitar las directivas como [ngClass]
-  imports: [CommonModule, RouterOutlet, PrimeNGModule, NavigationComponent], 
+  imports: [CommonModule, RouterOutlet, PrimeNGModule, NavigationComponent, IntakeUserComponent], 
   templateUrl: './app.html',
   styleUrl: './app.css'
 })
