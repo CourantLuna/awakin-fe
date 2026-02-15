@@ -1,4 +1,4 @@
-<div class="fixed bottom-0 left-0 right-0 h-auto bg-white/90 backdrop-blur-md shadow-2xl border-t-4 border-[var(--p-primary-100)] flex justify-around items-end pb-2 z-50">
+<div class="fixed bottom-0 left-0 right-0 h-24 bg-white/90 backdrop-blur-md shadow-2xl border-t-4 border-[var(--p-primary-100)] flex justify-around items-end pb-2 z-50">
 
   <button (click)="selectModule('intake')" class="flex flex-col items-center pb-1">
     <img [src]="activeTab() === 'intake' ? 'icons/intake-active.png' : 'icons/intake-gray.png'"
@@ -18,13 +18,13 @@
 
   <button (click)="selectModule('core')" 
     class="transition-all duration-300 active:scale-95 flex flex-col items-center"
-    [ngClass]="activeTab() === 'core' ? 'relative -top-8' : 'pb-1'">
+    [ngClass]="activeTab() === 'core' ? 'relative -top-4' : 'pb-'">
   
     <div 
       class="transition-all duration-300 flex items-center justify-center"
       [ngClass]="activeTab() === 'core' 
         ? 'w-22 h-22 rounded-full border-4 border-white bg-awakin-sun shadow-2xl shadow-orange-200/50 scale-100'  
-        : 'w-16 h-16 bg-transparent border-none'                              
+        : 'pt-1 w-20 h-20 bg-transparent border-none'                              
       ">
 
       <img 

@@ -1,0 +1,67 @@
+<!-- CONTENEDOR PRINCIPAL -->
+<!-- Usamos bg-[#050505] para fundirse con el notch del móvil -->
+<div class="w-full pt-6 pb-6 px-4 rounded-b-3xl shadow-2xl">
+
+  <!-- 1. TOP BAR (Menú - Hoy - Racha) -->
+  <div class="flex justify-between items-center mb-6">
+    
+    <!-- Izquierda: Menú (3 puntos) -->
+    <button (click)="onMenuClick.emit()" class="w-10 h-10 flex items-center justify-start text-black  transition-colors">
+      <i class="pi pi-ellipsis-h text-xl">sd</i>
+    </button>
+
+    <!-- Centro: Botón "Hoy" / Calendario Mensual -->
+    <button (click)="onMonthViewClick.emit()" 
+            class="flex items-center gap-2 px-4 py-2  rounded-full border border-stone-800 active:scale-95 transition-transform">
+      <i class="pi pi-calendar  text-sm"></i>
+      <span class="text-sm font-bold tracking-wide">Hoy</span>
+      <i class="pi pi-chevron-down text-xs text-stone-500"></i>
+    </button>
+
+    <!-- Derecha: Racha (Streak) -->
+    <div class="flex items-center gap-1.5">
+      <!-- Cambiamos el color del icono según si hay racha o no -->
+      <i class="pi" 
+          [ngClass]="streak > 0 ? 'pi-bolt text-awakin-sun animate-pulse' : 'pi-bolt text-stone-600'"></i>
+      <span class="text-xl font-bold font-mono" 
+            [ngClass]="streak > 0 ? 'text-black' : 'text-stone-600'">
+        {{ streak }}
+      </span>
+    </div>
+  </div>
+
+  <!-- 2. TIRA SEMANAL (L M M J V S D) -->
+  <div class="flex justify-between items-start">
+    
+    <!-- Bucle para generar los días recibidos por Input -->
+    <div *ngFor="let day of days" class="flex flex-col items-center gap-3 w-10 group cursor-pointer"
+         (click)="onDaySelect.emit(day)">
+      
+      <!-- Nombre del día -->
+      <span class="text-[10px] font-bold text-stone-500 uppercase tracking-wider group-hover:text-awakin-stone transition-colors">
+        {{ day.dayName }}
+      </span>
+
+      <!-- Círculo del Número -->
+      <div class="w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold transition-all duration-300"
+        [ngClass]="day.isToday 
+          ? ' text-awakin-sun shadow-lg scale-110' 
+          : 'bg-transparent border border-transparent hover:border-stone-700'">
+        {{ day.date }}
+      </div>
+
+      <!-- Punto Indicador de Estado -->
+      <div class="w-1.5 h-1.5 rounded-full mt-1 transition-all duration-500"
+        [ngClass]="{
+          'bg-awakin-sun shadow-[0_0_5px_rgba(254,151,10,0.8)]': day.status === 'record',
+          'bg-module-intake shadow-[0_0_5px_rgba(62,159,49,0.8)]': day.status === 'goal',
+          'bg-stone-800': day.status === 'none',
+          'opacity-0': day.status === 'future'
+        }">
+      </div>
+
+    </div>
+
+  </div>
+
+</div>

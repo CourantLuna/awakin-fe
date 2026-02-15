@@ -4,12 +4,13 @@ import { RouterOutlet } from '@angular/router';
 import { PrimeNGModule } from './shared/prime-ng.module';
 import { NavigationComponent } from './components/navigation/navigation.component';
 import { IntakeUserComponent } from "./features/intake/intake-user.component";
+import { WeekCalendarHeaderComponent } from "./components/week-calendar/week-calendar-header.component";
 
 @Component({
   selector: 'app-root',
   standalone: true,
   // Agregamos CommonModule aquí para habilitar las directivas como [ngClass]
-  imports: [CommonModule, RouterOutlet, PrimeNGModule, NavigationComponent, IntakeUserComponent], 
+  imports: [CommonModule, RouterOutlet, PrimeNGModule, NavigationComponent, IntakeUserComponent, WeekCalendarHeaderComponent], 
   templateUrl: './app.html',
   styleUrl: './app.css'
 })

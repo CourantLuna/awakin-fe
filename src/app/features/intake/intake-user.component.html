@@ -1,67 +1,110 @@
-<div class="p-4 pb-32 bg-awakin-base min-h-screen">
-  <header class="mb-6">
-    <h1 class="text-2xl font-bold text-gray-800">Mi Ingesta</h1>
-    <p class="text-awakin-stone text-sm">Jueves, 12 de Febrero</p>
-  </header>
+<div class="min-h-screen bg-awakin-base pb-20">
 
-  <div class="bg-white rounded-3xl p-6 shadow-sm border border-stone-100 mb-6">
-    <div class="flex items-center justify-between mb-4">
-      <h2 class="font-bold text-lg">Resumen de Macros</h2>
-      <span class="text-xs bg-awakin-sun/10 text-awakin-sun px-2 py-1 rounded-full font-bold">85% Completado</span>
-    </div>
-    
-    <div class="relative flex justify-center items-center mb-6">
-      <p-chart type="doughnut" [data]="macroData" [options]="macroOptions" class="w-48 h-48"></p-chart>
-      <div class="absolute flex flex-col items-center">
-        <span class="text-3xl font-black text-gray-800">1,850</span>
-        <span class="text-[10px] text-awakin-stone uppercase font-bold">kcal restantes</span>
+  <!-- 1. HEADER SEMANAL (Componente Reutilizable) -->
+  <app-week-calendar-header [days]="weekDays()" [streak]="streak()" (onDaySelect)="handleDaySelect($event)"
+    (onMonthViewClick)="handleMonthView()">
+  </app-week-calendar-header>
+
+  <!-- 2. CONTENIDO PRINCIPAL (Dashboard de Comida) -->
+  <div class="px-4  z-10 mt-2">
+
+    <!-- TARJETA DE RESUMEN MACROS -->
+    <div class="bg-white rounded-3xl p-6 shadow-xl shadow-stone-200/50 border border-stone-100 mb-6">
+
+      <div class="flex items-center justify-between mb-6">
+        <h2 class="font-bold text-lg text-gray-800 tracking-tight">Resumen Diario</h2>
+        <span
+          class="text-[10px] font-bold bg-green-50 text-module-intake px-3 py-1 rounded-full border border-green-100">
+          DÉFICIT ACTIVO
+        </span>
+      </div>
+
+      <!-- GRÁFICO CENTRAL -->
+      <div class=" flex justify-center items-center mb-8">
+        <!-- El Chart -->
+        <p-chart type="doughnut" [data]="macroData" [options]="macroOptions" class="w-48 h-48"></p-chart>
+
+        <!-- Dato Central (Overlay) -->
+        <div class="absolute flex flex-col items-center">
+          <span class="text-4xl font-black text-gray-800 tracking-tighter">{{ caloriesTarget - caloriesConsumed
+            }}</span>
+          <span class="text-[9px] text-awakin-stone uppercase font-bold tracking-widest mt-1">kcal restantes</span>
+        </div>
+      </div>
+
+      <!-- DESGLOSE DE MACROS -->
+      <div class="grid grid-cols-3 gap-4 border-t border-stone-100 pt-6">
+        <!-- Proteína -->
+        <div class="flex flex-col items-center gap-1">
+          <span class="text-module-intake font-black text-xl">120g</span>
+          <span class="text-[9px] text-awakin-stone uppercase font-bold tracking-wider">Proteína</span>
+          <div class="w-8 h-1 rounded-full bg-module-intake mt-1 opacity-50"></div>
+        </div>
+        <!-- Carbos -->
+        <div class="flex flex-col items-center gap-1 border-x border-stone-100 px-2">
+          <span class="text-awakin-sun font-black text-xl">210g</span>
+          <span class="text-[9px] text-awakin-stone uppercase font-bold tracking-wider">Carbos</span>
+          <div class="w-8 h-1 rounded-full bg-awakin-sun mt-1 opacity-50"></div>
+        </div>
+        <!-- Grasas -->
+        <div class="flex flex-col items-center gap-1">
+          <span class="text-module-avatar font-black text-xl">45g</span>
+          <span class="text-[9px] text-awakin-stone uppercase font-bold tracking-wider">Grasas</span>
+          <div class="w-8 h-1 rounded-full bg-module-avatar mt-1 opacity-50"></div>
+        </div>
       </div>
     </div>
 
-    <div class="grid grid-cols-3 gap-4 border-t border-stone-50 pt-4">
-      <div class="flex flex-col items-center">
-        <span class="text-module-intake font-bold">120g</span>
-        <span class="text-[10px] text-awakin-stone uppercase">Prot</span>
+    <!-- BOTÓN DE ACCIÓN PRINCIPAL -->
+    <button
+      class="w-full bg-awakin-sun hover:bg-awakin-sun-dim text-white rounded-2xl p-4 flex items-center justify-center gap-3 shadow-lg shadow-orange-500/30 transition-all active:scale-95 mb-8 group">
+      <div
+        class="bg-white/20 rounded-full w-8 h-8 flex items-center justify-center group-hover:rotate-90 transition-transform">
+        <i class="pi pi-plus text-lg font-bold"></i>
       </div>
-      <div class="flex flex-col items-center border-x border-stone-100">
-        <span class="text-awakin-sun font-bold">210g</span>
-        <span class="text-[10px] text-awakin-stone uppercase">Carbs</span>
+      <span class="font-bold tracking-wide">REGISTRAR COMIDA</span>
+    </button>
+
+    <!-- LISTA DE COMIDAS -->
+    <section>
+      <h3 class="font-bold text-gray-700 mb-4 px-1 flex justify-between items-center">
+        <span>Comidas de Hoy</span>
+        <span class="text-xs text-awakin-stone font-normal">3 registros</span>
+      </h3>
+
+      <!-- Item Comida 1 -->
+      <div
+        class="bg-white hover:bg-stone-50 transition-colors rounded-2xl p-4 flex items-center gap-4 border border-stone-100 mb-3 cursor-pointer group shadow-sm">
+        <div
+          class="w-12 h-12 bg-awakin-surface rounded-xl flex items-center justify-center text-2xl group-hover:scale-110 transition-transform">
+          🍳
+        </div>
+        <div class="flex-1">
+          <h4 class="font-bold text-gray-800 text-sm">Huevos con Aguacate</h4>
+          <div class="flex items-center gap-2 mt-1">
+            <span class="text-[10px] bg-stone-100 text-stone-500 px-1.5 rounded">Desayuno</span>
+            <p class="text-xs text-awakin-stone font-medium">450 kcal</p>
+          </div>
+        </div>
+        <i class="pi pi-chevron-right text-stone-300 group-hover:text-awakin-sun transition-colors"></i>
       </div>
-      <div class="flex flex-col items-center">
-        <span class="text-module-avatar font-bold">45g</span>
-        <span class="text-[10px] text-awakin-stone uppercase">Grasas</span>
+
+      <!-- Item Comida 2 (Planificado) -->
+      <div
+        class="bg-white/60 border-2 border-dashed border-stone-200 rounded-2xl p-4 flex items-center gap-4 mb-3 opacity-80">
+        <div class="w-12 h-12 bg-stone-50 rounded-xl flex items-center justify-center text-2xl opacity-50 grayscale">
+          🥗
+        </div>
+        <div class="flex-1">
+          <h4 class="font-bold text-stone-400 text-sm italic">Almuerzo Planificado</h4>
+          <p class="text-xs text-awakin-stone">Toca: Pollo con Quinoa</p>
+        </div>
+        <button
+          class="text-awakin-sun font-bold text-[10px] border border-awakin-sun px-3 py-1 rounded-full hover:bg-awakin-sun hover:text-white transition-colors">
+          REGISTRAR
+        </button>
       </div>
-    </div>
+    </section>
+
   </div>
-
-  <button class="w-full bg-awakin-sun hover:bg-awakin-sun-dim text-white rounded-2xl p-4 flex items-center justify-center gap-3 shadow-lg shadow-orange-200/50 transition-all active:scale-95 mb-8">
-    <i class="pi pi-plus-circle text-xl"></i>
-    <span class="font-bold tracking-wide">REGISTRAR COMIDA</span>
-  </button>
-
-  <section>
-    <h3 class="font-bold text-gray-700 mb-4 px-1">Comidas de Hoy</h3>
-    
-    <div class="bg-white rounded-2xl p-4 flex items-center gap-4 border border-stone-100 mb-3">
-      <div class="w-12 h-12 bg-awakin-surface rounded-xl flex items-center justify-center text-2xl">
-        🍳
-      </div>
-      <div class="flex-1">
-        <h4 class="font-bold text-gray-800 text-sm">Huevos con Aguacate</h4>
-        <p class="text-xs text-awakin-stone">08:30 AM • 450 kcal</p>
-      </div>
-      <i class="pi pi-chevron-right text-stone-300"></i>
-    </div>
-
-    <div class="bg-awakin-surface/50 border-2 border-dashed border-stone-200 rounded-2xl p-4 flex items-center gap-4 mb-3">
-      <div class="w-12 h-12 bg-white rounded-xl flex items-center justify-center text-2xl opacity-50">
-        🥗
-      </div>
-      <div class="flex-1">
-        <h4 class="font-bold text-stone-400 text-sm italic">Almuerzo Planificado</h4>
-        <p class="text-xs text-awakin-stone">Toca: Pollo con Quinoa</p>
-      </div>
-      <button class="text-awakin-sun font-bold text-xs">REGISTRAR</button>
-    </div>
-  </section>
 </div>
