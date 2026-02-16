@@ -1,8 +1,7 @@
 <div class="w-full pt-6 pb-6 px-4 rounded-b-3xl shadow-2xl bg-white border-b border-stone-100">
 
   <div class="flex justify-between items-center mb-6">
-    
-    <button (click)="onMenuClick.emit()" class="w-10 h-10 flex items-center justify-start text-black active:opacity-50">
+    <button (click)="onMenuClick.emit()" class="w-10 h-10 flex items-center justify-start text-black">
       <i class="pi pi-ellipsis-h text-xl"></i>
     </button>
 
@@ -14,22 +13,20 @@
     </button>
 
     <div class="flex items-center gap-1.5">
-      <i class="pi pi-bolt text-xl" 
-         [ngClass]="streak > 0 ? 'text-awakin-sun animate-pulse' : 'text-stone-300'"></i>
-      <span class="text-xl font-bold font-mono" 
-            [ngClass]="streak > 0 ? 'text-black' : 'text-stone-400'">
-        {{ streak }}
-      </span>
+      <i class="pi pi-bolt text-xl" [ngClass]="streak > 0 ? 'text-awakin-sun animate-pulse' : 'text-stone-300'"></i>
+      <span class="text-xl font-bold font-mono" [ngClass]="streak > 0 ? 'text-black' : 'text-stone-400'">{{ streak }}</span>
     </div>
   </div>
 
-  <div class="flex justify-between items-start px-1">
+  <div class="flex justify-between items-start px-1 select-none"
+       (touchstart)="handleTouchStart($event)"
+       (touchend)="handleTouchEnd($event)">
     
     <div *ngFor="let day of days()" 
-         class="flex flex-col items-center gap-3 w-10 cursor-pointer group"
+         class="flex flex-col items-center gap-3 w-10 cursor-pointer"
          (click)="selectDay(day)">
       
-      <span class="text-[10px] font-bold uppercase tracking-wider transition-colors"
+      <span class="text-[10px] font-bold uppercase tracking-wider"
             [ngClass]="isSelected(day) ? 'text-black' : 'text-stone-400'">
         {{ day.dayName }}
       </span>
@@ -39,7 +36,7 @@
         {{ day.date }}
       </div>
 
-      <div class="w-1.5 h-1.5 rounded-full mt-1 transition-all duration-500"
+      <div class="w-1.5 h-1.5 rounded-full mt-1 transition-all"
            [ngClass]="getStatusClasses(day)">
       </div>
     </div>

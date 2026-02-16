@@ -1,4 +1,4 @@
-import { Component, Input, Output, EventEmitter, computed, signal, OnInit, Signal } from '@angular/core';
+import { Component, Input, Output, EventEmitter, computed, signal, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
 export type DayStatus = 'none' | 'partial' | 'goal' | 'excess' | 'future';
@@ -19,90 +19,122 @@ export interface CalendarDay {
 export class WeekCalendarHeaderComponent implements OnInit {
   @Input() streak: number = 0;
 
-  // El componente gestiona su propia semana y selección
+  // Señales de estado
   days = signal<CalendarDay[]>([]);
-  @Output() selectedDate = signal<CalendarDay | null>(null);
-
-  // EVENTOS DE SALIDA (Lo que notifica al padre)
-  @Output() onMonthViewClick = new EventEmitter<void>();
-  @Output() onDaySelect = new EventEmitter<CalendarDay>();
-  @Output() onMenuClick = new EventEmitter<void>();
+  selectedDate = signal<Date>(new Date());
+  baseDate = signal<Date>(new Date()); // La fecha de referencia para la semana visible
 
   @Output() onDateChange = new EventEmitter<Date>();
+  @Output() onMenuClick = new EventEmitter<void>();
+  @Output() onMonthViewClick = new EventEmitter<void>();
 
+  // Coordenadas para Swipe
+  private touchStartX = 0;
 
   ngOnInit() {
-    this.generateCurrentWeek();
+    this.generateWeek(this.baseDate());
   }
 
-  // Helpers de comparación solicitados
+  // Helpers de comparación (Protocolo de Tiempo)
   compareDates(f1: Date, f2: Date): number {
     const d1 = new Date(f1).setHours(0, 0, 0, 0);
     const d2 = new Date(f2).setHours(0, 0, 0, 0);
-    if (d1 > d2) return 1;
-    if (d1 < d2) return -1;
-    return 0;
+    return d1 > d2 ? 1 : d1 < d2 ? -1 : 0;
   }
 
-  isToday(date: Date): boolean {
-    return this.compareDates(date, new Date()) === 0;
-  }
+  isToday(date: Date): boolean { return this.compareDates(date, new Date()) === 0; }
+  isPast(date: Date): boolean { return this.compareDates(date, new Date()) === -1; }
+  isFuture(date: Date): boolean { return this.compareDates(date, new Date()) === 1; }
+  isSelected(day: CalendarDay): boolean { return this.compareDates(day.fullDate, this.selectedDate()) === 0; }
 
-  isPast(date: Date): boolean {
-    return this.compareDates(date, new Date()) === -1;
-  }
-
-  isFuture(date: Date): boolean {
-    return this.compareDates(date, new Date()) === 1;
-  }
-
-  isSelected(day: CalendarDay): boolean {
-    const selected = this.selectedDate();
-    return selected ? this.compareDates(day.fullDate, selected.fullDate) === 0 : false;
-  }
-
-  // Generación automática de la semana (Lunes a Domingo)
-  private generateCurrentWeek() {
-    const today = new Date();
-    const dayOfWeek = today.getDay();
+  private generateWeek(referenceDate: Date) {
+    const start = new Date(referenceDate);
+    const dayOfWeek = start.getDay();
     const diffToMonday = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
-    const monday = new Date(today);
-    monday.setDate(today.getDate() + diffToMonday);
+    start.setDate(start.getDate() + diffToMonday);
 
     const week: CalendarDay[] = [];
     for (let i = 0; i < 7; i++) {
-      const d = new Date(monday);
-      d.setDate(monday.getDate() + i);
+      const d = new Date(start);
+      d.setDate(start.getDate() + i);
       week.push({
         date: d.getDate(),
         fullDate: d,
         dayName: ['D', 'L', 'M', 'M', 'J', 'V', 'S'][d.getDay()],
-        status: 'none' // Esto se conectará con los datos reales
+        status: 'none'
       });
     }
     this.days.set(week);
   }
 
+  // --- LÓGICA DE NAVEGACIÓN (SWIPE) ---
+  
+  handleTouchStart(event: TouchEvent) {
+    this.touchStartX = event.touches[0].clientX;
+  }
+
+  handleTouchEnd(event: TouchEvent) {
+    const touchEndX = event.changedTouches[0].clientX;
+    const deltaX = touchEndX - this.touchStartX;
+
+    if (Math.abs(deltaX) > 50) { // Umbral de swipe
+      if (deltaX > 0) this.navigateWeek(-7); // Swipe derecha -> Semana anterior
+      else this.navigateWeek(7);             // Swipe izquierda -> Semana siguiente
+    }
+  }
+
+  private navigateWeek(days: number) {
+    const newBase = new Date(this.baseDate());
+    newBase.setDate(newBase.getDate() + days);
+    this.baseDate.set(newBase);
+    this.generateWeek(newBase);
+  }
+
   selectDay(day: CalendarDay) {
-    this.selectedDate.set(day);
+    this.selectedDate.set(day.fullDate);
     this.onDateChange.emit(day.fullDate);
   }
 
-  // Label dinámico central
+  // --- DISPLAY LABEL INTELIGENTE ---
   displayLabel = computed(() => {
     const selected = this.selectedDate();
-    if (!selected) return '';
-    if (this.isToday(selected.fullDate)) return 'Hoy';
-    if (this.compareDates(selected.fullDate, new Date(new Date().setDate(new Date().getDate() - 1))) === 0) return 'Ayer';
-    if (this.compareDates(selected.fullDate, new Date(new Date().setDate(new Date().getDate() + 1))) === 0) return 'Mañana';
-    return new Intl.DateTimeFormat('es-ES', { weekday: 'long' }).format(selected.fullDate);
+    const today = new Date();
+    
+    // Si el día seleccionado está en la semana actual del sistema
+    const diffDays = Math.abs(this.compareDates(selected, today));
+    
+    if (this.isToday(selected)) return 'Hoy';
+    
+    const yesterday = new Date(today);
+    yesterday.setDate(today.getDate() - 1);
+
+    const tomorrow = new Date(today);
+    tomorrow.setDate(today.getDate() + 1);
+
+     if (this.compareDates(selected, tomorrow) === 0) return 'Mañana';
+    if (this.compareDates(selected, yesterday) === 0) return 'Ayer';
+
+    // Si no es hoy/ayer pero es la semana actual, mostramos nombre del día
+    const startOfThisWeek = new Date(today);
+    startOfThisWeek.setDate(today.getDate() + (today.getDay() === 0 ? -6 : 1 - today.getDay()));
+    startOfThisWeek.setHours(0,0,0,0);
+    
+    const endOfThisWeek = new Date(startOfThisWeek);
+    endOfThisWeek.setDate(startOfThisWeek.getDate() + 6);
+    endOfThisWeek.setHours(23,59,59,999);
+
+    if (selected >= startOfThisWeek && selected <= endOfThisWeek) {
+      return new Intl.DateTimeFormat('es-ES', { weekday: 'long' }).format(selected);
+    }
+
+    // FUERA DE LA SEMANA ACTUAL: Mes acortado + número (Ene 12)
+    return new Intl.DateTimeFormat('es-ES', { month: 'short', day: 'numeric' }).format(selected);
   });
 
-  // Método para evitar errores de parseo en el HTML
+  // Estilos (Ya refactorizados para evitar Parser Errors)
   getNumberClasses(day: CalendarDay) {
     const today = this.isToday(day.fullDate);
     const selected = this.isSelected(day);
-
     return {
       'text-awakin-sun': today,
       'text-black': selected && !today,
@@ -117,9 +149,9 @@ export class WeekCalendarHeaderComponent implements OnInit {
       'bg-awakin-sun': day.status === 'goal' || this.isToday(day.fullDate),
       'bg-module-intake': day.status === 'partial',
       'bg-module-avatar': day.status === 'excess',
-      'border-b-2 border-awakin-stone': this.isSelected(day),
-      'border border-stone-400': this.isFuture(day.fullDate),
-      'bg-stone-600': this.isPast(day.fullDate) && day.status === 'none'
+      'border-b-2 border-stone-800': this.isSelected(day),
+      'border border-stone-300': this.isFuture(day.fullDate),
+      'bg-stone-500': this.isPast(day.fullDate) && day.status === 'none'
     };
   }
 }
