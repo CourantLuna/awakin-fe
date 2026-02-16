@@ -2,11 +2,10 @@
 
   <!-- 1. HEADER SEMANAL (Componente Reutilizable) -->
   <app-week-calendar-header 
-  [days]="weekDays()"
   [streak]="streak()"
   (onDaySelect)="handleDaySelect($event)"
     (onMonthViewClick)="handleMonthView()"
-    [selectedDay]="selectedDay">
+  >
   </app-week-calendar-header>
 
   <!-- 2. CONTENIDO PRINCIPAL (Dashboard de Comida) -->

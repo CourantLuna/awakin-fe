@@ -1,77 +1,47 @@
-<!-- CONTENEDOR PRINCIPAL -->
-<!-- Usamos bg-[#050505] para fundirse con el notch del móvil -->
-<div class="w-full pt-6 pb-6 px-4 rounded-b-3xl shadow-2xl">
+<div class="w-full pt-6 pb-6 px-4 rounded-b-3xl shadow-2xl bg-white border-b border-stone-100">
 
-  <!-- 1. TOP BAR (Menú - Hoy - Racha) -->
   <div class="flex justify-between items-center mb-6">
     
-    <!-- Izquierda: Menú (3 puntos) -->
-    <button (click)="onMenuClick.emit()" class="w-10 h-10 flex items-center justify-start text-black  transition-colors">
-      <i class="pi pi-ellipsis-h text-xl">sd</i>
+    <button (click)="onMenuClick.emit()" class="w-10 h-10 flex items-center justify-start text-black active:opacity-50">
+      <i class="pi pi-ellipsis-h text-xl"></i>
     </button>
 
-    <!-- Centro: Botón "Hoy" / Calendario Mensual -->
     <button (click)="onMonthViewClick.emit()" 
-            class="flex items-center gap-2 px-4 py-2  rounded-full border border-stone-800 active:scale-95 transition-transform">
-      <i class="pi pi-calendar  text-sm"></i>
-      <span class="text-sm font-bold tracking-wide">{{ displayLabel() }}</span>
+            class="flex items-center gap-2 px-4 py-2 rounded-full border border-stone-200 bg-stone-50 active:scale-95 transition-all shadow-sm">
+      <i class="pi pi-calendar text-sm text-awakin-sun"></i>
+      <span class="text-sm font-bold tracking-wide capitalize">{{ displayLabel() }}</span>
       <i class="pi pi-chevron-down text-xs text-stone-500"></i>
     </button>
 
-    <!-- Derecha: Racha (Streak) -->
     <div class="flex items-center gap-1.5">
-      <!-- Cambiamos el color del icono según si hay racha o no -->
-      <i class="pi" 
-          [ngClass]="streak > 0 ? 'pi-bolt text-awakin-sun animate-pulse' : 'pi-bolt text-stone-600'"></i>
+      <i class="pi pi-bolt text-xl" 
+         [ngClass]="streak > 0 ? 'text-awakin-sun animate-pulse' : 'text-stone-300'"></i>
       <span class="text-xl font-bold font-mono" 
-            [ngClass]="streak > 0 ? 'text-black' : 'text-stone-600'">
+            [ngClass]="streak > 0 ? 'text-black' : 'text-stone-400'">
         {{ streak }}
       </span>
     </div>
   </div>
 
-  <!-- 2. TIRA SEMANAL (L M M J V S D) -->
-  <div class="flex justify-between items-start">
+  <div class="flex justify-between items-start px-1">
     
-    <!-- Bucle para generar los días recibidos por Input -->
-    <div *ngFor="let day of days" class="flex flex-col items-center gap-3 w-10 group cursor-pointer"
-         (click)="onDaySelect.emit(day)">
+    <div *ngFor="let day of days()" 
+         class="flex flex-col items-center gap-3 w-10 cursor-pointer group"
+         (click)="selectDay(day)">
       
-      <!-- Nombre del día -->
-      <span class="text-[10px] font-bold text-stone-500 uppercase tracking-wider group-hover:text-awakin-stone transition-colors">
+      <span class="text-[10px] font-bold uppercase tracking-wider transition-colors"
+            [ngClass]="isSelected(day) ? 'text-black' : 'text-stone-400'">
         {{ day.dayName }}
       </span>
 
-<div class="w-9 h-9 flex items-center justify-center text-sm font-bold rounded-full transition-all duration-300"
-     [ngClass]="{
-       'text-awakin-sun': isToday(day.fullDate),
-       
-       'text-black': !isToday(day.fullDate) && selectedDay()?.date === day.date,
-       
-       'text-stone-800': !isToday(day.fullDate) && selectedDay()?.date !== day.date,
+      <div class="w-9 h-9 flex items-center justify-center text-sm font-bold rounded-full transition-all duration-300"
+           [ngClass]="getNumberClasses(day)">
+        {{ day.date }}
+      </div>
 
-       'bg-stone-100 shadow-md scale-110': selectedDay()?.date === day.date,
-       
-       'bg-transparent': selectedDay()?.date !== day.date
-     }">
-  {{ day.date }}
-</div>
-
-<div class="w-1.5 h-1.5 rounded-full mt-1"
-     [ngClass]="{
-             'bg-awakin-sun': day.status === 'goal' || isToday(day.fullDate),
-
-       'bg-module-intake': day.status === 'partial',
-       'bg-module-avatar': day.status === 'excess',
-       'border-b-2 border-awakin-stone': isSelected(day),
-       'border border-stone-400': isFuture(day.fullDate),
-       'bg-stone-600': isPast(day.fullDate) ,
-     }">
-</div>
-      
-
+      <div class="w-1.5 h-1.5 rounded-full mt-1 transition-all duration-500"
+           [ngClass]="getStatusClasses(day)">
+      </div>
     </div>
-
   </div>
-
 </div>
