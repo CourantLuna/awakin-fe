@@ -14,7 +14,7 @@
     <button (click)="onMonthViewClick.emit()" 
             class="flex items-center gap-2 px-4 py-2  rounded-full border border-stone-800 active:scale-95 transition-transform">
       <i class="pi pi-calendar  text-sm"></i>
-      <span class="text-sm font-bold tracking-wide">Hoy</span>
+      <span class="text-sm font-bold tracking-wide">{{ displayLabel() }}</span>
       <i class="pi pi-chevron-down text-xs text-stone-500"></i>
     </button>
 
@@ -42,23 +42,33 @@
         {{ day.dayName }}
       </span>
 
-      <!-- Círculo del Número -->
-      <div class="w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold transition-all duration-300"
-        [ngClass]="day.isToday 
-          ? ' text-awakin-sun shadow-lg scale-110' 
-          : 'bg-transparent border border-transparent hover:border-stone-700'">
-        {{ day.date }}
-      </div>
+<div class="w-9 h-9 flex items-center justify-center text-sm font-bold rounded-full transition-all duration-300"
+     [ngClass]="{
+       'text-awakin-sun': isToday(day.fullDate),
+       
+       'text-black': !isToday(day.fullDate) && selectedDay()?.date === day.date,
+       
+       'text-stone-800': !isToday(day.fullDate) && selectedDay()?.date !== day.date,
 
-      <!-- Punto Indicador de Estado -->
-      <div class="w-1.5 h-1.5 rounded-full mt-1 transition-all duration-500"
-        [ngClass]="{
-          'bg-awakin-sun shadow-[0_0_5px_rgba(254,151,10,0.8)]': day.status === 'record',
-          'bg-module-intake shadow-[0_0_5px_rgba(62,159,49,0.8)]': day.status === 'goal',
-          'bg-stone-800': day.status === 'none',
-          'opacity-0': day.status === 'future'
-        }">
-      </div>
+       'bg-stone-100 shadow-md scale-110': selectedDay()?.date === day.date,
+       
+       'bg-transparent': selectedDay()?.date !== day.date
+     }">
+  {{ day.date }}
+</div>
+
+<div class="w-1.5 h-1.5 rounded-full mt-1"
+     [ngClass]="{
+             'bg-awakin-sun': day.status === 'goal' || isToday(day.fullDate),
+
+       'bg-module-intake': day.status === 'partial',
+       'bg-module-avatar': day.status === 'excess',
+       'border-b-2 border-awakin-stone': isSelected(day),
+       'border border-stone-400': isFuture(day.fullDate),
+       'bg-stone-600': isPast(day.fullDate) ,
+     }">
+</div>
+      
 
     </div>
 

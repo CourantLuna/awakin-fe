@@ -13,7 +13,7 @@ import { CalendarDay, WeekCalendarHeaderComponent } from '../../components/week-
 export class IntakeUserComponent implements OnInit {
   streak = signal<number>(12);
   weekDays = signal<CalendarDay[]>([]); // Se llenará dinámicamente
-
+  selectedDay = signal<CalendarDay | null>(null);
   // Datos Gráfico
   macroData: any;
   macroOptions: any;
@@ -51,8 +51,7 @@ export class IntakeUserComponent implements OnInit {
         dayName: dayNames[i],
         fullDate: d, // Guardamos la fecha completa para futuras comparaciones o usos
         // Lógica simulada de estado (esto vendría de BD)
-        status: isToday ? 'none' : (i < 4 ? 'record' : 'future'), 
-        isToday: isToday
+        status: isToday ? 'none' : (i < 4 ? 'none' : 'future'), 
       });
     }
     this.weekDays.set(days);
@@ -88,10 +87,11 @@ export class IntakeUserComponent implements OnInit {
 
   handleDaySelect(selectedDay: CalendarDay) {
     // Al seleccionar, marcamos visualmente
-    this.weekDays.update(days => days.map(d => ({
-      ...d,
-      isToday: d.date === selectedDay.date // Truco visual: hacemos que el seleccionado se comporte como "hoy" para el estilo
-    })));
+    // this.weekDays.update(days => days.map(d => ({
+    //   ...d,
+    //   isToday: d.date === selectedDay.date // Truco visual: hacemos que el seleccionado se comporte como "hoy" para el estilo
+    // })));
+    this.selectedDay.set(selectedDay);
   }
 
   handleMonthView() {
