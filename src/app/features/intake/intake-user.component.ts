@@ -49,6 +49,7 @@ export class IntakeUserComponent implements OnInit {
       days.push({
         date: d.getDate(), // Número del día (ej: 15)
         dayName: dayNames[i],
+        fullDate: d, // Guardamos la fecha completa para futuras comparaciones o usos
         // Lógica simulada de estado (esto vendría de BD)
         status: isToday ? 'none' : (i < 4 ? 'record' : 'future'), 
         isToday: isToday
