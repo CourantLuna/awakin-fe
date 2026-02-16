@@ -20,7 +20,12 @@ export class WeekCalendarHeaderComponent implements OnInit {
   @Input() streak: number = 0;
 
   // Señales de estado
-  days = signal<CalendarDay[]>([]);
+  @Output() days = signal<CalendarDay[]>([]);
+
+  @Input() setDays(daysToSet: CalendarDay[]) {
+    this.days.set(daysToSet);
+  }
+
   selectedDate = signal<Date>(new Date());
   baseDate = signal<Date>(new Date()); // La fecha de referencia para la semana visible
 
@@ -83,38 +88,49 @@ export class WeekCalendarHeaderComponent implements OnInit {
     }
   }
 
-  private navigateWeek(days: number) {
-    const newBase = new Date(this.baseDate());
-    newBase.setDate(newBase.getDate() + days);
-    this.baseDate.set(newBase);
-    this.generateWeek(newBase);
-  }
 
   selectDay(day: CalendarDay) {
     this.selectedDate.set(day.fullDate);
     this.onDateChange.emit(day.fullDate);
   }
 
-  // --- DISPLAY LABEL INTELIGENTE ---
+private navigateWeek(days: number) {
+    // 1. Guardamos el índice del día actual seleccionado (0-6)
+    const currentSelectedDayIndex = this.selectedDate().getDay();
+
+    // 2. Movemos la fecha base
+    const newBase = new Date(this.baseDate());
+    newBase.setDate(newBase.getDate() + days);
+    this.baseDate.set(newBase);
+
+    // 3. Generamos la nueva semana
+    this.generateWeek(newBase);
+
+    // 4. AUTO-SELECCIÓN: Buscamos el día en la nueva semana con el mismo dayIndex
+    const newWeekDays = this.days();
+    const sameDayNextWeek = newWeekDays.find(d => d.fullDate.getDay() === currentSelectedDayIndex);
+
+    if (sameDayNextWeek) {
+      this.selectDay(sameDayNextWeek);
+    }
+  }
+
+  // Label dinámico actualizado con tu lógica de 'Mañana' y formato AWAKIN
   displayLabel = computed(() => {
     const selected = this.selectedDate();
     const today = new Date();
-    
-    // Si el día seleccionado está en la semana actual del sistema
-    const diffDays = Math.abs(this.compareDates(selected, today));
     
     if (this.isToday(selected)) return 'Hoy';
     
     const yesterday = new Date(today);
     yesterday.setDate(today.getDate() - 1);
+    if (this.compareDates(selected, yesterday) === 0) return 'Ayer';
 
     const tomorrow = new Date(today);
     tomorrow.setDate(today.getDate() + 1);
+    if (this.compareDates(selected, tomorrow) === 0) return 'Mañana';
 
-     if (this.compareDates(selected, tomorrow) === 0) return 'Mañana';
-    if (this.compareDates(selected, yesterday) === 0) return 'Ayer';
-
-    // Si no es hoy/ayer pero es la semana actual, mostramos nombre del día
+    // Lógica para detectar si estamos en la semana actual del sistema
     const startOfThisWeek = new Date(today);
     startOfThisWeek.setDate(today.getDate() + (today.getDay() === 0 ? -6 : 1 - today.getDay()));
     startOfThisWeek.setHours(0,0,0,0);
@@ -123,11 +139,12 @@ export class WeekCalendarHeaderComponent implements OnInit {
     endOfThisWeek.setDate(startOfThisWeek.getDate() + 6);
     endOfThisWeek.setHours(23,59,59,999);
 
+    // Si está en la semana actual, nombre completo (ej: Martes)
     if (selected >= startOfThisWeek && selected <= endOfThisWeek) {
       return new Intl.DateTimeFormat('es-ES', { weekday: 'long' }).format(selected);
     }
 
-    // FUERA DE LA SEMANA ACTUAL: Mes acortado + número (Ene 12)
+    // Si está fuera de la semana actual, Mes + Día (ej: feb 18)
     return new Intl.DateTimeFormat('es-ES', { month: 'short', day: 'numeric' }).format(selected);
   });
 
