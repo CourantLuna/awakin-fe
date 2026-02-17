@@ -1,0 +1,57 @@
+<div class="bg-white rounded-3xl p-6 shadow-xl border border-stone-100 relative overflow-hidden">
+  
+  <div class="flex justify-between items-end mb-8">
+    <div class="flex flex-col text-left">
+      <span class="text-[10px] font-black tracking-[0.2em] text-stone-400 uppercase">Energía Ingerida</span>
+      <h2 class="text-3xl font-black text-gray-900 tracking-tighter italic">
+        {{ consumed() }} <span class="text-xs text-stone-400 font-bold not-italic">kcal</span>
+      </h2>
+    </div>
+    <div class="px-3 py-1 bg-stone-50 border border-stone-100 rounded-full flex items-center gap-2">
+      <div class="w-1.5 h-1.5 rounded-full bg-awakin-sun animate-pulse"></div>
+      <span class="text-[9px] font-black text-stone-500 uppercase tracking-widest">Live Sync</span>
+    </div>
+  </div>
+
+  <div class="relative w-full flex justify-center items-end h-24 overflow-visible">
+    <svg width="277" height="32" viewBox="0 0 277 32" fill="none" xmlns="http://www.w3.org/2000/svg" class="overflow-visible w-full">
+      
+      <path #trackPath
+            d="M2.50049 29.5002C2.50049 29.5002 67.8684 7.08312 138.5 7.00023C209.511 6.91689 274.5 29.5002 274.5 29.5002" 
+            stroke="#F5F5F4" stroke-width="5" stroke-linecap="round"/>
+      
+      <path d="M2.50049 29.5002C2.50049 29.5002 67.8684 7.08312 138.5 7.00023C209.511 6.91689 274.5 29.5002 274.5 29.5002" 
+            stroke="#FE970A" stroke-width="5" stroke-linecap="round"
+            [attr.stroke-dasharray]="progressStroke()"
+            class="transition-all duration-1000 ease-out"/>
+
+      <g [attr.transform]="getMarkerTransform(consumed())" class="transition-all duration-1000">
+        <rect x="-2" y="-12" width="4" height="20" rx="2" fill="#93918B" />
+        <text x="0" y="-18" text-anchor="middle" class="text-[7px] font-black fill-awakin-sun uppercase tracking-tighter">Eaten</text>
+      </g>
+
+      <g [attr.transform]="getMarkerTransform(goalB())">
+        <rect x="-2" y="-12" width="4" height="20" rx="2" fill="#93918B" />
+        <text x="0" y="-18" text-anchor="middle" class="text-[7px] font-black fill-stone-400 uppercase">Goal</text>
+      </g>
+
+      <g [attr.transform]="getMarkerTransform(maintC())">
+        <rect x="-2" y="-12" width="4" height="20" rx="2" fill="#93918B" />
+        <text x="0" y="-18" text-anchor="middle" class="text-[7px] font-black fill-stone-400 uppercase">Maint</text>
+      </g>
+    </svg>
+
+    <div class="absolute bottom-[-20px] text-center flex flex-col items-center">
+      <span class="text-[9px] font-black text-stone-300 uppercase tracking-[0.2em] leading-none">To Goal</span>
+      <span class="text-xl font-black text-gray-800 leading-none tracking-tighter">
+        {{ (goalB() - consumed()) > 0 ? (goalB() - consumed()) : 0 }}
+      </span>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-3 gap-1 mt-14 border-t border-stone-50 pt-4 text-center">
+    <div class="flex flex-col"><span class="text-[8px] font-bold text-stone-400 uppercase">Basal</span><span class="text-xs font-black">{{ minA() }}</span></div>
+    <div class="flex flex-col border-x border-stone-50"><span class="text-[8px] font-bold text-stone-400 uppercase text-module-intake">Goal</span><span class="text-xs font-black text-module-intake">{{ goalB() }}</span></div>
+    <div class="flex flex-col"><span class="text-[8px] font-bold text-stone-400 uppercase text-module-avatar">Maint</span><span class="text-xs font-black text-module-avatar">{{ maintC() }}</span></div>
+  </div>
+</div>

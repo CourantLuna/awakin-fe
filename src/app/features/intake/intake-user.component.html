@@ -1,8 +1,8 @@
 <div class="min-h-screen bg-awakin-base pb-20">
 
-  <div class="w-full bg-white  pt-4 pb-6 px-4">
+  <div class="w-full bg-white">
   
-  <p-toolbar styleClass="bg-transparent border-none p-0 mb-6">
+  <p-toolbar styleClass="bg-transparent border-none p-0 mb-3">
     
     <ng-template pTemplate="start">
       <button (click)="calendar.onMenuClick.emit()" 
@@ -58,7 +58,13 @@
 </div>
 
   <!-- 2. CONTENIDO PRINCIPAL (Dashboard de Comida) -->
-  <div class="px-4  z-10">
+  <div class="px-4 pt-5 z-10">
+<app-intake-progress-widget 
+      [consumed]="caloriesConsumed()"
+      [minA]="minBasal()"
+      [goalB]="targetGoal()"
+      [maintC]="maintenanceLevel()">
+    </app-intake-progress-widget>
 
     <!-- TARJETA DE RESUMEN MACROS -->
     <div class="bg-white rounded-3xl p-6 shadow-xl shadow-stone-200/50 border border-stone-100 mb-6">
@@ -78,7 +84,7 @@
 
         <!-- Dato Central (Overlay) -->
         <div class="absolute flex flex-col items-center">
-          <span class="text-4xl font-black text-gray-800 tracking-tighter">{{ caloriesTarget - caloriesConsumed
+          <span class="text-4xl font-black text-gray-800 tracking-tighter">{{ caloriesTarget - caloriesConsumed()
             }}</span>
           <span class="text-[9px] text-awakin-stone uppercase font-bold tracking-widest mt-1">kcal restantes</span>
         </div>

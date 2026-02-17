@@ -3,11 +3,13 @@ import { CommonModule } from '@angular/common';
 import { ChartModule } from 'primeng/chart';
 import { PrimeNGModule } from '../../shared/prime-ng.module';
 import { CalendarDay, WeekCalendarHeaderComponent } from '../../components/week-calendar/week-calendar-header.component';
+import { IntakeProgressWidgetComponent } from "./components/intake-widget/intake-progress-widget.component";
+
 
 @Component({
   selector: 'app-intake-user',
   standalone: true,
-  imports: [CommonModule, ChartModule, PrimeNGModule, WeekCalendarHeaderComponent],
+  imports: [CommonModule, ChartModule, PrimeNGModule, WeekCalendarHeaderComponent, IntakeProgressWidgetComponent],
   templateUrl: './intake-user.component.html'
 })
 export class IntakeUserComponent implements OnInit {
@@ -17,8 +19,13 @@ export class IntakeUserComponent implements OnInit {
   // Datos Gráfico
   macroData: any;
   macroOptions: any;
-  caloriesConsumed = 1850;
+caloriesConsumed = signal(1500);
   caloriesTarget = 2200;
+  
+  // Protocolo de Set Points (Normalmente vendrían de un ProfileService)
+  minBasal = signal(1200);      // Punto A
+  targetGoal = signal(4000);    // Punto B
+  maintenanceLevel = signal(5000); // Punto C
 
   // En intake-user.component.ts
 currentLabel = signal<string>('Hoy');
@@ -85,7 +92,7 @@ handleTopBtnAction() {
           backgroundColor: [colorIntake, colorSun, colorAvatar],
           hoverBackgroundColor: [colorIntake, colorSun, colorAvatar],
           borderWidth: 0,
-          borderRadius: 5,
+          borderRadius: 4,
           cutout: '88%'
         }
       ]
