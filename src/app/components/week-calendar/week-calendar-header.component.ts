@@ -114,16 +114,25 @@ export class WeekCalendarHeaderComponent implements OnInit {
     this.onDateChange.emit(day.fullDate);
   }
 
-private navigateWeek(days: number) {
-    // 1. Guardamos el índice del día actual seleccionado (0-6)
-const currentDayIndex = this.selectedDate().getDay();
+/**
+   * Navegación manual por flechas o swipe
+   * @param direction -1 para atrás, 1 para adelante
+   */
+  public navigate(direction: number) {
+    // Multiplicamos por 7 porque nos movemos por semanas completas
+    this.navigateWeek(direction * 7);
+  }
+
+  // Refactorizamos navigateWeek para que sea más robusto
+  private navigateWeek(days: number) {
+    const currentDayIndex = this.selectedDate().getDay();
     const newBase = new Date(this.baseDate());
     newBase.setDate(newBase.getDate() + days);
     
     this.baseDate.set(newBase);
     this.generateWeek(newBase);
 
-    // Auto-selección del mismo día de la semana
+    // Mantenemos la selección del mismo día de la semana (protocolo de consistencia)
     const newDay = this.days().find(d => d.fullDate.getDay() === currentDayIndex);
     if (newDay) this.selectDay(newDay);
   }

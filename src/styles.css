@@ -1,6 +1,6 @@
 /* 1. Importación del Core de Tailwind v4 */
 @import "tailwindcss";
-
+@import "primeicons/primeicons.css";
 /* 2. Definición del TEMA AWAKIN (Sunrise Tech) */
 @theme {
   /* El Sol (Sistema / Core) */

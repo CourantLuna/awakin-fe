@@ -11,6 +11,7 @@ import { ToastModule } from 'primeng/toast';
 import { ChartModule } from 'primeng/chart';
 import { ProgressBarModule } from 'primeng/progressbar';
 import { DatePickerModule } from 'primeng/datepicker';
+import { ToolbarModule } from 'primeng/toolbar';
 
 @NgModule({
   exports: [
@@ -23,7 +24,8 @@ import { DatePickerModule } from 'primeng/datepicker';
     ToastModule,
     ChartModule,
     ProgressBarModule,
-    DatePickerModule
+    DatePickerModule,
+    ToolbarModule
     // Agrega aquí más módulos si los necesitas en el futuro
   ]
 })
