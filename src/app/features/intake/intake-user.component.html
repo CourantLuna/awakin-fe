@@ -1,9 +1,14 @@
 <div class="min-h-screen bg-awakin-base pb-20">
-
+<button topCenter (click)="handleTopBtnAction()" 
+          class="flex items-center gap-2 px-4 py-2 rounded-full border border-stone-200 bg-stone-50 active:scale-95 transition-all shadow-sm">
+    <i class="pi pi-calendar text-sm text-awakin-sun"></i>
+    <span class="text-sm font-bold tracking-wide capitalize">{{ currentLabel() }}</span>
+    <i class="pi pi-chevron-down text-xs text-stone-500"></i>
+  </button>
   <!-- 1. HEADER SEMANAL (Componente Reutilizable) -->
   <app-week-calendar-header 
   [streak]="streak()"
-  (onMonthViewClick)="handleMonthView()"
+  (onLabelChange)="updateLabel($event)"
   >
   </app-week-calendar-header>
 

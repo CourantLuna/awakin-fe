@@ -1,23 +1,5 @@
 <div class="w-full pt-6 pb-6 px-4 rounded-b-3xl shadow-2xl bg-white border-b border-stone-100">
 
-  <div class="flex justify-between items-center mb-6">
-    <button (click)="onMenuClick.emit()" class="w-10 h-10 flex items-center justify-start text-black">
-      <i class="pi pi-ellipsis-h text-xl"></i>
-    </button>
-
-    <button (click)="onMonthViewClick.emit()" 
-            class="flex items-center gap-2 px-4 py-2 rounded-full border border-stone-200 bg-stone-50 active:scale-95 transition-all shadow-sm">
-      <i class="pi pi-calendar text-sm text-awakin-sun"></i>
-      <span class="text-sm font-bold tracking-wide capitalize">{{ displayLabel() }}</span>
-      <i class="pi pi-chevron-down text-xs text-stone-500"></i>
-    </button>
-
-    <div class="flex items-center gap-1.5">
-      <i class="pi pi-bolt text-xl" [ngClass]="streak > 0 ? 'text-awakin-sun animate-pulse' : 'text-stone-300'"></i>
-      <span class="text-xl font-bold font-mono" [ngClass]="streak > 0 ? 'text-black' : 'text-stone-400'">{{ streak }}</span>
-    </div>
-  </div>
-
   <div class="flex justify-between items-start px-1 select-none"
        (touchstart)="handleTouchStart($event)"
        (touchend)="handleTouchEnd($event)">

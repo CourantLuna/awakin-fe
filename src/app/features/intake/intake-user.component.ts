@@ -1,4 +1,4 @@
-import { Component, OnInit, signal } from '@angular/core';
+import { Component, OnInit, signal, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ChartModule } from 'primeng/chart';
 import { PrimeNGModule } from '../../shared/prime-ng.module';
@@ -19,6 +19,20 @@ export class IntakeUserComponent implements OnInit {
   macroOptions: any;
   caloriesConsumed = 1850;
   caloriesTarget = 2200;
+
+  // En intake-user.component.ts
+currentLabel = signal<string>('Hoy');
+@ViewChild(WeekCalendarHeaderComponent) calendar!: WeekCalendarHeaderComponent;
+updateLabel(label: string) {
+  this.currentLabel.set(label);
+}
+
+handleTopBtnAction() {
+  // 1. Ejecutamos la acción interna del hijo (Volver a hoy)
+    this.calendar.goToToday();
+  console.log('El padre controla esta acción para:', this.currentLabel());
+  // Aquí podrías abrir el calendario de PrimeNG, cambiar de vista, etc.
+}
 
   ngOnInit() {
     this.generateCurrentWeek(); // <--- Generar fechas reales al iniciar
