@@ -19,11 +19,11 @@ export class IntakeUserComponent implements OnInit {
   // Datos Gráfico
   macroData: any;
   macroOptions: any;
-caloriesConsumed = signal(1500);
+caloriesConsumed = signal(1660);
   caloriesTarget = 2200;
   
   // Protocolo de Set Points (Normalmente vendrían de un ProfileService)
-  minBasal = signal(1200);      // Punto A
+  minBasal = signal(800);      // Punto A
   targetGoal = signal(4000);    // Punto B
   maintenanceLevel = signal(5000); // Punto C
 
@@ -91,9 +91,9 @@ handleTopBtnAction() {
           data: [120, 210, 45],
           backgroundColor: [colorIntake, colorSun, colorAvatar],
           hoverBackgroundColor: [colorIntake, colorSun, colorAvatar],
-          borderWidth: 0,
+          borderWidth: 5,
           borderRadius: 4,
-          cutout: '88%'
+          cutout: '60%'
         }
       ]
     };

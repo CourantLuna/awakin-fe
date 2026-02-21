@@ -1,4 +1,4 @@
-import { Component, input, computed, ViewChild, ElementRef } from '@angular/core';
+import { Component, input, computed, ViewChild, ElementRef, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
 @Component({
@@ -24,12 +24,12 @@ export class IntakeProgressWidgetComponent {
     return `${percentage * totalLength}, 1000`;
   });
 
-  /**
-   * getMarkerTransform: Obtiene las coordenadas exactas del DOM
-   * para asegurar que los palitos estén sobre el arco.
-   */
-  // ... dentro de la clase IntakeProgressWidgetComponent
+ // Signal para controlar la alternancia de la pantalla digital
+  showTotalMode = signal(false);
 
+  toggleDisplay() {
+    this.showTotalMode.update(val => !val);
+  }
   /**
    * getMarkerTransform: Posiciona el palito sobre el arco.
    * Mantiene verticalidad absoluta (0 grados).
@@ -50,4 +50,41 @@ export class IntakeProgressWidgetComponent {
     // No aplicamos 'rotate' para que el palito se quede derecho.
     return `translate(${point.x} ${point.y})`;
   }
+
+  // Dentro de la clase IntakeProgressWidgetComponent
+
+// Determina el estado del protocolo basado en el consumo vs objetivo
+protocolState = computed(() => {
+  const diff = this.consumed() - this.goalB();
+  if (diff < -50) return 'DEFICIT';
+  if (diff > 50) return 'SURPLUS';
+  return 'MAINTENANCE';
+});
+
+getProtocolName() {
+  const states: any = {
+    'DEFICIT': 'Déficit Activo',
+    'SURPLUS': 'Superávit',
+    'MAINTENANCE': 'Mantenimiento'
+  };
+  return states[this.protocolState()];
+}
+
+getProtocolClass() {
+  const states: any = {
+    'DEFICIT': 'bg-emerald-50 border-emerald-100 text-emerald-700',
+    'SURPLUS': 'bg-amber-50 border-amber-100 text-amber-700',
+    'MAINTENANCE': 'bg-stone-50 border-stone-100 text-stone-600'
+  };
+  return states[this.protocolState()];
+}
+
+getProtocolColor() {
+  const colors: any = {
+    'DEFICIT': '#10b981', // Emerald 500
+    'SURPLUS': '#f59e0b', // Amber 500
+    'MAINTENANCE': '#93918B' // Awakin Stone
+  };
+  return colors[this.protocolState()];
+}
 }
