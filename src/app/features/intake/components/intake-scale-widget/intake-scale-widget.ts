@@ -55,7 +55,7 @@ export class IntakeScaleWidgetComponent {
   macroOptions = {
     plugins: { legend: { display: false }, tooltip: { enabled: false } },
     responsive: true,
-    maintainAspectRatio: false,
+    maintainAspectRatio: true,
     animation: { animateScale: true, animateRotate: true },
   };
 
