@@ -15,7 +15,15 @@ export class IntakeProgressWidgetComponent {
 
   @ViewChild('trackPath') trackPath!: ElementRef<SVGPathElement>;
 
-  maxLimit = computed(() => this.maintC() * 1.1);
+  maxLimit = computed(() => {
+    const maxlimitProtocol: any = {
+    'DEFICIT': this.maintC() * 1.33,
+    'SURPLUS': this.goalB() * 1.33,
+    'MAINTENANCE': this.maintC() * 1.33
+  };
+  
+    return maxlimitProtocol[this.protocolState()];
+  });
 
   // El porcentaje de llenado del arco
   progressStroke = computed(() => {
@@ -54,8 +62,9 @@ export class IntakeProgressWidgetComponent {
   // Dentro de la clase IntakeProgressWidgetComponent
 
 // Determina el estado del protocolo basado en el consumo vs objetivo
-protocolState = computed(() => {
-  const diff = this.consumed() - this.goalB();
+  protocolState = computed(() => {
+  
+  const diff = this.goalB() - this.maintC();
   if (diff < -50) return 'DEFICIT';
   if (diff > 50) return 'SURPLUS';
   return 'MAINTENANCE';

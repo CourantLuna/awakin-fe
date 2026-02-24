@@ -4,12 +4,13 @@ import { ChartModule } from 'primeng/chart';
 import { PrimeNGModule } from '../../shared/prime-ng.module';
 import { CalendarDay, WeekCalendarHeaderComponent } from '../../components/week-calendar/week-calendar-header.component';
 import { IntakeProgressWidgetComponent } from "./components/intake-widget/intake-progress-widget.component";
+import { IntakeScaleWidgetComponent } from "./components/intake-scale-widget/intake-scale-widget";
 
 
 @Component({
   selector: 'app-intake-user',
   standalone: true,
-  imports: [CommonModule, ChartModule, PrimeNGModule, WeekCalendarHeaderComponent, IntakeProgressWidgetComponent],
+  imports: [CommonModule, ChartModule, PrimeNGModule, WeekCalendarHeaderComponent, IntakeProgressWidgetComponent, IntakeScaleWidgetComponent],
   templateUrl: './intake-user.component.html'
 })
 export class IntakeUserComponent implements OnInit {
@@ -19,13 +20,12 @@ export class IntakeUserComponent implements OnInit {
   // Datos Gráfico
   macroData: any;
   macroOptions: any;
-caloriesConsumed = signal(1660);
   caloriesTarget = 2200;
   
   // Protocolo de Set Points (Normalmente vendrían de un ProfileService)
-  minBasal = signal(800);      // Punto A
-  targetGoal = signal(4000);    // Punto B
-  maintenanceLevel = signal(5000); // Punto C
+  minBasal = signal(700);      // Punto A
+  targetGoal = signal(885);    // Punto B
+  maintenanceLevel = signal(1500); // Punto C
 
   // En intake-user.component.ts
 currentLabel = signal<string>('Hoy');

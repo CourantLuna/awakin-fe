@@ -64,7 +64,7 @@
 
   <div class=" w-full flex justify-center items-end overflow-visible px-2">
   
-    <svg viewBox="0 0 277 32" class="overflow-visible w-full h-auto max-w-full drop-shadow-sm"
+    <svg viewBox="0 0 277 50" class="overflow-visible w-full h-auto max-w-full drop-shadow-sm"
       xmlns="http://www.w3.org/2000/svg">
     
       <path #trackPath
@@ -76,18 +76,21 @@
         [attr.stroke-dasharray]="progressStroke()" class="transition-all duration-1000 ease-out" />
     
       <g [attr.transform]="getMarkerTransform(minA())" class="transition-all duration-700">
-        <rect x="-1.5" y="-10" width="3" height="16" rx="1.5" fill="#93918B" />
-        <text x="0" y="-16" text-anchor="middle" fill="#A8A29E" class="text-[7px] font-black uppercase">TBM</text>
+        <rect x="-1" y="-2" width="2" height="14" rx="1" fill="#D6D3D1" />
+        <text x="0" y="24" text-anchor="middle" fill="#A8A29E"
+          class="text-[7px] font-black uppercase tracking-tighter">TBM</text>
       </g>
     
       <g [attr.transform]="getMarkerTransform(goalB())" class="transition-all duration-700">
-        <rect x="-1.5" y="-10" width="3" height="16" rx="1.5" fill="#93918B" />
-        <text x="0" y="-16" text-anchor="middle" fill="#A8A29E" class="text-[7px] font-black uppercase">Goal</text>
+        <rect x="-1" y="-2" width="2" height="14" rx="1" fill="var(--color-awakin-sun)" />
+        <text x="0" y="24" text-anchor="middle" fill="var(--color-awakin-sun)"
+          class="text-[7px] font-black uppercase tracking-tighter">Goal</text>
       </g>
     
       <g [attr.transform]="getMarkerTransform(maintC())" class="transition-all duration-700">
-        <rect x="-1.5" y="-10" width="3" height="16" rx="1.5" fill="#93918B" />
-        <text x="0" y="-16" text-anchor="middle" fill="#A8A29E" class="text-[7px] font-black uppercase">Maint</text>
+        <rect x="-1" y="-2" width="2" height="14" rx="1" fill="#93918B" />
+        <text x="0" y="24" text-anchor="middle" fill="#93918B"
+          class="text-[7px] font-black uppercase tracking-tighter">Maint</text>
       </g>
     </svg>
   </div>
