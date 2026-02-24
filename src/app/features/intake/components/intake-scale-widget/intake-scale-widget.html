@@ -1,13 +1,11 @@
-<div class="bg-white rounded-3xl p-6 shadow-xl border border-stone-100 relative overflow-hidden mb-6">
-
+<div class="bg-white rounded-3xl p-4 md:p-6 shadow-xl border border-stone-100 relative overflow-hidden mb-6 max-w-[400px] mx-auto">
     <app-intake-progress-widget 
     [consumed]="(proteinEated()*4) + (carbsEated()*4) + (fatsEated()*9) - burnedKcals() "
      [minA]="minA()" [goalB]="targetGoal()" [maintC]="maintC()">
     </app-intake-progress-widget>
 
-    <div class="flex justify-center items-center mb-2 md:-mt-12 -mt-2">
-        <p-chart type="doughnut" [data]="macroData()" [options]="macroOptions"
-            class="md:w-48 md:h-48 w-22 h-22"></p-chart>
+    <div class="flex justify-center items-center mb-2 -mt-4">
+        <p-chart type="doughnut" [data]="macroData()" [options]="macroOptions" class="w-24 h-24 md:w-32 md:h-32"></p-chart>
     </div>
 
     <div class="grid grid-cols-3 gap-4">
@@ -49,24 +47,30 @@
         </div>
     </div>
 
-    <div class="relative w-full flex justify-center items-center overflow-visible px-2 pt-4 flex-col">
-        <svg class="z-2" width="1" height="35" viewBox="0 0 1 35" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <line x1="0.5" x2="0.5" y2="34.5455" stroke="#93918B" stroke-dasharray="2 2" />
-        </svg>
+<div class="relative w-full flex justify-center items-center overflow-visible px-2 pt-6 pb-4 flex-col max-h-[100px]">
+    <svg viewBox="0 0 320 60" class="overflow-visible w-full h-auto drop-shadow-md" xmlns="http://www.w3.org/2000/svg">
 
-        <svg viewBox="0 0 320 80" class="absolute top-3 drop-shadow-sm gap-2 flex pb-2"
-            xmlns="http://www.w3.org/2000/svg">
-            <path
-                d="M3.00098 3.00085C3.00098 3.00085 78.2732 28.8145 159.607 28.9099C241.377 29.0059 316.213 3.00082 316.213 3.00082"
-                stroke="#FE970A" stroke-width="7" stroke-linecap="round" fill="none" />
-        </svg>
-        <svg viewBox="0 0 320 80" class="absolute top-1 drop-shadow-sm gap-2 flex pb-2"
-            xmlns="http://www.w3.org/2000/svg">
-            <path
-                d="M3.00098 3.00085C3.00098 3.00085 78.2732 28.8145 159.607 28.9099C241.377 29.0059 316.213 3.00082 316.213 3.00082"
-                stroke="#F51212" stroke-width="6" stroke-linecap="round" fill="none" />
-        </svg>
-    </div>
+        <path #scalePath id="mainCurve" d="M3 10C3 10 78 40 160 40C242 40 317 10 317 10" fill="none"
+            stroke="transparent" />
+
+        <path d="M3 10C3 10 78 40 160 40C242 40 317 10 317 10" fill="none" stroke="#F5F5F4" stroke-width="10"
+            stroke-linecap="round" />
+
+        <path d="M3 10C3 10 78 40 160 40C242 40 317 10 317 10" fill="none" stroke="#FE970A" stroke-width="10"
+            stroke-linecap="round" [attr.stroke-dasharray]="getStrokeDash(totalEated())"
+            class="transition-all duration-1000 ease-out" />
+
+        <path d="M3 10C3 10 78 40 160 40C242 40 317 10 317 10" fill="none" stroke="#F51212" stroke-width="6"
+            stroke-linecap="round" [attr.stroke-dasharray]="getStrokeDash(burnedKcals())"
+            class="transition-all duration-1000 ease-out delay-200" />
+
+        <g [attr.transform]="getMarkerTransform(targetGoal())" class="transition-all duration-700">
+            <line x1="0" y1="-15" x2="0" y2="15" stroke="#93918B" stroke-width="2" stroke-dasharray="3 2" />
+            <text x="0" y="28" text-anchor="middle" fill="#93918B"
+                class="text-[9px] font-black uppercase tracking-widest">Goal</text>
+        </g>
+    </svg>
+</div>
 
     <div class="flex justify-between items-center px-2">
         <div class="flex flex-col items-start">

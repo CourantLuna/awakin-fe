@@ -23,21 +23,20 @@
   </div>
   
   
- 
 <div class="text-center flex flex-col items-center z-10 select-none mb-4" (click)="toggleDisplay()">
-
   <div
-    class="bg-stone-50/50 backdrop-blur-xl px-5 py-2 rounded-xl shadow-[inset_0_2px_6px_rgba(0,0,0,0.08)] border border-stone-200/60 flex flex-col items-center min-w-[140px] transition-all active:scale-95 cursor-pointer">
-
-    <span class="text-[7px] font-black text-stone-400 uppercase tracking-[0.3em] leading-none mb-1.5 transition-all">
-      {{ showTotalMode() ? 'Tu progreso' : 'Te falta' }}
+    class="bg-stone-50/50 backdrop-blur-xl px-5 py-2 rounded-xl shadow-[inset_0_2px_6px_rgba(0,0,0,0.08)] border border-stone-200/60 flex flex-col items-center min-w-[140px] transition-all active:scale-95 cursor-pointer"
+    [class.border-orange-500/50]="isOverGoal() && !showTotalMode()"> <span
+      class="text-[7px] font-black uppercase tracking-[0.3em] leading-none mb-1.5 transition-all"
+      [class]="isOverGoal() ? 'text-orange-600' : 'text-stone-400'">
+      {{ statusLabel() }}
     </span>
 
     <div class="flex items-baseline gap-1 h-10">
       @if (!showTotalMode()) {
-      <span
-        class="text-3xl font-black text-[var(--color-awakin-sun)] tracking-tighter tabular-nums drop-shadow-[0_1px_2px_rgba(254,151,10,0.1)]">
-        {{ (goalB() - consumed()) > 0 ? (goalB() - consumed()) : 0 }}
+      <span class="text-3xl font-black tracking-tighter tabular-nums drop-shadow-[0_1px_2px_rgba(254,151,10,0.1)]"
+        [class]="isOverGoal() ? 'text-red-600 animate-pulse' : 'text-[var(--color-awakin-sun)]'">
+        {{ remainingKcal() }}
       </span>
       } @else {
       <div class="flex items-baseline gap-1 h-10">
@@ -55,12 +54,14 @@
 
     <div class="flex gap-1 mt-2">
       <div class="w-1.5 h-1 rounded-full transition-all duration-300"
-        [class]="!showTotalMode() ? 'bg-[var(--color-awakin-sun)] w-3' : 'bg-stone-200'"></div>
+        [class]="!showTotalMode() ? (isOverGoal() ? 'bg-red-500 w-3' : 'bg-[var(--color-awakin-sun)] w-3') : 'bg-stone-200'">
+      </div>
       <div class="w-1.5 h-1 rounded-full transition-all duration-300"
         [class]="showTotalMode() ? 'bg-[var(--color-awakin-sun)] w-3' : 'bg-stone-200'"></div>
     </div>
   </div>
 </div>
+
 
   <div class=" w-full flex justify-center items-end overflow-visible px-2">
   
