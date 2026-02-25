@@ -25,7 +25,7 @@
         class="flex items-center rounded-full border border-stone-200 bg-stone-50 shadow-sm overflow-hidden transition-all">
       
         <button (click)="handleTopBtnAction()"
-          class="flex items-center gap-1 pl-5 py-2 active:bg-stone-100 transition-colors group border-r border-stone-200">
+          class="flex items-center gap-1 pl-5 pe-2 py-2 active:bg-stone-100 transition-colors group border-r border-stone-200">
           <i class="pi pi-calendar text-sm text-awakin-sun group-hover:rotate-12 transition-transform"></i>
           <span class="text-sm font-bold tracking-wide capitalize text-gray-800 min-w-[60px] text-center">
             {{ currentLabel() }}
@@ -63,6 +63,7 @@
 
   <app-week-calendar-header 
     [streak]="streak()"
+    [weekStart]="1"
     (onLabelChange)="updateLabel($event)"
    >
   </app-week-calendar-header>

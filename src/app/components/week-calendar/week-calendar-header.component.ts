@@ -28,6 +28,8 @@ export type CalendarViewMode = 'week' | 'month'; //
   templateUrl: './week-calendar-header.component.html',
 })
 export class WeekCalendarHeaderComponent implements OnInit {
+  // Configuración de Protocolo
+  @Input() weekStart: number = 1; // 0: Domingo, 1: Lunes (Default AWAKIN)
   @Input() streak: number = 0;
 
   // Señales de estado
@@ -37,7 +39,6 @@ export class WeekCalendarHeaderComponent implements OnInit {
   }
 
   viewMode = signal<CalendarViewMode>('week'); // Control de estado interno
-
   selectedDate = signal<Date>(new Date());
   baseDate = signal<Date>(new Date());
   @Output() days = signal<CalendarDay[]>([]);
@@ -46,6 +47,16 @@ export class WeekCalendarHeaderComponent implements OnInit {
   @Output() onMenuClick = new EventEmitter<void>();
   @Output() onMonthViewClick = new EventEmitter<void>();
   @Output() onLabelChange = new EventEmitter<string>(); // Nuevo: Expone el label al padre
+
+  // 1. Nombres de días fijos para el Header
+weekDayNames = computed(() => {
+  const names = ['L', 'M', 'X', 'J', 'V', 'S', 'D']; // Orden de lunes
+  if (this.weekStart === 0) return ['D', 'L', 'M', 'X', 'J', 'V', 'S'];
+  return names;
+});
+
+// 2. Nueva señal para manejar los huecos del mes
+monthPaddingDays = signal<number[]>([]);
 
   // Coordenadas para Swipe
   private touchStartX = 0;
@@ -58,7 +69,7 @@ export class WeekCalendarHeaderComponent implements OnInit {
   }
 
   ngOnInit() {
-    this.generateWeek(this.baseDate());
+    this.generateCalendar();
   }
 
   // Helpers de comparación (Protocolo de Tiempo)
@@ -84,45 +95,55 @@ export class WeekCalendarHeaderComponent implements OnInit {
   // Método público para que el padre (IntakeUser) cambie el modo
   toggleViewMode() {
     this.viewMode.update((mode) => (mode === 'week' ? 'month' : 'week'));
+    // PROTOCOLO DE ANCLAJE: 
+    // Al cambiar de vista, la base debe ser la fecha que el usuario ya seleccionó
+    // para que la semana/mes se genere partiendo de esa realidad.
+    this.baseDate.set(new Date(this.selectedDate()));
     this.generateCalendar(); // Regeneramos los días según el nuevo modo
   }
 
-  // Refactorizamos la generación de días
-  generateCalendar() {
-    const base = new Date(this.baseDate());
-    const newDays: CalendarDay[] = [];
+generateCalendar() {
+  const base = new Date(this.baseDate());
+  const newDays: CalendarDay[] = [];
 
-    if (this.viewMode() === 'week') {
-      // Lógica de semana actual (Lunes a Domingo)
-      const start = new Date(base);
-      start.setDate(base.getDate() - (base.getDay() === 0 ? 6 : base.getDay() - 1));
+  if (this.viewMode() === 'week') {
+    this.monthPaddingDays.set([]); // Sin padding en semana
+    const start = new Date(base);
+    const day = start.getDay(); 
+    const diff = (day < this.weekStart ? 7 : 0) + day - this.weekStart;
+    start.setDate(start.getDate() - diff);
 
-      for (let i = 0; i < 7; i++) {
-        const d = new Date(start);
-        d.setDate(start.getDate() + i);
-        newDays.push(this.createDayObject(d));
-      }
-    } else {
-      // MODO MES: Generamos todos los días del mes de la baseDate
-      const year = base.getFullYear();
-      const month = base.getMonth();
-      const firstDay = new Date(year, month, 1);
-      const lastDay = new Date(year, month + 1, 0);
-
-      for (let i = 1; i <= lastDay.getDate(); i++) {
-        const d = new Date(year, month, i);
-        newDays.push(this.createDayObject(d));
-      }
+    for (let i = 0; i < 7; i++) {
+      const d = new Date(start);
+      d.setDate(start.getDate() + i);
+      newDays.push(this.createDayObject(d));
     }
-    this.days.set(newDays);
-  }
+  } else {
+    // MODO MES
+    const year = base.getFullYear();
+    const month = base.getMonth();
+    const firstDayOfMonth = new Date(year, month, 1).getDay();
+    
+    // Calcular padding: cuántos huecos hay antes del día 1
+    // Si weekStart es 1 (Lunes) y el primer día es Domingo (0), el offset es 6
+    let padding = (firstDayOfMonth - this.weekStart + 7) % 7;
+    this.monthPaddingDays.set(Array(padding).fill(0));
 
-  private createDayObject(date: Date): CalendarDay {
+    const lastDay = new Date(year, month + 1, 0).getDate();
+    for (let i = 1; i <= lastDay; i++) {
+      newDays.push(this.createDayObject(new Date(year, month, i)));
+    }
+  }
+  this.days.set(newDays);
+}
+
+private createDayObject(date: Date): CalendarDay {
     return {
       date: date.getDate(),
       fullDate: new Date(date),
-      dayName: new Intl.DateTimeFormat('es-ES', { weekday: 'narrow' }).format(date),
-      status: 'none', // Aquí conectarías con tu lógica de backend/status
+      // Forzamos que el nombre del día sea consistente con la localización
+      dayName: new Intl.DateTimeFormat('es-ES', { weekday: 'narrow' }).format(date).toUpperCase(),
+      status: 'none',
     };
   }
 
@@ -134,32 +155,11 @@ export class WeekCalendarHeaderComponent implements OnInit {
     const today = new Date();
     this.baseDate.set(today); // Reset de la semana visible
     this.selectedDate.set(today); // Seleccionamos hoy
-    this.generateWeek(today); // Regeneramos la tira
+    this.generateCalendar() // Regeneramos la tira
     this.onDateChange.emit(today); // Notificamos al padre
   }
 
-  private generateWeek(referenceDate: Date) {
-    const start = new Date(referenceDate);
-    const dayOfWeek = start.getDay();
-    const diffToMonday = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
-    start.setDate(start.getDate() + diffToMonday);
-
-    const week: CalendarDay[] = [];
-    for (let i = 0; i < 7; i++) {
-      const d = new Date(start);
-      d.setDate(start.getDate() + i);
-      week.push({
-        date: d.getDate(),
-        fullDate: d,
-        dayName: ['D', 'L', 'M', 'M', 'J', 'V', 'S'][d.getDay()],
-        status: 'none',
-      });
-    }
-    this.days.set(week);
-  }
-
   // --- LÓGICA DE NAVEGACIÓN (SWIPE) ---
-
   handleTouchStart(event: TouchEvent) {
     this.touchStartX = event.touches[0].clientX;
   }
@@ -171,8 +171,8 @@ export class WeekCalendarHeaderComponent implements OnInit {
     if (Math.abs(deltaX) > 50) {
       // Umbral de swipe
       if (deltaX > 0)
-        this.navigateWeek(-7); // Swipe derecha -> Semana anterior
-      else this.navigateWeek(7); // Swipe izquierda -> Semana siguiente
+        this.navigateTime(-7, 'days'); // Swipe derecha -> Semana anterior
+      else this.navigateTime(7, 'days'); // Swipe izquierda -> Semana siguiente
     }
   }
 
@@ -187,49 +187,78 @@ export class WeekCalendarHeaderComponent implements OnInit {
    */
   public navigate(direction: number) {
     // Multiplicamos por 7 porque nos movemos por semanas completas
-    this.navigateWeek(direction * 7);
+   if (this.viewMode()==='week'){
+    this.navigateTime(direction * 7, 'days');
+   } else if (this.viewMode()==='month'){
+    this.navigateTime(direction *1, 'months')
+   }
   }
+private navigateTime(amount: number, unit: 'days' | 'months') {
+    const currentDayOfWeek = this.selectedDate().getDay();
+    const newTarget = new Date(this.selectedDate()); // Usamos el seleccionado como target
 
-  // Refactorizamos navigateWeek para que sea más robusto
-  private navigateWeek(days: number) {
-    const currentDayIndex = this.selectedDate().getDay();
-    const newBase = new Date(this.baseDate());
-    newBase.setDate(newBase.getDate() + days);
+    if (unit === 'days') {
+      newTarget.setDate(newTarget.getDate() + amount);
+    } else {
+      newTarget.setMonth(newTarget.getMonth() + amount);
+    }
 
-    this.baseDate.set(newBase);
-    this.generateWeek(newBase);
+    // Actualizamos ambos: la selección y la base de la vista
+    this.selectedDate.set(newTarget);
+    this.baseDate.set(newTarget); 
+    
+    this.generateCalendar();
 
-    // Mantenemos la selección del mismo día de la semana (protocolo de consistencia)
-    const newDay = this.days().find((d) => d.fullDate.getDay() === currentDayIndex);
-    if (newDay) this.selectDay(newDay);
+    // Re-seleccionamos el día exacto tras regenerar para disparar eventos al padre
+    const newDay = this.days().find((d) => d.fullDate.getDay() === currentDayOfWeek);
+    if (newDay) {
+        this.selectDay(newDay);
+    } else {
+        this.selectDay(this.days()[0]);
+    }
   }
-
   displayLabel = computed(() => {
     const selected = this.selectedDate();
     const today = new Date();
+    const isDifferentYear = selected.getFullYear() !== today.getFullYear();
 
-    if (this.isToday(selected)) return 'Hoy';
+    // 1. Casos Especiales (Solo si es el mismo año)
+    if (!isDifferentYear) {
+      if (this.isToday(selected)) return 'Hoy';
 
-    const yesterday = new Date(today);
-    yesterday.setDate(today.getDate() - 1);
-    if (this.compareDates(selected, yesterday) === 0) return 'Ayer';
+      const yesterday = new Date(today);
+      yesterday.setDate(today.getDate() - 1);
+      if (this.compareDates(selected, yesterday) === 0) return 'Ayer';
 
-    const tomorrow = new Date(today);
-    tomorrow.setDate(today.getDate() + 1);
-    if (this.compareDates(selected, tomorrow) === 0) return 'Mañana';
+      const tomorrow = new Date(today);
+      tomorrow.setDate(today.getDate() + 1);
+      if (this.compareDates(selected, tomorrow) === 0) return 'Mañana';
+    }
 
+    // 2. Protocolo de Semana Actual
     const startOfThisWeek = new Date(today);
     startOfThisWeek.setDate(today.getDate() + (today.getDay() === 0 ? -6 : 1 - today.getDay()));
-
     const endOfThisWeek = new Date(startOfThisWeek);
     endOfThisWeek.setDate(startOfThisWeek.getDate() + 6);
 
-    if (selected >= startOfThisWeek && selected <= endOfThisWeek) {
+    if (!isDifferentYear && selected >= startOfThisWeek && selected <= endOfThisWeek) {
       return new Intl.DateTimeFormat('es-ES', { weekday: 'long' }).format(selected);
     }
 
-    return new Intl.DateTimeFormat('es-ES', { month: 'short', day: 'numeric' }).format(selected);
+    // 3. Formato dinámico (Día Mes, Año si aplica)
+    const options: Intl.DateTimeFormatOptions = { 
+      month: 'short', 
+      day: 'numeric' 
+    };
+    
+    if (isDifferentYear) {
+      options.year = 'numeric';
+    }
+
+    return new Intl.DateTimeFormat('es-ES', options).format(selected);
   });
+
+
 
   // Estilos (Ya refactorizados para evitar Parser Errors)
   getNumberClasses(day: CalendarDay) {
