@@ -2,6 +2,7 @@ import { NgModule } from '@angular/core';
 
 // Importa aquí todo lo que vayas a usar
 import { ButtonModule } from 'primeng/button';
+import { SplitButtonModule } from 'primeng/splitbutton';
 import { CardModule } from 'primeng/card';
 import { InputTextModule } from 'primeng/inputtext';
 import { AvatarModule } from 'primeng/avatar';
@@ -16,6 +17,7 @@ import { ToolbarModule } from 'primeng/toolbar';
 @NgModule({
   exports: [
     ButtonModule,
+    SplitButtonModule,
     CardModule,
     InputTextModule,
     AvatarModule,
@@ -25,8 +27,8 @@ import { ToolbarModule } from 'primeng/toolbar';
     ChartModule,
     ProgressBarModule,
     DatePickerModule,
-    ToolbarModule
+    ToolbarModule,
     // Agrega aquí más módulos si los necesitas en el futuro
-  ]
+  ],
 })
-export class PrimeNGModule { }
+export class PrimeNGModule {}

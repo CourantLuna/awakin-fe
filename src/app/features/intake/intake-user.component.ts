@@ -2,16 +2,23 @@ import { Component, OnInit, signal, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ChartModule } from 'primeng/chart';
 import { PrimeNGModule } from '../../shared/prime-ng.module';
-import { CalendarDay, WeekCalendarHeaderComponent } from '../../components/week-calendar/week-calendar-header.component';
-import { IntakeProgressWidgetComponent } from "./components/intake-widget/intake-progress-widget.component";
-import { IntakeScaleWidgetComponent } from "./components/intake-scale-widget/intake-scale-widget";
-
+import {
+  CalendarDay,
+  WeekCalendarHeaderComponent,
+} from '../../components/week-calendar/week-calendar-header.component';
+import { IntakeScaleWidgetComponent } from './components/intake-scale-widget/intake-scale-widget';
 
 @Component({
   selector: 'app-intake-user',
   standalone: true,
-  imports: [CommonModule, ChartModule, PrimeNGModule, WeekCalendarHeaderComponent, IntakeProgressWidgetComponent, IntakeScaleWidgetComponent],
-  templateUrl: './intake-user.component.html'
+  imports: [
+    CommonModule,
+    ChartModule,
+    PrimeNGModule,
+    WeekCalendarHeaderComponent,
+    IntakeScaleWidgetComponent,
+  ],
+  templateUrl: './intake-user.component.html',
 })
 export class IntakeUserComponent implements OnInit {
   streak = signal<number>(12);
@@ -21,25 +28,29 @@ export class IntakeUserComponent implements OnInit {
   macroData: any;
   macroOptions: any;
   caloriesTarget = 2200;
-  
+
   // Protocolo de Set Points (Normalmente vendrían de un ProfileService)
-  minBasal = signal(700);      // Punto A
-  targetGoal = signal(885);    // Punto B
+  minBasal = signal(700); // Punto A
+  targetGoal = signal(885); // Punto B
   maintenanceLevel = signal(1500); // Punto C
 
   // En intake-user.component.ts
-currentLabel = signal<string>('Hoy');
-@ViewChild(WeekCalendarHeaderComponent) calendar!: WeekCalendarHeaderComponent;
-updateLabel(label: string) {
-  this.currentLabel.set(label);
-}
+  currentLabel = signal<string>('Hoy');
+  @ViewChild(WeekCalendarHeaderComponent) calendar!: WeekCalendarHeaderComponent;
+  updateLabel(label: string) {
+    this.currentLabel.set(label);
+  }
 
-handleTopBtnAction() {
-  // 1. Ejecutamos la acción interna del hijo (Volver a hoy)
+  handleTopBtnAction() {
+    // 1. Ejecutamos la acción interna del hijo (Volver a hoy)
     this.calendar.goToToday();
-  console.log('El padre controla esta acción para:', this.currentLabel());
-  // Aquí podrías abrir el calendario de PrimeNG, cambiar de vista, etc.
-}
+    console.log('El padre controla esta acción para:', this.currentLabel());
+    // Aquí podrías abrir el calendario de PrimeNG, cambiar de vista, etc.
+  }
+
+  toggleCalendarViewMode() {
+    this.calendar.toggleViewMode(); // Ejecuta el cambio en el hijo
+  }
 
   ngOnInit() {
     this.generateCurrentWeek(); // <--- Generar fechas reales al iniciar
@@ -50,10 +61,10 @@ handleTopBtnAction() {
   generateCurrentWeek() {
     const today = new Date(); // Fecha real del sistema
     const currentDay = today.getDay(); // 0 (Domingo) a 6 (Sábado)
-    
+
     // Calcular la diferencia para llegar al Lunes (considerando Domingo como día 7 para el cálculo)
-    const diff = currentDay === 0 ? 6 : currentDay - 1; 
-    
+    const diff = currentDay === 0 ? 6 : currentDay - 1;
+
     const monday = new Date(today);
     monday.setDate(today.getDate() - diff); // Restamos días para volver al Lunes
 
@@ -63,7 +74,7 @@ handleTopBtnAction() {
     for (let i = 0; i < 7; i++) {
       const d = new Date(monday);
       d.setDate(monday.getDate() + i);
-      
+
       // Comparamos sin hora para saber si es "HOY"
       const isToday = d.toDateString() === today.toDateString();
 
@@ -72,7 +83,7 @@ handleTopBtnAction() {
         dayName: dayNames[i],
         fullDate: d, // Guardamos la fecha completa para futuras comparaciones o usos
         // Lógica simulada de estado (esto vendría de BD)
-        status: isToday ? 'none' : (i < 4 ? 'none' : 'future'), 
+        status: isToday ? 'none' : i < 4 ? 'none' : 'future',
       });
     }
     this.weekDays.set(days);
@@ -93,16 +104,16 @@ handleTopBtnAction() {
           hoverBackgroundColor: [colorIntake, colorSun, colorAvatar],
           borderWidth: 5,
           borderRadius: 4,
-          cutout: '60%'
-        }
-      ]
+          cutout: '60%',
+        },
+      ],
     };
 
     this.macroOptions = {
       plugins: { legend: { display: false }, tooltip: { enabled: false } },
       responsive: true,
       maintainAspectRatio: false,
-      animation: { animateScale: true, animateRotate: true }
+      animation: { animateScale: true, animateRotate: true },
     };
   }
 

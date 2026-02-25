@@ -19,14 +19,26 @@
           <i class="pi pi-chevron-left text-xs"></i>
         </button>
 
-        <button (click)="handleTopBtnAction()" 
-                class="flex items-center gap-2 px-5 py-2 rounded-full border border-stone-200 bg-stone-50 active:scale-95 transition-all shadow-sm group">
+        
+
+      <div
+        class="flex items-center rounded-full border border-stone-200 bg-stone-50 shadow-sm overflow-hidden transition-all">
+      
+        <button (click)="handleTopBtnAction()"
+          class="flex items-center gap-1 pl-5 py-2 active:bg-stone-100 transition-colors group border-r border-stone-200">
           <i class="pi pi-calendar text-sm text-awakin-sun group-hover:rotate-12 transition-transform"></i>
-          <span class="text-sm font-bold tracking-wide capitalize text-gray-800 min-w-[70px] text-center">
+          <span class="text-sm font-bold tracking-wide capitalize text-gray-800 min-w-[60px] text-center">
             {{ currentLabel() }}
           </span>
-          <i class="pi pi-chevron-down text-[10px] text-stone-400"></i>
         </button>
+      
+        <button (click)="toggleCalendarViewMode()"
+          class="px-4 py-2 hover:bg-stone-100 active:bg-stone-200 transition-colors flex items-center justify-center group">
+          <i class="pi pi-chevron-down text-[10px] text-stone-400 group-hover:text-awakin-sun transition-all"
+          ></i>
+        </button>
+      
+      </div>
 
         <button (click)="calendar.navigate(1)" 
                 class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-stone-100 active:scale-90 transition-all text-stone-400 hover:text-black">

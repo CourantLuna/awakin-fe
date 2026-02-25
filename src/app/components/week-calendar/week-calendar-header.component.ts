@@ -1,4 +1,13 @@
-import { Component, Input, Output, EventEmitter, computed, signal, OnInit, effect } from '@angular/core';
+import {
+  Component,
+  Input,
+  Output,
+  EventEmitter,
+  computed,
+  signal,
+  OnInit,
+  effect,
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
 
 export type DayStatus = 'none' | 'partial' | 'goal' | 'excess' | 'future';
@@ -10,11 +19,13 @@ export interface CalendarDay {
   status: DayStatus;
 }
 
+export type CalendarViewMode = 'week' | 'month'; //
+
 @Component({
   selector: 'app-week-calendar-header',
   standalone: true,
   imports: [CommonModule],
-  templateUrl: './week-calendar-header.component.html'
+  templateUrl: './week-calendar-header.component.html',
 })
 export class WeekCalendarHeaderComponent implements OnInit {
   @Input() streak: number = 0;
@@ -24,6 +35,8 @@ export class WeekCalendarHeaderComponent implements OnInit {
   @Input() setDays(daysToSet: CalendarDay[]) {
     this.days.set(daysToSet);
   }
+
+  viewMode = signal<CalendarViewMode>('week'); // Control de estado interno
 
   selectedDate = signal<Date>(new Date());
   baseDate = signal<Date>(new Date());
@@ -55,10 +68,63 @@ export class WeekCalendarHeaderComponent implements OnInit {
     return d1 > d2 ? 1 : d1 < d2 ? -1 : 0;
   }
 
-  isToday(date: Date): boolean { return this.compareDates(date, new Date()) === 0; }
-  isPast(date: Date): boolean { return this.compareDates(date, new Date()) === -1; }
-  isFuture(date: Date): boolean { return this.compareDates(date, new Date()) === 1; }
-  isSelected(day: CalendarDay): boolean { return this.compareDates(day.fullDate, this.selectedDate()) === 0; }
+  isToday(date: Date): boolean {
+    return this.compareDates(date, new Date()) === 0;
+  }
+  isPast(date: Date): boolean {
+    return this.compareDates(date, new Date()) === -1;
+  }
+  isFuture(date: Date): boolean {
+    return this.compareDates(date, new Date()) === 1;
+  }
+  isSelected(day: CalendarDay): boolean {
+    return this.compareDates(day.fullDate, this.selectedDate()) === 0;
+  }
+
+  // Método público para que el padre (IntakeUser) cambie el modo
+  toggleViewMode() {
+    this.viewMode.update((mode) => (mode === 'week' ? 'month' : 'week'));
+    this.generateCalendar(); // Regeneramos los días según el nuevo modo
+  }
+
+  // Refactorizamos la generación de días
+  generateCalendar() {
+    const base = new Date(this.baseDate());
+    const newDays: CalendarDay[] = [];
+
+    if (this.viewMode() === 'week') {
+      // Lógica de semana actual (Lunes a Domingo)
+      const start = new Date(base);
+      start.setDate(base.getDate() - (base.getDay() === 0 ? 6 : base.getDay() - 1));
+
+      for (let i = 0; i < 7; i++) {
+        const d = new Date(start);
+        d.setDate(start.getDate() + i);
+        newDays.push(this.createDayObject(d));
+      }
+    } else {
+      // MODO MES: Generamos todos los días del mes de la baseDate
+      const year = base.getFullYear();
+      const month = base.getMonth();
+      const firstDay = new Date(year, month, 1);
+      const lastDay = new Date(year, month + 1, 0);
+
+      for (let i = 1; i <= lastDay.getDate(); i++) {
+        const d = new Date(year, month, i);
+        newDays.push(this.createDayObject(d));
+      }
+    }
+    this.days.set(newDays);
+  }
+
+  private createDayObject(date: Date): CalendarDay {
+    return {
+      date: date.getDate(),
+      fullDate: new Date(date),
+      dayName: new Intl.DateTimeFormat('es-ES', { weekday: 'narrow' }).format(date),
+      status: 'none', // Aquí conectarías con tu lógica de backend/status
+    };
+  }
 
   /**
    * PROTOCOLO: Regresar a la fecha actual
@@ -66,9 +132,9 @@ export class WeekCalendarHeaderComponent implements OnInit {
    */
   public goToToday() {
     const today = new Date();
-    this.baseDate.set(today);     // Reset de la semana visible
+    this.baseDate.set(today); // Reset de la semana visible
     this.selectedDate.set(today); // Seleccionamos hoy
-    this.generateWeek(today);     // Regeneramos la tira
+    this.generateWeek(today); // Regeneramos la tira
     this.onDateChange.emit(today); // Notificamos al padre
   }
 
@@ -86,14 +152,14 @@ export class WeekCalendarHeaderComponent implements OnInit {
         date: d.getDate(),
         fullDate: d,
         dayName: ['D', 'L', 'M', 'M', 'J', 'V', 'S'][d.getDay()],
-        status: 'none'
+        status: 'none',
       });
     }
     this.days.set(week);
   }
 
   // --- LÓGICA DE NAVEGACIÓN (SWIPE) ---
-  
+
   handleTouchStart(event: TouchEvent) {
     this.touchStartX = event.touches[0].clientX;
   }
@@ -102,19 +168,20 @@ export class WeekCalendarHeaderComponent implements OnInit {
     const touchEndX = event.changedTouches[0].clientX;
     const deltaX = touchEndX - this.touchStartX;
 
-    if (Math.abs(deltaX) > 50) { // Umbral de swipe
-      if (deltaX > 0) this.navigateWeek(-7); // Swipe derecha -> Semana anterior
-      else this.navigateWeek(7);             // Swipe izquierda -> Semana siguiente
+    if (Math.abs(deltaX) > 50) {
+      // Umbral de swipe
+      if (deltaX > 0)
+        this.navigateWeek(-7); // Swipe derecha -> Semana anterior
+      else this.navigateWeek(7); // Swipe izquierda -> Semana siguiente
     }
   }
-
 
   selectDay(day: CalendarDay) {
     this.selectedDate.set(day.fullDate);
     this.onDateChange.emit(day.fullDate);
   }
 
-/**
+  /**
    * Navegación manual por flechas o swipe
    * @param direction -1 para atrás, 1 para adelante
    */
@@ -128,21 +195,21 @@ export class WeekCalendarHeaderComponent implements OnInit {
     const currentDayIndex = this.selectedDate().getDay();
     const newBase = new Date(this.baseDate());
     newBase.setDate(newBase.getDate() + days);
-    
+
     this.baseDate.set(newBase);
     this.generateWeek(newBase);
 
     // Mantenemos la selección del mismo día de la semana (protocolo de consistencia)
-    const newDay = this.days().find(d => d.fullDate.getDay() === currentDayIndex);
+    const newDay = this.days().find((d) => d.fullDate.getDay() === currentDayIndex);
     if (newDay) this.selectDay(newDay);
   }
 
-displayLabel = computed(() => {
+  displayLabel = computed(() => {
     const selected = this.selectedDate();
     const today = new Date();
-    
+
     if (this.isToday(selected)) return 'Hoy';
-    
+
     const yesterday = new Date(today);
     yesterday.setDate(today.getDate() - 1);
     if (this.compareDates(selected, yesterday) === 0) return 'Ayer';
@@ -153,7 +220,7 @@ displayLabel = computed(() => {
 
     const startOfThisWeek = new Date(today);
     startOfThisWeek.setDate(today.getDate() + (today.getDay() === 0 ? -6 : 1 - today.getDay()));
-    
+
     const endOfThisWeek = new Date(startOfThisWeek);
     endOfThisWeek.setDate(startOfThisWeek.getDate() + 6);
 
@@ -173,7 +240,7 @@ displayLabel = computed(() => {
       'text-black': selected && !today,
       'text-stone-800': !selected && !today,
       'bg-stone-100 shadow-md scale-110': selected,
-      'bg-transparent': !selected
+      'bg-transparent': !selected,
     };
   }
 
@@ -184,7 +251,7 @@ displayLabel = computed(() => {
       'bg-module-avatar': day.status === 'excess',
       'border-b-2 border-stone-800': this.isSelected(day),
       'border border-stone-300': this.isFuture(day.fullDate),
-      'bg-stone-500': this.isPast(day.fullDate) && day.status === 'none'
+      'bg-stone-500': this.isPast(day.fullDate) && day.status === 'none',
     };
   }
 }

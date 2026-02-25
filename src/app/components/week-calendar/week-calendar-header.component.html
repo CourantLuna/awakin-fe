@@ -1,18 +1,21 @@
 <div class="w-full pb-6 px-4 rounded-b-3xl shadow-2xl bg-white border-b border-stone-100">
 
 
-  <div class="flex justify-between items-start px-1 select-none"
+  <div class="flex justify-between items-start px-1 select-none transition-all duration-500"
+  [ngClass]="viewMode() === 'week' ? 'justify-between items-start' : 'flex-wrap justify-start gap-y-4 gap-x-2'"
        (touchstart)="handleTouchStart($event)"
        (touchend)="handleTouchEnd($event)">
     
-    <div *ngFor="let day of days()" 
-         class="flex flex-col items-center gap-3 w-10 cursor-pointer"
+<div *ngFor="let day of days(); let i = index"
+class="flex flex-col items-center gap-2 cursor-pointer transition-all"
+[ngClass]="viewMode() === 'week' ? 'w-10' : 'w-[calc(14.28%-8px)]'"
          (click)="selectDay(day)">
       
-      <span class="text-[10px] font-bold uppercase tracking-wider"
-            [ngClass]="isSelected(day) ? 'text-black' : 'text-stone-400'">
+      @if(viewMode() === 'week' || (viewMode() === 'month' && i < 7)) { <span
+        class="text-[10px] font-bold uppercase tracking-wider" [ngClass]="isSelected(day) ? 'text-black' : 'text-stone-400'">
         {{ day.dayName }}
-      </span>
+        </span>
+        }
 
       <div class="w-9 h-9 flex items-center justify-center text-sm font-bold rounded-full transition-all duration-300"
            [ngClass]="getNumberClasses(day)">
