@@ -8,6 +8,21 @@ import {
 } from '../../components/week-calendar/week-calendar-header.component';
 import { IntakeScaleWidgetComponent } from './components/intake-scale-widget/intake-scale-widget';
 
+// 1. NUEVO: Definición estricta del modelo de comida
+export interface FoodItem {
+  id: string;
+  name: string;
+  emoji: string;
+  category: string; // 'Desayuno' | 'Almuerzo' | 'Merienda' | 'Cena'
+  portion: number;
+  unit: string; // 'unidades', 'g', 'porción', 'ml'
+  kcal: number;
+  protein: number;
+  carbs: number;
+  fat: number;
+  isLogged: boolean; // Controla si es sugerencia (false) o registrado (true)
+}
+
 @Component({
   selector: 'app-intake-user',
   standalone: true,
@@ -33,9 +48,28 @@ export class IntakeUserComponent implements OnInit {
   minBasal = signal(700); // Punto A
   targetGoal = signal(885); // Punto B
   maintenanceLevel = signal(1500); // Punto C
+  
 
   // En intake-user.component.ts
   currentLabel = signal<string>('Hoy');
+
+  // 2. NUEVO: Señal con las comidas del día (Sugerencias + Registradas)
+  foodItems = signal<FoodItem[]>([
+    {
+      id: '1', name: 'Huevos con Aguacate', emoji: '🍳', category: 'Desayuno',
+      portion: 2, unit: 'unidades', kcal: 450, protein: 30, carbs: 12, fat: 22, isLogged: true
+    },
+    {
+      id: '2', name: 'Bowl de Avena y Whey', emoji: '🥣', category: 'Merienda',
+      portion: 120, unit: 'g', kcal: 320, protein: 25, carbs: 40, fat: 8, isLogged: false
+    },
+    {
+      id: '3', name: 'Salmón al Horno con Espárragos', emoji: '🍱', category: 'Cena',
+      portion: 1, unit: 'porción', kcal: 510, protein: 42, carbs: 5, fat: 30, isLogged: false
+    }
+  ]);
+
+
   @ViewChild(WeekCalendarHeaderComponent) calendar!: WeekCalendarHeaderComponent;
   updateLabel(label: string) {
     this.currentLabel.set(label);
@@ -128,5 +162,12 @@ export class IntakeUserComponent implements OnInit {
 
   handleMonthView() {
     console.log('Abrir calendario completo');
+  }
+
+  // 3. NUEVO: Lógica para marcar/desmarcar la comida
+  toggleFoodLog(item: FoodItem) {
+    this.foodItems.update(items => 
+      items.map(i => i.id === item.id ? { ...i, isLogged: !i.isLogged } : i)
+    );
   }
 }
