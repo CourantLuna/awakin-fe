@@ -170,4 +170,25 @@ export class IntakeUserComponent implements OnInit {
       items.map(i => i.id === item.id ? { ...i, isLogged: !i.isLogged } : i)
     );
   }
+
+  // 1. Opciones de ingesta (Protocolo de Categorías)
+  mealCategories = ['Desayuno', 'Almuerzo', 'Merienda', 'Cena'];
+  
+  // 2. Control del menú activo
+  openMenuId = signal<string | null>(null);
+
+  // 3. Método para abrir/cerrar el menú
+  toggleCategoryMenu(foodId: string, event: Event) {
+    event.stopPropagation(); // Evitamos que el click afecte a elementos padre
+    this.openMenuId.update(current => current === foodId ? null : foodId);
+  }
+
+  // 4. Método para aplicar el cambio
+  changeCategory(foodId: string, newCategory: string, event: Event) {
+    event.stopPropagation();
+    this.foodItems.update(items =>
+      items.map(item => item.id === foodId ? { ...item, category: newCategory } : item)
+    );
+    this.openMenuId.set(null); // Cerramos el menú tras elegir
+  }
 }
