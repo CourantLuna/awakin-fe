@@ -38,7 +38,7 @@ export class WeekCalendarHeaderComponent implements OnInit {
     this.days.set(daysToSet);
   }
 
-  viewMode = signal<CalendarViewMode>('week'); // Control de estado interno
+ public viewMode = signal<CalendarViewMode>('week'); // Control de estado interno
   selectedDate = signal<Date>(new Date());
   baseDate = signal<Date>(new Date());
   @Output() days = signal<CalendarDay[]>([]);

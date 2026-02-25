@@ -32,12 +32,16 @@
           </span>
         </button>
       
-        <button (click)="toggleCalendarViewMode()"
-          class="px-4 py-2 hover:bg-stone-100 active:bg-stone-200 transition-colors flex items-center justify-center group">
-          <i class="pi pi-chevron-down inline-block transform 0.3s ease-in-out text-[10px] text-stone-400 group-hover:text-awakin-sun transition-all"
-           [ngClass]="{'rotate-180': calendar.viewMode()=== 'month'}"
-          ></i>
-        </button>
+        @if (calendar) 
+        {
+          <button (click)="toggleCalendarViewMode()"
+            class="px-4 py-2 hover:bg-stone-100 active:bg-stone-200 transition-colors flex items-center justify-center group">
+            <i class="pi pi-chevron-down inline-block transform 0.3s ease-in-out text-[10px] text-stone-400 group-hover:text-awakin-sun transition-all"
+            [ngClass]="{'rotate-180': calendar.viewMode()=== 'month'}"
+            ></i>
+          </button>
+        }
+        
       
       </div>
 
