@@ -88,34 +88,39 @@
 [burnedKcals]="220"
 [kinData]="{ name: 'Alpha Kin', logo: 'wolf-icon.png' }">
 </app-intake-scale-widget>
-  
-    <!-- BOTÓN DE ACCIÓN PRINCIPAL -->
-    <!-- <button
-      class="w-full bg-awakin-sun hover:bg-awakin-sun-dim text-white rounded-2xl p-4 flex items-center justify-center gap-3 shadow-lg shadow-orange-500/30 transition-all active:scale-95 mb-8 group">
-      <div
-        class="bg-white/20 rounded-full w-8 h-8 flex items-center justify-center group-hover:rotate-90 transition-transform">
-        <i class="pi pi-plus text-lg font-bold"></i>
-      </div>
-      <span class="font-bold tracking-wide">REGISTRAR COMIDA</span>
-    </button> -->
 
-    <div class="px-4 mt-2 relative z-10">
-  <button 
-          class="w-full relative overflow-hidden bg-stone-900 rounded-2xl p-4 flex items-center justify-between group transition-all active:scale-[0.98] shadow-lg shadow-stone-900/20">
-    
-    <div class="absolute inset-0 bg-gradient-to-r from-awakin-sun/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+<app-protocol-matrix-drawer [(isOpen)]="isMatrixOpen" [(weeklyTemplates)]="weeklyTemplates"
+  [availableMenus]="availableMenus()" (onOpenShoppingList)="openShoppingListModal()">
+</app-protocol-matrix-drawer>
+
+<app-shopping-list-drawer [(isOpen)]="isShoppingListModalOpen" [weekAssignments]="weekAssignments()"
+  [availableMenus]="availableMenus()">
+</app-shopping-list-drawer>
+
+<div class="px-4 mt-2 relative z-10">
+  <button (click)="openFuelMatrix()"
+    class="w-full relative overflow-hidden bg-white border border-stone-200 rounded-2xl p-4 flex items-center justify-between group transition-all active:scale-[0.98] shadow-[0_4px_20px_rgb(0,0,0,0.03)] hover:shadow-[0_4px_20px_rgb(0,0,0,0.06)] hover:border-awakin-sun/30">
+
+    <div class="absolute inset-0 bg-gradient-to-r from-stone-50 to-white"></div>
+
+    <div
+      class="absolute inset-0 bg-gradient-to-r from-awakin-sun/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500">
+    </div>
 
     <div class="flex items-center gap-3 relative z-10">
-      <div class="w-10 h-10 rounded-xl bg-stone-800 border border-stone-700 flex items-center justify-center text-awakin-sun">
+      <div
+        class="w-10 h-10 rounded-xl bg-awakin-sun/10 border border-awakin-sun/20 flex items-center justify-center text-awakin-sun group-hover:scale-105 transition-transform duration-300">
         <i class="pi pi-map text-lg"></i>
       </div>
+
       <div class="text-left">
-        <h3 class="text-white font-black text-sm uppercase tracking-widest leading-tight">Protocolo Semanal</h3>
-        <p class="text-stone-400 text-[10px] font-medium mt-0.5">Gestiona tus menús del coach</p>
+        <h3 class="text-stone-900 font-black text-sm uppercase tracking-widest leading-tight">Protocolo Semanal</h3>
+        <p class="text-stone-500 text-[10px] font-medium mt-0.5">Gestiona tus menús del coach</p>
       </div>
     </div>
 
-    <div class="relative z-10 w-8 h-8 rounded-full bg-stone-800 flex items-center justify-center text-stone-300 group-hover:text-awakin-sun group-hover:bg-stone-700 transition-all">
+    <div
+      class="relative z-10 w-8 h-8 rounded-full bg-stone-100 flex items-center justify-center text-stone-400 group-hover:text-awakin-sun group-hover:bg-awakin-sun/10 transition-all">
       <i class="pi pi-arrow-right text-xs"></i>
     </div>
   </button>
@@ -205,4 +210,5 @@
  
 
   </div>
+
 </div>

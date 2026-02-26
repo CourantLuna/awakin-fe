@@ -1,0 +1,135 @@
+<p-drawer [(visible)]="isOpen" position="bottom"
+    [style]="{ height: 'auto', maxHeight: '92vh', borderRadius: '24px 24px 0 0', padding: '0' }"
+    [showCloseIcon]="false">
+
+    <ng-template #header>
+        <div class="flex justify-between items-center w-full">
+            <div>
+                <h2 class="text-lg font-black text-stone-900 uppercase tracking-widest">Lista de Compras</h2>
+                <p class="text-xs text-stone-500 font-medium">Configura el motor de cálculo</p>
+            </div>
+            <button (click)="isOpen.set(false)"
+                class="w-8 h-8 bg-stone-100 rounded-full flex items-center justify-center text-stone-500 hover:bg-stone-200 transition-colors">
+                <i class="pi pi-times"></i>
+            </button>
+        </div>
+    </ng-template>
+
+
+        <p-accordion [value]="selectedMode()" (valueChange)="onAccordionChange($event)">
+
+            <p-accordion-panel value="semanal">
+                <p-accordion-header>
+                    <div class="flex justify-between items-center w-full pr-2">
+                        <div class="flex items-center gap-3 py-1">
+                            <div
+                                class="w-8 h-8 rounded-lg bg-awakin-sun/10 text-awakin-sun flex items-center justify-center shrink-0">
+                                <i class="pi pi-calendar text-sm"></i>
+                            </div>
+                            <span class="font-black text-[13px] uppercase tracking-wider text-stone-800">Según Plan
+                                Semanal</span>
+                        </div>
+
+                        <p-radioButton name="shoppingMode" value="semanal" [(ngModel)]="selectedMode"
+                            class="pointer-events-none"></p-radioButton>
+                    </div>
+                </p-accordion-header>
+
+                <p-accordion-content>
+                    <div class="pt-2 pb-2 px-1">
+                        <p class="text-xs text-stone-500 font-medium leading-relaxed">
+                            Calcularemos los ingredientes exactos utilizando los menús que ya asignaste a cada día en tu
+                            Matriz Nutricional.
+                        </p>
+                    </div>
+                </p-accordion-content>
+            </p-accordion-panel>
+
+            <p-accordion-panel value="manual">
+                <p-accordion-header>
+                    <div class="flex justify-between items-center w-full pr-2">
+                        <div class="flex items-center gap-3 py-1">
+                            <div
+                                class="w-8 h-8 rounded-lg bg-stone-200 text-stone-600 flex items-center justify-center shrink-0">
+                                <i class="pi pi-check-square text-sm"></i>
+                            </div>
+                            <span class="font-black text-[13px] uppercase tracking-wider text-stone-800">Selección
+                                Manual</span>
+                        </div>
+
+                        <p-radioButton name="shoppingMode" value="manual" [(ngModel)]="selectedMode"
+                            class="pointer-events-none"></p-radioButton>
+                    </div>
+                </p-accordion-header>
+
+                <p-accordion-content>
+                    <div class="pt-2 pb-2 px-1">
+                        <p class="text-xs text-stone-500 mb-5 font-medium leading-relaxed">
+                            Elige específicamente qué protocolos deseas comprar y multiplica las cantidades indicando
+                            para cuántos días los vas a preparar.
+                        </p>
+
+                        <div class="flex flex-col gap-3">
+                            @for (menu of availableMenus(); track menu.id) {
+                            @if (getManualSelection(menu.id); as selection) {
+                            <div class="flex items-center justify-between p-3 rounded-2xl border transition-all duration-300"
+                                [ngClass]="selection.selected ? 'border-awakin-sun bg-awakin-sun/5 shadow-sm' : 'border-stone-200 bg-white'">
+
+                                <div class="flex items-center gap-3 flex-1">
+                                    <button (click)="toggleManualSelection(menu.id)"
+                                        class="w-6 h-6 rounded-md border-2 flex items-center justify-center transition-all shrink-0"
+                                        [ngClass]="selection.selected ? 'bg-awakin-sun border-awakin-sun text-white' : 'border-stone-300 text-transparent hover:border-awakin-sun/50'">
+                                        <i class="pi pi-check text-[10px] font-bold transition-all"
+                                            [ngClass]="{'opacity-100 scale-100': selection.selected, 'opacity-0 scale-50': !selection.selected}"></i>
+                                    </button>
+
+                                    <div class="min-w-0">
+                                        <h4 class="font-bold text-xs text-stone-800 truncate">{{ menu.name }}</h4>
+                                        <div class="flex items-center gap-1 mt-0.5">
+                                            <span class="text-[9px] text-stone-500 font-medium">{{ menu.kcal }}
+                                                kcal</span>
+                                            <span class="w-1 h-1 rounded-full bg-stone-300"></span>
+                                            <span class="text-[8px] text-stone-400 uppercase tracking-wider truncate">{{
+                                                menu.tags[0] }}</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="flex items-center gap-3 bg-white rounded-xl p-1 border shadow-sm transition-colors"
+                                    [ngClass]="selection.selected ? 'border-awakin-sun/30' : 'border-stone-100'">
+                                    <button (click)="updateManualQuantity(menu.id, -1, $event)"
+                                        class="w-7 h-7 rounded-lg bg-stone-50 flex items-center justify-center text-stone-600 active:bg-stone-200 transition-colors"
+                                        [disabled]="!selection.selected || selection.quantity <= 1"
+                                        [class.opacity-30]="!selection.selected || selection.quantity <= 1">
+                                        <i class="pi pi-minus text-[10px] font-bold"></i>
+                                    </button>
+                                    <span class="text-xs font-black w-4 text-center text-stone-800 transition-opacity"
+                                        [class.opacity-30]="!selection.selected">
+                                        {{ selection.quantity }}
+                                    </span>
+                                    <button (click)="updateManualQuantity(menu.id, 1, $event)"
+                                        class="w-7 h-7 rounded-lg bg-stone-50 flex items-center justify-center text-stone-600 active:bg-stone-200 transition-colors"
+                                        [class.opacity-30]="!selection.selected">
+                                        <i class="pi pi-plus text-[10px] font-bold"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            }
+                            }
+                        </div>
+                    </div>
+                </p-accordion-content>
+            </p-accordion-panel>
+
+        </p-accordion>
+
+    <ng-template #footer>
+        <div class="px-5 pb-5 pt-2 bg-[#FAFAF9]">
+            <button (click)="generateList()"
+                class="w-full bg-stone-900 text-white font-bold tracking-widest rounded-2xl py-4 shadow-lg shadow-stone-900/20 hover:bg-stone-800 transition-colors active:scale-[0.98]">
+                GENERAR {{ selectedMode() === 'semanal' ? 'PLAN SEMANAL' : 'SELECCIÓN MANUAL' }}
+            </button>
+        </div>
+    </ng-template>
+
+</p-drawer>

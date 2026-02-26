@@ -13,7 +13,9 @@ import { ChartModule } from 'primeng/chart';
 import { ProgressBarModule } from 'primeng/progressbar';
 import { DatePickerModule } from 'primeng/datepicker';
 import { ToolbarModule } from 'primeng/toolbar';
-
+import { DrawerModule } from 'primeng/drawer'; // <-- EL CORRECTO
+import { AccordionModule } from 'primeng/accordion';
+import { RadioButtonModule } from 'primeng/radiobutton'; // <-- NUEVO
 @NgModule({
   exports: [
     ButtonModule,
@@ -28,6 +30,9 @@ import { ToolbarModule } from 'primeng/toolbar';
     ProgressBarModule,
     DatePickerModule,
     ToolbarModule,
+    DrawerModule,
+    AccordionModule,
+    RadioButtonModule,
     // Agrega aquí más módulos si los necesitas en el futuro
   ],
 })

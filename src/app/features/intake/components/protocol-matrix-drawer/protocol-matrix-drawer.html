@@ -1,0 +1,207 @@
+<p-drawer [(visible)]="isOpen" position="bottom"
+    [style]="{ height: '90vh', borderRadius: '24px 24px 0 0', padding: '0', backgroundColor: '#FAFAF9' }"
+    [showCloseIcon]="false">
+
+    <ng-template #header>
+        <div>
+            <h2 class="text-lg font-black text-stone-900 uppercase tracking-widest">Matriz Nutricional</h2>
+            <p class="text-xs text-stone-500 font-medium">Diseña tus planes semanales</p>
+        </div>
+        <div class="flex gap-2">
+            <button (click)="onOpenShoppingList.emit()"
+                class="h-8 px-3 bg-awakin-sun/10 text-awakin-sun rounded-full flex items-center justify-center font-bold text-[10px] tracking-wider hover:bg-awakin-sun/20 transition-colors">
+                <i class="pi pi-shopping-cart mr-1"></i> LISTA
+            </button>
+            <button (click)="isOpen.set(false)"
+                class="w-8 h-8 bg-stone-100 rounded-full flex items-center justify-center text-stone-500 hover:bg-stone-200 transition-colors">
+                <i class="pi pi-times"></i>
+            </button>
+        </div>
+    </ng-template>
+
+    <div class="flex flex-col h-full relative">
+
+        <div class="flex-1 overflow-y-auto pb-32">
+            <div class="p-5">
+
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-xs font-bold text-stone-800 uppercase tracking-widest">Mis Planes Semanales</h3>
+                    <button (click)="addNewTemplate()"
+                        class="flex items-center gap-1 text-[10px] font-bold text-awakin-sun bg-awakin-sun/10 px-2.5 py-1.5 rounded-lg hover:bg-awakin-sun/20 transition-colors active:scale-95">
+                        <i class="pi pi-plus"></i> CREAR NUEVO
+                    </button>
+                </div>
+
+                @if (openDropdownKey() !== null) {
+                <div class="fixed inset-0 z-20" (click)="openDropdownKey.set(null)"></div>
+                }
+
+                <p-accordion [multiple]="true">
+                    @for (plan of weeklyTemplates(); track plan.id) {
+
+                    <p-accordion-panel [value]="plan.id">
+                        <p-accordion-header>
+                            <div class="flex items-center justify-between w-full pr-2">
+                                <div class="flex items-center gap-2">
+                                    <i class="pi pi-th-large text-stone-400"></i>
+                                    <span class="font-black text-xs uppercase tracking-wider text-stone-800">{{
+                                        plan.name }}</span>
+
+                                    @if(plan.isFromCoach) {
+                                    <span
+                                        class="bg-stone-800 text-awakin-sun text-[8px] px-1.5 py-0.5 rounded flex items-center gap-1 font-bold tracking-widest uppercase shadow-sm">
+                                        <i class="pi pi-verified text-[8px]"></i> COACH
+                                    </span>
+                                    }
+                                </div>
+                            </div>
+                        </p-accordion-header>
+
+                        <p-accordion-content>
+                            <div class="pt-2 pb-4">
+
+                                @if(!plan.isFromCoach) {
+                                <div class="flex items-center gap-2 mb-4">
+                                    <div class="relative flex-1">
+                                        <i
+                                            class="pi pi-pencil absolute left-3 top-1/2 -translate-y-1/2 text-stone-400 text-xs"></i>
+                                        <input type="text" [value]="plan.name"
+                                            (input)="updateTemplateName(plan.id, $any($event.target).value)"
+                                            class="w-full bg-stone-50 border border-stone-200 rounded-xl pl-8 pr-3 py-2 text-xs font-bold text-stone-800 focus:border-awakin-sun focus:ring-1 focus:ring-awakin-sun/50 transition-all outline-none placeholder:text-stone-400"
+                                            placeholder="Nombre del plan...">
+                                    </div>
+
+                                    <button (click)="deleteTemplate(plan.id, $event)"
+                                        class="w-9 h-9 shrink-0 flex items-center justify-center bg-red-50 text-red-500 rounded-xl hover:bg-red-100 transition-colors">
+                                        <i class="pi pi-trash text-sm"></i>
+                                    </button>
+                                </div>
+                                } @else {
+                                <div
+                                    class="mb-4 p-3 bg-stone-50 rounded-xl border border-stone-100 flex items-start gap-2">
+                                    <i class="pi pi-info-circle text-stone-400 mt-0.5"></i>
+                                    <p class="text-[10px] text-stone-500 font-medium leading-relaxed">Este plan fue
+                                        asignado por tu Coach. Es tu guía sugerida y no puede ser renombrada ni
+                                        eliminada.</p>
+                                </div>
+                                }
+
+                    <div class="flex flex-col gap-2.5">
+                        @for (day of plan.assignments; track $index) {
+                    
+                        <div class="bg-white border border-stone-100 rounded-xl p-2.5 flex items-center gap-3 relative shadow-[0_2px_10px_rgb(0,0,0,0.02)] transition-colors"
+                            [ngClass]="!plan.isFromCoach ? 'hover:border-awakin-sun/50' : 'bg-stone-50/30 opacity-95'">
+                    
+                            <div class="w-16 bg-stone-50 rounded-lg py-2 flex items-center justify-center shrink-0 border border-stone-100">
+                                <span class="text-[10px] font-black text-stone-800 uppercase tracking-wider">{{ day.dayName }}</span>
+                            </div>
+                    
+                            <div class="flex-1 w-full relative">
+                    
+                                <p-select [options]="availableMenus()" [ngModel]="day.menuId"
+                                    (ngModelChange)="assignMenuToDay(plan.id, $index, $event)" optionLabel="name" optionValue="id"
+                                    [disabled]="plan.isFromCoach" [showClear]="!plan.isFromCoach" placeholder="Seleccionar protocolo..."
+                                    appendTo="body"
+                                    styleClass="w-full !border-none !shadow-none !bg-transparent p-0 m-0 focus:ring-0 [&_.p-select-label]:!p-0 [&_.p-select-dropdown]:!w-6 [&_.p-select-dropdown]:!text-stone-400 [&_.p-select-clear-icon]:!text-stone-400"
+                                    [ngClass]="{'[&_.p-select-dropdown]:!hidden': plan.isFromCoach}"
+                                    panelStyleClass="bg-white rounded-xl shadow-2xl border border-stone-100 overflow-hidden text-sm mt-1 z-50">
+                    
+                                    <ng-template pTemplate="selectedItem">
+                                        <div class="w-full flex items-center justify-between">
+                                            @if (getAssignedMenu(day.menuId); as menu) {
+                                            <div class="mt-0.5">
+                                                <h4 class="text-[11px] font-bold text-stone-800">{{ menu.name }}</h4>
+                                                <div class="flex items-center gap-1 mt-0.5">
+                                                    <span class="text-[9px] text-stone-500 font-medium">{{ menu.kcal }} kcal</span>
+                                                    <span class="w-1 h-1 rounded-full bg-stone-300"></span>
+                                                    <span class="text-[8px] text-stone-400 uppercase tracking-wider">{{ menu.tags[0]
+                                                        }}</span>
+                                                </div>
+                                            </div>
+                                            } @else {
+                                            <span class="text-[11px] text-stone-400 font-medium italic py-1 block">Sin asignar...</span>
+                                            }
+                                        </div>
+                                    </ng-template>
+                    
+                                    <ng-template pTemplate="item" let-menu>
+                                        <div class="w-full py-1">
+                                            <div class="flex justify-between items-center mb-0.5">
+                                                <span class="text-[11px] font-bold"
+                                                    [ngClass]="day.menuId === menu.id ? 'text-awakin-sun' : 'text-stone-800'">
+                                                    {{ menu.name }}
+                                                </span>
+                                                @if (day.menuId === menu.id) { <i class="pi pi-check text-awakin-sun text-[10px]"></i> }
+                                            </div>
+                                            <p class="text-[9px] text-stone-500">{{ menu.kcal }} kcal • {{ menu.tags.join(', ') }}</p>
+                                        </div>
+                                    </ng-template>
+                    
+                                </p-select>
+                    
+                            </div>
+                        </div>
+                        }
+                    </div>
+
+
+                            </div>
+                        </p-accordion-content>
+                    </p-accordion-panel>
+                    }
+                </p-accordion>
+
+            </div>
+
+            <div class="border-t border-stone-200/60 p-5 mt-4">
+                <h3 class="text-xs font-bold text-stone-800 uppercase tracking-widest mb-4">Catálogo de Protocolos</h3>
+
+                <div class="flex gap-3 overflow-x-auto pb-4 snap-x hide-scrollbar">
+                    @for (menu of availableMenus(); track menu.id) {
+
+                    <div
+                        class="bg-white rounded-2xl p-4 shadow-sm border border-stone-100 flex flex-col min-w-[170px] max-w-[170px] snap-center relative">
+                        <div
+                            class="w-12 h-12 rounded-xl bg-stone-50 flex items-center justify-center text-2xl mb-3 border border-stone-100 shrink-0">
+                            {{ menu.coverIcon }}
+                        </div>
+
+                        <h4 class="font-black text-stone-900 text-[13px] leading-tight mb-1">{{ menu.name }}</h4>
+
+                        <div class="flex items-center flex-wrap gap-1 text-[9px] font-bold tracking-wide mb-3">
+                            <span class="text-stone-800">{{ menu.kcal }} <span
+                                    class="uppercase text-[8px] text-stone-400">kcal</span></span>
+                            <span class="text-stone-300">&bull;</span>
+                            <span class="text-stone-500">{{ menu.macros }}</span>
+                        </div>
+
+                        <div class="flex flex-wrap gap-1 mt-auto">
+                            @for (tag of menu.tags; track tag) {
+                            <span
+                                class="text-[8px] font-bold uppercase tracking-wider px-1.5 py-0.5 bg-stone-100 text-stone-600 rounded">
+                                {{ tag }}
+                            </span>
+                            }
+                        </div>
+                    </div>
+
+                    }
+                </div>
+            </div>
+
+        </div>
+
+        <div
+            class="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-[#FAFAF9] via-[#FAFAF9] to-transparent z-10 flex gap-3">
+            <button (click)="onOpenShoppingList.emit()"
+                class="w-14 bg-stone-900 text-white rounded-2xl shadow-lg flex items-center justify-center active:scale-95 transition-transform">
+                <i class="pi pi-shopping-bag"></i>
+            </button>
+            <button (click)="isOpen.set(false)"
+                class="flex-1 bg-awakin-sun text-white font-bold tracking-widest rounded-2xl py-4 shadow-lg shadow-awakin-sun/30 hover:bg-[#E68800] transition-colors active:scale-[0.98]">
+                GUARDAR MATRIZ
+            </button>
+        </div>
+
+    </div>
+</p-drawer>
