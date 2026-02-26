@@ -1,214 +1,262 @@
 <div class="min-h-screen bg-awakin-base pb-20">
-
   <div class="w-full bg-white">
-  
-  <p-toolbar styleClass="bg-transparent border-none p-0 mb-3">
-    
-    <ng-template pTemplate="start">
-      <button (click)="calendar.onMenuClick.emit()" 
-              class="w-10 h-10 flex items-center justify-center text-black active:opacity-40 transition-all">
-        <i class="pi pi-ellipsis-h text-xl"></i>
-      </button>
-    </ng-template>
-
-    <ng-template pTemplate="center">
-      <div class="flex items-center gap-1">
-        
-        <button (click)="calendar.navigate(-1)" 
-                class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-stone-100 active:scale-90 transition-all text-stone-400 hover:text-black">
-          <i class="pi pi-chevron-left text-xs"></i>
+    <p-toolbar styleClass="bg-transparent border-none p-0 mb-3">
+      <ng-template pTemplate="start">
+        <button
+          (click)="calendar.onMenuClick.emit()"
+          class="w-10 h-10 flex items-center justify-center text-black active:opacity-40 transition-all"
+        >
+          <i class="pi pi-ellipsis-h text-xl"></i>
         </button>
+      </ng-template>
 
-        
-
-      <div
-        class="flex items-center rounded-full border border-stone-200 bg-stone-50 shadow-sm transition-all">
-      
-        <button (click)="handleTopBtnAction()"
-          class="flex items-center gap-1 pl-5 pe-2 py-2 active:bg-stone-100 transition-colors group border-r border-stone-200">
-          <i class="pi pi-calendar text-sm text-awakin-sun group-hover:rotate-12 transition-transform"></i>
-          <span class="text-sm font-bold tracking-wide capitalize text-gray-800 min-w-[60px] text-center">
-            {{ currentLabel() }}
-          </span>
-        </button>
-      
-        @if (calendar) 
-        {
-          <button (click)="toggleCalendarViewMode()"
-            class="px-4 py-2 hover:bg-stone-100 active:bg-stone-200 transition-colors flex items-center justify-center group">
-            <i class="pi pi-chevron-down inline-block transform 0.3s ease-in-out text-[10px] text-stone-400 group-hover:text-awakin-sun transition-all"
-            [ngClass]="{'rotate-180': calendar.viewMode()=== 'month'}"
-            ></i>
+      <ng-template pTemplate="center">
+        <div class="flex items-center gap-1">
+          <button
+            (click)="calendar.navigate(-1)"
+            class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-stone-100 active:scale-90 transition-all text-stone-400 hover:text-black"
+          >
+            <i class="pi pi-chevron-left text-xs"></i>
           </button>
-        }
-        
-      
-      </div>
 
-        <button (click)="calendar.navigate(1)" 
-                class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-stone-100 active:scale-90 transition-all text-stone-400 hover:text-black">
-          <i class="pi pi-chevron-right text-xs"></i>
-        </button>
+          <div
+            class="flex items-center rounded-full border border-stone-200 bg-stone-50 shadow-sm transition-all"
+          >
+            <button
+              (click)="handleTopBtnAction()"
+              class="flex items-center gap-1 pl-5 pe-2 py-2 active:bg-stone-100 transition-colors group border-r border-stone-200"
+            >
+              <i
+                class="pi pi-calendar text-sm text-awakin-sun group-hover:rotate-12 transition-transform"
+              ></i>
+              <span
+                class="text-sm font-bold tracking-wide capitalize text-gray-800 min-w-[60px] text-center"
+              >
+                {{ currentLabel() }}
+              </span>
+            </button>
 
-      </div>
-    </ng-template>
+            @if (calendar) {
+              <button
+                (click)="toggleCalendarViewMode()"
+                class="px-4 py-2 hover:bg-stone-100 active:bg-stone-200 transition-colors flex items-center justify-center group"
+              >
+                <i
+                  class="pi pi-chevron-down inline-block transform 0.3s ease-in-out text-[10px] text-stone-400 group-hover:text-awakin-sun transition-all"
+                  [ngClass]="{ 'rotate-180': calendar.viewMode() === 'month' }"
+                ></i>
+              </button>
+            }
+          </div>
 
-    <ng-template pTemplate="end">
-      <div class="flex items-center gap-1.5 pr-2">
-        <i class="pi pi-bolt text-xl" 
-           [ngClass]="streak() > 0 ? 'text-awakin-sun animate-pulse' : 'text-stone-300'"></i>
-        <span class="text-xl font-bold font-mono" 
-              [ngClass]="streak() > 0 ? 'text-black' : 'text-stone-400'">
-          {{ streak() }}
-        </span>
-      </div>
-    </ng-template>
+          <button
+            (click)="calendar.navigate(1)"
+            class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-stone-100 active:scale-90 transition-all text-stone-400 hover:text-black"
+          >
+            <i class="pi pi-chevron-right text-xs"></i>
+          </button>
+        </div>
+      </ng-template>
 
-  </p-toolbar>
+      <ng-template pTemplate="end">
+        <div class="flex items-center gap-1.5 pr-2">
+          <i
+            class="pi pi-bolt text-xl"
+            [ngClass]="streak() > 0 ? 'text-awakin-sun animate-pulse' : 'text-stone-300'"
+          ></i>
+          <span
+            class="text-xl font-bold font-mono"
+            [ngClass]="streak() > 0 ? 'text-black' : 'text-stone-400'"
+          >
+            {{ streak() }}
+          </span>
+        </div>
+      </ng-template>
+    </p-toolbar>
 
-  <app-week-calendar-header 
-  #calendar
-    [streak]="streak()"
-    [weekStart]="1"
-    (onLabelChange)="updateLabel($event)"
-   >
-  </app-week-calendar-header>
-
-</div>
+    <app-week-calendar-header
+      #calendar
+      [streak]="streak()"
+      [weekStart]="1"
+      (onLabelChange)="updateLabel($event)"
+    >
+    </app-week-calendar-header>
+  </div>
 
   <!-- 2. CONTENIDO PRINCIPAL (Dashboard de Comida) -->
   <div class="px-4 z-10 py-5">
+    <app-intake-scale-widget
+      [minA]="minBasal()"
+      [maintC]="maintenanceLevel()"
+      [proteinEated]="70"
+      [proteinGoal]="120"
+      [carbsEated]="105"
+      [carbsGoal]="210"
+      [fatsEated]="45"
+      [fatsGoal]="60"
+      [burnedKcals]="220"
+      [kinData]="{ name: 'Alpha Kin', logo: 'wolf-icon.png' }"
+    >
+    </app-intake-scale-widget>
 
-<app-intake-scale-widget 
-[minA]="minBasal()" 
-[maintC]="maintenanceLevel()" 
-[proteinEated]="70" [proteinGoal]="120" 
-[carbsEated]="105" [carbsGoal]="210"
-[fatsEated]="45" [fatsGoal]="60" 
-[burnedKcals]="220"
-[kinData]="{ name: 'Alpha Kin', logo: 'wolf-icon.png' }">
-</app-intake-scale-widget>
+    <app-protocol-matrix-drawer
+      [(isOpen)]="isMatrixOpen"
+      [(weeklyTemplates)]="weeklyTemplates"
+      [availableMenus]="availableMenus()"
+      (onOpenShoppingList)="openShoppingListModal()"
+    >
+    </app-protocol-matrix-drawer>
 
-<app-protocol-matrix-drawer [(isOpen)]="isMatrixOpen" [(weeklyTemplates)]="weeklyTemplates"
-  [availableMenus]="availableMenus()" (onOpenShoppingList)="openShoppingListModal()">
-</app-protocol-matrix-drawer>
+    <app-shopping-list-drawer
+      [(isOpen)]="isShoppingListModalOpen"
+      [weekAssignments]="weeklyTemplates()"
+      [availableMenus]="availableMenus()"
+    >
+    </app-shopping-list-drawer>
 
-<app-shopping-list-drawer [(isOpen)]="isShoppingListModalOpen" [weekAssignments]="weekAssignments()"
-  [availableMenus]="availableMenus()">
-</app-shopping-list-drawer>
+    <div class="px-4 mt-2 relative z-10">
+      <button
+        (click)="openFuelMatrix()"
+        class="w-full relative overflow-hidden bg-white border border-stone-200 rounded-2xl p-4 flex items-center justify-between group transition-all active:scale-[0.98] shadow-[0_4px_20px_rgb(0,0,0,0.03)] hover:shadow-[0_4px_20px_rgb(0,0,0,0.06)] hover:border-awakin-sun/30"
+      >
+        <div class="absolute inset-0 bg-gradient-to-r from-stone-50 to-white"></div>
 
-<div class="px-4 mt-2 relative z-10">
-  <button (click)="openFuelMatrix()"
-    class="w-full relative overflow-hidden bg-white border border-stone-200 rounded-2xl p-4 flex items-center justify-between group transition-all active:scale-[0.98] shadow-[0_4px_20px_rgb(0,0,0,0.03)] hover:shadow-[0_4px_20px_rgb(0,0,0,0.06)] hover:border-awakin-sun/30">
+        <div
+          class="absolute inset-0 bg-gradient-to-r from-awakin-sun/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"
+        ></div>
 
-    <div class="absolute inset-0 bg-gradient-to-r from-stone-50 to-white"></div>
+        <div class="flex items-center gap-3 relative z-10">
+          <div
+            class="w-10 h-10 rounded-xl bg-awakin-sun/10 border border-awakin-sun/20 flex items-center justify-center text-awakin-sun group-hover:scale-105 transition-transform duration-300"
+          >
+            <i class="pi pi-map text-lg"></i>
+          </div>
 
-    <div
-      class="absolute inset-0 bg-gradient-to-r from-awakin-sun/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500">
-    </div>
-
-    <div class="flex items-center gap-3 relative z-10">
-      <div
-        class="w-10 h-10 rounded-xl bg-awakin-sun/10 border border-awakin-sun/20 flex items-center justify-center text-awakin-sun group-hover:scale-105 transition-transform duration-300">
-        <i class="pi pi-map text-lg"></i>
-      </div>
-
-      <div class="text-left">
-        <h3 class="text-stone-900 font-black text-sm uppercase tracking-widest leading-tight">Protocolo Semanal</h3>
-        <p class="text-stone-500 text-[10px] font-medium mt-0.5">Gestiona tus menús del coach</p>
-      </div>
-    </div>
-
-    <div
-      class="relative z-10 w-8 h-8 rounded-full bg-stone-100 flex items-center justify-center text-stone-400 group-hover:text-awakin-sun group-hover:bg-awakin-sun/10 transition-all">
-      <i class="pi pi-arrow-right text-xs"></i>
-    </div>
-  </button>
-</div>
-
-    <div class="mt-6 px-4">
-  <div class="flex items-center justify-between mb-4">
-    <h3 class="text-sm font-bold text-stone-800 uppercase tracking-widest">Plan de Hoy</h3>
-    <button class="text-awakin-sun tracking-widest text-xs font-bold px-3 py-1 bg-awakin-sun/10 rounded-full hover:bg-awakin-sun/20 transition-colors">
-      <i class="pi pi-plus text-[10px] mr-1 "></i> REGISTRAR COMIDA
-    </button>
-  </div>
-
-  @if (openMenuId()) {
-  <div class="fixed inset-0 z-20" (click)="openMenuId.set(null)"></div>
-}
-
-  @for (food of foodItems(); track food.id) {
-    <div class="group flex items-center p-3 mb-3 bg-white rounded-2xl border transition-all duration-300 relative  gap-3"
-         [ngClass]="food.isLogged ? 'border-stone-100 shadow-sm hover:shadow-md' : 'border-stone-200 border-dashed bg-stone-50/50 opacity-90'">
-
-      <div class="w-12 h-12 rounded-xl flex items-center justify-center text-2xl shrink-0 transition-all duration-300"
-           [ngClass]="food.isLogged ? 'bg-awakin-surface/50' : 'bg-stone-100 grayscale opacity-70'">
-        {{ food.emoji }}
-      </div>
-
-      <div class="flex-1 min-w-0 flex flex-col justify-center gap-1">
-        
-        <h4 class="font-bold text-sm truncate transition-all duration-300 leading-none"
-            [ngClass]="food.isLogged ? 'text-stone-800' : 'text-stone-500'">
-          {{ food.name }}
-        </h4>
-
-        <div class="flex items-center flex-wrap gap-1.5 text-[10px] font-bold tracking-wide transition-all duration-300"
-             [ngClass]="food.isLogged ? 'text-stone-600' : 'text-stone-400/70'">
-          <span [ngClass]="food.isLogged ? 'text-stone-800' : 'text-stone-500'">
-            {{ food.kcal }} <span class="font-medium text-[9px] uppercase opacity-70">kcal</span>
-          </span> 
-          <span class="opacity-30">&bull;</span>
-          <span>{{ food.protein }}<span class="font-normal opacity-70">P</span></span> 
-          <span class="opacity-30">&bull;</span>
-          <span>{{ food.carbs }}<span class="font-normal opacity-70">C</span></span> 
-          <span class="opacity-30">&bull;</span>
-          <span>{{ food.fat }}<span class="font-normal opacity-70">G</span></span>
+          <div class="text-left">
+            <h3 class="text-stone-900 font-black text-sm uppercase tracking-widest leading-tight">
+              Plan de Menu Semanal
+            </h3>
+            <p class="text-stone-500 text-[10px] font-medium mt-0.5">
+              Gestiona tus planes de alimentación
+            </p>
+          </div>
         </div>
 
-<div class="flex items-center gap-2 mt-0.5 relative">         <button (click)="toggleCategoryMenu(food.id, $event)"
-              class="flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider transition-colors relative z-30"
-              [ngClass]="food.isLogged ? 'bg-awakin-sun/10 text-awakin-sun hover:bg-awakin-sun/20' : 'bg-stone-200 text-stone-500 hover:bg-stone-300'">
-        {{ food.category }}
-        <i class="pi pi-angle-down text-[8px] transition-transform duration-300"
-           [ngClass]="{'rotate-180': openMenuId() === food.id}"></i>
+        <div
+          class="relative z-10 w-8 h-8 rounded-full bg-stone-100 flex items-center justify-center text-stone-400 group-hover:text-awakin-sun group-hover:bg-awakin-sun/10 transition-all"
+        >
+          <i class="pi pi-arrow-right text-xs"></i>
+        </div>
       </button>
+    </div>
 
-      @if (openMenuId() === food.id) {
-        <div class="absolute top-full left-0 mt-1.5 w-28 bg-white rounded-xl shadow-[0_8px_30px_rgb(0,0,0,0.12)] border border-stone-100 py-1 z-40 flex flex-col origin-top animate-fade-in-down">
-          @for (cat of mealCategories; track cat) {
-            <button (click)="changeCategory(food.id, cat, $event)"
-                    class="px-3 py-2 text-left text-[10px] font-bold uppercase tracking-wider transition-colors"
-                    [ngClass]="cat === food.category ? 'text-awakin-sun bg-awakin-sun/5' : 'text-stone-500 hover:bg-stone-50 hover:text-stone-800'">
-              <span class="flex items-center gap-1.5">
-                <i class="pi pi-check text-[8px]" [ngClass]="cat === food.category ? 'opacity-100' : 'opacity-0'"></i>
-                {{ cat }}
-              </span>
+    <div class="mt-6 px-4">
+      <div class="flex items-center justify-between mb-4 gap-2">
+        <div class="flex-1 min-w-0 flex items-center gap-2">
+          <p-select
+            [options]="availableMenus()"
+            [ngModel]="activeMenuForToday()"
+            (ngModelChange)="onDailyMenuChange($event)"
+            optionLabel="name"
+            optionValue="id"
+            appendTo="body"
+            styleClass="!border-none !shadow-none !bg-transparent p-0 m-0 focus:!ring-0 [&_.p-select-label]:!p-0 [&_.p-select-dropdown]:!hidden w-full"
+            panelStyleClass="bg-white rounded-xl shadow-2xl border border-stone-100 overflow-hidden text-sm mt-1 z-[100] min-w-[220px]"
+          >
+            <ng-template pTemplate="selectedItem" let-selectedOption>
+              <div class="flex items-center gap-1.5 cursor-pointer group w-full">
+                @if (activeMenuForToday() === baselineMenuId()) {
+                  <h3 class="text-sm font-bold text-stone-800 uppercase tracking-widest truncate">
+                    Plan de Hoy
+                  </h3>
+                  <span
+                    class="text-stone-400 font-medium text-[10px] lowercase tracking-normal truncate hidden sm:inline-block"
+                    >({{ selectedOption?.name }})</span
+                  >
+                } @else {
+                  <i class="pi pi-bolt text-awakin-sun text-xs shrink-0"></i>
+                  <h3 class="text-sm font-bold text-awakin-sun uppercase tracking-widest truncate">
+                    {{ selectedOption?.name }}
+                  </h3>
+                }
+
+                <i
+                  class="pi pi-angle-down text-stone-400 text-[10px] shrink-0 group-hover:text-awakin-sun transition-colors mt-0.5 ml-0.5"
+                ></i>
+              </div>
+            </ng-template>
+
+            <ng-template pTemplate="item" let-menu>
+              <div class="w-full py-1">
+                <div class="flex justify-between items-center mb-0.5 gap-4">
+                  <div class="flex items-center gap-2">
+                    <span
+                      class="text-[11px] font-bold"
+                      [ngClass]="
+                        activeMenuForToday() === menu.id ? 'text-awakin-sun' : 'text-stone-800'
+                      "
+                    >
+                      {{ menu.name }}
+                    </span>
+
+                    @if (menu.id === baselineMenuId()) {
+                      <span
+                        class="bg-stone-100 text-stone-500 text-[8px] px-1.5 py-0.5 rounded uppercase font-bold tracking-widest"
+                        >Sugerido</span
+                      >
+                    }
+                  </div>
+
+                  @if (activeMenuForToday() === menu.id) {
+                    <i class="pi pi-check text-awakin-sun text-[10px]"></i>
+                  }
+                </div>
+                <div class="flex items-center gap-1 mt-1">
+                  <span class="text-[9px] text-stone-500 font-medium">{{ menu.kcal }} kcal</span>
+                  <span class="w-1 h-1 rounded-full bg-stone-300"></span>
+                  <span class="text-[8px] text-stone-400 uppercase tracking-wider truncate">{{
+                    menu.tags[0]
+                  }}</span>
+                </div>
+              </div>
+            </ng-template>
+          </p-select>
+
+          @if (activeMenuForToday() !== baselineMenuId()) {
+            <button
+              (click)="resetToBaseline()"
+              class="w-7 h-7 shrink-0 rounded-full bg-stone-100 flex items-center justify-center text-stone-500 hover:bg-stone-200 hover:text-stone-700 transition-all shadow-inner active:scale-90"
+              title="Volver al plan original"
+            >
+              <i class="pi pi-undo text-[10px] font-bold"></i>
             </button>
           }
         </div>
-      }
-          
-          <span class="text-[10px] font-medium text-stone-400">
-            {{ food.portion }} {{ food.unit }}
-          </span>
-        </div>
+
+        <p-button
+          styleClass="!text-awakin-sun !tracking-widest !text-xs !font-bold !bg-awakin-sun/10 !rounded-full hover:!bg-awakin-sun/20 transition-colors !border-none !shadow-none !ring-0 !px-3 !py-1.5 shrink-0"
+        >
+          <div class="flex items-center justify-center">
+            <i class="pi pi-plus text-[10px] mr-1"></i> REGISTRAR COMIDA
+          </div>
+        </p-button>
       </div>
 
-      <button (click)="toggleFoodLog(food)"
-              class="w-7 h-7 shrink-0 rounded-full flex items-center justify-center transition-all duration-300 focus:outline-none relative "
-              [ngClass]="food.isLogged ? 'bg-module-intake text-white shadow-md border border-module-intake' : 'border-2 border-dashed border-stone-300 text-transparent hover:border-module-intake bg-transparent'">
-        <i class="pi pi-check text-xs font-bold transition-all duration-300 absolute" 
-           [ngClass]="{'opacity-100 scale-100': food.isLogged, 'opacity-0 scale-50': !food.isLogged}"></i>
-      </button>
+      @if (openMenuId()) {
+        <div class="fixed inset-0 z-20" (click)="openMenuId.set(null)"></div>
+      }
 
+      @for (food of foodItems(); track food.id) {
+        <app-food-card-horizontal
+          [food]="food"
+          [categories]="mealCategories"
+          [isOpen]="openMenuId() === food.id"
+          (onToggleLog)="toggleFoodLog(food)"
+          (onToggleMenu)="toggleCategoryMenu(food.id, $event)"
+          (onChangeCategory)="changeCategory(food.id, $event.category, $event.event)"
+        >
+        </app-food-card-horizontal>
+      }
     </div>
-  }
-</div>
-
- 
-
   </div>
-
 </div>

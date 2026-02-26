@@ -35,14 +35,84 @@
                     </div>
                 </p-accordion-header>
 
-                <p-accordion-content>
-                    <div class="pt-2 pb-2 px-1">
-                        <p class="text-xs text-stone-500 font-medium leading-relaxed">
-                            Calcularemos los ingredientes exactos utilizando los menús que ya asignaste a cada día en tu
-                            Matriz Nutricional.
-                        </p>
+            <p-accordion-content>
+                <div class="pt-2 pb-2 px-1">
+                    <p class="text-xs text-stone-500 font-medium leading-relaxed mb-4">
+                        Calcularemos los ingredientes sumando las plantillas semanales que selecciones a continuación.
+                    </p>
+            
+                    <div class="flex flex-col gap-3">
+                        @for (row of weeklyPlanSelections(); track row.rowId) {
+                        <div
+                            class="flex items-center gap-2 p-2 bg-white border border-stone-200 rounded-2xl shadow-sm relative transition-all">
+            
+                            @if (weeklyPlanSelections().length > 1) {
+                            <button (click)="removeWeeklyPlanRow(row.rowId)"
+                                class="w-8 h-8 flex items-center justify-center text-stone-300 hover:text-red-500 hover:bg-red-50 rounded-xl transition-colors shrink-0">
+                                <i class="pi pi-minus-circle"></i>
+                            </button>
+                            }
+            
+                            <div class="pl-1 flex-1 min-w-0 flex items-center">
+                                <p-select [options]="weekAssignments()" [ngModel]="row.templateId"
+                                    (ngModelChange)="updateWeeklyPlanTemplate(row.rowId, $event)" optionLabel="name" optionValue="id"
+                                    placeholder="Seleccionar plan..." appendTo="body"
+                                    styleClass="w-full !border-none !shadow-none !bg-transparent p-0 m-0 focus:ring-0 [&_.p-select-label]:!p-0 [&_.p-select-label]:!flex [&_.p-select-label]:!items-center [&_.p-select-dropdown]:!w-6 [&_.p-select-dropdown]:!text-stone-400"
+                                    panelStyleClass="bg-white rounded-xl shadow-2xl border border-stone-100 overflow-hidden text-sm mt-1 z-50">
+                            
+                                    <ng-template pTemplate="selectedItem" let-selectedOption>
+                                        <div class="flex items-center gap-1.5 w-full">
+                                            <h4 class="text-[11px] font-bold text-stone-800 whitespace-normal break-words leading-tight m-0">
+                                                {{ selectedOption?.name || 'Seleccionar plan...' }}
+                                            </h4>
+                                            @if(selectedOption?.isFromCoach) {
+                                            <i class="pi pi-verified text-awakin-sun text-[10px] shrink-0 flex-none"></i>
+                                            }
+                                        </div>
+                                    </ng-template>
+                            
+                                    <ng-template pTemplate="item" let-plan>
+                                        <div class="flex items-center gap-1.5 py-1 w-full">
+                                            <span class="text-[11px] font-bold text-stone-800 whitespace-normal break-words leading-tight flex-1">
+                                                {{ plan.name }}
+                                            </span>
+                                            @if(plan.isFromCoach) {
+                                            <i class="pi pi-verified text-awakin-sun text-[10px] shrink-0 flex-none"></i>
+                                            }
+                                        </div>
+                                    </ng-template>
+                                </p-select>
+                            </div>
+            
+                            <div class="flex items-center gap-2 bg-stone-50 rounded-xl p-1 border border-stone-100 shrink-0">
+                                <button (click)="updateWeeklyPlanQuantity(row.rowId, -1)"
+                                    class="w-7 h-7 rounded-lg bg-white flex items-center justify-center text-stone-600 shadow-sm active:bg-stone-100 transition-colors"
+                                    [disabled]="row.quantity <= 1" [class.opacity-30]="row.quantity <= 1">
+                                    <i class="pi pi-minus text-[10px] font-bold"></i>
+                                </button>
+            
+                                <div class="flex flex-col items-center justify-center w-5">
+                                    <span class="text-xs font-black leading-none text-stone-800">{{ row.quantity }}</span>
+                                    <span class="text-[7px] font-bold uppercase tracking-widest text-stone-400 mt-0.5">Sem</span>
+                                </div>
+            
+                                <button (click)="updateWeeklyPlanQuantity(row.rowId, 1)"
+                                    class="w-7 h-7 rounded-lg bg-white flex items-center justify-center text-stone-600 shadow-sm active:bg-stone-100 transition-colors">
+                                    <i class="pi pi-plus text-[10px] font-bold"></i>
+                                </button>
+                            </div>
+            
+                        </div>
+                        }
                     </div>
-                </p-accordion-content>
+            
+                    <button (click)="addWeeklyPlanRow()"
+                        class="mt-3 w-full py-3 border-2 border-dashed border-stone-200 bg-stone-50/50 text-stone-500 rounded-2xl text-[10px] font-bold tracking-widest uppercase hover:border-awakin-sun hover:text-awakin-sun hover:bg-awakin-sun/5 transition-all">
+                        <i class="pi pi-plus mr-1"></i> Añadir otro plan
+                    </button>
+            
+                </div>
+            </p-accordion-content>
             </p-accordion-panel>
 
             <p-accordion-panel value="manual">

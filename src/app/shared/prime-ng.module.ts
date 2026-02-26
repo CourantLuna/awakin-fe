@@ -16,6 +16,8 @@ import { ToolbarModule } from 'primeng/toolbar';
 import { DrawerModule } from 'primeng/drawer'; // <-- EL CORRECTO
 import { AccordionModule } from 'primeng/accordion';
 import { RadioButtonModule } from 'primeng/radiobutton'; // <-- NUEVO
+import { SelectModule } from 'primeng/select'; // <-- NUEVO
+
 @NgModule({
   exports: [
     ButtonModule,
@@ -33,6 +35,7 @@ import { RadioButtonModule } from 'primeng/radiobutton'; // <-- NUEVO
     DrawerModule,
     AccordionModule,
     RadioButtonModule,
+    SelectModule,
     // Agrega aquí más módulos si los necesitas en el futuro
   ],
 })

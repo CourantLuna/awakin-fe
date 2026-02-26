@@ -1,29 +1,43 @@
 import { Component, input, model, signal, effect, output } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { MenuPlan, DayAssignment, ManualMenuSelection } from '../../models/intake.models';
-import { FormsModule } from '@angular/forms'; // <-- NUEVO
+import {
+  MenuPlan,
+  DayAssignment,
+  ManualMenuSelection,
+  WeeklyTemplate,
+} from '../../models/intake.models';
+import { FormsModule } from '@angular/forms';
 import { PrimeNGModule } from '../../../../shared/prime-ng.module';
+
+// NUEVA INTERFAZ PARA LAS FILAS SEMANALES
+export interface WeeklyPlanSelection {
+  rowId: string;
+  templateId: string | null;
+  quantity: number;
+}
 
 @Component({
   selector: 'app-shopping-list-drawer',
-  imports: [CommonModule, PrimeNGModule, FormsModule],
+  imports: [CommonModule, PrimeNGModule, FormsModule], // <-- Añadir SelectModule
   templateUrl: './shopping-list-drawer.html',
   styleUrl: './shopping-list-drawer.css',
 })
 export class ShoppingListDrawer {
-  // Entradas y Salidas bidireccionales (Angular 19 Models)
   isOpen = model<boolean>(false);
   availableMenus = input<MenuPlan[]>([]);
-  weekAssignments = input<DayAssignment[]>([]);
+  weekAssignments = input<WeeklyTemplate[]>([]);
 
-  // NUEVO: Estado reactivo para controlar el modo seleccionado
   selectedMode = signal<'semanal' | 'manual'>('semanal');
-
-  // Estado local exclusivo de este componente
   manualSelections = signal<ManualMenuSelection[]>([]);
 
+  // ==========================================
+  // NUEVO: ESTADO PARA SELECCIÓN SEMANAL (PLANES)
+  // ==========================================
+  weeklyPlanSelections = signal<WeeklyPlanSelection[]>([
+    { rowId: 'row-init', templateId: null, quantity: 1 }, // Fila inicial vacía
+  ]);
+
   constructor() {
-    // Cuando cambian los menús disponibles, inicializamos la lista manual
     effect(() => {
       const initial = this.availableMenus().map((m) => ({
         menuId: m.id,
@@ -34,27 +48,19 @@ export class ShoppingListDrawer {
     });
   }
 
-  // NUEVO: Firma de tipos ajustada a PrimeNG 18+
+  // ... (Tus métodos onAccordionChange, generateList, etc. se mantienen igual)
   onAccordionChange(value: string | number | string[] | number[] | undefined | null) {
     if (value) {
-      // 1. Extraemos el valor base (sea de un array o un valor simple)
       const rawValue = Array.isArray(value) ? value[0] : value;
-
-      // 2. Lo casteamos a string de forma segura
       const mode = String(rawValue);
-
-      // 3. Verificamos que pertenezca a nuestro protocolo estricto
       if (mode === 'semanal' || mode === 'manual') {
         this.selectedMode.set(mode as 'semanal' | 'manual');
       }
     } else {
-      // Si el usuario intenta hacer clic en el panel abierto para cerrarlo,
-      // lo mantenemos forzosamente abierto (UX de Radio Button).
       this.selectedMode.set(this.selectedMode());
     }
   }
 
-  // NUEVO: Único botón de acción (Director de Operaciones)
   generateList() {
     if (this.selectedMode() === 'semanal') {
       this.generateFromWeekly();
@@ -63,16 +69,15 @@ export class ShoppingListDrawer {
     }
   }
 
+  // ... (Métodos de manualSelections se mantienen igual)
   getManualSelection(menuId: string): ManualMenuSelection | undefined {
     return this.manualSelections().find((s) => s.menuId === menuId);
   }
-
   toggleManualSelection(menuId: string) {
     this.manualSelections.update((sels) =>
       sels.map((s) => (s.menuId === menuId ? { ...s, selected: !s.selected } : s)),
     );
   }
-
   updateManualQuantity(menuId: string, delta: number, event: Event) {
     event.stopPropagation();
     this.manualSelections.update((sels) =>
@@ -86,8 +91,44 @@ export class ShoppingListDrawer {
     );
   }
 
+  // ==========================================
+  // NUEVOS MÉTODOS PARA EL CONSTRUCTOR SEMANAL
+  // ==========================================
+
+  addWeeklyPlanRow() {
+    this.weeklyPlanSelections.update((rows) => [
+      ...rows,
+      { rowId: `row-${Date.now()}`, templateId: null, quantity: 1 },
+    ]);
+  }
+
+  removeWeeklyPlanRow(rowId: string) {
+    this.weeklyPlanSelections.update((rows) => rows.filter((r) => r.rowId !== rowId));
+  }
+
+  updateWeeklyPlanTemplate(rowId: string, templateId: string) {
+    this.weeklyPlanSelections.update((rows) =>
+      rows.map((r) => (r.rowId === rowId ? { ...r, templateId } : r)),
+    );
+  }
+
+  updateWeeklyPlanQuantity(rowId: string, delta: number) {
+    this.weeklyPlanSelections.update((rows) =>
+      rows.map((r) => {
+        if (r.rowId === rowId) {
+          return { ...r, quantity: Math.max(1, r.quantity + delta) };
+        }
+        return r;
+      }),
+    );
+  }
+
+  // ==========================================
+
   generateFromWeekly() {
-    console.log('Generando desde Semana:', this.weekAssignments());
+    // Solo enviamos los que el usuario realmente seleccionó un template
+    const validSelections = this.weeklyPlanSelections().filter((s) => s.templateId !== null);
+    console.log('Generando Lista desde Plantillas:', validSelections);
     this.isOpen.set(false);
   }
 

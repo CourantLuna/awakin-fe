@@ -1,35 +1,38 @@
-import { Component, input, model, signal, output } from '@angular/core';
+import { Component, input, model, signal, output, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MenuPlan, WeeklyTemplate } from '../../models/intake.models';
 import { PrimeNGModule } from '../../../../shared/prime-ng.module';
-import { SelectModule } from 'primeng/select'; // <-- EL COMPONENTE MODERNO
+import { SelectModule } from 'primeng/select';
 
 @Component({
   selector: 'app-protocol-matrix-drawer',
   standalone: true,
-  imports: [CommonModule, FormsModule, PrimeNGModule, SelectModule], // <-- Añadido aquí
+  imports: [CommonModule, FormsModule, PrimeNGModule, SelectModule],
   templateUrl: './protocol-matrix-drawer.html',
   styleUrl: './protocol-matrix-drawer.css',
 })
 export class ProtocolMatrixDrawer {
-  // Comunicación con el padre
   isOpen = model<boolean>(false);
 
-  // MOCK DE PLANTILLAS DEL COACH
+  // NUEVO: Controla cuál es el plan que rige la semana actual
+  activeTemplateId = model<string | null>('coach-t1'); // Inicializado con el primer plan
+
+  maxTemplates = input<number>(5);
+
   weeklyTemplates = model<WeeklyTemplate[]>([
     {
       id: 'coach-t1',
       name: 'Semana 1 y 2 (Adaptación)',
       isFromCoach: true,
       assignments: [
-        { dayName: 'Lunes', menuId: '1' },
-        { dayName: 'Martes', menuId: '1' },
-        { dayName: 'Miércoles', menuId: '3' },
-        { dayName: 'Jueves', menuId: '2' },
-        { dayName: 'Viernes', menuId: '1' },
-        { dayName: 'Sábado', menuId: '2' },
-        { dayName: 'Domingo', menuId: '2' },
+        { dayName: 'Lun', menuId: '1' },
+        { dayName: 'Mar', menuId: '1' },
+        { dayName: 'Mié', menuId: '3' },
+        { dayName: 'Jue', menuId: '2' },
+        { dayName: 'Vie', menuId: '1' },
+        { dayName: 'Sáb', menuId: '2' },
+        { dayName: 'Dom', menuId: '2' },
       ],
     },
     {
@@ -37,13 +40,13 @@ export class ProtocolMatrixDrawer {
       name: 'Semana 3 y 4 (Sobrecarga)',
       isFromCoach: true,
       assignments: [
-        { dayName: 'Lunes', menuId: '1' },
-        { dayName: 'Martes', menuId: '3' },
-        { dayName: 'Miércoles', menuId: '1' },
-        { dayName: 'Jueves', menuId: '3' },
-        { dayName: 'Viernes', menuId: '1' },
-        { dayName: 'Sábado', menuId: '2' },
-        { dayName: 'Domingo', menuId: '3' },
+        { dayName: 'Lun', menuId: '1' },
+        { dayName: 'Mar', menuId: '3' },
+        { dayName: 'Mié', menuId: '1' },
+        { dayName: 'Jue', menuId: '3' },
+        { dayName: 'Vie', menuId: '1' },
+        { dayName: 'Sáb', menuId: '2' },
+        { dayName: 'Dom', menuId: '3' },
       ],
     },
   ]);
@@ -51,8 +54,14 @@ export class ProtocolMatrixDrawer {
   availableMenus = input<MenuPlan[]>([]);
   onOpenShoppingList = output<void>();
 
-  // ESTADO DE LA UI
   openDropdownKey = signal<string | null>(null);
+  canAddMore = computed(() => this.weeklyTemplates().length < this.maxTemplates());
+
+  // NUEVO: Método para cambiar el plan maestro
+  setActiveTemplate(templateId: string, event: Event) {
+    event.stopPropagation();
+    this.activeTemplateId.set(templateId);
+  }
 
   toggleDayMenu(templateId: string, dayIndex: number, event: Event) {
     event.stopPropagation();
@@ -76,21 +85,39 @@ export class ProtocolMatrixDrawer {
   }
 
   addNewTemplate() {
+    if (!this.canAddMore()) return;
+
     this.weeklyTemplates.update((templates) => {
       const newId = `t-${Date.now()}`;
       const newTemplate: WeeklyTemplate = {
         id: newId,
-        name: `Mi Plantilla ${templates.length + 1}`,
+        name: `Mi Plan ${templates.length + 1}`,
         isFromCoach: false,
         assignments: [
-          { dayName: 'Lunes', menuId: null },
-          { dayName: 'Martes', menuId: null },
-          { dayName: 'Miércoles', menuId: null },
-          { dayName: 'Jueves', menuId: null },
-          { dayName: 'Viernes', menuId: null },
-          { dayName: 'Sábado', menuId: null },
-          { dayName: 'Domingo', menuId: null },
+          { dayName: 'Lun', menuId: null },
+          { dayName: 'Mar', menuId: null },
+          { dayName: 'Mié', menuId: null },
+          { dayName: 'Jue', menuId: null },
+          { dayName: 'Vie', menuId: null },
+          { dayName: 'Sáb', menuId: null },
+          { dayName: 'Dom', menuId: null },
         ],
+      };
+      return [...templates, newTemplate];
+    });
+  }
+
+  duplicateTemplate(plan: WeeklyTemplate, event: Event) {
+    event.stopPropagation();
+    if (!this.canAddMore()) return;
+
+    this.weeklyTemplates.update((templates) => {
+      const newId = `t-${Date.now()}`;
+      const newTemplate: WeeklyTemplate = {
+        ...plan,
+        id: newId,
+        name: `${plan.name} (Copia)`,
+        isFromCoach: false,
       };
       return [...templates, newTemplate];
     });

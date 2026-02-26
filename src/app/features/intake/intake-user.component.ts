@@ -11,6 +11,8 @@ import { IntakeScaleWidgetComponent } from './components/intake-scale-widget/int
 import { ProtocolMatrixDrawer } from './components/protocol-matrix-drawer/protocol-matrix-drawer';
 import { ShoppingListDrawer } from './components/shopping-list-drawer/shopping-list-drawer';
 import { WeeklyTemplate } from './models/intake.models';
+import { FoodCardHorizontalComponent } from './components/food-cart-horizontal/food-card-horizontal.component';
+import { FormsModule } from '@angular/forms';
 
 // 1. NUEVO: Definición estricta del modelo de comida
 export interface FoodItem {
@@ -60,6 +62,8 @@ export interface ManualMenuSelection {
     DragDropModule,
     ProtocolMatrixDrawer,
     ShoppingListDrawer,
+    FoodCardHorizontalComponent,
+    FormsModule,
   ],
   templateUrl: './intake-user.component.html',
 })
@@ -86,6 +90,31 @@ export class IntakeUserComponent implements OnInit {
 
   openFuelMatrix() {
     this.isMatrixOpen.set(true);
+  }
+
+  // ==========================================
+  // NUEVO: SISTEMA DE PIVOT TÁCTICO (Daily Override)
+  // ==========================================
+
+  // 1. Simulamos que el sistema detectó que hoy (según la matriz) toca el Menú 1
+  baselineMenuId = signal<string | null>('1');
+
+  // 2. El menú que realmente rige HOY (por defecto es el baseline, pero el usuario puede cambiarlo)
+  activeMenuForToday = signal<string | null>(this.baselineMenuId());
+
+  // 3. Función que se dispara al cambiar el menú desde el tag
+  onDailyMenuChange(newMenuId: string) {
+    this.activeMenuForToday.set(newMenuId);
+    console.log('⚡ PIVOT TÁCTICO: Hoy aplicaremos el protocolo:', newMenuId);
+
+    // Aquí en el futuro llamarías a tu API:
+    // this.foodService.getSuggestionsForMenu(newMenuId).subscribe(...)
+  }
+
+  // NUEVO: Método para volver al plan asignado por el Coach/Matriz
+  resetToBaseline() {
+    this.activeMenuForToday.set(this.baselineMenuId());
+    console.log('🔄 PIVOT CANCELADO: Volviendo al plan sugerido:', this.baselineMenuId());
   }
 
   // ==========================================
@@ -133,7 +162,7 @@ export class IntakeUserComponent implements OnInit {
   }
 
   generateFromWeekly() {
-    console.log('Generando Lista desde Organización Semanal', this.weekAssignments());
+    console.log('Generando Lista desde Organización Semanal', this.weeklyTemplates());
     // TODO: Enviar a tu servicio/backend
     this.isShoppingListModalOpen.set(false);
   }
@@ -205,17 +234,6 @@ export class IntakeUserComponent implements OnInit {
         { dayName: 'Domingo', menuId: '3' },
       ],
     },
-  ]);
-
-  // 2. Matriz Semanal (Plantilla genérica, sin números de fecha)
-  weekAssignments = signal<DayAssignment[]>([
-    { dayName: 'Lunes', menuId: '1' },
-    { dayName: 'Martes', menuId: '1' },
-    { dayName: 'Miércoles', menuId: '3' },
-    { dayName: 'Jueves', menuId: '2' },
-    { dayName: 'Viernes', menuId: '1' },
-    { dayName: 'Sábado', menuId: '2' },
-    { dayName: 'Domingo', menuId: '2' },
   ]);
 
   openDayMenuIndex = signal<number | null>(null);
@@ -383,33 +401,5 @@ export class IntakeUserComponent implements OnInit {
       items.map((item) => (item.id === foodId ? { ...item, category: newCategory } : item)),
     );
     this.openMenuId.set(null); // Cerramos el menú tras elegir
-  }
-
-  toggleDayMenu(index: number, event: Event) {
-    event.stopPropagation();
-    this.openDayMenuIndex.update((current) => (current === index ? null : index));
-  }
-
-  assignMenuToDay(dayIndex: number, menuId: string | null, event: Event) {
-    event.stopPropagation();
-    this.weekAssignments.update((days) => {
-      const newDays = [...days];
-      newDays[dayIndex].menuId = menuId;
-      return newDays;
-    });
-    this.openDayMenuIndex.set(null);
-  }
-
-  getAssignedMenu(menuId: string | null): MenuPlan | null {
-    if (!menuId) return null;
-    return this.availableMenus().find((m) => m.id === menuId) || null;
-  }
-
-  // 3. NUEVO: Lógica de Lista de Compras
-  generateShoppingList() {
-    // Aquí el sistema AWAKIN multiplicará los ingredientes de los menús
-    // según cuántas veces aparezcan en weekAssignments().
-    console.log('Generando Lista de Compras para el protocolo actual...');
-    // TODO: Abrir modal o navegar a la vista de lista de compras.
   }
 }
