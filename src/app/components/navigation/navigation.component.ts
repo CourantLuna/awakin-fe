@@ -2,12 +2,12 @@ import { Component, inject, signal, ViewEncapsulation } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { DockModule } from 'primeng/dock';
 import { MenuItem } from 'primeng/api';
-import { RouterOutlet, Router } from '@angular/router';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-navigation',
   standalone: true,
-  imports: [CommonModule, DockModule, RouterOutlet],
+  imports: [CommonModule, DockModule],
   templateUrl: './navigation.component.html',
   styleUrls: ['./navigation.component.css'],
   encapsulation: ViewEncapsulation.None, // Necesario para modificar estilos internos de PrimeNG
