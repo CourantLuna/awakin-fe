@@ -1,8 +1,6 @@
 {
-  "name": "AWAKIN OS",
+  "name": "awakin-pwa",
   "short_name": "awakin-pwa",
-  "theme_color": "#050505",
-  "background_color": "#050505",
   "display": "standalone",
   "scope": "./",
   "start_url": "./",
