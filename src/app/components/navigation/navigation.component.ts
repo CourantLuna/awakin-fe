@@ -1,34 +1,42 @@
-import { Component, signal, ViewEncapsulation } from '@angular/core';
+import { Component, inject, signal, ViewEncapsulation } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { DockModule } from 'primeng/dock';
 import { MenuItem } from 'primeng/api';
+import { RouterOutlet, Router } from '@angular/router';
 
 @Component({
   selector: 'app-navigation',
   standalone: true,
-  imports: [CommonModule, DockModule],
+  imports: [CommonModule, DockModule, RouterOutlet],
   templateUrl: './navigation.component.html',
   styleUrls: ['./navigation.component.css'],
-  encapsulation: ViewEncapsulation.None // Necesario para modificar estilos internos de PrimeNG
+  encapsulation: ViewEncapsulation.None, // Necesario para modificar estilos internos de PrimeNG
 })
 export class NavigationComponent {
   // Estado reactivo para la pestaña activa
-  activeTab = signal<'intake' | 'workout' | 'core' | 'kin' | 'avatar'>('core');
+  activeTab = signal<'intake' | 'workout' | 'home' | 'kin' | 'avatar'>('home');
 
   // Configuración de los ítems del Dock
   items: MenuItem[] = [
     { id: 'intake', label: 'INTAKE' },
     { id: 'workout', label: 'WORKOUT' },
-    { id: 'core', label: 'CORE' }, // El botón central especial
+    { id: 'home', label: 'HOME' }, // El botón central especial
     { id: 'kin', label: 'KIN' },
-    { id: 'avatar', label: 'AVATAR' }
+    { id: 'avatar', label: 'AVATAR' },
   ];
+
+  // Inyectamos el motor de rutas de Angular
+  private router = inject(Router);
 
   /**
    * Cambia el módulo activo
    */
   selectModule(id: string) {
     this.activeTab.set(id as any);
+    console.log(`⚡ Enrutando al módulo: /${id}`);
+
+    // Ejecutamos la navegación real en la PWA
+    this.router.navigate(['/' + id]);
     // Aquí puedes agregar tu router.navigate(['/ruta'])
   }
 
