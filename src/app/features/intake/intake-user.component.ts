@@ -13,6 +13,7 @@ import { ShoppingListDrawer } from './components/shopping-list-drawer/shopping-l
 import { WeeklyTemplate } from './models/intake.models';
 import { FoodCardHorizontalComponent } from './components/food-cart-horizontal/food-card-horizontal.component';
 import { FormsModule } from '@angular/forms';
+import { IntakeTopBar } from '../../components/intake-top-bar/intake-top-bar';
 
 // 1. NUEVO: Definición estricta del modelo de comida
 export interface FoodItem {
@@ -64,6 +65,7 @@ export interface ManualMenuSelection {
     ShoppingListDrawer,
     FoodCardHorizontalComponent,
     FormsModule,
+    IntakeTopBar,
   ],
   templateUrl: './intake-user.component.html',
 })

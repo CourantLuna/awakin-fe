@@ -1,34 +1,308 @@
-<div class="min-h-screen bg-stone-900 pb-24 pt-12 px-5 font-sans">
-  <div class="flex justify-between items-end mb-8">
+<div class="w-full bg-white">
+  <p-toolbar styleClass="bg-transparent border-none p-0 mb-3">
+    <ng-template pTemplate="start">
+      <button
+        (click)="calendar.onMenuClick.emit()"
+        class="w-10 h-10 flex items-center justify-center text-black active:opacity-40 transition-all"
+      >
+        <i class="pi pi-ellipsis-h text-xl"></i>
+      </button>
+    </ng-template>
+
+    <ng-template pTemplate="center">
+      <div class="flex items-center gap-1">
+        <button
+          (click)="calendar.navigate(-1)"
+          class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-stone-100 active:scale-90 transition-all text-stone-400 hover:text-black"
+        >
+          <i class="pi pi-chevron-left text-xs"></i>
+        </button>
+
+        <div
+          class="flex items-center rounded-full border border-stone-200 bg-stone-50 shadow-sm transition-all"
+        >
+          <button
+            (click)="handleTopBtnAction()"
+            class="flex items-center gap-1 pl-5 pe-2 py-2 active:bg-stone-100 transition-colors group border-r border-stone-200"
+          >
+            <i
+              class="pi pi-calendar text-sm text-awakin-sun group-hover:rotate-12 transition-transform"
+            ></i>
+            <span
+              class="text-sm font-bold tracking-wide capitalize text-gray-800 min-w-[60px] text-center"
+            >
+              {{ currentLabel() }}
+            </span>
+          </button>
+
+          @if (calendar) {
+            <button
+              (click)="toggleCalendarViewMode()"
+              class="px-4 py-2 hover:bg-stone-100 active:bg-stone-200 transition-colors flex items-center justify-center group"
+            >
+              <i
+                class="pi pi-chevron-down inline-block transform 0.3s ease-in-out text-[10px] text-stone-400 group-hover:text-awakin-sun transition-all"
+                [ngClass]="{ 'rotate-180': calendar.viewMode() === 'month' }"
+              ></i>
+            </button>
+          }
+        </div>
+
+        <button
+          (click)="calendar.navigate(1)"
+          class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-stone-100 active:scale-90 transition-all text-stone-400 hover:text-black"
+        >
+          <i class="pi pi-chevron-right text-xs"></i>
+        </button>
+      </div>
+    </ng-template>
+
+    <ng-template pTemplate="end">
+      <div class="flex items-center gap-1.5 pr-2">
+        <i
+          class="pi pi-bolt text-xl"
+          [ngClass]="streak() > 0 ? 'text-awakin-sun animate-pulse' : 'text-stone-300'"
+        ></i>
+        <span
+          class="text-xl font-bold font-mono"
+          [ngClass]="streak() > 0 ? 'text-black' : 'text-stone-400'"
+        >
+          {{ streak() }}
+        </span>
+      </div>
+    </ng-template>
+  </p-toolbar>
+
+  <app-week-calendar-header
+    #calendar
+    [streak]="streak()"
+    [weekStart]="1"
+    (onLabelChange)="updateLabel($event)"
+  >
+  </app-week-calendar-header>
+
+  <div class="px-5 py-3 flex items-center">
+    <p-select
+      [options]="availableRoutines()"
+      [ngModel]="selectedRoutineId()"
+      (ngModelChange)="onRoutineChange($event)"
+      optionLabel="title"
+      optionValue="id"
+      appendTo="body"
+      styleClass="!border-none !shadow-none !bg-transparent p-0 m-0 focus:!ring-0 [&_.p-select-label]:!p-0 [&_.p-select-dropdown]:!hidden w-full"
+      panelStyleClass="bg-white rounded-xl shadow-2xl border border-stone-100 overflow-hidden text-sm mt-1 z-[100] min-w-[260px]"
+    >
+      <ng-template pTemplate="selectedItem" let-selectedOption>
+        <div class="flex items-center gap-2 cursor-pointer group">
+          <h3
+            class="font-black text-stone-600 uppercase tracking-widest group-hover:text-awakin-sun transition-colors"
+          >
+            Rutina Hoy
+          </h3>
+          <i
+            class="pi pi-angle-down text-stone-400 group-hover:text-awakin-sun transition-colors mt-0.5"
+          ></i>
+
+          <span class="ml-2 font-medium text-stone-400 truncate border-l border-stone-200 pl-2">
+            {{ selectedOption?.title }}
+          </span>
+        </div>
+      </ng-template>
+
+      <ng-template pTemplate="item" let-routine>
+        <div class="w-full py-1.5">
+          <div class="flex justify-between items-center mb-0.5 gap-4">
+            <span
+              class="text-[11px] font-bold"
+              [ngClass]="selectedRoutineId() === routine.id ? 'text-awakin-sun' : 'text-stone-800'"
+            >
+              {{ routine.title }}
+            </span>
+            @if (selectedRoutineId() === routine.id) {
+              <i class="pi pi-check text-awakin-sun text-[10px]"></i>
+            }
+          </div>
+
+          <div class="flex items-center gap-2 mt-1">
+            <span class="text-[9px] text-stone-500 font-medium flex items-center gap-1">
+              <i class="pi pi-clock text-[8px] text-stone-400"></i> {{ routine.duration }} min
+            </span>
+            <span class="w-1 h-1 rounded-full"></span>
+            <span class="text-[9px] text-stone-500 font-medium flex items-center gap-1">
+              <i class="pi pi-list text-[8px] text-stone-400"></i> {{ routine.exercisesCount }} ej.
+            </span>
+          </div>
+        </div>
+      </ng-template>
+    </p-select>
+  </div>
+</div>
+
+<div class="pb-24 pt-6 px-4">
+  <div class="flex justify-between items-center mb-6">
     <div>
-      <h1 class="text-3xl font-black text-white uppercase tracking-widest italic">WORKOUT</h1>
-      <p class="text-awakin-sun text-xs font-bold tracking-widest uppercase mt-1">
-        Día 3: Hipertrofia Inferior
-      </p>
+      <h1 class="text-2xl font-black text-stone-900 uppercase tracking-widest italic leading-none">
+        WORKOUT
+      </h1>
+      <p class="text-stone-500 text-xs font-medium mt-1">Día 4 • Semana de Sobrecarga</p>
     </div>
-    <button class="w-10 h-10 rounded-full bg-stone-800 flex items-center justify-center text-white">
-      <i class="pi pi-history"></i>
-    </button>
+    <div class="flex gap-2">
+      <button
+        class="w-10 h-10 bg-white border border-stone-200 rounded-full flex items-center justify-center text-stone-600 shadow-sm active:scale-95 transition-all"
+      >
+        <i class="pi pi-history"></i>
+      </button>
+    </div>
   </div>
 
   <div
-    class="bg-awakin-sun text-stone-900 rounded-3xl p-6 mb-6 shadow-lg shadow-awakin-sun/20 relative overflow-hidden"
+    class="relative w-full bg-stone-900 rounded-[2rem] p-6 mb-6 overflow-hidden shadow-2xl shadow-stone-900/20 flex flex-col justify-between min-h-[220px]"
   >
-    <h2 class="text-2xl font-black uppercase italic relative z-10">INICIAR<br />ENTRENAMIENTO</h2>
-    <p class="text-xs font-bold mt-2 opacity-80 relative z-10">Duración est: 65 min</p>
-    <i class="pi pi-play absolute -right-4 -bottom-4 text-[100px] opacity-20"></i>
+    <div
+      class="absolute -right-10 -top-10 w-48 h-48 bg-awakin-sun/20 rounded-full blur-3xl pointer-events-none"
+    ></div>
+    <i
+      class="pi pi-bolt absolute right-[-20px] bottom-[-20px] text-[120px] text-white/5 pointer-events-none rotate-12"
+    ></i>
+
+    <div class="relative z-10">
+      <div class="flex items-center gap-2 mb-3">
+        <span
+          class="bg-awakin-sun text-white text-[9px] font-black uppercase tracking-widest px-2 py-1 rounded-md"
+          >Asignado Hoy</span
+        >
+        <span class="text-stone-400 text-[10px] font-bold uppercase tracking-wider"
+          ><i class="pi pi-clock text-[9px]"></i> {{ todayWorkout().duration }} min</span
+        >
+      </div>
+
+      <h2 class="text-3xl font-black text-white uppercase italic leading-tight">
+        {{ todayWorkout().title }}
+      </h2>
+      <p class="text-stone-400 text-xs font-medium mt-1">{{ todayWorkout().subtitle }}</p>
+
+      <div class="flex flex-wrap gap-1.5 mt-4">
+        @for (focus of todayWorkout().focus; track focus) {
+          <span
+            class="border border-stone-700 text-stone-300 text-[9px] uppercase tracking-wider px-2 py-0.5 rounded-full font-bold"
+          >
+            {{ focus }}
+          </span>
+        }
+      </div>
+    </div>
+
+    <div class="mt-6 relative z-10">
+      <p-button
+        (onClick)="startWorkout()"
+        styleClass="!w-full !bg-awakin-sun !border-none !text-white !font-black !text-sm !tracking-widest !py-4 !rounded-2xl shadow-[0_4px_15px_rgba(254,151,10,0.4)] hover:!bg-[#E68800] active:!scale-[0.98] !transition-all !justify-center"
+      >
+        <div class="flex items-center gap-2">
+          <i class="pi pi-play-circle text-lg"></i> INICIAR SESIÓN
+        </div>
+      </p-button>
+    </div>
   </div>
 
-  <h3 class="text-stone-400 text-xs font-bold tracking-widest uppercase mb-4">Bloque Principal</h3>
+  <div class="flex gap-3 overflow-x-auto hide-scrollbar pb-2 mb-6 snap-x">
+    <button
+      class="snap-center shrink-0 w-[140px] bg-white border border-stone-200 p-4 rounded-2xl flex flex-col items-center justify-center gap-2 shadow-sm active:scale-95 transition-all"
+    >
+      <div
+        class="w-10 h-10 rounded-full bg-stone-100 text-stone-700 flex items-center justify-center text-lg"
+      >
+        <i class="pi pi-plus"></i>
+      </div>
+      <span class="text-[10px] font-bold text-stone-800 uppercase tracking-wider text-center"
+        >Entreno Libre</span
+      >
+    </button>
 
-  <div class="bg-stone-800 rounded-2xl p-4 flex items-center gap-4 mb-3 border border-stone-700">
-    <div class="w-16 h-16 bg-stone-700 rounded-xl flex items-center justify-center shrink-0">
-      <i class="pi pi-image text-stone-500 text-xl"></i>
+    <button
+      class="snap-center shrink-0 w-[140px] bg-white border border-stone-200 p-4 rounded-2xl flex flex-col items-center justify-center gap-2 shadow-sm active:scale-95 transition-all"
+    >
+      <div
+        class="w-10 h-10 rounded-full bg-blue-50 text-blue-500 flex items-center justify-center text-lg"
+      >
+        <i class="pi pi-stopwatch"></i>
+      </div>
+      <span class="text-[10px] font-bold text-stone-800 uppercase tracking-wider text-center"
+        >Cardio / Deporte</span
+      >
+    </button>
+
+    <button
+      class="snap-center shrink-0 w-[140px] bg-white border border-stone-200 p-4 rounded-2xl flex flex-col items-center justify-center gap-2 shadow-sm active:scale-95 transition-all"
+    >
+      <div
+        class="w-10 h-10 rounded-full bg-emerald-50 text-emerald-500 flex items-center justify-center text-lg"
+      >
+        <i class="pi pi-list"></i>
+      </div>
+      <span class="text-[10px] font-bold text-stone-800 uppercase tracking-wider text-center"
+        >Crear Rutina</span
+      >
+    </button>
+  </div>
+
+  <div class="grid grid-cols-2 gap-4 mb-6">
+    <div
+      class="bg-white rounded-2xl border border-stone-200 p-4 shadow-sm flex flex-col col-span-2"
+    >
+      <div class="flex justify-between items-center mb-2">
+        <h3 class="text-xs font-bold text-stone-800 uppercase tracking-widest">
+          Carga Muscular (Semana)
+        </h3>
+        <i class="pi pi-chart-pie text-stone-400"></i>
+      </div>
+      <div class="w-full h-[200px] relative">
+        <p-chart type="radar" [data]="radarData" [options]="radarOptions" height="100%"></p-chart>
+      </div>
     </div>
-    <div class="flex-1">
-      <h4 class="text-white font-bold text-sm">Sentadilla Libre Libre</h4>
-      <p class="text-stone-400 text-[10px] mt-1">4 Series x 8-10 Reps</p>
+  </div>
+
+  <div class="mb-6">
+    <div class="flex justify-between items-center mb-4">
+      <h3 class="text-xs font-bold text-stone-800 uppercase tracking-widest">Librería Awakin</h3>
+      <button class="text-[10px] font-bold text-awakin-sun uppercase tracking-wider">
+        Ver Todo
+      </button>
     </div>
-    <i class="pi pi-ellipsis-v text-stone-500"></i>
+
+    <div class="flex flex-col gap-3">
+      <button
+        class="w-full bg-white border border-stone-200 rounded-2xl p-4 flex items-center gap-4 shadow-sm active:scale-[0.98] transition-all group"
+      >
+        <div
+          class="w-12 h-12 rounded-xl bg-stone-50 flex items-center justify-center text-stone-400 group-hover:text-awakin-sun group-hover:bg-awakin-sun/10 transition-colors"
+        >
+          <i class="pi pi-images text-xl"></i>
+        </div>
+        <div class="flex-1 text-left">
+          <h4 class="text-sm font-bold text-stone-800 uppercase tracking-wider">
+            Galería de Ejercicios
+          </h4>
+          <p class="text-[10px] font-medium text-stone-500 mt-0.5">+450 movimientos en video HD</p>
+        </div>
+        <i class="pi pi-angle-right text-stone-300 group-hover:text-awakin-sun"></i>
+      </button>
+
+      <button
+        class="w-full bg-white border border-stone-200 rounded-2xl p-4 flex items-center gap-4 shadow-sm active:scale-[0.98] transition-all group"
+      >
+        <div
+          class="w-12 h-12 rounded-xl bg-stone-50 flex items-center justify-center text-stone-400 group-hover:text-awakin-sun group-hover:bg-awakin-sun/10 transition-colors"
+        >
+          <i class="pi pi-folder-open text-xl"></i>
+        </div>
+        <div class="flex-1 text-left">
+          <h4 class="text-sm font-bold text-stone-800 uppercase tracking-wider">
+            Programas Especializados
+          </h4>
+          <p class="text-[10px] font-medium text-stone-500 mt-0.5">Bloques de 4-8 semanas</p>
+        </div>
+        <i class="pi pi-angle-right text-stone-300 group-hover:text-awakin-sun"></i>
+      </button>
+    </div>
   </div>
 </div>
