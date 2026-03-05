@@ -152,114 +152,114 @@
                 </div>
               }
 
-              <div class="flex gap-1 overflow-x-auto pb-4 snap-x mt-2 overscroll-x-contain touch-pan-x w-full max-w-[calc(100vw-4rem)] md:max-w-full awakin-scrollbar">
-        @for (day of plan.assignments; track $index) {
-  <div 
-    class="shrink-0 snap-start transition-all duration-300 group relative flex items-stretch"
-    [ngClass]="[
-      !plan.isFromCoach ? 'hover:-translate-y-0.5' : 'opacity-95',
-      day.menuId ? 'min-w-[170px] max-w-[170px]' : 'min-w-[170px] max-w-[170px]'
-    ]"
-  >
-    <div class="w-full h-full cursor-pointer" (click)="!plan.isFromCoach && op.toggle($event)">
-    <p-card 
-      (click)="!plan.isFromCoach"
-      class="w-full h-full "
+          <div class="flex gap-3 overflow-x-auto pb-4 px-1 snap-x mt-2 overscroll-x-contain touch-pan-x w-full max-w-[calc(100vw-4rem)] md:max-w-full awakin-scrollbar after:content-[''] after:min-w-[8px] after:shrink-0">
+  
+  @for (day of plan.assignments; track $index; let dayIndex = $index) {
+    <div
+      class="shrink-0 snap-start transition-all duration-300 group relative flex items-stretch"
+      [ngClass]="[
+        !plan.isFromCoach ? 'hover:-translate-y-0.5' : 'opacity-95',
+        day.menuId ? 'min-w-[180px] max-w-[180px]' : 'min-w-[180px] max-w-[180px]'
+      ]"
     >
       
-      @if (getAssignedMenu(day.menuId); as menu) {
-        <div class="flex items-center justify-between gap-3">
-          <div class="w-10 h-10 bg-stone-50 border border-stone-200/60 rounded-xl flex items-center justify-center shrink-0">
-            <span class="text-lg font-black text-stone-800 uppercase">{{ day.dayName[0] }}</span>
-          </div>
-          <div class="flex flex-col justify-center text-right">
-            <div class="text-[10px] font-black text-stone-900 leading-none">
-              {{ menu.kcal }} <span class="text-[9px] font-bold text-stone-400 uppercase tracking-widest ml-0.5">kcal</span>
-            </div>
-            <div class="text-[8px] font-bold text-stone-500 mt-1 flex items-center justify-end gap-1.5 tracking-wide">
-              <span>{{ menu.macros }}</span>
-            </div>
-          </div>
-        </div>
-
-        <div class="relative w-full h-24 mt-3 bg-[url('https://images.unsplash.com/photo-1490645935967-10de6ba17061?auto=format&fit=crop&q=80')] bg-cover bg-center rounded-[1rem] overflow-hidden">
-          <div class="absolute inset-0 bg-[#937751]/60 group-hover:bg-[#E68800]/50 transition-colors duration-300"></div>
-          <div class="relative z-10 flex flex-col items-center justify-center h-full px-4 text-center">
-            <h2 class="text-lg font-black text-white uppercase tracking-widest leading-none drop-shadow-md mb-2 line-clamp-1">
-              {{ menu.name }}
-            </h2>
-            <div class="flex flex-row items-center justify-center gap-2 w-full overflow-hidden whitespace-nowrap">
-              @for (tag of menu.tags; track tag) {
-                <p-chip 
-                  [label]="tag" 
-                  styleClass="!bg-white/20 backdrop-blur-sm !border !border-white/30 !text-white !rounded-md !h-5 !px-2 [&_.p-chip-text]:!text-[8px] [&_.p-chip-text]:!font-black [&_.p-chip-text]:!uppercase [&_.p-chip-text]:!tracking-widest"
-                ></p-chip>
-              }
-            </div>
-          </div>
-        </div>
-      } @else {
-        <div class="flex items-center justify-between gap-3 h-full">
-          <div class="w-10 h-10 bg-stone-50 border border-stone-200/60 rounded-xl flex items-center justify-center shrink-0 group-hover:bg-awakin-sun/5 group-hover:text-awakin-sun transition-colors">
-            <span class="text-lg font-black text-stone-800 uppercase group-hover:text-awakin-sun transition-colors">{{ day.dayName[0] }}</span>
-          </div>
-          <div class="flex flex-row items-center justify-center text-right gap-1.5">
-            <div class="text-[13px] font-black text-stone-900 leading-none">
-                <span class="text-[9px] font-bold text-stone-400 uppercase tracking-widest ml-0.5 group-hover:text-awakin-sun transition-colors">Sin asignar</span>
-            </div>
-            <i class="pi pi-angle-down text-stone-400 group-hover:text-awakin-sun transition-colors"></i>
-          </div>
-          
-        </div>
-                <div class="relative w-full h-24 mt-3 bg-[url('https://images.unsplash.com/photo-1490645935967-10de6ba17061?auto=format&fit=crop&q=80')] bg-cover bg-center rounded-[1rem] overflow-hidden">
-                          <div class="absolute inset-0 bg-[#937751]/60 group-hover:bg-[#E68800]/50 transition-colors duration-300"></div>
-
-                </div>
-      }
-
-    </p-card>
-  </div>
-
-    <p-popover #op appendTo="body" styleClass="!p-0 !bg-white !rounded-2xl !shadow-2xl !border !border-stone-100 !overflow-hidden">
-      <div class="w-[240px] flex flex-col py-1 animate-fade-in">
+     <div 
+  #cardTarget 
+  class="w-full h-full cursor-pointer" 
+  (click)="$event.preventDefault(); $event.stopPropagation(); !plan.isFromCoach && op.toggle($event, cardTarget)"
+>
         
-        @if (day.menuId) {
-          <div 
-            (click)="assignMenuToDay(plan.id, $index, null); op.hide(); $event.stopPropagation();"
-            class="w-full px-4 py-2 hover:bg-red-50 cursor-pointer flex items-center gap-2 transition-colors border-b border-stone-100/60"
-          >
-            <i class="pi pi-trash text-red-400 text-[10px]"></i>
-            <span class="text-[10px] font-black uppercase tracking-widest text-red-500 mt-0.5">Quitar Fuel</span>
-          </div>
-        }
-
-        <div class="max-h-[220px] overflow-y-auto awakin-scrollbar">
-          @for (menu of availableMenus(); track menu.id) {
-            <div 
-              (click)="assignMenuToDay(plan.id, $index, menu.id); op.hide(); $event.stopPropagation();"
-              class="w-full px-4 py-2.5 hover:bg-stone-50 cursor-pointer transition-colors border-b border-stone-50 last:border-none"
-              [ngClass]="day.menuId === menu.id ? 'bg-awakin-sun/5' : ''"
-            >
-              <div class="flex justify-between items-center mb-0.5">
-                <span class="text-[11px] font-bold flex items-center gap-2" [ngClass]="day.menuId === menu.id ? 'text-awakin-sun' : 'text-stone-800'">
-                  <span class="text-sm">{{ menu.coverIcon }}</span> {{ menu.name }}
-                </span>
-                @if (day.menuId === menu.id) {
-                  <i class="pi pi-check text-awakin-sun text-[10px]"></i>
-                }
+        <p-card styleClass="w-full h-full !shadow-[0_2px_12px_rgb(0,0,0,0.03)] !border !border-stone-100 !rounded-[1.5rem] [&_.p-card-body]:!p-3 [&_.p-card-content]:!p-0 [&_.p-card-content]:!m-0 flex flex-col justify-between transition-colors hover:!border-awakin-sun/30">
+          
+          @if (getAssignedMenu(day.menuId); as menu) {
+            <div class="flex items-center justify-between gap-3">
+              <div class="w-10 h-10 bg-stone-50 border border-stone-200/60 rounded-xl flex items-center justify-center shrink-0">
+                <span class="text-lg font-black text-stone-800 uppercase">{{ day.dayName[0] }}</span>
               </div>
-              <p class="text-[9px] text-stone-500 ml-6 font-medium">
-                {{ menu.kcal }} kcal • {{ menu.tags.join(', ') }}
-              </p>
+              <div class="flex flex-col justify-center text-right">
+                <div class="text-[13px] font-black text-stone-900 leading-none">
+                  {{ menu.kcal }} <span class="text-[9px] font-bold text-stone-400 uppercase tracking-widest ml-0.5">kcal</span>
+                </div>
+                <div class="text-[10px] font-bold text-stone-500 mt-1 flex items-center justify-end gap-1.5 tracking-wide">
+                  <span>{{ menu.macros }}</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="relative w-full h-24 mt-3 bg-[url('https://images.unsplash.com/photo-1490645935967-10de6ba17061?auto=format&fit=crop&q=80')] bg-cover bg-center rounded-[1rem] overflow-hidden">
+              <div class="absolute inset-0 bg-[#937751]/60 group-hover:bg-[#E68800]/50 transition-colors duration-300"></div>
+              <div class="relative z-10 flex flex-col items-center justify-center h-full px-4 text-center">
+                <h2 class="text-lg font-black text-white uppercase tracking-widest leading-none drop-shadow-md mb-2 line-clamp-1">
+                  {{ menu.name }}
+                </h2>
+                <div class="flex flex-row items-center justify-center gap-2 w-full overflow-hidden whitespace-nowrap">
+                  @for (tag of menu.tags; track tag) {
+                    <p-chip 
+                      [label]="tag" 
+                      styleClass="!bg-white/20 backdrop-blur-sm !border !border-white/30 !text-white !rounded-md !h-5 !px-2 [&_.p-chip-text]:!text-[8px] [&_.p-chip-text]:!font-black [&_.p-chip-text]:!uppercase [&_.p-chip-text]:!tracking-widest"
+                    ></p-chip>
+                  }
+                </div>
+              </div>
+            </div>
+
+          } @else {
+            <div class="flex items-center justify-between gap-3 h-full px-1">
+              <div class="w-10 h-10 bg-stone-50 border border-stone-200/60 rounded-xl flex items-center justify-center shrink-0 group-hover:bg-awakin-sun/5 group-hover:text-awakin-sun transition-colors">
+                <span class="text-lg font-black text-stone-800 uppercase group-hover:text-awakin-sun transition-colors">{{ day.dayName[0] }}</span>
+              </div>
+              <div class="flex flex-row items-center justify-center text-right gap-1.5">
+                <div class="text-[13px] font-black text-stone-900 leading-none">
+                    <span class="text-[9px] font-bold text-stone-400 uppercase tracking-widest ml-0.5 group-hover:text-awakin-sun transition-colors">Sin asignar</span>
+                </div>
+                <i class="pi pi-angle-down text-stone-400 group-hover:text-awakin-sun transition-colors"></i>
+              </div>
             </div>
           }
-        </div>
-      </div>
-    </p-popover>
 
-  </div>
-}
+        </p-card>
+      </div>
+
+      <p-popover #op appendTo="body" styleClass="!p-0 !bg-white !rounded-2xl !shadow-2xl !border !border-stone-100 !overflow-hidden">
+        <div class="w-[240px] flex flex-col py-1 animate-fade-in">
+          
+          @if (day.menuId) {
+            <div 
+              (click)="assignMenuToDay(plan.id, dayIndex, null); op.hide(); $event.stopPropagation();"
+              class="w-full px-4 py-2 hover:bg-red-50 cursor-pointer flex items-center gap-2 transition-colors border-b border-stone-100/60"
+            >
+              <i class="pi pi-trash text-red-400 text-[10px]"></i>
+              <span class="text-[10px] font-black uppercase tracking-widest text-red-500 mt-0.5">Quitar Fuel</span>
+            </div>
+          }
+
+          <div class="max-h-[220px] overflow-y-auto awakin-scrollbar">
+            @for (menu of availableMenus(); track menu.id) {
+              <div 
+                (click)="assignMenuToDay(plan.id, dayIndex, menu.id); op.hide(); $event.stopPropagation();"
+                class="w-full px-4 py-2.5 hover:bg-stone-50 cursor-pointer transition-colors border-b border-stone-50 last:border-none"
+                [ngClass]="day.menuId === menu.id ? 'bg-awakin-sun/5' : ''"
+              >
+                <div class="flex justify-between items-center mb-0.5">
+                  <span class="text-[11px] font-bold flex items-center gap-2" [ngClass]="day.menuId === menu.id ? 'text-awakin-sun' : 'text-stone-800'">
+                    <span class="text-sm">{{ menu.coverIcon }}</span> {{ menu.name }}
+                  </span>
+                  @if (day.menuId === menu.id) {
+                    <i class="pi pi-check text-awakin-sun text-[10px]"></i>
+                  }
+                </div>
+                <p class="text-[9px] text-stone-500 ml-6 font-medium">
+                  {{ menu.kcal }} kcal • {{ menu.tags.join(', ') }}
+                </p>
               </div>
+            }
+          </div>
+        </div>
+      </p-popover>
+
+    </div>
+  }
+</div>
 
             </div>
           </p-accordion-content>
