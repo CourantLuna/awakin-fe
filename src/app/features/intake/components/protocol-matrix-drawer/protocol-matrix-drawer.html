@@ -152,97 +152,113 @@
                 </div>
               }
 
-<div class="flex gap-3 overflow-x-auto pb-4 snap-x mt-2 overscroll-x-contain touch-pan-x w-full max-w-[calc(100vw-4rem)] md:max-w-full awakin-scrollbar">                
-  @for (day of plan.assignments; track $index) {
-                  <div
-                    class="bg-white border border-stone-100 rounded-3xl p-3 flex flex-col relative shadow-[0_2px_12px_rgb(0,0,0,0.03)] min-w-[130px] max-w-[130px] shrink-0 snap-start transition-all duration-300 group"
-                    [ngClass]="
-                      !plan.isFromCoach 
-                        ? 'hover:border-awakin-sun/40 hover:shadow-awakin-sun/5' 
-                        : 'bg-stone-50/40 opacity-95'
-                    "
-                  >
-                    <div class="flex items-center justify-between mb-3">
-                      <div class="w-8 h-8 bg-stone-100 rounded-full flex items-center justify-center border border-stone-200/60 shadow-inner">
-                        <span class="text-xs font-black text-stone-800 uppercase tracking-widest">
-                          {{ day.dayName[0] }}
-                        </span>
-                      </div>
-                      <span class="text-[9px] font-bold text-stone-400 uppercase tracking-widest">
-                        {{ day.dayName }}
-                      </span>
-                    </div>
+              <div class="flex gap-1 overflow-x-auto pb-4 snap-x mt-2 overscroll-x-contain touch-pan-x w-full max-w-[calc(100vw-4rem)] md:max-w-full awakin-scrollbar">
+        @for (day of plan.assignments; track $index) {
+  <div 
+    class="shrink-0 snap-start transition-all duration-300 group relative flex items-stretch"
+    [ngClass]="[
+      !plan.isFromCoach ? 'hover:-translate-y-0.5' : 'opacity-95',
+      day.menuId ? 'min-w-[170px] max-w-[170px]' : 'min-w-[170px] max-w-[170px]'
+    ]"
+  >
+    <div class="w-full h-full cursor-pointer" (click)="!plan.isFromCoach && op.toggle($event)">
+    <p-card 
+      (click)="!plan.isFromCoach"
+      class="w-full h-full "
+    >
+      
+      @if (getAssignedMenu(day.menuId); as menu) {
+        <div class="flex items-center justify-between gap-3">
+          <div class="w-10 h-10 bg-stone-50 border border-stone-200/60 rounded-xl flex items-center justify-center shrink-0">
+            <span class="text-lg font-black text-stone-800 uppercase">{{ day.dayName[0] }}</span>
+          </div>
+          <div class="flex flex-col justify-center text-right">
+            <div class="text-[10px] font-black text-stone-900 leading-none">
+              {{ menu.kcal }} <span class="text-[9px] font-bold text-stone-400 uppercase tracking-widest ml-0.5">kcal</span>
+            </div>
+            <div class="text-[8px] font-bold text-stone-500 mt-1 flex items-center justify-end gap-1.5 tracking-wide">
+              <span>{{ menu.macros }}</span>
+            </div>
+          </div>
+        </div>
 
-                    <div class="flex-1 w-full relative flex flex-col">
-                      <p-select
-                        [options]="availableMenus()"
-                        [ngModel]="day.menuId"
-                        (ngModelChange)="assignMenuToDay(plan.id, $index, $event)"
-                        optionLabel="name"
-                        optionValue="id"
-                        [disabled]="plan.isFromCoach"
-                        [showClear]="!plan.isFromCoach"
-                        placeholder="Asignar Fuel"
-                        appendTo="body"
-                        styleClass="w-full h-full !border-none !shadow-none !bg-transparent p-0 m-0 focus:ring-0 [&_.p-select-label]:!p-0 [&_.p-select-dropdown]:!hidden [&_.p-select-clear-icon]:!text-stone-300 hover:[&_.p-select-clear-icon]:!text-red-400 [&_.p-placeholder]:!text-[10px] [&_.p-placeholder]:!font-medium"
-                        panelStyleClass="bg-white rounded-2xl shadow-2xl border border-stone-100 overflow-hidden text-sm mt-1 z-50 min-w-[220px]"
-                      >
-                        <ng-template pTemplate="selectedItem">
-                          <div class="w-full flex flex-col h-full cursor-pointer">
-                            @if (getAssignedMenu(day.menuId); as menu) {
-                              <div class="w-10 h-10 rounded-xl bg-stone-50 flex items-center justify-center text-xl mb-2 border border-stone-100/80 shrink-0">
-                                {{ menu.coverIcon }}
-                              </div>
-                              <h4 class="text-[11px] font-bold text-stone-800 leading-tight mb-1 line-clamp-2">
-                                {{ menu.name }}
-                              </h4>
-                              <div class="flex items-center gap-1 mt-auto pt-1">
-                                <span class="text-[9px] text-stone-500 font-bold tracking-wide">
-                                  {{ menu.kcal }} <span class="text-[8px] uppercase text-stone-400 font-medium">kcal</span>
-                                </span>
-                              </div>
-                            } @else {
-                              <div class="flex flex-col items-center justify-center py-3 opacity-60 transition-opacity group-hover:opacity-100">
-                                <div class="w-8 h-8 rounded-full border border-dashed border-stone-300 flex items-center justify-center mb-2 bg-stone-50">
-                                  <i class="pi pi-plus text-stone-400 text-[10px]"></i>
-                                </div>
-                                <span class="text-[10px] text-stone-400 font-medium italic text-center leading-tight">
-                                  Toca para<br/>asignar fuel
-                                </span>
-                              </div>
-                            }
-                          </div>
-                        </ng-template>
+        <div class="relative w-full h-24 mt-3 bg-[url('https://images.unsplash.com/photo-1490645935967-10de6ba17061?auto=format&fit=crop&q=80')] bg-cover bg-center rounded-[1rem] overflow-hidden">
+          <div class="absolute inset-0 bg-[#937751]/60 group-hover:bg-[#E68800]/50 transition-colors duration-300"></div>
+          <div class="relative z-10 flex flex-col items-center justify-center h-full px-4 text-center">
+            <h2 class="text-lg font-black text-white uppercase tracking-widest leading-none drop-shadow-md mb-2 line-clamp-1">
+              {{ menu.name }}
+            </h2>
+            <div class="flex flex-row items-center justify-center gap-2 w-full overflow-hidden whitespace-nowrap">
+              @for (tag of menu.tags; track tag) {
+                <p-chip 
+                  [label]="tag" 
+                  styleClass="!bg-white/20 backdrop-blur-sm !border !border-white/30 !text-white !rounded-md !h-5 !px-2 [&_.p-chip-text]:!text-[8px] [&_.p-chip-text]:!font-black [&_.p-chip-text]:!uppercase [&_.p-chip-text]:!tracking-widest"
+                ></p-chip>
+              }
+            </div>
+          </div>
+        </div>
+      } @else {
+        <div class="flex items-center justify-between gap-3 h-full">
+          <div class="w-10 h-10 bg-stone-50 border border-stone-200/60 rounded-xl flex items-center justify-center shrink-0 group-hover:bg-awakin-sun/5 group-hover:text-awakin-sun transition-colors">
+            <span class="text-lg font-black text-stone-800 uppercase group-hover:text-awakin-sun transition-colors">{{ day.dayName[0] }}</span>
+          </div>
+          <div class="flex flex-row items-center justify-center text-right gap-1.5">
+            <div class="text-[13px] font-black text-stone-900 leading-none">
+                <span class="text-[9px] font-bold text-stone-400 uppercase tracking-widest ml-0.5 group-hover:text-awakin-sun transition-colors">Sin asignar</span>
+            </div>
+            <i class="pi pi-angle-down text-stone-400 group-hover:text-awakin-sun transition-colors"></i>
+          </div>
+          
+        </div>
+                <div class="relative w-full h-24 mt-3 bg-[url('https://images.unsplash.com/photo-1490645935967-10de6ba17061?auto=format&fit=crop&q=80')] bg-cover bg-center rounded-[1rem] overflow-hidden">
+                          <div class="absolute inset-0 bg-[#937751]/60 group-hover:bg-[#E68800]/50 transition-colors duration-300"></div>
 
-                        <ng-template pTemplate="item" let-menu>
-                          <div class="w-full py-1">
-                            <div class="flex justify-between items-center mb-0.5">
-                              <span
-                                class="text-[11px] font-bold flex items-center gap-2"
-                                [ngClass]="day.menuId === menu.id ? 'text-awakin-sun' : 'text-stone-800'"
-                              >
-                                <span class="text-sm">{{ menu.coverIcon }}</span> 
-                                {{ menu.name }}
-                              </span>
-                              @if (day.menuId === menu.id) {
-                                <i class="pi pi-check text-awakin-sun text-[10px]"></i>
-                              }
-                            </div>
-                            <p class="text-[9px] text-stone-500 ml-6">
-                              {{ menu.kcal }} kcal • {{ menu.tags.join(', ') }}
-                            </p>
-                          </div>
-                        </ng-template>
-                      </p-select>
-                    </div>
+                </div>
+      }
 
-                    @if (!plan.isFromCoach) {
-                      <div class="absolute bottom-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
-                        <i class="pi pi-angle-down text-stone-300 text-[10px]"></i>
-                      </div>
-                    }
-                  </div>
+    </p-card>
+  </div>
+
+    <p-popover #op appendTo="body" styleClass="!p-0 !bg-white !rounded-2xl !shadow-2xl !border !border-stone-100 !overflow-hidden">
+      <div class="w-[240px] flex flex-col py-1 animate-fade-in">
+        
+        @if (day.menuId) {
+          <div 
+            (click)="assignMenuToDay(plan.id, $index, null); op.hide(); $event.stopPropagation();"
+            class="w-full px-4 py-2 hover:bg-red-50 cursor-pointer flex items-center gap-2 transition-colors border-b border-stone-100/60"
+          >
+            <i class="pi pi-trash text-red-400 text-[10px]"></i>
+            <span class="text-[10px] font-black uppercase tracking-widest text-red-500 mt-0.5">Quitar Fuel</span>
+          </div>
+        }
+
+        <div class="max-h-[220px] overflow-y-auto awakin-scrollbar">
+          @for (menu of availableMenus(); track menu.id) {
+            <div 
+              (click)="assignMenuToDay(plan.id, $index, menu.id); op.hide(); $event.stopPropagation();"
+              class="w-full px-4 py-2.5 hover:bg-stone-50 cursor-pointer transition-colors border-b border-stone-50 last:border-none"
+              [ngClass]="day.menuId === menu.id ? 'bg-awakin-sun/5' : ''"
+            >
+              <div class="flex justify-between items-center mb-0.5">
+                <span class="text-[11px] font-bold flex items-center gap-2" [ngClass]="day.menuId === menu.id ? 'text-awakin-sun' : 'text-stone-800'">
+                  <span class="text-sm">{{ menu.coverIcon }}</span> {{ menu.name }}
+                </span>
+                @if (day.menuId === menu.id) {
+                  <i class="pi pi-check text-awakin-sun text-[10px]"></i>
                 }
+              </div>
+              <p class="text-[9px] text-stone-500 ml-6 font-medium">
+                {{ menu.kcal }} kcal • {{ menu.tags.join(', ') }}
+              </p>
+            </div>
+          }
+        </div>
+      </div>
+    </p-popover>
+
+  </div>
+}
               </div>
 
             </div>
