@@ -10,13 +10,14 @@
   <div class="px-4 flex items-center justify-between mb-4">
     <div class="relative">
       <img
-        src="https://i.pravatar.cc/150?img=11"
-        class="w-20 h-20 rounded-full border border-stone-200 object-cover"
-      />
+  [src]="user()?.avatar?.photoUrl" 
+  [alt]="user()?.avatar?.fullName"
+  class="w-24 h-24 rounded-full border-4 border-stone-200 object-cover"
+/>
       <div
         class="absolute -bottom-1 -right-1 bg-awakin-sun text-white text-[9px] font-black px-1.5 py-0.5 rounded border-2 border-[#FAFAF9]"
       >
-        Nvl 12
+        Nvl {{ user()?.avatar?.level }}
       </div>
     </div>
     <div class="flex flex-1 justify-around text-center">
@@ -36,8 +37,9 @@
   </div>
 
   <div class="px-4 mb-4">
-    <h2 class="font-bold text-sm text-stone-900">Operator Alpha</h2>
-    <p class="text-xs text-stone-600 mt-0.5">Construyendo disciplina, un día a la vez.</p>
+<h2 class="font-black text-sm text-stone-900 uppercase tracking-tight">
+  {{ user()?.avatar?.fullName }}
+</h2>    <p class="text-xs text-stone-600 mt-0.5">Construyendo disciplina, un día a la vez.</p>
 
     <div
       class="mt-2 inline-flex items-center gap-1.5 bg-stone-100 px-2 py-1 rounded-md border border-stone-200"

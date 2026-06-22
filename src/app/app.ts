@@ -1,8 +1,9 @@
-import { Component, signal, inject } from '@angular/core';
+import { Component, signal, inject, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterOutlet, Router } from '@angular/router'; // <-- Importamos Router
 import { PrimeNGModule } from './shared/prime-ng.module';
 import { NavigationComponent } from './components/navigation/navigation.component';
+import { AuthService } from './core/services/auth.service';
 
 // ¡OJO! Hemos borrado la importación de IntakeUserComponent porque ahora es Lazy Loaded
 
@@ -20,6 +21,10 @@ export class App {
 
   // ESTADO: Valor inicial coincide con la ruta por defecto
   activeTab = signal<string>('intake');
+  private authService = inject(AuthService);
+
+  // Computed Signal: Se actualiza de forma automática y óptima cuando cambia la sesión de Supabase
+  isLoggedIn = computed(() => !!this.authService.currentSession());
 
   // ACCIÓN: El Bottom Bar llama a esta función
   selectModule(moduleName: string) {
