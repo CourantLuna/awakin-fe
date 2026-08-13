@@ -4,11 +4,12 @@ import { FormsModule } from '@angular/forms';
 import { MenuPlan, WeeklyTemplate } from '../../models/intake.models';
 import { PrimeNGModule } from '../../../../shared/prime-ng.module';
 import { SelectModule } from 'primeng/select';
+import { PopoverModule } from 'primeng/popover';
 
 @Component({
   selector: 'app-protocol-matrix-drawer',
   standalone: true,
-  imports: [CommonModule, FormsModule, PrimeNGModule, SelectModule],
+  imports: [CommonModule, FormsModule, PrimeNGModule, SelectModule, PopoverModule],
   templateUrl: './protocol-matrix-drawer.html',
   styleUrl: './protocol-matrix-drawer.css',
 })
