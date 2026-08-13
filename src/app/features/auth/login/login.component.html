@@ -1,0 +1,117 @@
+<div class="grid grid-cols-1 lg:grid-cols-12 min-h-screen bg-[#0B0F17] text-white selection:bg-[#FE970A] selection:text-black">
+  
+  <!-- PANEL DE MARCA RADICAL: Solución Inmersiva (Oculto en Mobile/Tablet) -->
+  <div class="hidden lg:flex lg:col-span-7 p-16 flex-col justify-between relative overflow-hidden bg-gradient-to-br from-[#0D1527] via-[#0B0F17] to-[#161224] border-r border-slate-800/40">
+    <!-- Grid Cinético Decorativo de Fondo -->
+    <div class="absolute inset-0 opacity-[0.02] bg-[linear-gradient(to_right,#808080_1px,transparent_1px),linear-gradient(to_bottom,#808080_1px,transparent_1px)] bg-[size:30px_34px]"></div>
+    
+    <!-- Branding Header -->
+    <div class="flex items-center gap-3 z-10">
+      <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-[#FE970A] to-amber-400 flex items-center justify-center font-black text-black text-sm shadow-lg shadow-orange-500/20">
+        𝚫𝛀
+      </div>
+      <span class="text-xs tracking-[0.4em] font-black text-slate-200">AWAKIN OS</span>
+    </div>
+
+    <!-- Core Brand Statement -->
+    <div class="max-w-xl z-10 space-y-6 my-auto">
+      <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-orange-500/20 bg-[#FE970A]/10 text-[#FE970A] text-[10px] uppercase font-mono tracking-widest">
+        ✦ INIT STATE: THE SLEEP IS OVER.
+      </div>
+      <h1 class="text-5xl font-black tracking-tight leading-[1.15] uppercase">
+        El sistema operativo <br>
+        <span class="bg-clip-text text-transparent bg-gradient-to-r from-[#FE970A] via-amber-400 to-yellow-500">
+          para tu vida.
+        </span>
+      </h1>
+      <p class="text-slate-400 leading-relaxed text-sm max-w-lg">
+        Sincroniza tu biología a través del módulo <span class="text-white font-semibold">Intake</span>, gestiona tus sistemas adaptativos en <span class="text-white font-semibold">Workout</span> y domina la matriz del Avatar Real junto a tu <span class="text-white font-semibold">Kin</span>.
+      </p>
+    </div>
+
+    <!-- Footer Meta-Data -->
+    <div class="z-10 flex gap-12 text-[10px] font-mono tracking-widest text-slate-500 uppercase">
+      <div>PROTOCOL: ACTIVE</div>
+      <div>BIOMETRICS: ENCRYPTED</div>
+    </div>
+  </div>
+
+  <!-- PANEL DE ACCESO: Controles de Input PrimeNG -->
+  <div class="col-span-1 lg:col-span-5 flex flex-col justify-center p-6 sm:p-16 lg:p-12 xl:p-16 bg-[#0E131F]">
+    <div class="w-full max-w-md mx-auto space-y-8">
+      
+      <!-- Titulares -->
+      <div class="space-y-2">
+        <h2 class="text-2xl font-black tracking-tight uppercase">Inicializar Vínculo</h2>
+        <p class="text-slate-400 text-xs font-medium">Introduce tus credenciales para sincronizar tu progreso diario.</p>
+      </div>
+
+      <!-- BOTÓN GOOGLE WORKSPACE OAUTH -->
+      <p-button 
+        label="Sincronizar con Google" 
+        icon="pi pi-google" 
+        styleClass="w-full bg-slate-800/40 hover:bg-white text-slate-200 hover:text-black border-slate-700/80 font-bold text-xs tracking-wider uppercase p-3 rounded-xl transition-all duration-300"
+        (onClick)="initiateGoogleHandshake()">
+      </p-button>
+
+      <!-- Divisor Estético Minimalista -->
+      <div class="relative flex py-2 items-center">
+        <div class="flex-grow border-t border-slate-800/80"></div>
+        <span class="flex-shrink mx-4 text-[9px] text-slate-500 uppercase tracking-widest font-mono">O PROTOCOLO INTERNO</span>
+        <div class="flex-grow border-t border-slate-800/80"></div>
+      </div>
+
+      <!-- FEEDBACK DE ERRORES CRÍTICOS -->
+      @if (errorMessage()) {
+        <p-message 
+          severity="error" 
+          [text]="errorMessage()" 
+          styleClass="w-full text-xs font-semibold rounded-xl bg-red-950/20 border-red-900/50 text-red-400">
+        </p-message>
+      }
+
+      <!-- FORMULARIO ESTRUCTURADO -->
+      <form (ngSubmit)="onSecureSubmit()" class="space-y-6">
+        
+        <!-- Input ID de Correo -->
+        <div class="flex flex-col gap-2">
+          <label class="text-[10px] uppercase font-bold tracking-widest text-slate-400 font-mono">IDENTIFICADOR (EMAIL)</label>
+          <input 
+            type="email" 
+            pInputText 
+            [ngModel]="email()" 
+            (ngModelChange)="email.set($event)"
+            name="email"
+            placeholder="atleta@awakin.com" 
+            class="w-full bg-[#131926] border-slate-700/60 focus:border-[#FE970A] rounded-xl text-sm p-3.5 text-white" />
+        </div>
+
+        <!-- Input Clave Operativa -->
+        <div class="flex flex-col gap-2">
+          <label class="text-[10px] uppercase font-bold tracking-widest text-slate-400 font-mono">CLAVE DE ACCESO</label>
+          <p-password 
+            [ngModel]="password()" 
+            (ngModelChange)="password.set($event)"
+            name="password"
+            [feedback]="false" 
+            [toggleMask]="true"
+            styleClass="w-full"
+            placeholder="••••••••••••"
+            inputStyleClass="w-full bg-[#131926] border-slate-700/60 focus:border-[#FE970A] rounded-xl text-sm p-3.5 text-white">
+          </p-password>
+        </div>
+
+        <!-- Botón de Ejecución del Sistema -->
+        <p-button 
+          type="submit"
+          [disabled]="loading()"
+          [label]="loading() ? 'PROCESANDO BIOLOGÍA...' : 'ACCEDER AL SISTEMA'"
+          styleClass="w-full bg-gradient-to-r from-[#FE970A] to-amber-500 hover:from-amber-400 hover:to-orange-500 text-black font-black text-xs tracking-widest uppercase p-4 rounded-xl border-none transition-all duration-200">
+        </p-button>
+
+      </form>
+
+    </div>
+  </div>
+
+</div>
