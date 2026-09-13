@@ -1,94 +1,482 @@
-<div class="min-h-screen bg-[#FAFAF9] pb-24 pt-10">
-  <div class="flex justify-between items-center px-4 mb-6">
-    <h1 class="text-sm font-bold text-stone-900">
-      <i class="pi pi-lock text-[10px] mr-1"></i> mi_usuario_awakin
-      <i class="pi pi-angle-down text-[10px]"></i>
-    </h1>
-    <i class="pi pi-bars text-xl text-stone-800"></i>
-  </div>
-
-  <div class="px-4 flex items-center justify-between mb-4">
-    <div class="relative">
-      <img
-  [src]="user()?.avatar?.photoUrl" 
-  [alt]="user()?.avatar?.fullName"
-  class="w-24 h-24 rounded-full border-4 border-stone-200 object-cover"
-/>
-      <div
-        class="absolute -bottom-1 -right-1 bg-awakin-sun text-white text-[9px] font-black px-1.5 py-0.5 rounded border-2 border-[#FAFAF9]"
-      >
-        Nvl {{ user()?.avatar?.level }}
-      </div>
-    </div>
-    <div class="flex flex-1 justify-around text-center">
-      <div>
-        <p class="font-black text-stone-900 text-lg">34</p>
-        <p class="text-[10px] text-stone-500">Racha 🔥</p>
-      </div>
-      <div>
-        <p class="font-black text-stone-900 text-lg">1.2K</p>
-        <p class="text-[10px] text-stone-500">Seguidores</p>
-      </div>
-      <div>
-        <p class="font-black text-stone-900 text-lg">150</p>
-        <p class="text-[10px] text-stone-500">Siguiendo</p>
-      </div>
-    </div>
-  </div>
-
-  <div class="px-4 mb-4">
-<h2 class="font-black text-sm text-stone-900 uppercase tracking-tight">
-  {{ user()?.avatar?.fullName }}
-</h2>    <p class="text-xs text-stone-600 mt-0.5">Construyendo disciplina, un día a la vez.</p>
-
-    <div
-      class="mt-2 inline-flex items-center gap-1.5 bg-stone-100 px-2 py-1 rounded-md border border-stone-200"
+<div class="min-h-screen bg-[#FAFAF9] pb-28 pt-8">
+  <!-- BARRA SUPERIOR CON SELECTOR DE ATLETA Y ACCIONES -->
+  <div class="flex justify-between items-center px-4 mb-5 relative">
+    <!-- Selector de cuenta / Username -->
+    <button
+      (click)="toggleSwitcher()"
+      class="flex items-center gap-1.5 text-sm font-black text-stone-900 bg-stone-100 hover:bg-stone-200 px-3 py-1.5 rounded-full border border-stone-200 transition-all cursor-pointer"
     >
-      <i class="pi pi-bullseye text-awakin-sun text-[10px]"></i>
-      <span class="text-[10px] font-bold text-stone-800 uppercase tracking-wider"
-        >Objetivo: Recomposición</span
+      <i class="pi pi-lock text-[10px] text-stone-500"></i>
+      <span>@{{ athlete()?.username || 'mi_usuario_awakin' }}</span>
+      <i
+        class="pi pi-chevron-down text-[10px] text-stone-600 transition-transform"
+        [class.rotate-180]="isSwitcherOpen()"
+      ></i>
+    </button>
+
+    <!-- Botón de Menú de Opciones -->
+    <button
+      (click)="isMenuOpen.set(!isMenuOpen())"
+      class="w-9 h-9 flex items-center justify-center rounded-full hover:bg-stone-200 text-stone-800 transition-all cursor-pointer"
+      title="Opciones de cuenta"
+    >
+      <i class="pi pi-bars text-lg"></i>
+    </button>
+
+    <!-- DROPDOWN: SWITCHER DE ATLETAS (Permite conmutar o ver usuarios de la BD) -->
+    @if (isSwitcherOpen()) {
+      <div
+        class="absolute left-4 top-12 z-50 w-72 bg-white rounded-2xl shadow-2xl border border-stone-200 p-2 max-h-96 overflow-y-auto animate-fade-in"
       >
+        <div class="px-3 py-2 border-b border-stone-100 mb-1">
+          <p class="text-[10px] font-bold uppercase tracking-widest text-stone-400">Atletas Registrados (BD)</p>
+          <p class="text-xs text-stone-600">Selecciona para sincronizar tu vista</p>
+        </div>
+
+        @for (ath of athletesList(); track ath.id) {
+          <button
+            (click)="onSelectAthlete(ath)"
+            class="w-full flex items-center gap-3 p-2 rounded-xl hover:bg-stone-100 text-left transition-colors cursor-pointer"
+            [class.bg-orange-50]="ath.id === athlete()?.id"
+            [class.border]="ath.id === athlete()?.id"
+            [class.border-orange-200]="ath.id === athlete()?.id"
+          >
+            <div class="w-8 h-8 rounded-full overflow-hidden bg-stone-200 shrink-0 border border-stone-300">
+              @if (ath.profile_image_url) {
+                <img [src]="ath.profile_image_url" [alt]="ath.username" class="w-full h-full object-cover" />
+              } @else {
+                <div class="w-full h-full flex items-center justify-center text-[10px] font-bold text-stone-600 bg-stone-100">
+                  {{ (ath.first_name || ath.username || 'A').slice(0, 2).toUpperCase() }}
+                </div>
+              }
+            </div>
+            <div class="flex-1 min-w-0">
+              <p class="text-xs font-bold text-stone-900 truncate">
+                {{ ath.first_name ? ath.first_name + ' ' + (ath.last_name || '') : ath.username }}
+              </p>
+              <p class="text-[10px] text-stone-500 truncate">@{{ ath.username }}</p>
+            </div>
+            @if (ath.id === athlete()?.id) {
+              <i class="pi pi-check text-xs text-amber-500 font-bold"></i>
+            }
+          </button>
+        }
+      </div>
+    }
+
+    <!-- DROPDOWN: MENÚ RÁPIDO (Cerrar sesión / Editar) -->
+    @if (isMenuOpen()) {
+      <div
+        class="absolute right-4 top-12 z-50 w-52 bg-white rounded-2xl shadow-2xl border border-stone-200 p-2 animate-fade-in"
+      >
+        <button
+          (click)="openEditProfile(); isMenuOpen.set(false)"
+          class="w-full flex items-center gap-2 px-3 py-2 text-xs font-bold text-stone-800 hover:bg-stone-100 rounded-xl transition-all cursor-pointer"
+        >
+          <i class="pi pi-user-edit text-stone-500"></i>
+          <span>Editar Perfil</span>
+        </button>
+        <button
+          (click)="athleteService.loadInitialAthletes(); isMenuOpen.set(false)"
+          class="w-full flex items-center gap-2 px-3 py-2 text-xs font-bold text-stone-800 hover:bg-stone-100 rounded-xl transition-all cursor-pointer"
+        >
+          <i class="pi pi-refresh text-stone-500"></i>
+          <span>Refrescar Datos</span>
+        </button>
+        <div class="border-t border-stone-100 my-1"></div>
+        <button
+          (click)="logout()"
+          class="w-full flex items-center gap-2 px-3 py-2 text-xs font-bold text-red-600 hover:bg-red-50 rounded-xl transition-all cursor-pointer"
+        >
+          <i class="pi pi-sign-out"></i>
+          <span>Cerrar Sesión</span>
+        </button>
+      </div>
+    }
+  </div>
+
+  <!-- CABECERA DE PERFIL: AVATAR Y ESTADÍSTICAS -->
+  <div class="px-4 flex items-center justify-between mb-4">
+    <!-- FOTO CON BADGE DE NIVEL -->
+    <div class="relative">
+      <div class="w-24 h-24 rounded-full border-4 border-white shadow-md overflow-hidden bg-stone-200">
+        @if (athlete()?.profile_image_url) {
+          <img
+            [src]="athlete()?.profile_image_url"
+            [alt]="athlete()?.first_name || athlete()?.username"
+            class="w-full h-full object-cover"
+          />
+        } @else {
+          <div
+            class="w-full h-full flex items-center justify-center bg-gradient-to-tr from-stone-800 to-stone-700 text-white font-black text-2xl"
+          >
+            {{ getInitials() }}
+          </div>
+        }
+      </div>
+
+      <!-- Badge de Nivel Calculado -->
+      <div
+        class="absolute -bottom-1 -right-1 bg-gradient-to-r from-[#FE970A] to-amber-500 text-white text-[10px] font-black px-2 py-0.5 rounded-full border-2 border-white shadow-sm"
+      >
+        Nvl {{ athlete()?.current_level || 1 }}
+      </div>
+    </div>
+
+    <!-- MÉTRICAS EN VIVO: RACHA, SEGUIDORES, SIGUIENDO -->
+    <div class="flex flex-1 justify-around text-center ml-2">
+      <div>
+        <p class="font-black text-stone-900 text-xl tracking-tight">
+          {{ athlete()?.streak_days || 0 }}
+        </p>
+        <p class="text-[10px] font-semibold text-stone-500 uppercase tracking-wider">Racha 🔥</p>
+      </div>
+      <div>
+        <p class="font-black text-stone-900 text-xl tracking-tight">
+          {{ athlete()?.followers_count || 0 }}
+        </p>
+        <p class="text-[10px] font-semibold text-stone-500 uppercase tracking-wider">Seguidores</p>
+      </div>
+      <div>
+        <p class="font-black text-stone-900 text-xl tracking-tight">
+          {{ athlete()?.following_count || 0 }}
+        </p>
+        <p class="text-[10px] font-semibold text-stone-500 uppercase tracking-wider">Siguiendo</p>
+      </div>
     </div>
   </div>
 
-  <div class="px-4 mb-4 flex gap-2">
-    <div class="flex items-center gap-1 bg-[#1E293B] text-white px-2 py-1 rounded-md shadow-sm">
-      <i class="pi pi-verified text-blue-400 text-[10px]"></i>
-      <span class="text-[9px] font-bold tracking-widest uppercase">Coach Nutrición</span>
-    </div>
-    <div class="flex items-center gap-1 bg-[#1E293B] text-white px-2 py-1 rounded-md shadow-sm">
-      <i class="pi pi-verified text-blue-400 text-[10px]"></i>
-      <span class="text-[9px] font-bold tracking-widest uppercase">Coach Fitness</span>
+  <!-- DETALLES: NOMBRE COMPLETO, EMAIL Y BIOGRAFÍA -->
+  <div class="px-4 mb-4">
+    <h2 class="font-black text-base text-stone-900 uppercase tracking-tight">
+      {{ athlete()?.first_name ? athlete()?.first_name + ' ' + (athlete()?.last_name || '') : athlete()?.username }}
+    </h2>
+
+    @if (athlete()?.email) {
+      <p class="text-[11px] text-stone-500 font-mono mb-1">
+        <i class="pi pi-envelope text-[10px] mr-1"></i>{{ athlete()?.email }}
+      </p>
+    }
+
+    <p class="text-xs text-stone-700 mt-1 leading-relaxed">
+      {{ athlete()?.bio_description || 'Construyendo disciplina, un día a la vez.' }}
+    </p>
+
+    <!-- Objetivo Biológico -->
+    <div class="mt-2.5 inline-flex items-center gap-1.5 bg-stone-100 px-2.5 py-1 rounded-lg border border-stone-200">
+      <i class="pi pi-bullseye text-amber-500 text-xs"></i>
+      <span class="text-[10px] font-black text-stone-800 uppercase tracking-wider">
+        Protocolo: Rendimiento & Recomposición
+      </span>
     </div>
   </div>
 
+  <!-- ROLES Y DISTINTIVOS EN SUPABASE -->
+  <div class="px-4 mb-4 flex flex-wrap gap-1.5">
+    @for (role of (athlete()?.roles || ['ATHLETE']); track role) {
+      <div
+        class="flex items-center gap-1.5 px-2.5 py-1 rounded-md border text-[10px] font-bold tracking-wider uppercase shadow-xs"
+        [ngClass]="getRoleBadgeClass(role)"
+      >
+        <i class="pi pi-verified text-[10px]"></i>
+        <span>{{ formatRole(role) }}</span>
+      </div>
+    }
+  </div>
+
+  <!-- BOTONES DE ACCIÓN: EDITAR Y COMPARTIR -->
   <div class="px-4 flex gap-2 mb-6">
     <button
-      class="flex-1 bg-stone-200 text-stone-900 font-bold text-xs py-1.5 rounded-lg active:scale-95 transition-all"
+      (click)="openEditProfile()"
+      class="flex-1 bg-stone-900 hover:bg-stone-800 text-white font-bold text-xs py-2 rounded-xl active:scale-98 transition-all cursor-pointer flex items-center justify-center gap-1.5 shadow-sm"
     >
-      Editar Perfil
+      <i class="pi pi-user-edit text-xs"></i>
+      <span>Editar Perfil</span>
     </button>
     <button
-      class="flex-1 bg-stone-200 text-stone-900 font-bold text-xs py-1.5 rounded-lg active:scale-95 transition-all"
+      (click)="shareProfile()"
+      class="flex-1 bg-stone-200 hover:bg-stone-300 text-stone-900 font-bold text-xs py-2 rounded-xl active:scale-98 transition-all cursor-pointer flex items-center justify-center gap-1.5"
     >
-      Compartir Perfil
+      <i class="pi pi-share-alt text-xs"></i>
+      <span>Compartir Perfil</span>
     </button>
   </div>
 
-  <div class="flex border-t border-stone-200">
-    <div class="flex-1 text-center py-2 border-b-2 border-stone-900">
-      <i class="pi pi-th-large text-xl text-stone-900"></i>
-    </div>
-    <div class="flex-1 text-center py-2">
-      <i class="pi pi-chart-bar text-xl text-stone-400"></i>
-    </div>
+  <!-- BARRA DE PESTAÑAS: FOTOS / MÉTRICAS -->
+  <div class="flex border-t border-stone-200 bg-white">
+    <button
+      (click)="setTab('grid')"
+      class="flex-1 py-3 text-center transition-all cursor-pointer relative"
+      [class.border-b-2]="activeTab() === 'grid'"
+      [class.border-stone-900]="activeTab() === 'grid'"
+      [class.text-stone-900]="activeTab() === 'grid'"
+      [class.text-stone-400]="activeTab() !== 'grid'"
+    >
+      <i class="pi pi-th-large text-lg"></i>
+    </button>
+    <button
+      (click)="setTab('stats')"
+      class="flex-1 py-3 text-center transition-all cursor-pointer relative"
+      [class.border-b-2]="activeTab() === 'stats'"
+      [class.border-stone-900]="activeTab() === 'stats'"
+      [class.text-stone-900]="activeTab() === 'stats'"
+      [class.text-stone-400]="activeTab() !== 'stats'"
+    >
+      <i class="pi pi-chart-bar text-lg"></i>
+    </button>
   </div>
-  <div class="grid grid-cols-3 gap-0.5 mt-0.5">
-    <div class="aspect-square bg-stone-200"></div>
-    <div class="aspect-square bg-stone-300"></div>
-    <div class="aspect-square bg-stone-200"></div>
-    <div class="aspect-square bg-stone-300"></div>
-    <div class="aspect-square bg-stone-200"></div>
-    <div class="aspect-square bg-stone-300"></div>
-  </div>
+
+  <!-- CONTENIDO TAB 1: CUADRÍCULA DE FOTOS REALES (Intake & Progreso) -->
+  @if (activeTab() === 'grid') {
+    <div class="mt-0.5">
+      @if (records()?.meals?.length || records()?.progress?.length) {
+        <div class="grid grid-cols-3 gap-0.5">
+          <!-- Fotos de Comidas (registros_nutricionales) -->
+          @for (meal of records()?.meals; track meal.id) {
+            @if (meal.foto_url) {
+              <div
+                (click)="selectedMeal.set(meal)"
+                class="aspect-square bg-stone-100 relative group overflow-hidden cursor-pointer"
+              >
+                <img [src]="meal.foto_url" [alt]="meal.nombre || 'Comida'" class="w-full h-full object-cover" />
+                <div
+                  class="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white"
+                >
+                  <span class="text-[9px] font-bold uppercase tracking-wider bg-black/60 px-1.5 py-0.5 rounded">
+                    {{ meal.tipo_comida || 'Intake' }}
+                  </span>
+                </div>
+              </div>
+            }
+          }
+
+          <!-- Fotos de Progreso (registros_progreso) -->
+          @for (prog of records()?.progress; track prog.id) {
+            @if (prog.foto_frontal_url) {
+              <div
+                (click)="selectedProgress.set(prog)"
+                class="aspect-square bg-stone-100 relative group overflow-hidden cursor-pointer"
+              >
+                <img [src]="prog.foto_frontal_url" alt="Progreso" class="w-full h-full object-cover" />
+                <div
+                  class="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white"
+                >
+                  <span class="text-[9px] font-bold uppercase tracking-wider bg-amber-600/80 px-1.5 py-0.5 rounded">
+                    {{ prog.peso ? prog.peso + 'kg' : 'Progreso' }}
+                  </span>
+                </div>
+              </div>
+            }
+          }
+        </div>
+      } @else {
+        <!-- Estado Vacío Elegante -->
+        <div class="py-16 text-center px-4">
+          <div class="w-14 h-14 mx-auto rounded-2xl bg-stone-100 flex items-center justify-center text-stone-400 mb-3">
+            <i class="pi pi-camera text-2xl"></i>
+          </div>
+          <h3 class="text-xs font-bold text-stone-800 uppercase tracking-wider mb-1">Sin Registros Multimedia</h3>
+          <p class="text-[11px] text-stone-500 max-w-xs mx-auto">
+            Las fotos que subas en el módulo <span class="font-bold text-stone-700">Intake</span> o en tus registros de progreso aparecerán organizadas en este feed.
+          </p>
+        </div>
+      }
+    </div>
+  }
+
+  <!-- CONTENIDO TAB 2: MÉTRICAS Y BIOMETRÍA EN VIVO -->
+  @if (activeTab() === 'stats') {
+    <div class="p-4 space-y-4 animate-fade-in">
+      <div class="bg-white p-4 rounded-2xl border border-stone-200 shadow-xs">
+        <h3 class="text-xs font-black text-stone-900 uppercase tracking-wider mb-3 flex items-center gap-1.5">
+          <i class="pi pi-sliders-h text-amber-500"></i>
+          <span>Biometría Actual</span>
+        </h3>
+
+        @if (records()?.progress?.length) {
+          @let latest = records()!.progress[0];
+          <div class="grid grid-cols-2 gap-3">
+            <div class="bg-stone-50 p-3 rounded-xl border border-stone-200/60">
+              <p class="text-[10px] uppercase font-bold text-stone-400">Peso Corporal</p>
+              <p class="text-xl font-black text-stone-900 mt-0.5">
+                {{ latest.peso ? latest.peso + ' ' + (latest.unidad_peso || 'kg') : 'N/D' }}
+              </p>
+            </div>
+            <div class="bg-stone-50 p-3 rounded-xl border border-stone-200/60">
+              <p class="text-[10px] uppercase font-bold text-stone-400">Cintura</p>
+              <p class="text-xl font-black text-stone-900 mt-0.5">
+                {{ latest.cintura ? latest.cintura + ' cm' : 'N/D' }}
+              </p>
+            </div>
+            <div class="bg-stone-50 p-3 rounded-xl border border-stone-200/60">
+              <p class="text-[10px] uppercase font-bold text-stone-400">Cadera</p>
+              <p class="text-xl font-black text-stone-900 mt-0.5">
+                {{ latest.cadera ? latest.cadera + ' cm' : 'N/D' }}
+              </p>
+            </div>
+            <div class="bg-stone-50 p-3 rounded-xl border border-stone-200/60">
+              <p class="text-[10px] uppercase font-bold text-stone-400">Pecho</p>
+              <p class="text-xl font-black text-stone-900 mt-0.5">
+                {{ latest.pecho ? latest.pecho + ' cm' : 'N/D' }}
+              </p>
+            </div>
+          </div>
+          <p class="text-[10px] text-stone-400 mt-2 font-mono text-right">
+            Última medición: {{ latest.timestamp | date:'mediumDate' }}
+          </p>
+        } @else {
+          <div class="py-6 text-center text-stone-400 text-xs">
+            No hay registros biométricos registrados todavía.
+          </div>
+        }
+      </div>
+
+      <!-- Tarjeta de Racha y Disciplina -->
+      <div class="bg-white p-4 rounded-2xl border border-stone-200 shadow-xs flex items-center justify-between">
+        <div>
+          <h4 class="text-xs font-black text-stone-900 uppercase tracking-wider">Compromiso Diario</h4>
+          <p class="text-[11px] text-stone-500 mt-0.5">Días consecutivos de registro biológico</p>
+        </div>
+        <div class="text-right">
+          <span class="text-2xl font-black text-amber-500">{{ athlete()?.streak_days || 0 }}</span>
+          <span class="text-xs font-bold text-stone-400 ml-1">Días</span>
+        </div>
+      </div>
+    </div>
+  }
 </div>
+
+<!-- MODAL: EDITAR PERFIL DEL ATLETA -->
+<p-dialog
+  [(visible)]="isEditModalOpen"
+  [modal]="true"
+  [draggable]="false"
+  [resizable]="false"
+  header="Editar Perfil de Atleta"
+  styleClass="w-[92vw] max-w-md bg-white rounded-3xl overflow-hidden shadow-2xl p-0"
+>
+  <div class="p-5 space-y-4">
+    <div>
+      <label class="block text-[10px] font-bold uppercase tracking-wider text-stone-500 mb-1">Nombre</label>
+      <input
+        type="text"
+        pInputText
+        [ngModel]="editFirstName()"
+        (ngModelChange)="editFirstName.set($event)"
+        placeholder="Tu nombre"
+        class="w-full bg-stone-50 border-stone-200 rounded-xl text-sm p-3 text-stone-900"
+      />
+    </div>
+
+    <div>
+      <label class="block text-[10px] font-bold uppercase tracking-wider text-stone-500 mb-1">Apellido</label>
+      <input
+        type="text"
+        pInputText
+        [ngModel]="editLastName()"
+        (ngModelChange)="editLastName.set($event)"
+        placeholder="Tu apellido"
+        class="w-full bg-stone-50 border-stone-200 rounded-xl text-sm p-3 text-stone-900"
+      />
+    </div>
+
+    <div>
+      <label class="block text-[10px] font-bold uppercase tracking-wider text-stone-500 mb-1">Username (@handle)</label>
+      <input
+        type="text"
+        pInputText
+        [ngModel]="editUsername()"
+        (ngModelChange)="editUsername.set($event)"
+        placeholder="usuario_awakin"
+        class="w-full bg-stone-50 border-stone-200 rounded-xl text-sm p-3 text-stone-900 font-mono"
+      />
+    </div>
+
+    <div>
+      <label class="block text-[10px] font-bold uppercase tracking-wider text-stone-500 mb-1">Biografía</label>
+      <textarea
+        rows="3"
+        [ngModel]="editBio()"
+        (ngModelChange)="editBio.set($event)"
+        placeholder="Describe tus metas de rendimiento..."
+        class="w-full bg-stone-50 border border-stone-200 rounded-xl text-xs p-3 text-stone-900 focus:outline-none focus:border-amber-500 resize-none"
+      ></textarea>
+    </div>
+
+    <div>
+      <label class="block text-[10px] font-bold uppercase tracking-wider text-stone-500 mb-1">URL Foto de Perfil</label>
+      <input
+        type="text"
+        pInputText
+        [ngModel]="editPhotoUrl()"
+        (ngModelChange)="editPhotoUrl.set($event)"
+        placeholder="https://ejemplo.com/avatar.jpg"
+        class="w-full bg-stone-50 border-stone-200 rounded-xl text-xs p-3 text-stone-900 font-mono"
+      />
+    </div>
+
+    @if (saveSuccess()) {
+      <div class="p-2.5 bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs font-bold rounded-xl flex items-center gap-2">
+        <i class="pi pi-check-circle"></i>
+        <span>¡Perfil actualizado con éxito en Supabase!</span>
+      </div>
+    }
+
+    <div class="flex gap-2 pt-2">
+      <button
+        (click)="isEditModalOpen.set(false)"
+        class="flex-1 bg-stone-100 hover:bg-stone-200 text-stone-700 font-bold text-xs py-3 rounded-xl transition-all cursor-pointer"
+      >
+        Cancelar
+      </button>
+      <button
+        (click)="saveProfile()"
+        [disabled]="isSaving()"
+        class="flex-1 bg-amber-500 hover:bg-amber-600 disabled:opacity-50 text-white font-black text-xs py-3 rounded-xl transition-all cursor-pointer flex items-center justify-center gap-1.5 shadow-sm"
+      >
+        @if (isSaving()) {
+          <i class="pi pi-spin pi-spinner"></i>
+          <span>Guardando...</span>
+        } @else {
+          <span>Guardar Cambios</span>
+        }
+      </button>
+    </div>
+  </div>
+</p-dialog>
+
+<!-- MODAL: DETALLE DE FOTO DE COMIDA -->
+@if (selectedMeal()) {
+  <p-dialog
+    [visible]="true"
+    (visibleChange)="selectedMeal.set(null)"
+    [modal]="true"
+    [draggable]="false"
+    [resizable]="false"
+    header="Registro Nutricional"
+    styleClass="w-[90vw] max-w-sm bg-white rounded-3xl overflow-hidden shadow-2xl p-0"
+  >
+    <div class="p-4 space-y-3">
+      <div class="rounded-2xl overflow-hidden aspect-video bg-stone-100 border border-stone-200">
+        <img [src]="selectedMeal()?.foto_url" alt="Plato" class="w-full h-full object-cover" />
+      </div>
+      <div>
+        <span class="text-[9px] font-bold uppercase tracking-widest bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full">
+          {{ selectedMeal()?.tipo_comida || 'Comida' }}
+        </span>
+        <h4 class="font-black text-sm text-stone-900 mt-1">
+          {{ selectedMeal()?.nombre || 'Plato Registrado' }}
+        </h4>
+        <p class="text-[10px] text-stone-500 font-mono mt-0.5">
+          {{ selectedMeal()?.timestamp | date:'medium' }}
+        </p>
+      </div>
+      @if (selectedMeal()?.notas) {
+        <p class="text-xs text-stone-600 bg-stone-50 p-2 rounded-xl border border-stone-100">
+          {{ selectedMeal()?.notas }}
+        </p>
+      }
+    </div>
+  </p-dialog>
+}
+

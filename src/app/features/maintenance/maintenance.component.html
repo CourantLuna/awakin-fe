@@ -1,0 +1,104 @@
+<div
+  class="min-h-screen bg-[#FAFAF9] text-stone-900 flex flex-col justify-between px-6 py-10 relative overflow-hidden font-sans pb-28">
+  <!-- Luces difusas sutiles en tema claro -->
+  <div
+    class="absolute top-10 left-1/2 -translate-x-1/2 w-96 h-96 bg-orange-100/60 rounded-full blur-3xl pointer-events-none">
+  </div>
+  <div class="absolute bottom-10 right-10 w-80 h-80 bg-amber-100/40 rounded-full blur-3xl pointer-events-none"></div>
+
+  <!-- Header Superior -->
+  <header class="relative z-10 flex items-center justify-between">
+    <div class="flex items-center gap-2">
+      <span class="w-2.5 h-2.5 rounded-full bg-awakin-sun animate-ping"></span>
+      <span class="text-[10px] font-black uppercase tracking-[0.25em] text-awakin-sun">
+        AWAKIN OS // CONTROL
+      </span>
+    </div>
+    <span
+      class="text-[9px] font-mono px-2.5 py-1 rounded-full bg-white border border-stone-200 text-stone-500 shadow-xs">
+      MODULE_{{ moduleKey().toUpperCase() }}_ENABLED: false
+    </span>
+  </header>
+
+  <!-- Tarjeta Central de Mantenimiento -->
+  <main class="relative z-10 my-auto py-6">
+    <div
+      class="max-w-md mx-auto bg-white border border-stone-200/90 rounded-3xl p-8 shadow-xl shadow-stone-200/60 text-center relative overflow-hidden">
+      <!-- Acento superior de color solar -->
+      <div class="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-awakin-sun via-amber-400 to-awakin-sun">
+      </div>
+
+      <!-- Icono estilizado -->
+      <div
+        class="w-20 h-20 mx-auto mb-5 rounded-2xl bg-orange-50 border border-orange-100 flex items-center justify-center shadow-inner relative">
+        <i [class]="meta().icon + ' text-3xl text-awakin-sun'"></i>
+        <div
+          class="absolute -bottom-1.5 -right-1.5 w-6 h-6 rounded-full bg-stone-900 border-2 border-white flex items-center justify-center shadow">
+          <i class="pi pi-lock text-[9px] text-amber-400"></i>
+        </div>
+      </div>
+
+      <!-- Badge de Estado -->
+      <div
+        class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-orange-50 border border-orange-200/80 text-awakin-sun text-xs font-bold uppercase tracking-wider mb-3">
+        <i class="pi pi-wrench text-[10px]"></i>
+        <span>Módulo en Mantenimiento</span>
+      </div>
+
+      <!-- Título y Descripción -->
+      <h1 class="text-2xl font-black italic tracking-wide text-stone-900 uppercase mb-2">
+        {{ meta().title }}
+      </h1>
+      <p class="text-stone-600 text-sm leading-relaxed mb-6">
+        {{ meta().description }}
+      </p>
+
+      <!-- Panel técnico de estado -->
+      <div class="bg-stone-50 rounded-2xl p-4 border border-stone-200/80 mb-6 text-left space-y-2 font-mono text-xs">
+        <div class="flex justify-between items-center text-stone-500">
+          <span>Identificador:</span>
+          <span class="text-stone-900 font-bold">{{ moduleKey() }}</span>
+        </div>
+        <div class="flex justify-between items-center text-stone-500">
+          <span>Acceso:</span>
+          <span class="text-amber-700 font-bold bg-amber-50 px-2 py-0.5 rounded border border-amber-200">En
+            Mantenimiento</span>
+        </div>
+        <div class="flex justify-between items-center text-stone-500">
+          <span>Sincronización:</span>
+          <span class="text-stone-800 font-bold">Activa</span>
+        </div>
+      </div>
+
+      <!-- Acciones -->
+      <div class="space-y-3">
+        <button (click)="goToHome()"
+          class="w-full py-3.5 px-4 rounded-xl bg-awakin-sun hover:bg-orange-500 text-white font-black text-xs uppercase tracking-wider shadow-md shadow-orange-500/20 active:scale-95 transition-all flex items-center justify-center gap-2">
+          <i class="pi pi-home text-sm"></i>
+          <span>Volver al Inicio</span>
+        </button>
+
+        <div class="grid grid-cols-2 gap-3">
+          <button (click)="goToIntake()"
+            class="py-3 px-3 rounded-xl bg-stone-100 hover:bg-stone-200 text-stone-800 font-bold text-xs active:scale-95 transition-all border border-stone-200 flex items-center justify-center gap-1.5">
+            <i class="pi pi-apple text-xs text-awakin-sun"></i>
+            <span>Ir a Intake</span>
+          </button>
+
+          <button (click)="checkStatus()" [disabled]="isChecking()"
+            class="py-3 px-3 rounded-xl bg-stone-100 hover:bg-stone-200 text-stone-700 font-bold text-xs active:scale-95 transition-all border border-stone-200 flex items-center justify-center gap-1.5 disabled:opacity-50">
+            <i [class]="isChecking() ? 'pi pi-spin pi-spinner text-xs' : 'pi pi-refresh text-xs'"></i>
+            <span>{{ isChecking() ? 'Verificando...' : 'Reintentar' }}</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Footer -->
+  <footer class="relative z-10 text-center">
+    <p class="text-[10px] text-stone-400 font-mono uppercase tracking-widest">
+      Awakin Protocol &bull; Sistema Operativo de Alto Rendimiento
+    </p>
+  </footer>
+</div>

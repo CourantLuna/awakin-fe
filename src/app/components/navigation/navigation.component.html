@@ -1,88 +1,128 @@
-<div
-  class="fixed bottom-0 left-0 right-0 h-24 bg-white/90 backdrop-blur-md shadow-2xl border-t-4 border-[var(--p-primary-100)] flex justify-around items-end pb-2 z-50"
+<nav
+  class="fixed bottom-5 left-1/2 -translate-x-1/2 z-50 transition-all duration-300 ease-out w-[92vw] max-w-md"
+  [ngClass]="isBarVisible() ? 'translate-y-0 opacity-100' : 'translate-y-28 opacity-0 pointer-events-none'"
+  aria-label="Navegación principal flotante"
 >
-  <button (click)="selectModule('intake')" class="flex flex-col items-center pb-1">
-    <img
-      [src]="activeTab() === 'intake' ? 'icons/intake-active.png' : 'icons/intake-gray.png'"
-      class="w-16 h-16 object-contain"
-      alt="Intake"
-    />
-    <span
-      class="text-[10px] -mt-1 font-extrabold text-awakin-sun"
-      [class.hidden]="activeTab() !== 'intake'"
-    >
-      INTAKE
-    </span>
-  </button>
-
-  <button (click)="selectModule('workout')" class="flex flex-col items-center pb-1">
-    <img
-      [src]="activeTab() === 'workout' ? 'icons/workout-active.png' : 'icons/workout-gray.png'"
-      class="w-16 h-16 object-contain"
-      alt="Workout"
-    />
-    <span
-      class="text-[10px] -mt-1 font-extrabold text-awakin-sun"
-      [class.hidden]="activeTab() !== 'workout'"
-    >
-      WORKOUT
-    </span>
-  </button>
-
-  <button
-    (click)="selectModule('home')"
-    class="transition-all duration-300 active:scale-95 flex flex-col items-center"
-    [ngClass]="activeTab() === 'home' ? 'relative -top-4' : 'pb-'"
+  <!-- Cápsula / Cilindro Flotante con Altura Fija (overflow-visible) -->
+  <div
+    class="w-full h-16 bg-white/90 backdrop-blur-2xl border border-stone-200/90 shadow-[0_16px_40px_-6px_rgba(0,0,0,0.16),0_0_0_1px_rgba(0,0,0,0.03)] rounded-full px-6 flex items-center justify-between select-none relative overflow-visible"
   >
-    <div
-      class="transition-all duration-300 flex items-center justify-center"
-      [ngClass]="
-        activeTab() === 'home'
-          ? 'w-22 h-22 rounded-full border-4 border-white bg-awakin-sun shadow-2xl shadow-orange-200/50 scale-100'
-          : 'pt-1 w-20 h-20 bg-transparent border-none'
-      "
+    <!-- INTAKE -->
+    <button
+      (click)="selectModule('intake')"
+      class="flex flex-col items-center justify-center transition-all duration-300 active:scale-90 cursor-pointer min-w-[52px] h-full"
+      title="Intake"
     >
       <img
-        [src]="activeTab() === 'home' ? 'icons/home-active.png' : 'icons/home-gray.png'"
-        class="transition-all duration-300 object-contain"
-        [ngClass]="activeTab() === 'home' ? 'w-16 h-16 animate-pulse-slow' : 'w-16 h-16'"
-        alt="home Home"
+        [src]="activeTab() === 'intake' ? 'icons/intake-active.png' : 'icons/intake-gray.png'"
+        class="w-11 h-11 object-contain transition-all duration-300"
+        [ngClass]="activeTab() === 'intake' ? 'scale-110 drop-shadow-sm' : 'opacity-70 hover:opacity-100'"
+        alt="Intake"
       />
-    </div>
+      <span
+        class="text-[9px] font-extrabold text-awakin-sun -mt-0.5 tracking-tight transition-all duration-300"
+        [class.hidden]="activeTab() !== 'intake'"
+      >
+        INTAKE
+      </span>
+    </button>
 
-    <span
-      class="text-[12px] bottom-0 font-extrabold text-awakin-sun"
-      [class.hidden]="activeTab() !== 'home'"
+    <!-- WORKOUT -->
+    <button
+      (click)="selectModule('workout')"
+      class="flex flex-col items-center justify-center transition-all duration-300 active:scale-90 cursor-pointer min-w-[52px] h-full"
+      title="Workout"
     >
-      AWAKIN
-    </span>
-  </button>
+      <img
+        [src]="activeTab() === 'workout' ? 'icons/workout-active.png' : 'icons/workout-gray.png'"
+        class="w-11 h-11 object-contain transition-all duration-300"
+        [ngClass]="activeTab() === 'workout' ? 'scale-110 drop-shadow-sm' : 'opacity-70 hover:opacity-100'"
+        alt="Workout"
+      />
+      <span
+        class="text-[9px] font-extrabold text-awakin-sun -mt-0.5 tracking-tight transition-all duration-300"
+        [class.hidden]="activeTab() !== 'workout'"
+      >
+        WORKOUT
+      </span>
+    </button>
 
-  <button (click)="selectModule('kin')" class="flex flex-col items-center pb-1">
-    <img
-      [src]="activeTab() === 'kin' ? 'icons/kin-active.png' : 'icons/kin-gray.png'"
-      class="w-16 h-16 object-contain"
-      alt="Kin"
-    />
-    <span
-      class="text-[10px] -mt-1 font-extrabold text-awakin-sun"
-      [class.hidden]="activeTab() !== 'kin'"
+    <!-- HOME (AWAKIN CORE) - Flota hacia arriba con transform sin alterar la altura del padre -->
+    <button
+      (click)="selectModule('home')"
+      class="relative flex flex-col items-center justify-center cursor-pointer min-w-[52px] h-full active:scale-95 transition-all duration-300"
+      title="Awakin"
     >
-      KIN
-    </span>
-  </button>
+      <div
+        class="transition-transform duration-300 flex items-center justify-center"
+        [ngClass]="activeTab() === 'home' ? '-translate-y-4' : 'translate-y-0'"
+      >
+        @if (activeTab() === 'home') {
+          <div
+            class="w-13 h-13 bg-awakin-sun shadow-xl shadow-orange-500/40 border-3 border-white scale-105 rounded-full flex items-center justify-center transition-all duration-300"
+          >
+            <img
+              src="icons/home-active.png"
+              class="w-10 h-10 object-contain transition-all duration-300"
+              alt="Awakin Home"
+            />
+          </div>
+        } @else {
+          <img
+            src="icons/home-gray.png"
+            class="w-10 h-10 object-contain transition-all duration-300 opacity-70 hover:opacity-100"
+            alt="Awakin Home"
+          />
+        }
+      </div>
 
-  <button (click)="selectModule('avatar')" class="flex flex-col items-center pb-1">
-    <img
-      [src]="activeTab() === 'avatar' ? 'icons/avatar-active.png' : 'icons/avatar-gray.png'"
-      class="w-16 h-16 object-contain"
-      alt="Me"
-    />
-    <span
-      class="text-[10px] -mt-1 font-extrabold text-awakin-sun"
-      [class.hidden]="activeTab() !== 'avatar'"
+      <span
+        class="text-[9px] font-extrabold text-awakin-sun tracking-tight transition-all duration-300"
+        [ngClass]="activeTab() === 'home' ? 'absolute bottom-1' : '-mt-0.5'"
+        [class.hidden]="activeTab() !== 'home'"
+      >
+        AWAKIN
+      </span>
+    </button>
+
+    <!-- KIN -->
+    <button
+      (click)="selectModule('kin')"
+      class="flex flex-col items-center justify-center transition-all duration-300 active:scale-90 cursor-pointer min-w-[52px] h-full"
+      title="Kin"
     >
-      AVATAR
-    </span>
-  </button>
-</div>
+      <img
+        [src]="activeTab() === 'kin' ? 'icons/kin-active.png' : 'icons/kin-gray.png'"
+        class="w-11 h-11 object-contain transition-all duration-300"
+        [ngClass]="activeTab() === 'kin' ? 'scale-110 drop-shadow-sm' : 'opacity-70 hover:opacity-100'"
+        alt="Kin"
+      />
+      <span
+        class="text-[9px] font-extrabold text-awakin-sun -mt-0.5 tracking-tight transition-all duration-300"
+        [class.hidden]="activeTab() !== 'kin'"
+      >
+        KIN
+      </span>
+    </button>
+
+    <!-- AVATAR -->
+    <button
+      (click)="selectModule('avatar')"
+      class="flex flex-col items-center justify-center transition-all duration-300 active:scale-90 cursor-pointer min-w-[52px] h-full"
+      title="Avatar"
+    >
+      <img
+        [src]="activeTab() === 'avatar' ? 'icons/avatar-active.png' : 'icons/avatar-gray.png'"
+        class="w-11 h-11 object-contain transition-all duration-300"
+        [ngClass]="activeTab() === 'avatar' ? 'scale-110 drop-shadow-sm' : 'opacity-70 hover:opacity-100'"
+        alt="Avatar"
+      />
+      <span
+        class="text-[9px] font-extrabold text-awakin-sun -mt-0.5 tracking-tight transition-all duration-300"
+        [class.hidden]="activeTab() !== 'avatar'"
+      >
+        AVATAR
+      </span>
+    </button>
+  </div>
+</nav>

@@ -113,6 +113,24 @@ export class AuthService {
     this.#sessionState.set(session);
   }
 
+  /**
+   * Conecta directamente un atleta como usuario autenticado de la app
+   */
+  public devLoginAthlete(id: string, email: string, fullName: string, photoUrl?: string): void {
+    const sessionData: AthleteSession = {
+      token: 'dev-token-' + id,
+      avatar: {
+        id: id,
+        email: email,
+        fullName: fullName || 'Atleta AWAKIN',
+        photoUrl: photoUrl || 'https://i.pravatar.cc/150',
+        level: 1,
+        streak: 0
+      }
+    };
+    this.initializeProtocol(sessionData);
+  }
+
   private clearProtocolState(): void {
     localStorage.removeItem('awakin_session');
     this.#sessionState.set(null);

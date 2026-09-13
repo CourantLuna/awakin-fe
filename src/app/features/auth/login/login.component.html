@@ -109,6 +109,18 @@
           styleClass="w-full bg-gradient-to-r from-[#FE970A] to-amber-500 hover:from-amber-400 hover:to-orange-500 text-black font-black text-xs tracking-widest uppercase p-4 rounded-xl border-none transition-all duration-200">
         </p-button>
 
+        <!-- Acceso Rápido / Conectar como Atleta Activo -->
+        <div class="pt-2">
+          <button
+            type="button"
+            (click)="quickAccessAthlete()"
+            class="w-full bg-slate-800/80 hover:bg-slate-700 text-amber-400 hover:text-amber-300 font-bold text-xs tracking-widest uppercase p-3.5 rounded-xl border border-amber-500/30 transition-all duration-200 cursor-pointer flex items-center justify-center gap-2"
+          >
+            <i class="pi pi-bolt"></i>
+            <span>Acceso Inmediato como Atleta</span>
+          </button>
+        </div>
+
       </form>
 
     </div>

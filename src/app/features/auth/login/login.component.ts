@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
+import { AthleteService } from '../../../core/services/athlete.service';
 import { firstValueFrom } from 'rxjs'; // Protocolo de conversión RxJS a Promesa
 
 // UI Kit: Componentes Premium de PrimeNG
@@ -63,6 +64,8 @@ export class LoginComponent {
     }
   }
 
+  public athleteService = inject(AthleteService);
+
   /**
    * Dispara el flujo OAuth Prestige con Google Workspace
    * Redirige el hilo de ejecución directamente al origen de autenticación externa
@@ -71,5 +74,32 @@ export class LoginComponent {
     this.errorMessage.set('');
     // Al ser un redireccionamiento nativo de ventana, no requiere await ni verificación local
     this.authService.loginWithGoogle();
+  }
+
+  /**
+   * Acceso directo con un atleta registrado de la base de datos
+   */
+  quickAccessAthlete(): void {
+    const list = this.athleteService.availableAthletes();
+    const athlete = list.length > 0 ? list[0] : null;
+    if (athlete) {
+      this.athleteService.setActiveAthlete(athlete);
+      this.authService.devLoginAthlete(
+        athlete.id,
+        athlete.email || `${athlete.username}@awakin.com`,
+        `${athlete.first_name || ''} ${athlete.last_name || ''}`.trim() || athlete.username,
+        athlete.profile_image_url || undefined
+      );
+      this.router.navigate(['/avatar']);
+    } else {
+      // Fallback a Courant Luna por defecto si la lista aún no ha respondido
+      this.authService.devLoginAthlete(
+        'bde94017-1771-4c83-8901-f0e400e0fb43',
+        'courantluna@gmail.com',
+        'Courant Luna',
+        'https://lh3.googleusercontent.com/a/ACg8ocJfnggD49HZR51l7GkBR70-I-WPkaOxybRqHRE12OjL7NUMtw=s96-c'
+      );
+      this.router.navigate(['/avatar']);
+    }
   }
 }
