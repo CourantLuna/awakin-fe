@@ -12,6 +12,7 @@ export class IntakeProgressWidgetComponent {
   minA = input.required<number>();
   goalB = input.required<number>();
   maintC = input.required<number>();
+  showCurves = input<boolean>(true);
 
   @ViewChild('trackPath') trackPath!: ElementRef<SVGPathElement>;
 

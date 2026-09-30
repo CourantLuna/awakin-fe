@@ -1,4 +1,4 @@
-import { Component, OnInit, signal, ViewChild } from '@angular/core';
+import { Component, computed, OnInit, signal, ViewChild } from '@angular/core';
 import { DragDropModule } from '@angular/cdk/drag-drop';
 import { CommonModule } from '@angular/common';
 import { ChartModule } from 'primeng/chart';
@@ -11,23 +11,85 @@ import { IntakeScaleWidgetComponent } from './components/intake-scale-widget/int
 import { ProtocolMatrixDrawer } from './components/protocol-matrix-drawer/protocol-matrix-drawer';
 import { ShoppingListDrawer } from './components/shopping-list-drawer/shopping-list-drawer';
 import { WeeklyTemplate } from './models/intake.models';
-import { FoodCardHorizontalComponent } from './components/food-cart-horizontal/food-card-horizontal.component';
 import { FormsModule } from '@angular/forms';
 import { IntakeTopBar } from '../../components/intake-top-bar/intake-top-bar';
 
-// 1. NUEVO: Definición estricta del modelo de comida
+// 1. Tipos de comida del protocolo
+export type MealType =
+  | 'BREAKFAST'
+  | 'LUNCH'
+  | 'DINNER'
+  | 'SNACK_AM'
+  | 'SNACK_PM'
+  | 'SNACK_EXTRA'
+  | 'DRINK';
+
+export interface MealConfig {
+  type: MealType;
+  title: string;
+  icon: string;
+  badgeBg: string;
+}
+
+export const MEAL_DEFINITIONS: Record<MealType, MealConfig> = {
+  BREAKFAST: {
+    type: 'BREAKFAST',
+    title: 'Desayuno',
+    icon: 'pi pi-sun',
+    badgeBg: 'bg-amber-500/10 text-amber-600 border-amber-200/50',
+  },
+  SNACK_AM: {
+    type: 'SNACK_AM',
+    title: 'Snack Mañana',
+    icon: 'pi pi-apple',
+    badgeBg: 'bg-emerald-500/10 text-emerald-600 border-emerald-200/50',
+  },
+  LUNCH: {
+    type: 'LUNCH',
+    title: 'Almuerzo',
+    icon: 'pi pi-compass',
+    badgeBg: 'bg-orange-500/10 text-orange-600 border-orange-200/50',
+  },
+  SNACK_PM: {
+    type: 'SNACK_PM',
+    title: 'Snack Tarde',
+    icon: 'pi pi-bolt',
+    badgeBg: 'bg-purple-500/10 text-purple-600 border-purple-200/50',
+  },
+  DINNER: {
+    type: 'DINNER',
+    title: 'Cena',
+    icon: 'pi pi-moon',
+    badgeBg: 'bg-indigo-500/10 text-indigo-600 border-indigo-200/50',
+  },
+  SNACK_EXTRA: {
+    type: 'SNACK_EXTRA',
+    title: 'Snack Extra',
+    icon: 'pi pi-star',
+    badgeBg: 'bg-pink-500/10 text-pink-600 border-pink-200/50',
+  },
+  DRINK: {
+    type: 'DRINK',
+    title: 'Bebidas',
+    icon: 'pi pi-filter',
+    badgeBg: 'bg-cyan-500/10 text-cyan-600 border-cyan-200/50',
+  },
+};
+
+// Modelo de alimento
 export interface FoodItem {
   id: string;
   name: string;
   emoji: string;
-  category: string; // 'Desayuno' | 'Almuerzo' | 'Merienda' | 'Cena'
+  mealType: MealType;
+  category?: string;
   portion: number;
-  unit: string; // 'unidades', 'g', 'porción', 'ml'
+  unit: string;
   kcal: number;
   protein: number;
   carbs: number;
   fat: number;
-  isLogged: boolean; // Controla si es sugerencia (false) o registrado (true)
+  isLogged: boolean;
 }
 
 // 1. INTERFACES ACTUALIZADAS (Arriba en tu archivo)
@@ -63,7 +125,6 @@ export interface ManualMenuSelection {
     DragDropModule,
     ProtocolMatrixDrawer,
     ShoppingListDrawer,
-    FoodCardHorizontalComponent,
     FormsModule,
     IntakeTopBar,
   ],
@@ -85,6 +146,17 @@ export class IntakeUserComponent implements OnInit {
 
   // En intake-user.component.ts
   currentLabel = signal<string>('Hoy');
+
+  // Label dinámico para el selector de plan según el día seleccionado en el header calendar
+  planLabel = computed(() => {
+    const label = this.currentLabel()?.trim() || 'Hoy';
+    const lower = label.toLowerCase();
+    if (lower === 'hoy') return 'Plan de Hoy';
+    if (lower === 'ayer') return 'Plan de Ayer';
+    if (lower === 'mañana') return 'Plan de Mañana';
+    const capitalized = label.charAt(0).toUpperCase() + label.slice(1);
+    return `Plan del ${capitalized}`;
+  });
 
   // 2. CONTROL DE DRAWERS
   isMatrixOpen = signal<boolean>(false);
@@ -240,48 +312,257 @@ export class IntakeUserComponent implements OnInit {
 
   openDayMenuIndex = signal<number | null>(null);
 
-  // 2. NUEVO: Señal con las comidas del día (Sugerencias + Registradas)
+  // Definiciones de tipos de comida y configuración activa (mockup con las 5 opciones)
+  mealDefinitions = MEAL_DEFINITIONS;
+
+  configuredMealTypes = signal<MealType[]>([
+    'BREAKFAST',
+    'SNACK_AM',
+    'LUNCH',
+    'SNACK_PM',
+    'DINNER',
+  ]);
+
+  // Señal con las comidas del día agrupadas por MealType (Sugerencias + Registradas)
   foodItems = signal<FoodItem[]>([
     {
       id: '1',
-      name: 'Huevos con Aguacate',
-      emoji: '🍳',
-      category: 'Desayuno',
+      name: 'Pechuga de Pavo con Tostadas',
+      emoji: '🥪',
+      mealType: 'BREAKFAST',
       portion: 2,
-      unit: 'unidades',
-      kcal: 450,
-      protein: 30,
-      carbs: 12,
-      fat: 22,
+      unit: 'tostadas (180g)',
+      kcal: 290,
+      protein: 26,
+      carbs: 32,
+      fat: 6,
       isLogged: true,
     },
     {
       id: '2',
-      name: 'Bowl de Avena y Whey',
+      name: 'Huevos Revueltos con Aguacate',
+      emoji: '🍳',
+      mealType: 'BREAKFAST',
+      portion: 2,
+      unit: 'huevos',
+      kcal: 310,
+      protein: 18,
+      carbs: 4,
+      fat: 24,
+      isLogged: true,
+    },
+    {
+      id: '3',
+      name: 'Bowl de Avena con Whey y Frutos Rojos',
       emoji: '🥣',
-      category: 'Merienda',
+      mealType: 'SNACK_AM',
       portion: 120,
       unit: 'g',
       kcal: 320,
       protein: 25,
       carbs: 40,
       fat: 8,
-      isLogged: false,
+      isLogged: true,
     },
     {
-      id: '3',
-      name: 'Salmón al Horno con Espárragos',
-      emoji: '🍱',
-      category: 'Cena',
+      id: '4',
+      name: 'Pechuga De Pollo Con Pasta Y Tomate',
+      emoji: '🍗',
+      mealType: 'LUNCH',
       portion: 1,
-      unit: 'porción',
-      kcal: 510,
-      protein: 42,
-      carbs: 5,
-      fat: 30,
+      unit: 'porción (456 g)',
+      kcal: 549,
+      protein: 44,
+      carbs: 50,
+      fat: 19,
+      isLogged: true,
+    },
+    {
+      id: '5',
+      name: 'Omelet De Huevo Y Claras Con Papa',
+      emoji: '🥚',
+      mealType: 'DINNER',
+      portion: 1,
+      unit: 'porción (489 g)',
+      kcal: 370,
+      protein: 29,
+      carbs: 34,
+      fat: 13,
       isLogged: false,
     },
   ]);
+
+  // Cálculos de macros totales registrados (dinámicos para el scale-widget)
+  totalLoggedProtein = computed(() =>
+    this.foodItems()
+      .filter((f) => f.isLogged)
+      .reduce((sum, f) => sum + f.protein, 0),
+  );
+
+  totalLoggedCarbs = computed(() =>
+    this.foodItems()
+      .filter((f) => f.isLogged)
+      .reduce((sum, f) => sum + f.carbs, 0),
+  );
+
+  totalLoggedFat = computed(() =>
+    this.foodItems()
+      .filter((f) => f.isLogged)
+      .reduce((sum, f) => sum + f.fat, 0),
+  );
+
+  getFoodsForMeal(type: MealType): FoodItem[] {
+    return this.foodItems().filter((f) => f.mealType === type);
+  }
+
+  getMealTotals(type: MealType) {
+    const foods = this.getFoodsForMeal(type);
+    return {
+      kcal: foods.reduce((sum, f) => sum + f.kcal, 0),
+      protein: foods.reduce((sum, f) => sum + f.protein, 0),
+      carbs: foods.reduce((sum, f) => sum + f.carbs, 0),
+      fat: foods.reduce((sum, f) => sum + f.fat, 0),
+      count: foods.length,
+    };
+  }
+
+  // ==========================================
+  // MODAL DE REGISTRO DE COMIDA (Nutritional Report)
+  // ==========================================
+  isRegisterModalOpen = signal<boolean>(false);
+  targetFoodItem = signal<FoodItem | null>(null);
+  uploadedPhotoUrl = signal<string | null>(null);
+  selectedMealType = signal<MealType>('LUNCH');
+  selectedAdherence = signal<'100' | 'ADAPTATION' | 'FREE' | null>('100');
+  notesText = signal<string>('');
+
+  // Opciones de tipo de comida para el formulario (mockup: Desayuno, Almuerzo, Merienda, Cena, Bebida)
+  modalMealOptions: { type: MealType; label: string; icon: string }[] = [
+    { type: 'BREAKFAST', label: 'Desayuno', icon: 'pi pi-sun' },
+    { type: 'LUNCH', label: 'Almuerzo', icon: 'pi pi-compass' },
+    { type: 'SNACK_AM', label: 'Merienda', icon: 'pi pi-apple' },
+    { type: 'DINNER', label: 'Cena', icon: 'pi pi-moon' },
+    { type: 'DRINK', label: 'Bebida', icon: 'pi pi-filter' },
+  ];
+
+  // Opciones de evaluación de adherencia
+  adherenceOptions = [
+    {
+      id: '100' as const,
+      title: 'Sí, 100% en el plan',
+      desc: 'Ingredientes y porciones exactas',
+      pts: 10,
+    },
+    {
+      id: 'ADAPTATION' as const,
+      title: 'Adaptación de macros',
+      desc: 'Sustituciones equivalentes que cuadran',
+      pts: 5,
+    },
+    {
+      id: 'FREE' as const,
+      title: 'Comida libre / Fuera de plan',
+      desc: 'No se ajusta a los requerimientos',
+      pts: 2,
+    },
+  ];
+
+  // Validación: foto obligatoria, tipo de comida obligatorio, evaluación de adherencia obligatoria
+  isRegisterFormValid = computed(() => {
+    return (
+      !!this.uploadedPhotoUrl() &&
+      !!this.selectedMealType() &&
+      !!this.selectedAdherence()
+    );
+  });
+
+  // Handler al presionar el check de alguna receta
+  handleFoodCheckClick(food: FoodItem) {
+    if (food.isLogged) {
+      // Si ya estaba marcada, la desmarca directamente
+      this.toggleFoodLog(food);
+    } else {
+      // Si no estaba marcada, abre primero el modal para registrar
+      this.openRegisterModal(food.mealType, food);
+    }
+  }
+
+  // Abrir modal de registro
+  openRegisterModal(mealType?: MealType, food?: FoodItem) {
+    this.targetFoodItem.set(food || null);
+    this.selectedMealType.set(food ? food.mealType : (mealType || 'LUNCH'));
+    this.uploadedPhotoUrl.set(null);
+    this.selectedAdherence.set('100');
+    this.notesText.set(food ? `${food.name} (${food.portion} ${food.unit})` : '');
+    this.isRegisterModalOpen.set(true);
+  }
+
+  // Manejar selección de foto desde input file
+  onPhotoSelected(event: Event) {
+    const input = event.target as HTMLInputElement;
+    if (input.files && input.files[0]) {
+      const file = input.files[0];
+      const reader = new FileReader();
+      reader.onload = (e: any) => {
+        this.uploadedPhotoUrl.set(e.target.result);
+      };
+      reader.readAsDataURL(file);
+    }
+  }
+
+  // Remover foto seleccionada
+  removePhoto() {
+    this.uploadedPhotoUrl.set(null);
+  }
+
+  // Foto de prueba para agilizar testing
+  useDemoPhoto() {
+    this.uploadedPhotoUrl.set(
+      'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=600&q=80',
+    );
+  }
+
+  // Enviar reporte y registrar comida/bebida
+  submitRegisterFood() {
+    if (!this.isRegisterFormValid()) return;
+
+    const target = this.targetFoodItem();
+    if (target) {
+      // Marcar como consumido el alimento específico
+      this.foodItems.update((items) =>
+        items.map((i) => (i.id === target.id ? { ...i, isLogged: true } : i)),
+      );
+    } else {
+      // Registrar un nuevo alimento en la comida elegida
+      const def = this.mealDefinitions[this.selectedMealType()];
+      const newFood: FoodItem = {
+        id: Date.now().toString(),
+        name: this.notesText()?.trim() || `Registro de ${def.title}`,
+        emoji:
+          this.selectedMealType() === 'BREAKFAST'
+            ? '🍳'
+            : this.selectedMealType() === 'LUNCH'
+              ? '🍲'
+              : this.selectedMealType() === 'DINNER'
+                ? '🥗'
+                : this.selectedMealType() === 'DRINK'
+                  ? '🥤'
+                  : '🥪',
+        mealType: this.selectedMealType(),
+        portion: 1,
+        unit: 'porción',
+        kcal: 450,
+        protein: 35,
+        carbs: 45,
+        fat: 14,
+        isLogged: true,
+      };
+      this.foodItems.update((items) => [...items, newFood]);
+    }
+
+    this.isRegisterModalOpen.set(false);
+    this.targetFoodItem.set(null);
+  }
 
   @ViewChild(WeekCalendarHeaderComponent) calendar!: WeekCalendarHeaderComponent;
   updateLabel(label: string) {

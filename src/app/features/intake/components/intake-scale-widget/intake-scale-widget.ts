@@ -1,4 +1,4 @@
-import { Component, input, computed, ViewChild, ElementRef } from '@angular/core';
+import { Component, input, computed, ViewChild, ElementRef, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ChartModule } from 'primeng/chart';
 import { IntakeProgressWidgetComponent } from '../intake-widget/intake-progress-widget.component';
@@ -11,6 +11,13 @@ import { IntakeProgressWidgetComponent } from '../intake-widget/intake-progress-
 })
 export class IntakeScaleWidgetComponent {
   @ViewChild('scalePath') scalePath!: ElementRef<SVGPathElement>;
+
+  // Control de vista compacta / expandida (por defecto detallada)
+  isExpanded = signal<boolean>(true);
+
+  toggleExpanded() {
+    this.isExpanded.update((val) => !val);
+  }
   // --- CALORÍAS Y METAS ---
   burnedKcals = input.required<number>();
   minA = input.required<number>();
