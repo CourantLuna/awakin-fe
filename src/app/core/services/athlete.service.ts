@@ -10,6 +10,7 @@ export interface KinInfo {
   primary_color?: string;
   secondary_color?: string;
   manifesto?: string | null;
+  head_coach_id?: string | null;
   instructor_id?: string | null;
   role_in_kin?: string;
 }
@@ -38,6 +39,8 @@ export interface AthleteProfile {
   followers_count?: number;
   following_count?: number;
   email?: string | null;
+  kin_id?: string | null;
+  head_coach_id?: string | null;
   instructor_id?: string | null;
   kin?: KinInfo | null;
 }
