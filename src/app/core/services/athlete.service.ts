@@ -3,6 +3,27 @@ import { HttpClient } from '@angular/common/http';
 import { Observable, tap } from 'rxjs';
 import { environment } from '../../../environments/environment';
 
+export interface KinInfo {
+  id: string;
+  team_name: string;
+  team_logo_url?: string | null;
+  primary_color?: string;
+  secondary_color?: string;
+  manifesto?: string | null;
+  instructor_id?: string | null;
+  role_in_kin?: string;
+}
+
+export interface AthleteFeedPost {
+  id: string;
+  athlete_id: string;
+  media_url: string;
+  caption?: string | null;
+  module_source?: string | null;
+  related_intake_dish_id?: string | null;
+  created_at?: string;
+}
+
 export interface AthleteProfile {
   id: string;
   username: string;
@@ -17,6 +38,8 @@ export interface AthleteProfile {
   followers_count?: number;
   following_count?: number;
   email?: string | null;
+  instructor_id?: string | null;
+  kin?: KinInfo | null;
 }
 
 export interface NutritionMealRecord {
@@ -46,6 +69,7 @@ export interface AthleteRecordsResponse {
   athlete_id: string;
   meals: NutritionMealRecord[];
   progress: ProgressMetricRecord[];
+  posts?: AthleteFeedPost[];
 }
 
 export interface AthleteProfileUpdate {
@@ -56,6 +80,7 @@ export interface AthleteProfileUpdate {
   profile_image_url?: string;
 }
 
+
 @Injectable({ providedIn: 'root' })
 export class AthleteService {
   private http = inject(HttpClient);
@@ -65,6 +90,7 @@ export class AthleteService {
   public currentAthlete = signal<AthleteProfile | null>(null);
   public availableAthletes = signal<AthleteProfile[]>([]);
   public currentRecords = signal<AthleteRecordsResponse | null>(null);
+  public currentPosts = signal<AthleteFeedPost[]>([]);
   public isLoading = signal<boolean>(false);
 
   constructor() {
@@ -108,12 +134,13 @@ export class AthleteService {
   }
 
   /**
-   * Establece el atleta activo y carga sus registros de fotos y progreso
+   * Establece el atleta activo y carga sus registros de fotos, progreso y posts de feed
    */
   public setActiveAthlete(athlete: AthleteProfile): void {
     this.currentAthlete.set(athlete);
     localStorage.setItem('awakin_active_athlete_id', athlete.id);
     this.loadAthleteRecords(athlete.id);
+    this.loadAthletePosts(athlete.id);
   }
 
   /**
@@ -149,10 +176,74 @@ export class AthleteService {
     this.http.get<AthleteRecordsResponse>(`${this.baseUrl}/${athleteId}/records`).subscribe({
       next: (records) => {
         this.currentRecords.set(records);
+        if (records.posts && records.posts.length > 0) {
+          this.currentPosts.set(records.posts);
+        }
       },
       error: (err) => {
         console.error('Error cargando registros del atleta:', err);
       }
     });
   }
+
+  /**
+   * Carga publicaciones de feed de la tabla athlete_feed_posts
+   */
+  public loadAthletePosts(athleteId: string): void {
+    this.http.get<AthleteFeedPost[]>(`${this.baseUrl}/${athleteId}/posts`).subscribe({
+      next: (posts) => {
+        this.currentPosts.set(posts);
+      },
+      error: (err) => {
+        console.error('Error cargando posts del atleta:', err);
+      }
+    });
+  }
+
+  /**
+   * Publica un nuevo post en athlete_feed_posts
+   */
+  public createPost(
+    athleteId: string,
+    post: { media_url: string; caption?: string; module_source?: string; related_intake_dish_id?: string }
+  ): Observable<AthleteFeedPost> {
+    return this.http.post<AthleteFeedPost>(`${this.baseUrl}/${athleteId}/posts`, post).pipe(
+      tap((newPost) => {
+        this.currentPosts.update((list) => [newPost, ...list]);
+      })
+    );
+  }
+
+  /**
+   * Sube un archivo o blob al bucket de Supabase Storage especificado
+   */
+  public uploadMedia(
+    file: File | Blob,
+    bucket: 'avatars' | 'feed_posts' = 'feed_posts',
+    filename: string = 'media.jpg'
+  ): Observable<{ status: string; bucket: string; filename: string; public_url: string }> {
+    const formData = new FormData();
+    formData.append('file', file, filename);
+    return this.http.post<{ status: string; bucket: string; filename: string; public_url: string }>(
+      `${this.baseUrl}/upload-media?bucket=${bucket}`,
+      formData
+    );
+  }
+
+  /**
+   * Verifica en tiempo real si un username está disponible
+   */
+  public checkUsernameAvailability(
+    username: string,
+    excludeId?: string
+  ): Observable<{ username: string; available: boolean; message: string }> {
+    let url = `${this.baseUrl}/check-username?username=${encodeURIComponent(username)}`;
+    if (excludeId) {
+      url += `&exclude_id=${encodeURIComponent(excludeId)}`;
+    }
+    return this.http.get<{ username: string; available: boolean; message: string }>(url);
+  }
 }
+
+
+

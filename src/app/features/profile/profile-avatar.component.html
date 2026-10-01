@@ -2,168 +2,221 @@
   <!-- BARRA SUPERIOR CON SELECTOR DE ATLETA Y ACCIONES -->
   <div class="flex justify-between items-center px-4 mb-5 relative">
     <!-- Selector de cuenta / Username -->
-    <button
-      (click)="toggleSwitcher()"
-      class="flex items-center gap-1.5 text-sm font-black text-stone-900 bg-stone-100 hover:bg-stone-200 px-3 py-1.5 rounded-full border border-stone-200 transition-all cursor-pointer"
-    >
+    <button (click)="toggleSwitcher()"
+      class="flex items-center gap-1.5 text-sm font-black text-stone-900 bg-stone-100 hover:bg-stone-200 px-3 py-1.5 rounded-full border border-stone-200 transition-all cursor-pointer">
       <i class="pi pi-lock text-[10px] text-stone-500"></i>
       <span>@{{ athlete()?.username || 'mi_usuario_awakin' }}</span>
-      <i
-        class="pi pi-chevron-down text-[10px] text-stone-600 transition-transform"
-        [class.rotate-180]="isSwitcherOpen()"
-      ></i>
+      <i class="pi pi-chevron-down text-[10px] text-stone-600 transition-transform"
+        [class.rotate-180]="isSwitcherOpen()"></i>
     </button>
 
     <!-- Botón de Menú de Opciones -->
-    <button
-      (click)="isMenuOpen.set(!isMenuOpen())"
+    <button (click)="isMenuOpen.set(!isMenuOpen())"
       class="w-9 h-9 flex items-center justify-center rounded-full hover:bg-stone-200 text-stone-800 transition-all cursor-pointer"
-      title="Opciones de cuenta"
-    >
+      title="Opciones de cuenta">
       <i class="pi pi-bars text-lg"></i>
     </button>
 
     <!-- DROPDOWN: SWITCHER DE ATLETAS (Permite conmutar o ver usuarios de la BD) -->
     @if (isSwitcherOpen()) {
-      <div
-        class="absolute left-4 top-12 z-50 w-72 bg-white rounded-2xl shadow-2xl border border-stone-200 p-2 max-h-96 overflow-y-auto animate-fade-in"
-      >
-        <div class="px-3 py-2 border-b border-stone-100 mb-1">
-          <p class="text-[10px] font-bold uppercase tracking-widest text-stone-400">Atletas Registrados (BD)</p>
-          <p class="text-xs text-stone-600">Selecciona para sincronizar tu vista</p>
-        </div>
-
-        @for (ath of athletesList(); track ath.id) {
-          <button
-            (click)="onSelectAthlete(ath)"
-            class="w-full flex items-center gap-3 p-2 rounded-xl hover:bg-stone-100 text-left transition-colors cursor-pointer"
-            [class.bg-orange-50]="ath.id === athlete()?.id"
-            [class.border]="ath.id === athlete()?.id"
-            [class.border-orange-200]="ath.id === athlete()?.id"
-          >
-            <div class="w-8 h-8 rounded-full overflow-hidden bg-stone-200 shrink-0 border border-stone-300">
-              @if (ath.profile_image_url) {
-                <img [src]="ath.profile_image_url" [alt]="ath.username" class="w-full h-full object-cover" />
-              } @else {
-                <div class="w-full h-full flex items-center justify-center text-[10px] font-bold text-stone-600 bg-stone-100">
-                  {{ (ath.first_name || ath.username || 'A').slice(0, 2).toUpperCase() }}
-                </div>
-              }
-            </div>
-            <div class="flex-1 min-w-0">
-              <p class="text-xs font-bold text-stone-900 truncate">
-                {{ ath.first_name ? ath.first_name + ' ' + (ath.last_name || '') : ath.username }}
-              </p>
-              <p class="text-[10px] text-stone-500 truncate">@{{ ath.username }}</p>
-            </div>
-            @if (ath.id === athlete()?.id) {
-              <i class="pi pi-check text-xs text-amber-500 font-bold"></i>
-            }
-          </button>
-        }
+    <div
+      class="absolute left-4 top-12 z-50 w-72 bg-white rounded-2xl shadow-2xl border border-stone-200 p-2 max-h-96 overflow-y-auto animate-fade-in">
+      <div class="px-3 py-2 border-b border-stone-100 mb-1">
+        <p class="text-[10px] font-bold uppercase tracking-widest text-stone-400">Atletas Registrados (BD)</p>
+        <p class="text-xs text-stone-600">Selecciona para sincronizar tu vista</p>
       </div>
+
+      @for (ath of athletesList(); track ath.id) {
+      <button (click)="onSelectAthlete(ath)"
+        class="w-full flex items-center gap-3 p-2 rounded-xl hover:bg-stone-100 text-left transition-colors cursor-pointer"
+        [class.bg-orange-50]="ath.id === athlete()?.id" [class.border]="ath.id === athlete()?.id"
+        [class.border-orange-200]="ath.id === athlete()?.id">
+        <div class="w-8 h-8 rounded-full overflow-hidden bg-stone-200 shrink-0 border border-stone-300">
+          @if (ath.profile_image_url) {
+          <img [src]="ath.profile_image_url" [alt]="ath.username" class="w-full h-full object-cover" />
+          } @else {
+          <div class="w-full h-full flex items-center justify-center text-[10px] font-bold text-stone-600 bg-stone-100">
+            {{ (ath.first_name || ath.username || 'A').slice(0, 2).toUpperCase() }}
+          </div>
+          }
+        </div>
+        <div class="flex-1 min-w-0">
+          <p class="text-xs font-bold text-stone-900 truncate">
+            {{ ath.first_name ? ath.first_name + ' ' + (ath.last_name || '') : ath.username }}
+          </p>
+          <div class="flex items-center gap-1.5">
+            <p class="text-[10px] text-stone-500 truncate">@{{ ath.username }}</p>
+            @if (ath.kin) {
+            <span class="text-[8px] font-bold text-amber-600 bg-amber-50 px-1 rounded">
+              {{ ath.kin.team_name }}
+            </span>
+            }
+          </div>
+        </div>
+        @if (ath.id === athlete()?.id) {
+        <i class="pi pi-check text-xs text-amber-500 font-bold"></i>
+        }
+      </button>
+      }
+    </div>
     }
 
     <!-- DROPDOWN: MENÚ RÁPIDO (Cerrar sesión / Editar) -->
     @if (isMenuOpen()) {
-      <div
-        class="absolute right-4 top-12 z-50 w-52 bg-white rounded-2xl shadow-2xl border border-stone-200 p-2 animate-fade-in"
-      >
-        <button
-          (click)="openEditProfile(); isMenuOpen.set(false)"
-          class="w-full flex items-center gap-2 px-3 py-2 text-xs font-bold text-stone-800 hover:bg-stone-100 rounded-xl transition-all cursor-pointer"
-        >
-          <i class="pi pi-user-edit text-stone-500"></i>
-          <span>Editar Perfil</span>
-        </button>
-        <button
-          (click)="athleteService.loadInitialAthletes(); isMenuOpen.set(false)"
-          class="w-full flex items-center gap-2 px-3 py-2 text-xs font-bold text-stone-800 hover:bg-stone-100 rounded-xl transition-all cursor-pointer"
-        >
-          <i class="pi pi-refresh text-stone-500"></i>
-          <span>Refrescar Datos</span>
-        </button>
-        <div class="border-t border-stone-100 my-1"></div>
-        <button
-          (click)="logout()"
-          class="w-full flex items-center gap-2 px-3 py-2 text-xs font-bold text-red-600 hover:bg-red-50 rounded-xl transition-all cursor-pointer"
-        >
-          <i class="pi pi-sign-out"></i>
-          <span>Cerrar Sesión</span>
-        </button>
-      </div>
+    <div
+      class="absolute right-4 top-12 z-50 w-52 bg-white rounded-2xl shadow-2xl border border-stone-200 p-2 animate-fade-in">
+      <button (click)="openEditProfile(); isMenuOpen.set(false)"
+        class="w-full flex items-center gap-2 px-3 py-2 text-xs font-bold text-stone-800 hover:bg-stone-100 rounded-xl transition-all cursor-pointer">
+        <i class="pi pi-user-edit text-stone-500"></i>
+        <span>Editar Perfil</span>
+      </button>
+      <button (click)="openCreatePost(); isMenuOpen.set(false)"
+        class="w-full flex items-center gap-2 px-3 py-2 text-xs font-bold text-stone-800 hover:bg-stone-100 rounded-xl transition-all cursor-pointer">
+        <i class="pi pi-plus-circle text-stone-500"></i>
+        <span>Publicar en Feed</span>
+      </button>
+      <button (click)="athleteService.loadInitialAthletes(); isMenuOpen.set(false)"
+        class="w-full flex items-center gap-2 px-3 py-2 text-xs font-bold text-stone-800 hover:bg-stone-100 rounded-xl transition-all cursor-pointer">
+        <i class="pi pi-refresh text-stone-500"></i>
+        <span>Refrescar Datos</span>
+      </button>
+      <div class="border-t border-stone-100 my-1"></div>
+      <button (click)="logout()"
+        class="w-full flex items-center gap-2 px-3 py-2 text-xs font-bold text-red-600 hover:bg-red-50 rounded-xl transition-all cursor-pointer">
+        <i class="pi pi-sign-out"></i>
+        <span>Cerrar Sesión</span>
+      </button>
+    </div>
     }
   </div>
 
   <!-- CABECERA DE PERFIL: AVATAR Y ESTADÍSTICAS -->
   <div class="px-4 flex items-center justify-between mb-4">
-    <!-- FOTO CON BADGE DE NIVEL -->
-    <div class="relative">
-      <div class="w-24 h-24 rounded-full border-4 border-white shadow-md overflow-hidden bg-stone-200">
+    <!-- FOTO CON BADGE DE NIVEL Y BOTÓN DE EDICIÓN -->
+    <div class="relative group cursor-pointer" (click)="avatarFileInput.click()"
+      title="Cambiar foto de perfil (Zoom & Recorte)">
+      <div class="w-24 h-24 rounded-full border-4 border-white shadow-md overflow-hidden bg-stone-200 relative">
         @if (athlete()?.profile_image_url) {
-          <img
-            [src]="athlete()?.profile_image_url"
-            [alt]="athlete()?.first_name || athlete()?.username"
-            class="w-full h-full object-cover"
-          />
+        <img [src]="athlete()?.profile_image_url" [alt]="athlete()?.first_name || athlete()?.username"
+          class="w-full h-full object-cover" />
         } @else {
-          <div
-            class="w-full h-full flex items-center justify-center bg-gradient-to-tr from-stone-800 to-stone-700 text-white font-black text-2xl"
-          >
-            {{ getInitials() }}
-          </div>
+        <div
+          class="w-full h-full flex items-center justify-center bg-gradient-to-tr from-stone-800 to-stone-700 text-white font-black text-2xl">
+          {{ getInitials() }}
+        </div>
         }
+
+        <!-- Overlay hover para cambiar foto -->
+        <div
+          class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center text-white">
+          <i class="pi pi-camera text-xl"></i>
+          <span class="text-[8px] font-black uppercase tracking-wider mt-0.5">Cambiar</span>
+        </div>
+      </div>
+
+      <!-- Icono de cámara flotante -->
+      <div
+        class="absolute bottom-0 right-0 w-7 h-7 bg-stone-900 border-2 border-white rounded-full flex items-center justify-center text-white text-[10px] shadow-sm">
+        <i class="pi pi-camera"></i>
       </div>
 
       <!-- Badge de Nivel Calculado -->
       <div
-        class="absolute -bottom-1 -right-1 bg-gradient-to-r from-[#FE970A] to-amber-500 text-white text-[10px] font-black px-2 py-0.5 rounded-full border-2 border-white shadow-sm"
-      >
+        class="absolute -top-1 -right-1 bg-gradient-to-r from-[#FE970A] to-amber-500 text-white text-[10px] font-black px-2 py-0.5 rounded-full border-2 border-white shadow-sm">
         Nvl {{ athlete()?.current_level || 1 }}
       </div>
+
+      <!-- Input invisible para seleccionar foto -->
+      <input #avatarFileInput type="file" accept="image/*" (change)="onAvatarFileSelected($event)" class="hidden" />
     </div>
 
-    <!-- MÉTRICAS EN VIVO: RACHA, SEGUIDORES, SIGUIENDO -->
+
+    <!-- MÉTRICAS EN VIVO: RACHA, POSTS, SEGUIDORES, SIGUIENDO -->
     <div class="flex flex-1 justify-around text-center ml-2">
       <div>
-        <p class="font-black text-stone-900 text-xl tracking-tight">
+        <p class="font-black text-stone-900 text-lg tracking-tight">
           {{ athlete()?.streak_days || 0 }}
         </p>
-        <p class="text-[10px] font-semibold text-stone-500 uppercase tracking-wider">Racha 🔥</p>
+        <p class="text-[9px] font-semibold text-stone-500 uppercase tracking-wider">Racha 🔥</p>
       </div>
       <div>
-        <p class="font-black text-stone-900 text-xl tracking-tight">
+        <p class="font-black text-stone-900 text-lg tracking-tight">
+          {{ posts().length }}
+        </p>
+        <p class="text-[9px] font-semibold text-stone-500 uppercase tracking-wider">Posts</p>
+      </div>
+      <div>
+        <p class="font-black text-stone-900 text-lg tracking-tight">
           {{ athlete()?.followers_count || 0 }}
         </p>
-        <p class="text-[10px] font-semibold text-stone-500 uppercase tracking-wider">Seguidores</p>
+        <p class="text-[9px] font-semibold text-stone-500 uppercase tracking-wider">Seguidores</p>
       </div>
       <div>
-        <p class="font-black text-stone-900 text-xl tracking-tight">
+        <p class="font-black text-stone-900 text-lg tracking-tight">
           {{ athlete()?.following_count || 0 }}
         </p>
-        <p class="text-[10px] font-semibold text-stone-500 uppercase tracking-wider">Siguiendo</p>
+        <p class="text-[9px] font-semibold text-stone-500 uppercase tracking-wider">Siguiendo</p>
       </div>
     </div>
   </div>
 
   <!-- DETALLES: NOMBRE COMPLETO, EMAIL Y BIOGRAFÍA -->
-  <div class="px-4 mb-4">
+  <div class="px-4 mb-3">
     <h2 class="font-black text-base text-stone-900 uppercase tracking-tight">
       {{ athlete()?.first_name ? athlete()?.first_name + ' ' + (athlete()?.last_name || '') : athlete()?.username }}
     </h2>
 
     @if (athlete()?.email) {
-      <p class="text-[11px] text-stone-500 font-mono mb-1">
-        <i class="pi pi-envelope text-[10px] mr-1"></i>{{ athlete()?.email }}
-      </p>
+    <p class="text-[11px] text-stone-500 font-mono mb-1">
+      <i class="pi pi-envelope text-[10px] mr-1"></i>{{ athlete()?.email }}
+    </p>
     }
 
     <p class="text-xs text-stone-700 mt-1 leading-relaxed">
       {{ athlete()?.bio_description || 'Construyendo disciplina, un día a la vez.' }}
     </p>
 
-    <!-- Objetivo Biológico -->
-    <div class="mt-2.5 inline-flex items-center gap-1.5 bg-stone-100 px-2.5 py-1 rounded-lg border border-stone-200">
+    <!-- IDENTIFICACIÓN DE TRIBU / KIN -->
+    <div class="mt-3">
+      @if (hasKin()) {
+      <div class="inline-flex items-center gap-2.5 px-3 py-1.5 rounded-xl border shadow-xs transition-all"
+        [style.borderColor]="(getKin()?.primary_color || '#FE970A') + '55'"
+        [style.backgroundColor]="(getKin()?.primary_color || '#FE970A') + '10'">
+        <div
+          class="w-6 h-6 rounded-lg flex items-center justify-center font-black text-[9px] text-white shadow-xs shrink-0"
+          [style.backgroundColor]="getKin()?.primary_color || '#FE970A'">
+          <i class="pi pi-shield text-xs"></i>
+        </div>
+        <div class="flex flex-col text-left">
+          <div class="flex items-center gap-1.5">
+            <span class="text-[8px] font-black tracking-widest text-stone-400 uppercase leading-none">Tribu Kin</span>
+            <span class="text-[8px] font-black uppercase px-1.5 py-0.5 rounded-md leading-none"
+              [class.bg-amber-500]="getKin()?.role_in_kin === 'LEADER'"
+              [class.text-white]="getKin()?.role_in_kin === 'LEADER'"
+              [class.bg-stone-200]="getKin()?.role_in_kin !== 'LEADER'"
+              [class.text-stone-700]="getKin()?.role_in_kin !== 'LEADER'">
+              {{ getKinRoleBadge() }}
+            </span>
+          </div>
+          <h4 class="text-xs font-black text-stone-900 uppercase tracking-tight leading-snug">
+            {{ getKin()?.team_name }}
+          </h4>
+        </div>
+      </div>
+      } @else {
+      <!-- Estado sin tribu asignada -->
+      <div
+        class="inline-flex items-center gap-1.5 bg-stone-100/90 px-2.5 py-1 rounded-lg border border-dashed border-stone-300 text-stone-500">
+        <i class="pi pi-users text-stone-400 text-xs"></i>
+        <span class="text-[10px] font-bold text-stone-600 uppercase tracking-wider">
+          Sin Tribu Asignada (Agente Libre)
+        </span>
+      </div>
+      }
+    </div>
+
+    <!-- PROTOCOLO ACTUAL -->
+    <div class="mt-2 inline-flex items-center gap-1.5 bg-stone-100 px-2.5 py-1 rounded-lg border border-stone-200">
       <i class="pi pi-bullseye text-amber-500 text-xs"></i>
       <span class="text-[10px] font-black text-stone-800 uppercase tracking-wider">
         Protocolo: Rendimiento & Recomposición
@@ -174,309 +227,632 @@
   <!-- ROLES Y DISTINTIVOS EN SUPABASE -->
   <div class="px-4 mb-4 flex flex-wrap gap-1.5">
     @for (role of (athlete()?.roles || ['ATHLETE']); track role) {
-      <div
-        class="flex items-center gap-1.5 px-2.5 py-1 rounded-md border text-[10px] font-bold tracking-wider uppercase shadow-xs"
-        [ngClass]="getRoleBadgeClass(role)"
-      >
-        <i class="pi pi-verified text-[10px]"></i>
-        <span>{{ formatRole(role) }}</span>
-      </div>
+    <div
+      class="flex items-center gap-1.5 px-2.5 py-1 rounded-md border text-[10px] font-bold tracking-wider uppercase shadow-xs"
+      [ngClass]="getRoleBadgeClass(role)">
+      <i class="pi pi-verified text-[10px]"></i>
+      <span>{{ formatRole(role) }}</span>
+    </div>
     }
   </div>
 
-  <!-- BOTONES DE ACCIÓN: EDITAR Y COMPARTIR -->
-  <div class="px-4 flex gap-2 mb-6">
-    <button
-      (click)="openEditProfile()"
-      class="flex-1 bg-stone-900 hover:bg-stone-800 text-white font-bold text-xs py-2 rounded-xl active:scale-98 transition-all cursor-pointer flex items-center justify-center gap-1.5 shadow-sm"
-    >
+  <!-- BOTONES DE ACCIÓN: EDITAR, NUEVO POST Y COMPARTIR -->
+  <div class="px-4 flex gap-2 mb-4">
+    <button (click)="openEditProfile()"
+      class="flex-1 bg-stone-900 hover:bg-stone-800 text-white font-bold text-xs py-2 rounded-xl active:scale-98 transition-all cursor-pointer flex items-center justify-center gap-1.5 shadow-sm">
       <i class="pi pi-user-edit text-xs"></i>
-      <span>Editar Perfil</span>
+      <span>Editar</span>
     </button>
-    <button
-      (click)="shareProfile()"
-      class="flex-1 bg-stone-200 hover:bg-stone-300 text-stone-900 font-bold text-xs py-2 rounded-xl active:scale-98 transition-all cursor-pointer flex items-center justify-center gap-1.5"
-    >
+    <button (click)="openCreatePost()"
+      class="flex-1 bg-amber-500 hover:bg-amber-600 text-white font-black text-xs py-2 rounded-xl active:scale-98 transition-all cursor-pointer flex items-center justify-center gap-1.5 shadow-sm">
+      <i class="pi pi-plus-circle text-xs"></i>
+      <span>Nuevo Post</span>
+    </button>
+    <button (click)="shareProfile()"
+      class="w-10 bg-stone-200 hover:bg-stone-300 text-stone-900 font-bold text-xs py-2 rounded-xl active:scale-98 transition-all cursor-pointer flex items-center justify-center shadow-xs"
+      title="Compartir Perfil">
       <i class="pi pi-share-alt text-xs"></i>
-      <span>Compartir Perfil</span>
     </button>
   </div>
 
-  <!-- BARRA DE PESTAÑAS: FOTOS / MÉTRICAS -->
-  <div class="flex border-t border-stone-200 bg-white">
-    <button
-      (click)="setTab('grid')"
-      class="flex-1 py-3 text-center transition-all cursor-pointer relative"
-      [class.border-b-2]="activeTab() === 'grid'"
-      [class.border-stone-900]="activeTab() === 'grid'"
-      [class.text-stone-900]="activeTab() === 'grid'"
-      [class.text-stone-400]="activeTab() !== 'grid'"
-    >
-      <i class="pi pi-th-large text-lg"></i>
-    </button>
-    <button
-      (click)="setTab('stats')"
-      class="flex-1 py-3 text-center transition-all cursor-pointer relative"
-      [class.border-b-2]="activeTab() === 'stats'"
-      [class.border-stone-900]="activeTab() === 'stats'"
-      [class.text-stone-900]="activeTab() === 'stats'"
-      [class.text-stone-400]="activeTab() !== 'stats'"
-    >
-      <i class="pi pi-chart-bar text-lg"></i>
-    </button>
-  </div>
-
-  <!-- CONTENIDO TAB 1: CUADRÍCULA DE FOTOS REALES (Intake & Progreso) -->
-  @if (activeTab() === 'grid') {
-    <div class="mt-0.5">
-      @if (records()?.meals?.length || records()?.progress?.length) {
-        <div class="grid grid-cols-3 gap-0.5">
-          <!-- Fotos de Comidas (registros_nutricionales) -->
-          @for (meal of records()?.meals; track meal.id) {
-            @if (meal.foto_url) {
-              <div
-                (click)="selectedMeal.set(meal)"
-                class="aspect-square bg-stone-100 relative group overflow-hidden cursor-pointer"
-              >
-                <img [src]="meal.foto_url" [alt]="meal.nombre || 'Comida'" class="w-full h-full object-cover" />
-                <div
-                  class="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white"
-                >
-                  <span class="text-[9px] font-bold uppercase tracking-wider bg-black/60 px-1.5 py-0.5 rounded">
-                    {{ meal.tipo_comida || 'Intake' }}
-                  </span>
-                </div>
-              </div>
-            }
-          }
-
-          <!-- Fotos de Progreso (registros_progreso) -->
-          @for (prog of records()?.progress; track prog.id) {
-            @if (prog.foto_frontal_url) {
-              <div
-                (click)="selectedProgress.set(prog)"
-                class="aspect-square bg-stone-100 relative group overflow-hidden cursor-pointer"
-              >
-                <img [src]="prog.foto_frontal_url" alt="Progreso" class="w-full h-full object-cover" />
-                <div
-                  class="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white"
-                >
-                  <span class="text-[9px] font-bold uppercase tracking-wider bg-amber-600/80 px-1.5 py-0.5 rounded">
-                    {{ prog.peso ? prog.peso + 'kg' : 'Progreso' }}
-                  </span>
-                </div>
-              </div>
-            }
-          }
-        </div>
-      } @else {
-        <!-- Estado Vacío Elegante -->
-        <div class="py-16 text-center px-4">
-          <div class="w-14 h-14 mx-auto rounded-2xl bg-stone-100 flex items-center justify-center text-stone-400 mb-3">
-            <i class="pi pi-camera text-2xl"></i>
-          </div>
-          <h3 class="text-xs font-bold text-stone-800 uppercase tracking-wider mb-1">Sin Registros Multimedia</h3>
-          <p class="text-[11px] text-stone-500 max-w-xs mx-auto">
-            Las fotos que subas en el módulo <span class="font-bold text-stone-700">Intake</span> o en tus registros de progreso aparecerán organizadas en este feed.
-          </p>
-        </div>
-      }
-    </div>
-  }
-
-  <!-- CONTENIDO TAB 2: MÉTRICAS Y BIOMETRÍA EN VIVO -->
-  @if (activeTab() === 'stats') {
-    <div class="p-4 space-y-4 animate-fade-in">
-      <div class="bg-white p-4 rounded-2xl border border-stone-200 shadow-xs">
-        <h3 class="text-xs font-black text-stone-900 uppercase tracking-wider mb-3 flex items-center gap-1.5">
-          <i class="pi pi-sliders-h text-amber-500"></i>
-          <span>Biometría Actual</span>
-        </h3>
-
-        @if (records()?.progress?.length) {
-          @let latest = records()!.progress[0];
-          <div class="grid grid-cols-2 gap-3">
-            <div class="bg-stone-50 p-3 rounded-xl border border-stone-200/60">
-              <p class="text-[10px] uppercase font-bold text-stone-400">Peso Corporal</p>
-              <p class="text-xl font-black text-stone-900 mt-0.5">
-                {{ latest.peso ? latest.peso + ' ' + (latest.unidad_peso || 'kg') : 'N/D' }}
-              </p>
-            </div>
-            <div class="bg-stone-50 p-3 rounded-xl border border-stone-200/60">
-              <p class="text-[10px] uppercase font-bold text-stone-400">Cintura</p>
-              <p class="text-xl font-black text-stone-900 mt-0.5">
-                {{ latest.cintura ? latest.cintura + ' cm' : 'N/D' }}
-              </p>
-            </div>
-            <div class="bg-stone-50 p-3 rounded-xl border border-stone-200/60">
-              <p class="text-[10px] uppercase font-bold text-stone-400">Cadera</p>
-              <p class="text-xl font-black text-stone-900 mt-0.5">
-                {{ latest.cadera ? latest.cadera + ' cm' : 'N/D' }}
-              </p>
-            </div>
-            <div class="bg-stone-50 p-3 rounded-xl border border-stone-200/60">
-              <p class="text-[10px] uppercase font-bold text-stone-400">Pecho</p>
-              <p class="text-xl font-black text-stone-900 mt-0.5">
-                {{ latest.pecho ? latest.pecho + ' cm' : 'N/D' }}
-              </p>
-            </div>
-          </div>
-          <p class="text-[10px] text-stone-400 mt-2 font-mono text-right">
-            Última medición: {{ latest.timestamp | date:'mediumDate' }}
-          </p>
-        } @else {
-          <div class="py-6 text-center text-stone-400 text-xs">
-            No hay registros biométricos registrados todavía.
-          </div>
+  <!-- BARRA DE PESTAÑAS SEPARADAS DEL FEED:
+       1) Posts realizados (athlete_feed_posts)
+       2) Comidas registradas (registros_nutricionales foto_url)
+       3) Workouts (en construcción) -->
+  <div class="flex border-t border-b border-stone-200 bg-white sticky top-0 z-30 shadow-xs">
+    <!-- Pestaña 1: Posts -->
+    <button (click)="setTab('posts')"
+      class="flex-1 py-2.5 text-center transition-all cursor-pointer relative flex flex-col items-center gap-0.5"
+      [class.border-b-2]="activeTab() === 'posts'" [class.border-stone-900]="activeTab() === 'posts'"
+      [class.text-stone-900]="activeTab() === 'posts'" [class.text-stone-400]="activeTab() !== 'posts'">
+      <div class="flex items-center gap-1">
+        <i class="pi pi-th-large text-sm"></i>
+        @if (posts().length > 0) {
+        <span class="text-[8px] font-black px-1.5 py-0.2 rounded-full bg-stone-100 text-stone-700">
+          {{ posts().length }}
+        </span>
         }
       </div>
+      <span class="text-[9px] font-black uppercase tracking-wider">Posts</span>
+    </button>
 
-      <!-- Tarjeta de Racha y Disciplina -->
-      <div class="bg-white p-4 rounded-2xl border border-stone-200 shadow-xs flex items-center justify-between">
-        <div>
-          <h4 class="text-xs font-black text-stone-900 uppercase tracking-wider">Compromiso Diario</h4>
-          <p class="text-[11px] text-stone-500 mt-0.5">Días consecutivos de registro biológico</p>
-        </div>
-        <div class="text-right">
-          <span class="text-2xl font-black text-amber-500">{{ athlete()?.streak_days || 0 }}</span>
-          <span class="text-xs font-bold text-stone-400 ml-1">Días</span>
+    <!-- Pestaña 2: Comidas -->
+    <button (click)="setTab('meals')"
+      class="flex-1 py-2.5 text-center transition-all cursor-pointer relative flex flex-col items-center gap-0.5"
+      [class.border-b-2]="activeTab() === 'meals'" [class.border-stone-900]="activeTab() === 'meals'"
+      [class.text-stone-900]="activeTab() === 'meals'" [class.text-stone-400]="activeTab() !== 'meals'">
+      <div class="flex items-center gap-1">
+        <i class="pi pi-apple text-sm"></i>
+        @if (mealPhotos().length > 0) {
+        <span class="text-[8px] font-black px-1.5 py-0.2 rounded-full bg-stone-100 text-stone-700">
+          {{ mealPhotos().length }}
+        </span>
+        }
+      </div>
+      <span class="text-[9px] font-black uppercase tracking-wider">Comidas</span>
+    </button>
+
+    <!-- Pestaña 3: Workouts (en construcción) -->
+    <button (click)="setTab('workouts')"
+      class="flex-1 py-2.5 text-center transition-all cursor-pointer relative flex flex-col items-center gap-0.5"
+      [class.border-b-2]="activeTab() === 'workouts'" [class.border-stone-900]="activeTab() === 'workouts'"
+      [class.text-stone-900]="activeTab() === 'workouts'" [class.text-stone-400]="activeTab() !== 'workouts'">
+      <div class="flex items-center gap-1">
+        <i class="pi pi-bolt text-sm"></i>
+      </div>
+      <span class="text-[9px] font-black uppercase tracking-wider">Workouts</span>
+    </button>
+  </div>
+
+
+  <!-- ========================================== -->
+  <!-- CONTENIDO TAB 1: POSTS REALIZADOS          -->
+  <!-- ========================================== -->
+  @if (activeTab() === 'posts') {
+  <div class="mt-0.5 animate-fade-in">
+    @if (posts().length > 0) {
+    <div class="grid grid-cols-3 gap-0.5">
+      @for (post of posts(); track post.id) {
+      <div (click)="selectedPost.set(post)"
+        class="aspect-square bg-stone-100 relative group overflow-hidden cursor-pointer">
+        <img [src]="post.media_url" [alt]="post.caption || 'Publicación en Feed'"
+          class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" />
+        <div
+          class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-between p-2 text-white">
+          <div class="flex justify-between items-center">
+            <span class="text-[8px] font-black uppercase px-1.5 py-0.5 rounded bg-amber-500/90 text-white">
+              {{ post.module_source || 'GENERAL' }}
+            </span>
+          </div>
+          @if (post.caption) {
+          <p class="text-[10px] line-clamp-2 font-medium">
+            {{ post.caption }}
+          </p>
+          }
         </div>
       </div>
+      }
     </div>
+    } @else {
+    <!-- Estado Vacío para Posts de athlete_feed_posts -->
+    <div class="py-16 text-center px-4">
+      <div
+        class="w-14 h-14 mx-auto rounded-2xl bg-amber-50 border border-amber-200/60 flex items-center justify-center text-amber-500 mb-3 shadow-xs">
+        <i class="pi pi-images text-2xl"></i>
+      </div>
+      <h3 class="text-xs font-bold text-stone-800 uppercase tracking-wider mb-1">Sin Publicaciones en el Feed</h3>
+      <p class="text-[11px] text-stone-500 max-w-xs mx-auto mb-4 leading-relaxed">
+        Publica fotos de tus avances, disciplina o hábitos para compartirlos en el feed de la comunidad.
+      </p>
+      <button (click)="openCreatePost()"
+        class="inline-flex items-center gap-1.5 px-4 py-2 bg-stone-900 text-white rounded-xl text-xs font-bold hover:bg-stone-800 transition-all cursor-pointer shadow-sm active:scale-95">
+        <i class="pi pi-plus text-xs"></i>
+        <span>Crear Publicación</span>
+      </button>
+    </div>
+    }
+  </div>
+  }
+
+  <!-- ========================================== -->
+  <!-- CONTENIDO TAB 2: COMIDAS REGISTRADAS       -->
+  <!-- ========================================== -->
+  @if (activeTab() === 'meals') {
+  <div class="mt-0.5 animate-fade-in">
+    @if (mealPhotos().length > 0) {
+    <div class="grid grid-cols-3 gap-0.5">
+      @for (meal of mealPhotos(); track meal.id) {
+      <div (click)="selectedMeal.set(meal)"
+        class="aspect-square bg-stone-100 relative group overflow-hidden cursor-pointer">
+        <img [src]="meal.foto_url" [alt]="meal.nombre || 'Plato'"
+          class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" />
+        <div
+          class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-end p-2 text-white">
+          <span
+            class="text-[8px] font-black uppercase tracking-wider bg-emerald-600/90 self-start px-1.5 py-0.5 rounded shadow-xs">
+            {{ meal.tipo_comida || 'Comida' }}
+          </span>
+          <p class="text-[9px] text-stone-200 mt-1 truncate">
+            {{ meal.timestamp | date:'shortDate' }}
+          </p>
+        </div>
+      </div>
+      }
+    </div>
+    } @else {
+    <!-- Estado Vacío para Comidas -->
+    <div class="py-16 text-center px-4">
+      <div
+        class="w-14 h-14 mx-auto rounded-2xl bg-emerald-50 border border-emerald-200/60 flex items-center justify-center text-emerald-500 mb-3 shadow-xs">
+        <i class="pi pi-apple text-2xl"></i>
+      </div>
+      <h3 class="text-xs font-bold text-stone-800 uppercase tracking-wider mb-1">Sin Registros Nutricionales</h3>
+      <p class="text-[11px] text-stone-500 max-w-xs mx-auto leading-relaxed">
+        Las fotos que subas en el módulo <span class="font-bold text-stone-700">Intake</span> aparecerán organizadas en
+        este feed nutricional.
+      </p>
+    </div>
+    }
+  </div>
+  }
+
+  <!-- ========================================== -->
+  <!-- CONTENIDO TAB 3: WORKOUTS (EN CONSTRUCCIÓN) -->
+  <!-- ========================================== -->
+  @if (activeTab() === 'workouts') {
+  <div class="py-20 text-center px-4 animate-fade-in">
+    <div
+      class="w-16 h-16 mx-auto rounded-3xl bg-stone-100 border border-stone-200 flex items-center justify-center text-amber-500 mb-3 shadow-xs">
+      <i class="pi pi-bolt text-2xl"></i>
+    </div>
+    <h3 class="text-xs font-black text-stone-900 uppercase tracking-wider mb-1">
+      Workouts Registrados
+    </h3>
+    <p class="text-[11px] text-stone-500 max-w-xs mx-auto leading-relaxed mb-3">
+      El registro y análisis de sesiones de entrenamiento se encuentra en construcción. Pronto podrás ver aquí tus
+      rutinas, series y cargas levantadas.
+    </p>
+    <div
+      class="inline-flex items-center gap-1.5 px-3 py-1 bg-amber-500/10 border border-amber-500/30 rounded-full text-amber-800 text-[10px] font-bold">
+      <i class="pi pi-clock text-[10px]"></i>
+      <span>En Construcción</span>
+    </div>
+  </div>
   }
 </div>
 
-<!-- MODAL: EDITAR PERFIL DEL ATLETA -->
-<p-dialog
-  [(visible)]="isEditModalOpen"
-  [modal]="true"
-  [draggable]="false"
-  [resizable]="false"
-  header="Editar Perfil de Atleta"
-  styleClass="w-[92vw] max-w-md bg-white rounded-3xl overflow-hidden shadow-2xl p-0"
->
+
+
+<!-- ========================================== -->
+<!-- MODAL: CREAR PUBLICACIÓN EN FEED           -->
+<!-- ========================================== -->
+<p-dialog [(visible)]="isNewPostModalOpen" [modal]="true" [draggable]="false" [resizable]="false"
+  header="Nueva Publicación en Feed" styleClass="w-[92vw] max-w-md bg-white rounded-3xl overflow-hidden shadow-2xl p-0">
   <div class="p-5 space-y-4">
+    <!-- Subir Archivo a Supabase Bucket feed_posts -->
     <div>
-      <label class="block text-[10px] font-bold uppercase tracking-wider text-stone-500 mb-1">Nombre</label>
-      <input
-        type="text"
-        pInputText
-        [ngModel]="editFirstName()"
-        (ngModelChange)="editFirstName.set($event)"
-        placeholder="Tu nombre"
-        class="w-full bg-stone-50 border-stone-200 rounded-xl text-sm p-3 text-stone-900"
-      />
-    </div>
+      <label
+        class="block text-[10px] font-bold uppercase tracking-wider text-stone-500 mb-1.5 flex items-center justify-between">
+        <span>Foto / Multimedia *</span>
+        <span class="text-[9px] font-mono text-amber-600 font-bold bg-amber-50 px-1.5 py-0.5 rounded">
+          Bucket: feed_posts
+        </span>
+      </label>
 
-    <div>
-      <label class="block text-[10px] font-bold uppercase tracking-wider text-stone-500 mb-1">Apellido</label>
-      <input
-        type="text"
-        pInputText
-        [ngModel]="editLastName()"
-        (ngModelChange)="editLastName.set($event)"
-        placeholder="Tu apellido"
-        class="w-full bg-stone-50 border-stone-200 rounded-xl text-sm p-3 text-stone-900"
-      />
-    </div>
-
-    <div>
-      <label class="block text-[10px] font-bold uppercase tracking-wider text-stone-500 mb-1">Username (@handle)</label>
-      <input
-        type="text"
-        pInputText
-        [ngModel]="editUsername()"
-        (ngModelChange)="editUsername.set($event)"
-        placeholder="usuario_awakin"
-        class="w-full bg-stone-50 border-stone-200 rounded-xl text-sm p-3 text-stone-900 font-mono"
-      />
-    </div>
-
-    <div>
-      <label class="block text-[10px] font-bold uppercase tracking-wider text-stone-500 mb-1">Biografía</label>
-      <textarea
-        rows="3"
-        [ngModel]="editBio()"
-        (ngModelChange)="editBio.set($event)"
-        placeholder="Describe tus metas de rendimiento..."
-        class="w-full bg-stone-50 border border-stone-200 rounded-xl text-xs p-3 text-stone-900 focus:outline-none focus:border-amber-500 resize-none"
-      ></textarea>
-    </div>
-
-    <div>
-      <label class="block text-[10px] font-bold uppercase tracking-wider text-stone-500 mb-1">URL Foto de Perfil</label>
-      <input
-        type="text"
-        pInputText
-        [ngModel]="editPhotoUrl()"
-        (ngModelChange)="editPhotoUrl.set($event)"
-        placeholder="https://ejemplo.com/avatar.jpg"
-        class="w-full bg-stone-50 border-stone-200 rounded-xl text-xs p-3 text-stone-900 font-mono"
-      />
-    </div>
-
-    @if (saveSuccess()) {
-      <div class="p-2.5 bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs font-bold rounded-xl flex items-center gap-2">
-        <i class="pi pi-check-circle"></i>
-        <span>¡Perfil actualizado con éxito en Supabase!</span>
+      @if (postFilePreview()) {
+      <!-- Vista previa de la foto seleccionada -->
+      <div
+        class="relative rounded-2xl overflow-hidden aspect-video bg-stone-900 border border-stone-200 group shadow-inner">
+        <img [src]="postFilePreview()" alt="Preview post" class="w-full h-full object-cover" />
+        <button type="button" (click)="clearPostFile()"
+          class="absolute top-2 right-2 w-7 h-7 bg-black/75 hover:bg-red-600 text-white rounded-full flex items-center justify-center text-xs transition-all cursor-pointer shadow-md"
+          title="Quitar foto">
+          <i class="pi pi-times"></i>
+        </button>
+        <div
+          class="absolute bottom-2 left-2 bg-black/60 backdrop-blur-xs text-white text-[9px] font-mono px-2 py-0.5 rounded-lg truncate max-w-[200px]">
+          {{ selectedPostFile()?.name }}
+        </div>
       </div>
+      } @else {
+      <!-- Dropzone para seleccionar archivo -->
+      <div (click)="postFileInput.click()"
+        class="border-2 border-dashed border-stone-300 hover:border-amber-500 hover:bg-amber-50/30 rounded-2xl p-6 text-center cursor-pointer transition-all group select-none">
+        <div
+          class="w-12 h-12 mx-auto rounded-2xl bg-amber-50 group-hover:bg-amber-100 flex items-center justify-center text-amber-500 mb-2 transition-colors shadow-2xs">
+          <i class="pi pi-upload text-xl"></i>
+        </div>
+        <p class="text-xs font-bold text-stone-800">
+          Haz clic para seleccionar foto de tu equipo
+        </p>
+        <p class="text-[10px] text-stone-400 mt-0.5">
+          Se subirá al bucket <span class="font-bold text-stone-600">feed_posts</span> de Supabase
+        </p>
+      </div>
+      }
+
+      <input #postFileInput type="file" accept="image/*" (change)="onPostFileSelected($event)" class="hidden" />
+    </div>
+
+    <!-- O ingresar URL manual (opción secundaria) -->
+    @if (!selectedPostFile()) {
+    <div>
+      <label class="block text-[10px] font-bold uppercase tracking-wider text-stone-400 mb-1">
+        O ingresar URL externa directa
+      </label>
+      <input type="text" pInputText [ngModel]="newPostMediaUrl()" (ngModelChange)="newPostMediaUrl.set($event)"
+        placeholder="https://ejemplo.com/foto_post.jpg"
+        class="w-full bg-stone-50 border-stone-200 rounded-xl text-xs p-2.5 text-stone-900 font-mono" />
+    </div>
+    }
+
+    <div>
+      <label class="block text-[10px] font-bold uppercase tracking-wider text-stone-500 mb-1">
+        Descripción / Caption
+      </label>
+      <textarea rows="3" [ngModel]="newPostCaption()" (ngModelChange)="newPostCaption.set($event)"
+        placeholder="Comparte el contexto o motivación de este post..."
+        class="w-full bg-stone-50 border border-stone-200 rounded-xl text-xs p-3 text-stone-900 focus:outline-none focus:border-amber-500 resize-none"></textarea>
+    </div>
+
+    <div>
+      <label class="block text-[10px] font-bold uppercase tracking-wider text-stone-500 mb-1">
+        Módulo Origen
+      </label>
+      <div class="grid grid-cols-3 gap-2">
+        <button type="button" (click)="newPostModule.set('GENERAL')"
+          class="py-2 text-center text-xs font-bold rounded-xl border transition-all cursor-pointer"
+          [class.bg-stone-900]="newPostModule() === 'GENERAL'" [class.text-white]="newPostModule() === 'GENERAL'"
+          [class.border-stone-900]="newPostModule() === 'GENERAL'" [class.bg-stone-50]="newPostModule() !== 'GENERAL'"
+          [class.text-stone-700]="newPostModule() !== 'GENERAL'">
+          General
+        </button>
+        <button type="button" (click)="newPostModule.set('INTAKE')"
+          class="py-2 text-center text-xs font-bold rounded-xl border transition-all cursor-pointer"
+          [class.bg-emerald-600]="newPostModule() === 'INTAKE'" [class.text-white]="newPostModule() === 'INTAKE'"
+          [class.border-emerald-600]="newPostModule() === 'INTAKE'" [class.bg-stone-50]="newPostModule() !== 'INTAKE'"
+          [class.text-stone-700]="newPostModule() !== 'INTAKE'">
+          Intake
+        </button>
+        <button type="button" (click)="newPostModule.set('WORKOUT')"
+          class="py-2 text-center text-xs font-bold rounded-xl border transition-all cursor-pointer"
+          [class.bg-amber-500]="newPostModule() === 'WORKOUT'" [class.text-white]="newPostModule() === 'WORKOUT'"
+          [class.border-amber-500]="newPostModule() === 'WORKOUT'" [class.bg-stone-50]="newPostModule() !== 'WORKOUT'"
+          [class.text-stone-700]="newPostModule() !== 'WORKOUT'">
+          Workout
+        </button>
+      </div>
+    </div>
+
+    @if (createPostSuccess()) {
+    <div
+      class="p-2.5 bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs font-bold rounded-xl flex items-center gap-2">
+      <i class="pi pi-check-circle"></i>
+      <span>¡Publicación guardada en athlete_feed_posts y bucket feed_posts!</span>
+    </div>
     }
 
     <div class="flex gap-2 pt-2">
-      <button
-        (click)="isEditModalOpen.set(false)"
-        class="flex-1 bg-stone-100 hover:bg-stone-200 text-stone-700 font-bold text-xs py-3 rounded-xl transition-all cursor-pointer"
-      >
+      <button (click)="isNewPostModalOpen.set(false)"
+        class="flex-1 bg-stone-100 hover:bg-stone-200 text-stone-700 font-bold text-xs py-3 rounded-xl transition-all cursor-pointer">
         Cancelar
       </button>
-      <button
-        (click)="saveProfile()"
-        [disabled]="isSaving()"
-        class="flex-1 bg-amber-500 hover:bg-amber-600 disabled:opacity-50 text-white font-black text-xs py-3 rounded-xl transition-all cursor-pointer flex items-center justify-center gap-1.5 shadow-sm"
-      >
-        @if (isSaving()) {
-          <i class="pi pi-spin pi-spinner"></i>
-          <span>Guardando...</span>
+      <button (click)="submitCreatePost()"
+        [disabled]="(!selectedPostFile() && !newPostMediaUrl().trim()) || isCreatingPost()"
+        class="flex-1 bg-amber-500 hover:bg-amber-600 disabled:opacity-50 text-white font-black text-xs py-3 rounded-xl transition-all cursor-pointer flex items-center justify-center gap-1.5 shadow-sm">
+        @if (isCreatingPost()) {
+        <i class="pi pi-spin pi-spinner"></i>
+        <span>Subiendo & Publicando...</span>
         } @else {
-          <span>Guardar Cambios</span>
+        <span>Publicar Post</span>
         }
       </button>
     </div>
   </div>
 </p-dialog>
 
-<!-- MODAL: DETALLE DE FOTO DE COMIDA -->
-@if (selectedMeal()) {
-  <p-dialog
-    [visible]="true"
-    (visibleChange)="selectedMeal.set(null)"
-    [modal]="true"
-    [draggable]="false"
-    [resizable]="false"
-    header="Registro Nutricional"
-    styleClass="w-[90vw] max-w-sm bg-white rounded-3xl overflow-hidden shadow-2xl p-0"
-  >
-    <div class="p-4 space-y-3">
-      <div class="rounded-2xl overflow-hidden aspect-video bg-stone-100 border border-stone-200">
-        <img [src]="selectedMeal()?.foto_url" alt="Plato" class="w-full h-full object-cover" />
+<!-- ==================================================== -->
+<!-- MODAL: RECORTAR Y AJUSTAR AVATAR (BUCKET 'avatars') -->
+<!-- ==================================================== -->
+<p-dialog [(visible)]="isAvatarModalOpen" [modal]="true" [draggable]="false" [resizable]="false"
+  header="Ajustar y Recortar Foto de Perfil"
+  styleClass="w-[94vw] max-w-sm bg-white rounded-3xl overflow-hidden shadow-2xl p-0">
+  <div class="p-5 space-y-4">
+    <!-- Viewport Circular de Recorte -->
+    <div class="flex flex-col items-center">
+      <div
+        class="w-[260px] h-[260px] rounded-full overflow-hidden bg-stone-900 border-4 border-amber-500/80 shadow-inner relative select-none cursor-grab active:cursor-grabbing touch-none"
+        (mousedown)="startPan($event)" (mousemove)="onPan($event)" (mouseup)="endPan()" (mouseleave)="endPan()"
+        (touchstart)="startPan($event)" (touchmove)="onPan($event)" (touchend)="endPan()">
+        @if (rawAvatarImage()) {
+        <img [src]="rawAvatarImage()" alt="Crop Avatar"
+          class="w-full h-full object-cover pointer-events-none origin-center"
+          [style.transform]="'translate(' + avatarPanX() + 'px, ' + avatarPanY() + 'px) scale(' + avatarZoom() + ')'" />
+        }
+
+        <!-- Guía circular central -->
+        <div class="absolute inset-0 rounded-full border border-white/20 pointer-events-none"></div>
       </div>
-      <div>
-        <span class="text-[9px] font-bold uppercase tracking-widest bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full">
-          {{ selectedMeal()?.tipo_comida || 'Comida' }}
+
+      <p class="text-[10px] text-stone-500 font-medium mt-2 flex items-center gap-1">
+        <i class="pi pi-arrows-alt text-[9px] text-stone-400"></i>
+        <span>Arrastra para centrar · Ajusta el zoom abajo</span>
+      </p>
+    </div>
+
+    <!-- Controles de Zoom -->
+    <div class="bg-stone-50 p-3 rounded-2xl border border-stone-200/80 space-y-2">
+      <div class="flex items-center justify-between">
+        <span class="text-[10px] font-black uppercase tracking-wider text-stone-600 flex items-center gap-1">
+          <i class="pi pi-search-plus text-amber-500"></i>
+          <span>Zoom ({{ avatarZoom().toFixed(1) }}x)</span>
         </span>
-        <h4 class="font-black text-sm text-stone-900 mt-1">
-          {{ selectedMeal()?.nombre || 'Plato Registrado' }}
-        </h4>
-        <p class="text-[10px] text-stone-500 font-mono mt-0.5">
-          {{ selectedMeal()?.timestamp | date:'medium' }}
-        </p>
+        <button type="button" (click)="resetAvatarCrop()"
+          class="text-[9px] font-bold text-amber-600 hover:text-amber-700 bg-amber-50 px-2 py-0.5 rounded-md cursor-pointer">
+          Reiniciar
+        </button>
       </div>
-      @if (selectedMeal()?.notas) {
-        <p class="text-xs text-stone-600 bg-stone-50 p-2 rounded-xl border border-stone-100">
-          {{ selectedMeal()?.notas }}
-        </p>
+
+      <div class="flex items-center gap-2">
+        <button type="button" (click)="zoomOutAvatar()"
+          class="w-7 h-7 rounded-lg bg-white border border-stone-200 flex items-center justify-center text-xs font-bold text-stone-700 hover:bg-stone-100 cursor-pointer shadow-2xs">
+          -
+        </button>
+        <input type="range" min="1" max="3" step="0.05" [ngModel]="avatarZoom()" (ngModelChange)="setAvatarZoom($event)"
+          class="flex-1 accent-amber-500 cursor-pointer h-1.5 bg-stone-200 rounded-lg" />
+        <button type="button" (click)="zoomInAvatar()"
+          class="w-7 h-7 rounded-lg bg-white border border-stone-200 flex items-center justify-center text-xs font-bold text-stone-700 hover:bg-stone-100 cursor-pointer shadow-2xs">
+          +
+        </button>
+      </div>
+    </div>
+
+    <!-- Indicador de Bucket Supabase -->
+    <!-- <div class="flex items-center gap-2 px-3 py-1.5 bg-emerald-50 border border-emerald-200/60 rounded-xl text-emerald-800 text-[10px]">
+      <i class="pi pi-cloud-upload text-emerald-600"></i>
+      <span>Se recortará y guardará en el bucket <strong>avatars</strong></span>
+    </div> -->
+
+    @if (avatarUploadSuccess()) {
+    <div
+      class="p-2.5 bg-emerald-100 border border-emerald-300 text-emerald-800 text-xs font-bold rounded-xl flex items-center gap-2">
+      <i class="pi pi-check-circle"></i>
+      <span>¡Avatar actualizado con éxito en Supabase!</span>
+    </div>
+    }
+
+    <!-- Botones de Acción -->
+    <div class="flex gap-2 pt-1">
+      <button type="button" (click)="isAvatarModalOpen.set(false)"
+        class="flex-1 bg-stone-100 hover:bg-stone-200 text-stone-700 font-bold text-xs py-2.5 rounded-xl transition-all cursor-pointer">
+        Cancelar
+      </button>
+      <button type="button" (click)="applyAndSaveAvatar()" [disabled]="isUploadingAvatar()"
+        class="flex-1 bg-amber-500 hover:bg-amber-600 disabled:opacity-50 text-white font-black text-xs py-2.5 rounded-xl transition-all cursor-pointer flex items-center justify-center gap-1.5 shadow-sm">
+        @if (isUploadingAvatar()) {
+        <i class="pi pi-spin pi-spinner"></i>
+        <span>Recortando y Subiendo...</span>
+        } @else {
+        <i class="pi pi-check"></i>
+        <span>Guardar Avatar</span>
+        }
+      </button>
+    </div>
+  </div>
+</p-dialog>
+
+
+<!-- ========================================== -->
+<!-- MODAL: DETALLE DE PUBLICACIÓN (POST)       -->
+<!-- ========================================== -->
+@if (selectedPost()) {
+<p-dialog [visible]="true" (visibleChange)="selectedPost.set(null)" [modal]="true" [draggable]="false"
+  [resizable]="false" header="Publicación de Feed"
+  styleClass="w-[90vw] max-w-sm bg-white rounded-3xl overflow-hidden shadow-2xl p-0">
+  <div class="p-4 space-y-3">
+    <div class="rounded-2xl overflow-hidden aspect-square bg-stone-100 border border-stone-200">
+      <img [src]="selectedPost()?.media_url" alt="Post" class="w-full h-full object-cover" />
+    </div>
+    <div>
+      <div class="flex items-center justify-between mb-1">
+        <span
+          class="text-[9px] font-bold uppercase tracking-widest bg-amber-100 text-amber-800 px-2 py-0.5 rounded-full">
+          {{ selectedPost()?.module_source || 'GENERAL' }}
+        </span>
+        <span class="text-[10px] text-stone-400 font-mono">
+          {{ selectedPost()?.created_at | date:'mediumDate' }}
+        </span>
+      </div>
+      @if (selectedPost()?.caption) {
+      <p
+        class="text-xs text-stone-800 mt-2 font-medium leading-relaxed bg-stone-50 p-2.5 rounded-xl border border-stone-100">
+        {{ selectedPost()?.caption }}
+      </p>
       }
     </div>
-  </p-dialog>
+  </div>
+</p-dialog>
 }
 
+<!-- ========================================== -->
+<!-- MODAL: EDITAR PERFIL DEL ATLETA            -->
+<!-- ========================================== -->
+<p-dialog [(visible)]="isEditModalOpen" [modal]="true" [draggable]="false" [resizable]="false"
+  header="Editar Perfil de Atleta" styleClass="w-[92vw] max-w-md bg-white rounded-3xl overflow-hidden shadow-2xl p-0">
+  <div class="p-5 space-y-4">
+    <div>
+      <label class="block text-[10px] font-bold uppercase tracking-wider text-stone-500 mb-1">Nombre</label>
+      <input type="text" pInputText [ngModel]="editFirstName()" (ngModelChange)="editFirstName.set($event)"
+        placeholder="Tu nombre" class="w-full bg-stone-50 border-stone-200 rounded-xl text-sm p-3 text-stone-900" />
+    </div>
+
+    <div>
+      <label class="block text-[10px] font-bold uppercase tracking-wider text-stone-500 mb-1">Apellido</label>
+      <input type="text" pInputText [ngModel]="editLastName()" (ngModelChange)="editLastName.set($event)"
+        placeholder="Tu apellido" class="w-full bg-stone-50 border-stone-200 rounded-xl text-sm p-3 text-stone-900" />
+    </div>
+
+    <!-- Nombre de usuario con verificación en tiempo real estilo Instagram -->
+    <div>
+      <div class="flex items-center justify-between mb-1">
+        <label class="block text-[10px] font-bold uppercase tracking-wider text-stone-500">
+          Username (@handle)
+        </label>
+        @if (usernameCheckStatus() === 'checking') {
+        <span class="text-[10px] text-stone-400 flex items-center gap-1 font-mono">
+          <i class="pi pi-spin pi-spinner text-[10px]"></i> Verificando...
+        </span>
+        } @else if (usernameCheckStatus() === 'available') {
+        <span class="text-[10px] text-emerald-600 font-bold flex items-center gap-1">
+          <i class="pi pi-check text-[10px]"></i> Disponible
+        </span>
+        } @else if (usernameCheckStatus() === 'taken') {
+        <span class="text-[10px] text-red-500 font-bold flex items-center gap-1">
+          <i class="pi pi-times-circle text-[10px]"></i> No disponible
+        </span>
+        }
+      </div>
+
+      <!-- Contenedor Flex con prefijo @ integrado para evitar cualquier solapamiento -->
+      <div
+        class="flex items-center w-full bg-stone-50 border rounded-xl transition-all focus-within:bg-white focus-within:ring-2 focus-within:ring-amber-500/20"
+        [class.border-emerald-500]="usernameCheckStatus() === 'available'"
+        [class.border-red-500]="usernameCheckStatus() === 'taken' || usernameCheckStatus() === 'invalid'"
+        [class.border-stone-200]="usernameCheckStatus() === 'idle' || usernameCheckStatus() === 'checking'">
+        <span class="pl-3.5 pr-1 text-stone-400 font-bold text-sm select-none font-mono">@</span>
+        <input type="text" [ngModel]="editUsername()" (ngModelChange)="onUsernameInput($event)"
+          placeholder="usuario_awakin"
+          class="flex-1 bg-transparent border-0 outline-none text-sm py-3 px-1 text-stone-900 font-mono shadow-none focus:outline-none focus:ring-0" />
+
+        <!-- Indicador visual tipo Instagram dentro del input a la derecha -->
+        <div class="pr-3.5 flex items-center shrink-0">
+          @if (usernameCheckStatus() === 'checking') {
+          <i class="pi pi-spin pi-spinner text-stone-400 text-sm"></i>
+          } @else if (usernameCheckStatus() === 'available') {
+          <div class="w-5 h-5 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-600 shadow-2xs">
+            <i class="pi pi-check text-[10px] font-bold"></i>
+          </div>
+          } @else if (usernameCheckStatus() === 'taken' || usernameCheckStatus() === 'invalid') {
+          <div class="w-5 h-5 rounded-full bg-red-100 flex items-center justify-center text-red-600 shadow-2xs">
+            <i class="pi pi-times text-[10px] font-bold"></i>
+          </div>
+          }
+        </div>
+      </div>
+
+      @if (usernameFeedbackMessage()) {
+      <p class="text-[10px] mt-1 font-medium transition-colors"
+        [class.text-emerald-600]="usernameCheckStatus() === 'available'"
+        [class.text-red-500]="usernameCheckStatus() === 'taken' || usernameCheckStatus() === 'invalid'"
+        [class.text-stone-400]="usernameCheckStatus() === 'checking' || usernameCheckStatus() === 'idle'">
+        {{ usernameFeedbackMessage() }}
+      </p>
+      }
+    </div>
+
+    <div>
+      <label class="block text-[10px] font-bold uppercase tracking-wider text-stone-500 mb-1">Biografía</label>
+      <textarea rows="3" [ngModel]="editBio()" (ngModelChange)="editBio.set($event)"
+        placeholder="Describe tus metas de rendimiento..."
+        class="w-full bg-stone-50 border border-stone-200 rounded-xl text-xs p-3 text-stone-900 focus:outline-none focus:border-amber-500 resize-none"></textarea>
+    </div>
+
+    <!-- Foto de Perfil (Sin campo URL manual: cambio interactivo con recorte, zoom y subida al bucket 'avatars') -->
+    <div class="p-3 bg-stone-50 border border-stone-200/80 rounded-2xl flex items-center justify-between gap-3">
+      <div class="flex items-center gap-3">
+        <div class="w-12 h-12 rounded-full overflow-hidden border-2 border-white shadow-xs bg-stone-200 shrink-0">
+          @if (athlete()?.profile_image_url) {
+          <img [src]="athlete()?.profile_image_url" alt="Avatar" class="w-full h-full object-cover" />
+          } @else {
+          <div class="w-full h-full flex items-center justify-center font-black text-stone-600 text-sm">
+            {{ getInitials() }}
+          </div>
+          }
+        </div>
+        <div>
+          <span class="block text-xs font-bold text-stone-800">Foto de Perfil</span>
+          <span class="text-[10px] text-stone-500">Ajuste con zoom y recorte interactivo</span>
+        </div>
+      </div>
+      <button type="button" (click)="avatarFileInput.click()"
+        class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-amber-500/10 hover:bg-amber-500/20 text-amber-700 text-xs font-bold rounded-xl transition-all cursor-pointer border border-amber-500/30">
+        <i class="pi pi-camera text-xs"></i>
+        <span>Cambiar</span>
+      </button>
+    </div>
+
+    <!-- Retroalimentación de Error al Guardar -->
+    @if (saveError()) {
+    <div
+      class="p-3 bg-red-50 border border-red-200 text-red-700 text-xs rounded-xl flex items-start gap-2.5 animate-shake">
+      <i class="pi pi-exclamation-triangle text-sm mt-0.5 shrink-0 text-red-600"></i>
+      <div class="flex-1 leading-snug">
+        <span class="font-bold block text-red-800">Error al guardar:</span>
+        <span>{{ saveError() }}</span>
+      </div>
+      <button type="button" (click)="saveError.set(null)" class="text-red-400 hover:text-red-700 p-0.5 cursor-pointer"
+        title="Cerrar">
+        <i class="pi pi-times text-xs"></i>
+      </button>
+    </div>
+    }
+
+    <!-- Retroalimentación de Éxito al Guardar -->
+    @if (saveSuccess()) {
+    <div
+      class="p-2.5 bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs font-bold rounded-xl flex items-center gap-2">
+      <i class="pi pi-check-circle"></i>
+      <span>¡Perfil actualizado con éxito en Supabase!</span>
+    </div>
+    }
+
+    <div class="flex gap-2 pt-2">
+      <button (click)="isEditModalOpen.set(false)"
+        class="flex-1 bg-stone-100 hover:bg-stone-200 text-stone-700 font-bold text-xs py-3 rounded-xl transition-all cursor-pointer">
+        Cancelar
+      </button>
+      <button (click)="saveProfile()"
+        [disabled]="isSaving() || usernameCheckStatus() === 'taken' || usernameCheckStatus() === 'invalid' || usernameCheckStatus() === 'checking' || !editUsername().trim()"
+        class="flex-1 bg-amber-500 hover:bg-amber-600 disabled:opacity-50 disabled:cursor-not-allowed text-white font-black text-xs py-3 rounded-xl transition-all cursor-pointer flex items-center justify-center gap-1.5 shadow-sm">
+        @if (isSaving()) {
+        <i class="pi pi-spin pi-spinner"></i>
+        <span>Guardando...</span>
+        } @else {
+        <span>Guardar Cambios</span>
+        }
+      </button>
+    </div>
+  </div>
+</p-dialog>
+
+<!-- ========================================== -->
+<!-- MODAL: DETALLE DE FOTO DE COMIDA           -->
+<!-- ========================================== -->
+@if (selectedMeal()) {
+<p-dialog [visible]="true" (visibleChange)="selectedMeal.set(null)" [modal]="true" [draggable]="false"
+  [resizable]="false" header="Registro Nutricional"
+  styleClass="w-[90vw] max-w-sm bg-white rounded-3xl overflow-hidden shadow-2xl p-0">
+  <div class="p-4 space-y-3">
+    <div class="rounded-2xl overflow-hidden aspect-video bg-stone-100 border border-stone-200">
+      <img [src]="selectedMeal()?.foto_url" alt="Plato" class="w-full h-full object-cover" />
+    </div>
+    <div>
+      <span
+        class="text-[9px] font-bold uppercase tracking-widest bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full">
+        {{ selectedMeal()?.tipo_comida || 'Comida' }}
+      </span>
+      <h4 class="font-black text-sm text-stone-900 mt-1">
+        {{ selectedMeal()?.nombre || 'Plato Registrado' }}
+      </h4>
+      <p class="text-[10px] text-stone-500 font-mono mt-0.5">
+        {{ selectedMeal()?.timestamp | date:'medium' }}
+      </p>
+    </div>
+    @if (selectedMeal()?.notas) {
+    <p class="text-xs text-stone-600 bg-stone-50 p-2 rounded-xl border border-stone-100">
+      {{ selectedMeal()?.notas }}
+    </p>
+    }
+  </div>
+</p-dialog>
+}
