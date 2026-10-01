@@ -1,4 +1,4 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, inject, signal, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -27,7 +27,7 @@ import { MessageModule } from 'primeng/message';
   ],
   templateUrl: './login.component.html'
 })
-export class LoginComponent {
+export class LoginComponent implements OnInit {
   private authService = inject(AuthService);
   private router = inject(Router);
 
@@ -36,6 +36,13 @@ export class LoginComponent {
   password = signal<string>('');
   loading = signal<boolean>(false);
   errorMessage = signal<string>('');
+
+  ngOnInit(): void {
+    // Si ya existe sesión activa, redirigir de inmediato a /home
+    if (this.authService.isAuthenticated()) {
+      this.router.navigate(['/home']);
+    }
+  }
 
   /**
    * Ejecuta el protocolo de autenticación tradicional por correo
@@ -54,7 +61,7 @@ export class LoginComponent {
       // Forzamos la resolución del flujo HTTP antes de dar el pase de navegación
       await firstValueFrom(this.authService.signInWithEmail(this.email(), this.password()));
       
-      // Si la API responde con éxito, el interceptor o el tap ya habrán guardado la sesión
+      // Si la API responde con éxito, redirigir a /home
       this.router.navigate(['/home']);
     } catch (error: any) {
       // Captura el error arrojado por el bloque catchError de nuestro servicio central
@@ -90,7 +97,7 @@ export class LoginComponent {
         `${athlete.first_name || ''} ${athlete.last_name || ''}`.trim() || athlete.username,
         athlete.profile_image_url || undefined
       );
-      this.router.navigate(['/avatar']);
+      this.router.navigate(['/home']);
     } else {
       // Fallback a Courant Luna por defecto si la lista aún no ha respondido
       this.authService.devLoginAthlete(
@@ -99,7 +106,7 @@ export class LoginComponent {
         'Courant Luna',
         'https://lh3.googleusercontent.com/a/ACg8ocJfnggD49HZR51l7GkBR70-I-WPkaOxybRqHRE12OjL7NUMtw=s96-c'
       );
-      this.router.navigate(['/avatar']);
+      this.router.navigate(['/home']);
     }
   }
 }

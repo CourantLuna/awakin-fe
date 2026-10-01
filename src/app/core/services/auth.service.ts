@@ -96,6 +96,9 @@ export class AuthService {
       }
     };
     this.initializeProtocol(sessionData);
+    if (this.router.url.includes('/login') || this.router.url === '/') {
+      this.router.navigate(['/home']);
+    }
   }
 
   /**
