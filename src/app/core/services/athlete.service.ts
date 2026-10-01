@@ -110,6 +110,8 @@ export class AthleteService {
         this.availableAthletes.set(athletes);
         if (athletes.length > 0) {
           let selected: AthleteProfile | undefined;
+
+          // 1. Identificador preferido explícito
           if (preferredIdentifier) {
             selected = athletes.find(
               (a) =>
@@ -118,13 +120,25 @@ export class AthleteService {
                 a.username === preferredIdentifier
             );
           }
+
+          // 2. Prioridad absoluta: Usuario autenticado en sesión actual (awakin_session)
           if (!selected) {
-            // Intentar recuperar el último atleta seleccionado guardado en localStorage
-            const savedId = localStorage.getItem('awakin_active_athlete_id');
-            if (savedId) {
-              selected = athletes.find((a) => a.id === savedId);
+            const sessionRaw = localStorage.getItem('awakin_session');
+            if (sessionRaw) {
+              try {
+                const parsed = JSON.parse(sessionRaw);
+                const authId = parsed?.avatar?.id;
+                const authEmail = parsed?.avatar?.email;
+                if (authId || authEmail) {
+                  selected = athletes.find(
+                    (a) => a.id === authId || (authEmail && a.email?.toLowerCase() === authEmail.toLowerCase())
+                  );
+                }
+              } catch (e) {}
             }
           }
+
+          // 3. Fallback al primer atleta
           this.setActiveAthlete(selected || athletes[0]);
         }
         this.isLoading.set(false);

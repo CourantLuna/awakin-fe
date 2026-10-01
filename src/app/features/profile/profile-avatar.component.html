@@ -1,14 +1,12 @@
 <div class="min-h-screen bg-[#FAFAF9] pb-28 pt-8">
   <!-- BARRA SUPERIOR CON SELECTOR DE ATLETA Y ACCIONES -->
   <div class="flex justify-between items-center px-4 mb-5 relative">
-    <!-- Selector de cuenta / Username -->
-    <button (click)="toggleSwitcher()"
-      class="flex items-center gap-1.5 text-sm font-black text-stone-900 bg-stone-100 hover:bg-stone-200 px-3 py-1.5 rounded-full border border-stone-200 transition-all cursor-pointer">
+    <!-- Identificador de cuenta / Username bloqueado con credenciales -->
+    <div
+      class="flex items-center gap-1.5 text-sm font-black text-stone-900 bg-stone-100/90 px-3 py-1.5 rounded-full border border-stone-200 select-none shadow-xs">
       <i class="pi pi-lock text-[10px] text-stone-500"></i>
       <span>@{{ athlete()?.username || 'mi_usuario_awakin' }}</span>
-      <i class="pi pi-chevron-down text-[10px] text-stone-600 transition-transform"
-        [class.rotate-180]="isSwitcherOpen()"></i>
-    </button>
+    </div>
 
     <!-- Botón de Menú de Opciones -->
     <button (click)="isMenuOpen.set(!isMenuOpen())"
@@ -16,50 +14,6 @@
       title="Opciones de cuenta">
       <i class="pi pi-bars text-lg"></i>
     </button>
-
-    <!-- DROPDOWN: SWITCHER DE ATLETAS (Permite conmutar o ver usuarios de la BD) -->
-    @if (isSwitcherOpen()) {
-    <div
-      class="absolute left-4 top-12 z-50 w-72 bg-white rounded-2xl shadow-2xl border border-stone-200 p-2 max-h-96 overflow-y-auto animate-fade-in">
-      <div class="px-3 py-2 border-b border-stone-100 mb-1">
-        <p class="text-[10px] font-bold uppercase tracking-widest text-stone-400">Atletas Registrados (BD)</p>
-        <p class="text-xs text-stone-600">Selecciona para sincronizar tu vista</p>
-      </div>
-
-      @for (ath of athletesList(); track ath.id) {
-      <button (click)="onSelectAthlete(ath)"
-        class="w-full flex items-center gap-3 p-2 rounded-xl hover:bg-stone-100 text-left transition-colors cursor-pointer"
-        [class.bg-orange-50]="ath.id === athlete()?.id" [class.border]="ath.id === athlete()?.id"
-        [class.border-orange-200]="ath.id === athlete()?.id">
-        <div class="w-8 h-8 rounded-full overflow-hidden bg-stone-200 shrink-0 border border-stone-300">
-          @if (ath.profile_image_url) {
-          <img [src]="ath.profile_image_url" [alt]="ath.username" class="w-full h-full object-cover" />
-          } @else {
-          <div class="w-full h-full flex items-center justify-center text-[10px] font-bold text-stone-600 bg-stone-100">
-            {{ (ath.first_name || ath.username || 'A').slice(0, 2).toUpperCase() }}
-          </div>
-          }
-        </div>
-        <div class="flex-1 min-w-0">
-          <p class="text-xs font-bold text-stone-900 truncate">
-            {{ ath.first_name ? ath.first_name + ' ' + (ath.last_name || '') : ath.username }}
-          </p>
-          <div class="flex items-center gap-1.5">
-            <p class="text-[10px] text-stone-500 truncate">@{{ ath.username }}</p>
-            @if (ath.kin) {
-            <span class="text-[8px] font-bold text-amber-600 bg-amber-50 px-1 rounded">
-              {{ ath.kin.team_name }}
-            </span>
-            }
-          </div>
-        </div>
-        @if (ath.id === athlete()?.id) {
-        <i class="pi pi-check text-xs text-amber-500 font-bold"></i>
-        }
-      </button>
-      }
-    </div>
-    }
 
     <!-- DROPDOWN: MENÚ RÁPIDO (Cerrar sesión / Editar) -->
     @if (isMenuOpen()) {
@@ -255,52 +209,62 @@
     </button>
   </div>
 
-  <!-- BARRA DE PESTAÑAS SEPARADAS DEL FEED:
-       1) Posts realizados (athlete_feed_posts)
-       2) Comidas registradas (registros_nutricionales foto_url)
-       3) Workouts (en construcción) -->
+  <!-- BARRA DE PESTAÑAS DEL FEED (ICON ONLY CON BADGE EN ESQUINA SUPERIOR DERECHA) -->
   <div class="flex border-t border-b border-stone-200 bg-white sticky top-0 z-30 shadow-xs">
-    <!-- Pestaña 1: Posts -->
+    <!-- Pestaña 1: Posts (Icon Only) -->
     <button (click)="setTab('posts')"
-      class="flex-1 py-2.5 text-center transition-all cursor-pointer relative flex flex-col items-center gap-0.5"
+      class="flex-1 py-3 text-center transition-all cursor-pointer relative flex items-center justify-center"
       [class.border-b-2]="activeTab() === 'posts'" [class.border-stone-900]="activeTab() === 'posts'"
-      [class.text-stone-900]="activeTab() === 'posts'" [class.text-stone-400]="activeTab() !== 'posts'">
-      <div class="flex items-center gap-1">
-        <i class="pi pi-th-large text-sm"></i>
+      [class.text-stone-900]="activeTab() === 'posts'" [class.text-stone-400]="activeTab() !== 'posts'"
+      title="Publicaciones">
+      <div class="relative w-8 h-8 flex items-center justify-center">
+        <i class="pi pi-th-large text-lg transition-transform duration-200"
+          [class.scale-110]="activeTab() === 'posts'" [class.opacity-40]="activeTab() !== 'posts'"></i>
         @if (posts().length > 0) {
-        <span class="text-[8px] font-black px-1.5 py-0.2 rounded-full bg-stone-100 text-stone-700">
+        <span
+          class="absolute -top-1 -right-2.5 min-w-[16px] h-4 px-1 rounded-full bg-stone-100 border border-stone-200 text-stone-700 text-[8px] font-black flex items-center justify-center shadow-xs">
           {{ posts().length }}
         </span>
         }
       </div>
-      <span class="text-[9px] font-black uppercase tracking-wider">Posts</span>
     </button>
 
-    <!-- Pestaña 2: Comidas -->
+    <!-- Pestaña 2: Comidas (Mismo icono del módulo Intake - Icon Only) -->
     <button (click)="setTab('meals')"
-      class="flex-1 py-2.5 text-center transition-all cursor-pointer relative flex flex-col items-center gap-0.5"
+      class="flex-1 py-3 text-center transition-all cursor-pointer relative flex items-center justify-center"
       [class.border-b-2]="activeTab() === 'meals'" [class.border-stone-900]="activeTab() === 'meals'"
-      [class.text-stone-900]="activeTab() === 'meals'" [class.text-stone-400]="activeTab() !== 'meals'">
-      <div class="flex items-center gap-1">
-        <i class="pi pi-apple text-sm"></i>
+      [class.text-stone-900]="activeTab() === 'meals'" [class.text-stone-400]="activeTab() !== 'meals'"
+      title="Comidas (Intake)">
+      <div class="relative w-8 h-8 flex items-center justify-center">
+        <img
+          [src]="activeTab() === 'meals' ? 'icons/intake-active.png' : 'icons/intake-gray.png'"
+          class="w-7 h-7 object-contain transition-all duration-200"
+          [ngClass]="activeTab() === 'meals' ? 'scale-110 drop-shadow-xs' : 'opacity-50 hover:opacity-80'"
+          alt="Comidas"
+        />
         @if (mealPhotos().length > 0) {
-        <span class="text-[8px] font-black px-1.5 py-0.2 rounded-full bg-stone-100 text-stone-700">
+        <span
+          class="absolute -top-1 -right-2.5 min-w-[16px] h-4 px-1 rounded-full bg-stone-100 border border-stone-200 text-stone-700 text-[8px] font-black flex items-center justify-center shadow-xs">
           {{ mealPhotos().length }}
         </span>
         }
       </div>
-      <span class="text-[9px] font-black uppercase tracking-wider">Comidas</span>
     </button>
 
-    <!-- Pestaña 3: Workouts (en construcción) -->
+    <!-- Pestaña 3: Workouts (Mismo icono del módulo Workout - Icon Only) -->
     <button (click)="setTab('workouts')"
-      class="flex-1 py-2.5 text-center transition-all cursor-pointer relative flex flex-col items-center gap-0.5"
+      class="flex-1 py-3 text-center transition-all cursor-pointer relative flex items-center justify-center"
       [class.border-b-2]="activeTab() === 'workouts'" [class.border-stone-900]="activeTab() === 'workouts'"
-      [class.text-stone-900]="activeTab() === 'workouts'" [class.text-stone-400]="activeTab() !== 'workouts'">
-      <div class="flex items-center gap-1">
-        <i class="pi pi-bolt text-sm"></i>
+      [class.text-stone-900]="activeTab() === 'workouts'" [class.text-stone-400]="activeTab() !== 'workouts'"
+      title="Workouts">
+      <div class="relative w-8 h-8 flex items-center justify-center">
+        <img
+          [src]="activeTab() === 'workouts' ? 'icons/workout-active.png' : 'icons/workout-gray.png'"
+          class="w-7 h-7 object-contain transition-all duration-200"
+          [ngClass]="activeTab() === 'workouts' ? 'scale-110 drop-shadow-xs' : 'opacity-50 hover:opacity-80'"
+          alt="Workouts"
+        />
       </div>
-      <span class="text-[9px] font-black uppercase tracking-wider">Workouts</span>
     </button>
   </div>
 
