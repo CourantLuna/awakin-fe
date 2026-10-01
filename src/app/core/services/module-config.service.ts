@@ -32,6 +32,14 @@ export class ModuleConfigService {
   }
 
   /**
+   * Método de compatibilidad para refrescar estado si se solicita
+   */
+  syncWithBackend(): void {
+    // Mantiene la configuración estática de environment.ts
+    this.modules.set(this.defaultModules);
+  }
+
+  /**
    * Consulta si un módulo específico está habilitado (true) o en mantenimiento (false).
    */
   isModuleEnabled(moduleName: string): boolean {
