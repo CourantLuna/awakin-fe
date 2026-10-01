@@ -97,7 +97,24 @@ export class AthleteService {
   public isLoading = signal<boolean>(false);
 
   constructor() {
-    this.loadInitialAthletes();
+    // Constructor limpio sin llamadas HTTP automáticas (Carga On-Demand tras Login)
+  }
+
+  /**
+   * Carga el perfil específico del atleta autenticado por ID o Username
+   */
+  public loadAthleteProfile(identifier: string): void {
+    this.isLoading.set(true);
+    this.http.get<AthleteProfile>(`${this.baseUrl}/${identifier}`).subscribe({
+      next: (athlete) => {
+        this.setActiveAthlete(athlete);
+        this.isLoading.set(false);
+      },
+      error: (err) => {
+        console.warn(`Aviso al cargar perfil de atleta '${identifier}':`, err);
+        this.isLoading.set(false);
+      }
+    });
   }
 
   /**

@@ -86,11 +86,18 @@ export class ProfileAvatarComponent implements OnInit {
   });
 
   ngOnInit() {
-    console.log('ProfileAvatarComponent inicializado.');
-    // Si no hay atleta activo aún, asegurar que se cargue
+    // Cargar bajo demanda el perfil del atleta autenticado
     const current = this.athlete();
     if (!current) {
-      this.athleteService.loadInitialAthletes();
+      const session = this.authService.currentSession();
+      if (session?.avatar?.id) {
+        this.athleteService.loadAthleteProfile(session.avatar.id);
+      } else {
+        const savedId = localStorage.getItem('awakin_active_athlete_id');
+        if (savedId) {
+          this.athleteService.loadAthleteProfile(savedId);
+        }
+      }
     }
   }
 
