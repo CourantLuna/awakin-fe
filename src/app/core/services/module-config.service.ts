@@ -1,7 +1,5 @@
-import { Injectable, inject, signal } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { Injectable, signal } from '@angular/core';
 import { environment } from '../../../environments/environment';
-import { catchError, of, tap } from 'rxjs';
 
 export interface ModuleConfig {
   home: boolean;
@@ -16,8 +14,6 @@ export interface ModuleConfig {
   providedIn: 'root',
 })
 export class ModuleConfigService {
-  private http = inject(HttpClient);
-
   // Inicialización inmediata con la configuración local de environment.ts
   private defaultModules: ModuleConfig = {
     home: environment.modules?.home ?? true,
@@ -27,37 +23,12 @@ export class ModuleConfigService {
     avatar: environment.modules?.avatar ?? true,
   };
 
-  // Signal reactivo para acceso síncrono en guards y componentes
+  // Signal reactivo basado 100% en environment.ts / environment.development.ts
   modules = signal<ModuleConfig>(this.defaultModules);
-  isLoaded = signal<boolean>(false);
+  isLoaded = signal<boolean>(true);
 
   constructor() {
-    this.syncWithBackend();
-  }
-
-  /**
-   * Intenta sincronizar el estado de los módulos con el backend (/api/v1/system/modules).
-   * Si el backend está apagado o no responde, mantiene sin problemas la configuración de environment.ts.
-   */
-  syncWithBackend() {
-    const url = `${environment.apiUrl}/system/modules`;
-    this.http
-      .get<ModuleConfig>(url)
-      .pipe(
-        tap((remoteConfig) => {
-          if (remoteConfig) {
-            console.log('⚡ Estado de módulos sincronizado con backend:', remoteConfig);
-            this.modules.update((curr) => Object.assign({}, curr, remoteConfig));
-            this.isLoaded.set(true);
-          }
-        }),
-        catchError((err) => {
-          console.warn('⚠️ No se pudo conectar al endpoint de módulos del backend, usando environment local:', err.message || err);
-          this.isLoaded.set(true);
-          return of(null);
-        })
-      )
-      .subscribe();
+    // Los módulos se controlan exclusivamente desde environment.ts en el Frontend
   }
 
   /**
