@@ -160,6 +160,36 @@ export class ProtocolMatrixDrawer {
     this.setDayIndex(planId, prev);
   }
 
+  // Control de gestos táctiles (Swipe) en mobile para el carrusel
+  private touchStartX = 0;
+  private touchStartY = 0;
+
+  onTouchStart(event: TouchEvent) {
+    if (!event.touches || event.touches.length === 0) return;
+    this.touchStartX = event.touches[0].clientX;
+    this.touchStartY = event.touches[0].clientY;
+  }
+
+  onTouchEnd(planId: string, event: TouchEvent) {
+    if (!event.changedTouches || event.changedTouches.length === 0) return;
+    const touchEndX = event.changedTouches[0].clientX;
+    const touchEndY = event.changedTouches[0].clientY;
+
+    const deltaX = touchEndX - this.touchStartX;
+    const deltaY = touchEndY - this.touchStartY;
+
+    // Solo activamos si el gesto fue predominantemente horizontal y supera el umbral de 40px
+    if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > 40) {
+      if (deltaX < 0) {
+        // Deslizar hacia la izquierda (swipe left) -> siguiente día
+        this.nextDay(planId);
+      } else {
+        // Deslizar hacia la derecha (swipe right) -> día anterior
+        this.prevDay(planId);
+      }
+    }
+  }
+
   nextDay(planId: string, event?: Event) {
     if (event) event.stopPropagation();
     const current = this.getDayIndex(planId);

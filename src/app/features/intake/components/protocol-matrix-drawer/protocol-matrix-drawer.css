@@ -1,11 +1,26 @@
-/* Ajustes para el nuevo p-select en modo "Fantasma" */
-/* .p-select.border-none {
-    border: none !important;
-    box-shadow: none !important;
-    background: transparent !important;
-} */
+/* Ajustes de Contención de Overflow y Acordeón */
+:host ::ng-deep .p-accordioncontent-content {
+  padding-left: 0.25rem !important;
+  padding-right: 0.25rem !important;
+  overflow-x: hidden !important;
+}
 
-/* .p-select.border-none .p-select-label {
-    padding: 0 !important;
-} */
+@media (min-width: 640px) {
+  :host ::ng-deep .p-accordioncontent-content {
+    padding-left: 1rem !important;
+    padding-right: 1rem !important;
+  }
+}
+
+/* Área táctil del carrusel: permite scroll vertical pero captura swipe horizontal */
+.carousel-touch-area {
+  touch-action: pan-y;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+/* Transición suave para el cambio de día en la card */
+.day-card-transition {
+  transition: opacity 0.18s ease-in-out, transform 0.18s ease-in-out;
+}
 

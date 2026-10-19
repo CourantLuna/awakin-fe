@@ -33,7 +33,7 @@
     </div>
   </ng-template>
 
-  <div class="flex flex-col h-full">
+  <div class="flex flex-col h-full max-w-full overflow-x-hidden">
     <div class="flex items-center justify-between mb-4">
       <h3 class="text-xs font-bold text-stone-800 uppercase tracking-widest">
         Mis Planes Semanales
@@ -73,23 +73,24 @@
       </div>
     }
 
-    <p-accordion [multiple]="true">
+    <p-accordion [multiple]="true" class="w-full">
       @for (plan of weeklyTemplates(); track plan.id) {
-        <p-accordion-panel [value]="plan.id">
+        <p-accordion-panel [value]="plan.id" class="w-full overflow-hidden">
           <p-accordion-header>
-            <div class="flex items-center justify-between gap-2 w-full pr-2">
-              <div class="flex items-center gap-2 justify-start">
-                <i class="pi pi-th-large text-stone-400"></i>
+            <div class="flex items-center justify-between gap-2 w-full min-w-0 pr-1 overflow-hidden">
+              <div class="flex items-center gap-2 justify-start min-w-0 flex-1">
+                <i class="pi pi-th-large text-stone-400 shrink-0"></i>
                 <span
-                  class="font-black text-xs uppercase tracking-wider text-stone-800 min-w-24 max-w-36 md:max-w-[400px]"
+                  class="font-black text-xs uppercase tracking-wider text-stone-800 truncate"
+                  [title]="plan.name"
                   >{{ plan.name }}</span
                 >
               </div>
 
-              <div class="flex flex-row gap-2">
+              <div class="flex items-center gap-1.5 shrink-0">
                 @if (plan.id === activeTemplateId()) {
                   <span
-                    class="bg-emerald-50 text-emerald-600 border border-emerald-200 text-[8px] px-1.5 py-0.5 rounded flex items-center gap-1 font-bold tracking-widest uppercase shadow-sm"
+                    class="bg-emerald-50 text-emerald-600 border border-emerald-200 text-[8px] px-1.5 py-0.5 rounded flex items-center gap-1 font-bold tracking-widest uppercase shadow-sm whitespace-nowrap"
                   >
                     <i class="pi pi-check-circle text-[5px]"></i> ACTUAL
                   </span>
@@ -97,13 +98,13 @@
 
                 @if (plan.isFromCoach) {
                   <span
-                    class="bg-[#5057FE] text-white text-[9px] px-2.5 py-0.5 rounded-full flex items-center gap-1 font-bold tracking-wider uppercase shadow-xs"
+                    class="bg-[#5057FE] text-white text-[9px] px-2.5 py-0.5 rounded-full flex items-center gap-1 font-bold tracking-wider uppercase shadow-xs whitespace-nowrap"
                   >
                     <i class="pi pi-verified text-[8px]"></i> De tu Coach
                   </span>
                 } @else {
                   <span
-                    class="bg-[#00C48C] text-white text-[9px] px-2.5 py-0.5 rounded-full flex items-center gap-1 font-bold tracking-wider uppercase shadow-xs"
+                    class="bg-[#00C48C] text-white text-[9px] px-2.5 py-0.5 rounded-full flex items-center gap-1 font-bold tracking-wider uppercase shadow-xs whitespace-nowrap"
                   >
                     Personal
                   </span>
@@ -112,8 +113,8 @@
             </div>
           </p-accordion-header>
 
-          <p-accordion-content class="-p-1">
-            <div class="pt-2 pb-4 p-0!">
+          <p-accordion-content class="w-full max-w-full overflow-x-hidden">
+            <div class="pt-2 pb-4 px-0 w-full max-w-full overflow-x-hidden">
               @if (plan.id !== activeTemplateId()) {
                 <button
                   (click)="setActiveTemplate(plan.id, $event)"
@@ -188,15 +189,15 @@
               @let assignedMenu = getAssignedMenu(currentDay ? currentDay.menuId : null);
 
               <!-- Selector de Días (Tabs superiores) -->
-              <div class="flex items-center justify-between gap-1 mb-3 px-1">
+              <div class="flex items-center justify-between gap-1 mb-3 px-1 w-full max-w-[450px] mx-auto">
                 @for (day of plan.assignments; track $index; let i = $index) {
                   <button
                     type="button"
                     (click)="setDayIndex(plan.id, i, $event)"
-                    class="flex-1 py-1.5 px-1 rounded-xl text-[11px] font-black uppercase tracking-wider transition-all cursor-pointer text-center"
+                    class="flex-1 min-w-0 py-1.5 px-0.5 rounded-xl text-[10px] sm:text-[11px] font-black uppercase tracking-wider transition-all cursor-pointer text-center truncate"
                     [ngClass]="i === dayIdx
-                      ? 'bg-stone-900 text-white shadow-xs scale-102'
-                      : 'bg-stone-100/80 text-stone-500 hover:bg-stone-200/60 hover:text-stone-800'"
+                      ? 'bg-stone-900 text-white shadow-xs font-black'
+                      : 'bg-stone-100/80 text-stone-500 hover:bg-stone-200/60 hover:text-stone-800 font-bold'"
                   >
                     {{ day.dayName }}
                   </button>
@@ -204,30 +205,34 @@
               </div>
 
               <!-- Carrusel con Flechas de Navegación Lateral y Card del Día -->
-              <div class="relative w-full flex items-center justify-center py-2 px-1 sm:px-6">
-                <!-- Flecha Izquierda -->
+              <div
+                class="relative w-full max-w-full flex items-center justify-center py-2 px-1 sm:px-12 carousel-touch-area"
+                (touchstart)="onTouchStart($event)"
+                (touchend)="onTouchEnd(plan.id, $event)"
+              >
+                <!-- Flecha Izquierda (Solo Desktop) -->
                 <button
                   type="button"
                   (click)="prevDay(plan.id, $event)"
-                  class="absolute left-0 z-20 w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-white border border-stone-200 shadow-md flex items-center justify-center text-stone-700 hover:text-stone-900 hover:scale-105 active:scale-95 transition-all cursor-pointer"
+                  class="hidden sm:flex absolute left-1 sm:left-2 z-20 w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-white border border-stone-200 shadow-md items-center justify-center text-stone-700 hover:text-stone-900 hover:scale-105 active:scale-95 transition-all cursor-pointer"
                   title="Día anterior"
                 >
                   <i class="pi pi-chevron-left text-xs font-bold"></i>
                 </button>
 
-                <!-- Flecha Derecha -->
+                <!-- Flecha Derecha (Solo Desktop) -->
                 <button
                   type="button"
                   (click)="nextDay(plan.id, $event)"
-                  class="absolute right-0 z-20 w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-white border border-stone-200 shadow-md flex items-center justify-center text-stone-700 hover:text-stone-900 hover:scale-105 active:scale-95 transition-all cursor-pointer"
+                  class="hidden sm:flex absolute right-1 sm:right-2 z-20 w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-white border border-stone-200 shadow-md items-center justify-center text-stone-700 hover:text-stone-900 hover:scale-105 active:scale-95 transition-all cursor-pointer"
                   title="Día siguiente"
                 >
                   <i class="pi pi-chevron-right text-xs font-bold"></i>
                 </button>
 
-                <!-- CARD DEL DÍA (Espejo de la 2da Imagen de Referencia) -->
+                <!-- CARD DEL DÍA: Ancho fijo consistente, centrado en pantalla móvil -->
                 <div
-                  class="w-full max-w-md bg-white border-2 border-emerald-300/80 rounded-[28px] p-4 sm:p-5 shadow-[0_4px_25px_rgb(0,0,0,0.03)] relative transition-all"
+                  class="w-full max-w-[450px] shrink-0 mx-auto bg-white border-2 border-emerald-300/80 rounded-[28px] p-4 sm:p-5 shadow-[0_4px_25px_rgb(0,0,0,0.03)] relative day-card-transition min-w-0"
                 >
                   <!-- Header del Día: Nombre del Día + Badge de Kcal -->
                   <div class="flex items-center justify-between mb-4">
@@ -492,7 +497,7 @@
                       </div>
                     } @else {
                       <!-- Menú sin platillos registrados aún -->
-                      <div class="py-8 px-4 text-center bg-stone-50/60 rounded-2xl border border-dashed border-stone-200">
+                      <div class="w-full py-8 px-4 text-center bg-stone-50/60 rounded-2xl border border-dashed border-stone-200">
                         <i class="pi pi-info-circle text-stone-400 text-2xl mb-2"></i>
                         <p class="text-xs font-bold text-stone-700">Este menú no tiene platillos configurados aún</p>
                         <p class="text-[11px] text-stone-400 mt-0.5">Valores del menú: {{ assignedMenu.kcal }} kcal • {{ assignedMenu.macros }}</p>
@@ -500,7 +505,7 @@
                     }
                   } @else {
                     <!-- Día sin menú asignado -->
-                    <div class="py-12 px-4 text-center bg-stone-50/60 rounded-2xl border-2 border-dashed border-stone-200 flex flex-col items-center justify-center">
+                    <div class="w-full py-12 px-4 text-center bg-stone-50/60 rounded-2xl border-2 border-dashed border-stone-200 flex flex-col items-center justify-center">
                       <div class="w-12 h-12 rounded-2xl bg-amber-500/10 text-amber-500 flex items-center justify-center mb-3">
                         <i class="pi pi-calendar-plus text-xl"></i>
                       </div>
