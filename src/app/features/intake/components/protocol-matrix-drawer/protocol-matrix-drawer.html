@@ -1,33 +1,23 @@
-<p-drawer
-  [(visible)]="isOpen"
-  position="bottom"
-  [style]="{
+<p-drawer [(visible)]="isOpen" position="bottom" [style]="{
     height: '100dvh',
     maxHeight: '100dvh',
     width: '100%',
     borderRadius: '0',
     padding: '0',
     backgroundColor: '#FAFAF9',
-  }"
-  styleClass="!h-[100dvh] !max-h-[100dvh] !w-full !rounded-none"
-  [showCloseIcon]="false"
->
+  }" styleClass="!h-[100dvh] !max-h-[100dvh] !w-full !rounded-none" [showCloseIcon]="false">
   <ng-template #header>
     <div>
       <h2 class="text-lg font-black text-stone-900 uppercase tracking-widest">Plan Nutricional</h2>
       <p class="text-xs text-stone-500 font-medium">Diseña tus planes semanales</p>
     </div>
     <div class="flex gap-2">
-      <button
-        (click)="onOpenShoppingList.emit()"
-        class="h-8 px-3 bg-awakin-sun/10 text-awakin-sun rounded-full flex items-center justify-center font-bold text-[10px] tracking-wider hover:bg-awakin-sun/20 transition-colors"
-      >
+      <button (click)="onOpenShoppingList.emit()"
+        class="h-8 px-3 bg-awakin-sun/10 text-awakin-sun rounded-full flex items-center justify-center font-bold text-[10px] tracking-wider hover:bg-awakin-sun/20 transition-colors">
         <i class="pi pi-shopping-cart mr-1"></i> LISTA
       </button>
-      <button
-        (click)="isOpen.set(false)"
-        class="w-8 h-8 bg-stone-100 rounded-full flex items-center justify-center text-stone-500 hover:bg-stone-200 transition-colors"
-      >
+      <button (click)="isOpen.set(false)"
+        class="w-8 h-8 bg-stone-100 rounded-full flex items-center justify-center text-stone-500 hover:bg-stone-200 transition-colors">
         <i class="pi pi-times"></i>
       </button>
     </div>
@@ -37,500 +27,425 @@
     <div class="flex items-center justify-between mb-4">
       <h3 class="text-xs font-bold text-stone-800 uppercase tracking-widest">
         Mis Planes Semanales
-        <span class="text-stone-400 font-medium lowercase ml-1"
-          >({{ weeklyTemplates().length }}/{{ maxTemplates() }})</span
-        >
+        <span class="text-stone-400 font-medium lowercase ml-1">({{ weeklyTemplates().length }}/{{ maxTemplates()
+          }})</span>
       </h3>
 
-      <button
-        (click)="addNewTemplate()"
-        [disabled]="!canAddMore()"
-        class="flex items-center gap-1 text-[10px] font-bold text-awakin-sun bg-awakin-sun/10 px-2.5 py-1.5 rounded-lg hover:bg-awakin-sun/20 transition-colors active:scale-95 disabled:opacity-50 disabled:active:scale-100 disabled:pointer-events-none"
-      >
+      <button (click)="addNewTemplate()" [disabled]="!canAddMore()"
+        class="flex items-center gap-1 text-[10px] font-bold text-awakin-sun bg-awakin-sun/10 px-2.5 py-1.5 rounded-lg hover:bg-awakin-sun/20 transition-colors active:scale-95 disabled:opacity-50 disabled:active:scale-100 disabled:pointer-events-none">
         <i class="pi pi-plus"></i> CREAR NUEVO
       </button>
     </div>
 
     @if (openDropdownKey() !== null) {
-      <div class="fixed inset-0 z-20" (click)="openDropdownKey.set(null)"></div>
+    <div class="fixed inset-0 z-20" (click)="openDropdownKey.set(null)"></div>
     }
 
     @if (weeklyTemplates().length === 0) {
-      <div class="py-12 px-6 text-center bg-stone-50 border-2 border-dashed border-stone-200 rounded-3xl my-2 flex flex-col items-center justify-center">
-        <div class="w-14 h-14 mb-3 rounded-2xl bg-awakin-sun/10 text-awakin-sun flex items-center justify-center">
-          <i class="pi pi-calendar-plus text-2xl"></i>
-        </div>
-        <h4 class="text-sm font-black text-stone-800 uppercase tracking-wider mb-1">Sin planes asignados</h4>
-        <p class="text-xs text-stone-500 max-w-sm mx-auto mb-4 font-medium leading-relaxed">
-          No tienes planes nutricionales asignados aún. Pulsa el botón para crear tu primer plan semanal.
-        </p>
-        <button
-          (click)="addNewTemplate()"
-          class="inline-flex items-center gap-2 text-xs font-bold text-white bg-awakin-sun px-4 py-2.5 rounded-xl shadow-lg shadow-awakin-sun/20 hover:bg-[#E68800] active:scale-95 transition-all"
-        >
-          <i class="pi pi-plus"></i> CREAR NUEVO PLAN
-        </button>
+    <div
+      class="py-12 px-6 text-center bg-stone-50 border-2 border-dashed border-stone-200 rounded-3xl my-2 flex flex-col items-center justify-center">
+      <div class="w-14 h-14 mb-3 rounded-2xl bg-awakin-sun/10 text-awakin-sun flex items-center justify-center">
+        <i class="pi pi-calendar-plus text-2xl"></i>
       </div>
+      <h4 class="text-sm font-black text-stone-800 uppercase tracking-wider mb-1">Sin planes asignados</h4>
+      <p class="text-xs text-stone-500 max-w-sm mx-auto mb-4 font-medium leading-relaxed">
+        No tienes planes nutricionales asignados aún. Pulsa el botón para crear tu primer plan semanal.
+      </p>
+      <button (click)="addNewTemplate()"
+        class="inline-flex items-center gap-2 text-xs font-bold text-white bg-awakin-sun px-4 py-2.5 rounded-xl shadow-lg shadow-awakin-sun/20 hover:bg-[#E68800] active:scale-95 transition-all">
+        <i class="pi pi-plus"></i> CREAR NUEVO PLAN
+      </button>
+    </div>
     }
 
     <p-accordion [multiple]="true" class="w-full">
       @for (plan of weeklyTemplates(); track plan.id) {
-        <p-accordion-panel [value]="plan.id" class="w-full overflow-hidden">
-          <p-accordion-header>
-            <div class="flex items-center justify-between gap-2 w-full min-w-0 pr-1 overflow-hidden">
-              <div class="flex items-center gap-2 justify-start min-w-0 flex-1">
-                <i class="pi pi-th-large text-stone-400 shrink-0"></i>
-                <span
-                  class="font-black text-xs uppercase tracking-wider text-stone-800 truncate"
-                  [title]="plan.name"
-                  >{{ plan.name }}</span
-                >
-              </div>
-
-              <div class="flex items-center gap-1.5 shrink-0">
-                @if (plan.id === activeTemplateId()) {
-                  <span
-                    class="bg-emerald-50 text-emerald-600 border border-emerald-200 text-[8px] px-1.5 py-0.5 rounded flex items-center gap-1 font-bold tracking-widest uppercase shadow-sm whitespace-nowrap"
-                  >
-                    <i class="pi pi-check-circle text-[5px]"></i> ACTUAL
-                  </span>
-                }
-
-                @if (plan.isFromCoach) {
-                  <span
-                    class="bg-[#5057FE] text-white text-[9px] px-2.5 py-0.5 rounded-full flex items-center gap-1 font-bold tracking-wider uppercase shadow-xs whitespace-nowrap"
-                  >
-                    <i class="pi pi-verified text-[8px]"></i> De tu Coach
-                  </span>
-                } @else {
-                  <span
-                    class="bg-[#00C48C] text-white text-[9px] px-2.5 py-0.5 rounded-full flex items-center gap-1 font-bold tracking-wider uppercase shadow-xs whitespace-nowrap"
-                  >
-                    Personal
-                  </span>
-                }
-              </div>
+      <p-accordion-panel [value]="plan.id" class="w-full overflow-hidden">
+        <p-accordion-header>
+          <div class="flex items-center justify-between gap-2 w-full min-w-0 pr-1 overflow-hidden">
+            <div class="flex items-center gap-2 justify-start min-w-0 flex-1">
+              <i class="pi pi-th-large text-stone-400 shrink-0"></i>
+              <span class="font-black text-xs uppercase tracking-wider text-stone-800 truncate" [title]="plan.name">{{
+                plan.name }}</span>
             </div>
-          </p-accordion-header>
 
-          <p-accordion-content class="w-full max-w-full overflow-x-hidden">
-            <div class="pt-2 pb-4 px-0 w-full max-w-full overflow-x-hidden">
-              @if (plan.id !== activeTemplateId()) {
-                <button
-                  (click)="setActiveTemplate(plan.id, $event)"
-                  class="w-full mb-4 py-3 border-2 border-dashed border-stone-200 rounded-xl text-[10px] font-bold tracking-widest uppercase text-stone-500 hover:border-emerald-500 hover:text-emerald-600 hover:bg-emerald-50 transition-colors flex items-center justify-center gap-2"
-                >
-                  <i class="pi pi-check-circle"></i> Establecer como Plan Actual
-                </button>
-              } @else {
-                <div
-                  class="w-full mb-4 py-3 bg-emerald-50/50 border border-emerald-100 rounded-xl text-[10px] font-bold tracking-widest uppercase text-emerald-600 flex items-center justify-center gap-2 shadow-sm pointer-events-none"
-                >
-                  <i class="pi pi-check-circle"></i> Plan Semanal Activo
-                </div>
+            <div class="flex items-center gap-1.5 shrink-0">
+              @if (plan.id === activeTemplateId()) {
+              <span
+                class="bg-emerald-50 text-emerald-600 border border-emerald-200 text-[8px] px-1.5 py-0.5 rounded flex items-center gap-1 font-bold tracking-widest uppercase shadow-sm whitespace-nowrap">
+                <i class="pi pi-check-circle text-[5px]"></i> ACTUAL
+              </span>
               }
 
-              @if (!plan.isFromCoach) {
-                <div class="flex items-center gap-2 mb-4">
-                  <div class="relative flex-1">
-                    <i
-                      class="pi pi-pencil absolute left-3 top-1/2 -translate-y-1/2 text-stone-400 text-xs"
-                    ></i>
-                    <input
-                      type="text"
-                      [value]="plan.name"
-                      (input)="updateTemplateName(plan.id, $any($event.target).value)"
-                      class="w-full bg-stone-50 border border-stone-200 rounded-xl pl-8 pr-3 py-2 text-xs font-bold text-stone-800 focus:border-awakin-sun focus:ring-1 focus:ring-awakin-sun/50 transition-all outline-none placeholder:text-stone-400"
-                      placeholder="Nombre del plan..."
-                    />
-                  </div>
-
-                  <button
-                    (click)="duplicateTemplate(plan, $event)"
-                    [disabled]="!canAddMore()"
-                    class="w-9 h-9 shrink-0 flex items-center justify-center bg-stone-50 border border-stone-200 text-stone-500 rounded-xl hover:bg-stone-100 hover:text-stone-700 transition-colors disabled:opacity-50"
-                  >
-                    <i class="pi pi-copy text-sm"></i>
-                  </button>
-
-                  <button
-                    (click)="deleteTemplate(plan.id, $event)"
-                    class="w-9 h-9 shrink-0 flex items-center justify-center bg-red-50 text-red-500 rounded-xl hover:bg-red-100 transition-colors"
-                  >
-                    <i class="pi pi-trash text-sm"></i>
-                  </button>
-                </div>
+              @if (plan.isFromCoach) {
+              <span
+                class="bg-[#5057FE] text-white text-[9px] px-2.5 py-0.5 rounded-full flex items-center gap-1 font-bold tracking-wider uppercase shadow-xs whitespace-nowrap">
+                <i class="pi pi-verified text-[8px]"></i> De tu Coach
+              </span>
               } @else {
-                <div class="mb-4 flex gap-2 items-stretch">
-                  <div
-                    class="flex-1 p-3 bg-stone-50 rounded-xl border border-stone-100 flex items-start gap-2"
-                  >
-                    <i class="pi pi-info-circle text-stone-400 mt-0.5"></i>
-                    <p class="text-[10px] text-stone-500 font-medium leading-relaxed">
-                      Este plan fue asignado por tu Coach. Es tu guía sugerida y no puede ser
-                      renombrada ni eliminada.
-                    </p>
-                  </div>
-
-                  <button
-                    (click)="duplicateTemplate(plan, $event)"
-                    [disabled]="!canAddMore()"
-                    class="w-12 shrink-0 flex flex-col items-center justify-center gap-1 bg-awakin-sun/5 text-awakin-sun rounded-xl border border-awakin-sun/10 hover:bg-awakin-sun/10 transition-colors disabled:opacity-50"
-                    title="Copiar para editar"
-                  >
-                    <i class="pi pi-copy text-[12px]"></i>
-                    <span class="text-[7px] font-bold uppercase tracking-wider">Duplicar</span>
-                  </button>
-                </div>
+              <span
+                class="bg-[#00C48C] text-white text-[9px] px-2.5 py-0.5 rounded-full flex items-center gap-1 font-bold tracking-wider uppercase shadow-xs whitespace-nowrap">
+                Personal
+              </span>
               }
+            </div>
+          </div>
+        </p-accordion-header>
 
-              @let dayIdx = getDayIndex(plan.id);
-              @let currentDay = plan.assignments[dayIdx];
-              @let assignedMenu = getAssignedMenu(currentDay ? currentDay.menuId : null);
+        <p-accordion-content class="w-full max-w-full overflow-x-hidden">
+          <div class="pt-2 pb-4 px-0 w-full max-w-full overflow-x-hidden">
+            @if (plan.id !== activeTemplateId()) {
+            <button (click)="setActiveTemplate(plan.id, $event)"
+              class="w-full mb-4 py-3 border-2 border-dashed border-stone-200 rounded-xl text-[10px] font-bold tracking-widest uppercase text-stone-500 hover:border-emerald-500 hover:text-emerald-600 hover:bg-emerald-50 transition-colors flex items-center justify-center gap-2">
+              <i class="pi pi-check-circle"></i> Establecer como Plan Actual
+            </button>
+            } @else {
+            <div
+              class="w-full mb-4 py-3 bg-emerald-50/50 border border-emerald-100 rounded-xl text-[10px] font-bold tracking-widest uppercase text-emerald-600 flex items-center justify-center gap-2 shadow-sm pointer-events-none">
+              <i class="pi pi-check-circle"></i> Plan Semanal Activo
+            </div>
+            }
 
-              <!-- Selector de Días (Tabs superiores) -->
-              <div class="flex items-center justify-between gap-1 mb-3 px-1 w-full max-w-[450px] mx-auto">
-                @for (day of plan.assignments; track $index; let i = $index) {
-                  <button
-                    type="button"
-                    (click)="setDayIndex(plan.id, i, $event)"
-                    class="flex-1 min-w-0 py-1.5 px-0.5 rounded-xl text-[10px] sm:text-[11px] font-black uppercase tracking-wider transition-all cursor-pointer text-center truncate"
-                    [ngClass]="i === dayIdx
-                      ? 'bg-stone-900 text-white shadow-xs font-black'
-                      : 'bg-stone-100/80 text-stone-500 hover:bg-stone-200/60 hover:text-stone-800 font-bold'"
-                  >
-                    {{ day.dayName }}
-                  </button>
-                }
+            @if (!plan.isFromCoach) {
+            <div class="flex items-center gap-2 mb-4">
+              <div class="relative flex-1">
+                <i class="pi pi-pencil absolute left-3 top-1/2 -translate-y-1/2 text-stone-400 text-xs"></i>
+                <input type="text" [value]="plan.name" (input)="updateTemplateName(plan.id, $any($event.target).value)"
+                  class="w-full bg-stone-50 border border-stone-200 rounded-xl pl-8 pr-3 py-2 text-xs font-bold text-stone-800 focus:border-awakin-sun focus:ring-1 focus:ring-awakin-sun/50 transition-all outline-none placeholder:text-stone-400"
+                  placeholder="Nombre del plan..." />
               </div>
 
-              <!-- Carrusel con Flechas de Navegación Lateral y Card del Día -->
+              <button (click)="duplicateTemplate(plan, $event)" [disabled]="!canAddMore()"
+                class="w-9 h-9 shrink-0 flex items-center justify-center bg-stone-50 border border-stone-200 text-stone-500 rounded-xl hover:bg-stone-100 hover:text-stone-700 transition-colors disabled:opacity-50">
+                <i class="pi pi-copy text-sm"></i>
+              </button>
+
+              <button (click)="deleteTemplate(plan.id, $event)"
+                class="w-9 h-9 shrink-0 flex items-center justify-center bg-red-50 text-red-500 rounded-xl hover:bg-red-100 transition-colors">
+                <i class="pi pi-trash text-sm"></i>
+              </button>
+            </div>
+            } @else {
+            <div class="mb-4 flex gap-2 items-stretch">
+              <div class="flex-1 p-3 bg-stone-50 rounded-xl border border-stone-100 flex items-start gap-2">
+                <i class="pi pi-info-circle text-stone-400 mt-0.5"></i>
+                <p class="text-[10px] text-stone-500 font-medium leading-relaxed">
+                  Este plan fue asignado por tu Coach. Es tu guía sugerida y no puede ser
+                  renombrada ni eliminada.
+                </p>
+              </div>
+
+              <button (click)="duplicateTemplate(plan, $event)" [disabled]="!canAddMore()"
+                class="w-12 shrink-0 flex flex-col items-center justify-center gap-1 bg-awakin-sun/5 text-awakin-sun rounded-xl border border-awakin-sun/10 hover:bg-awakin-sun/10 transition-colors disabled:opacity-50"
+                title="Copiar para editar">
+                <i class="pi pi-copy text-[12px]"></i>
+                <span class="text-[7px] font-bold uppercase tracking-wider">Duplicar</span>
+              </button>
+            </div>
+            }
+
+            @let dayIdx = getDayIndex(plan.id);
+            @let currentDay = plan.assignments[dayIdx];
+            @let assignedMenu = getAssignedMenu(currentDay ? currentDay.menuId : null);
+
+            <!-- Selector de Días (Tabs superiores) -->
+            <div class="flex items-center justify-between gap-1 mb-3 px-1 w-full max-w-[450px] mx-auto">
+              @for (day of plan.assignments; track $index; let i = $index) {
+              <button type="button" (click)="setDayIndex(plan.id, i, $event)"
+                class="flex-1 min-w-0 py-1.5 px-0.5 rounded-xl text-[10px] sm:text-[11px] font-black uppercase tracking-wider transition-all cursor-pointer text-center truncate"
+                [ngClass]="i === dayIdx
+                      ? 'bg-stone-900 text-white shadow-xs font-black'
+                      : 'bg-stone-100/80 text-stone-500 hover:bg-stone-200/60 hover:text-stone-800 font-bold'">
+                {{ day.dayName }}
+              </button>
+              }
+            </div>
+
+            <!-- Carrusel con Flechas de Navegación Lateral y Card del Día -->
+            <div
+              class="relative w-full max-w-full flex items-center justify-center py-2 px-1 sm:px-12 carousel-touch-area"
+              (touchstart)="onTouchStart($event)" (touchend)="onTouchEnd(plan.id, $event)">
+              <!-- Flecha Izquierda (Solo Desktop) -->
+              <button type="button" (click)="prevDay(plan.id, $event)"
+                class="hidden sm:flex absolute left-1 sm:left-2 z-20 w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-white border border-stone-200 shadow-md items-center justify-center text-stone-700 hover:text-stone-900 hover:scale-105 active:scale-95 transition-all cursor-pointer"
+                title="Día anterior">
+                <i class="pi pi-chevron-left text-xs font-bold"></i>
+              </button>
+
+              <!-- Flecha Derecha (Solo Desktop) -->
+              <button type="button" (click)="nextDay(plan.id, $event)"
+                class="hidden sm:flex absolute right-1 sm:right-2 z-20 w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-white border border-stone-200 shadow-md items-center justify-center text-stone-700 hover:text-stone-900 hover:scale-105 active:scale-95 transition-all cursor-pointer"
+                title="Día siguiente">
+                <i class="pi pi-chevron-right text-xs font-bold"></i>
+              </button>
+
+              <!-- CARD DEL DÍA: Ancho fijo consistente, centrado en pantalla móvil -->
               <div
-                class="relative w-full max-w-full flex items-center justify-center py-2 px-1 sm:px-12 carousel-touch-area"
-                (touchstart)="onTouchStart($event)"
-                (touchend)="onTouchEnd(plan.id, $event)"
-              >
-                <!-- Flecha Izquierda (Solo Desktop) -->
-                <button
-                  type="button"
-                  (click)="prevDay(plan.id, $event)"
-                  class="hidden sm:flex absolute left-1 sm:left-2 z-20 w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-white border border-stone-200 shadow-md items-center justify-center text-stone-700 hover:text-stone-900 hover:scale-105 active:scale-95 transition-all cursor-pointer"
-                  title="Día anterior"
-                >
-                  <i class="pi pi-chevron-left text-xs font-bold"></i>
-                </button>
-
-                <!-- Flecha Derecha (Solo Desktop) -->
-                <button
-                  type="button"
-                  (click)="nextDay(plan.id, $event)"
-                  class="hidden sm:flex absolute right-1 sm:right-2 z-20 w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-white border border-stone-200 shadow-md items-center justify-center text-stone-700 hover:text-stone-900 hover:scale-105 active:scale-95 transition-all cursor-pointer"
-                  title="Día siguiente"
-                >
-                  <i class="pi pi-chevron-right text-xs font-bold"></i>
-                </button>
-
-                <!-- CARD DEL DÍA: Ancho fijo consistente, centrado en pantalla móvil -->
-                <div
-                  class="w-full max-w-[450px] shrink-0 mx-auto bg-white border-2 border-emerald-300/80 rounded-[28px] p-4 sm:p-5 shadow-[0_4px_25px_rgb(0,0,0,0.03)] relative day-card-transition min-w-0"
-                >
-                  <!-- Header del Día: Nombre del Día + Badge de Kcal -->
-                  <div class="flex items-center justify-between mb-4">
-                    <div>
-                      <h3 class="text-xl sm:text-2xl font-black text-stone-900 leading-tight tracking-tight">
-                        {{ dayNamesFull[dayIdx] }}
-                      </h3>
-                      <!-- Botón / Tag para cambiar o asignar menú -->
-                      <div class="mt-1 flex items-center gap-1.5">
-                        @if (assignedMenu) {
-                          <button
-                            #menuTarget
-                            type="button"
-                            (click)="!plan.isFromCoach && opMenu.toggle($event, menuTarget)"
-                            [disabled]="plan.isFromCoach"
-                            class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-lg bg-stone-100 hover:bg-stone-200/80 text-[10px] font-bold text-stone-600 transition-colors cursor-pointer disabled:pointer-events-none"
-                            title="Cambiar menú asignado"
-                          >
-                            <span class="truncate max-w-[150px] sm:max-w-[200px]">{{ assignedMenu.name }}</span>
-                            @if (!plan.isFromCoach) {
-                              <i class="pi pi-angle-down text-[8px] text-stone-400"></i>
-                            }
-                          </button>
-                        } @else {
-                          <button
-                            #menuTarget
-                            type="button"
-                            (click)="!plan.isFromCoach && opMenu.toggle($event, menuTarget)"
-                            [disabled]="plan.isFromCoach"
-                            class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 text-[10px] font-bold text-amber-600 transition-colors cursor-pointer"
-                          >
-                            <i class="pi pi-plus text-[8px]"></i>
-                            <span>Asignar menú</span>
-                          </button>
+                class="w-full max-w-[450px] shrink-0 mx-auto bg-white border-2 border-emerald-300/80 rounded-[28px] p-4 sm:p-5 shadow-[0_4px_25px_rgb(0,0,0,0.03)] relative day-card-transition min-w-0">
+                <!-- Header del Día: Nombre del Día + Badge de Kcal -->
+                <div class="flex items-center justify-between mb-4">
+                  <div>
+                    <h3 class="text-xl sm:text-2xl font-black text-stone-900 leading-tight tracking-tight">
+                      {{ dayNamesFull[dayIdx] }}
+                    </h3>
+                    <!-- Botón / Tag para cambiar o asignar menú -->
+                    <div class="mt-1 flex items-center gap-1.5">
+                      @if (assignedMenu) {
+                      <button #menuTarget type="button" (click)="!plan.isFromCoach && opMenu.toggle($event, menuTarget)"
+                        [disabled]="plan.isFromCoach"
+                        class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-lg bg-stone-100 hover:bg-stone-200/80 text-[10px] font-bold text-stone-600 transition-colors cursor-pointer disabled:pointer-events-none"
+                        title="Cambiar menú asignado">
+                        <span class="truncate max-w-[150px] sm:max-w-[200px]">{{ assignedMenu.name }}</span>
+                        @if (!plan.isFromCoach) {
+                        <i class="pi pi-angle-down text-[8px] text-stone-400"></i>
                         }
-                      </div>
+                      </button>
+                      } @else {
+                      <button #menuTarget type="button" (click)="!plan.isFromCoach && opMenu.toggle($event, menuTarget)"
+                        [disabled]="plan.isFromCoach"
+                        class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 text-[10px] font-bold text-amber-600 transition-colors cursor-pointer">
+                        <i class="pi pi-plus text-[8px]"></i>
+                        <span>Asignar menú</span>
+                      </button>
+                      }
                     </div>
-
-                    <!-- Badge de Calorías del Día -->
-                    @if (assignedMenu) {
-                      <div
-                        class="bg-white border border-stone-200/90 px-3.5 py-1 rounded-full text-xs sm:text-sm font-extrabold text-stone-800 shadow-2xs"
-                      >
-                        {{ assignedMenu.kcal }} kcal
-                      </div>
-                    } @else {
-                      <div
-                        class="bg-stone-50 border border-stone-200 px-3 py-1 rounded-full text-xs font-bold text-stone-400"
-                      >
-                        0 kcal
-                      </div>
-                    }
                   </div>
 
-                  <!-- Popover de Selección de Menús -->
-                  <p-popover
-                    #opMenu
-                    appendTo="body"
-                    styleClass="!p-0 !bg-white !rounded-2xl !shadow-2xl !border !border-stone-100 !overflow-hidden"
-                  >
-                    <div class="w-[260px] flex flex-col py-1 animate-fade-in">
-                      @if (currentDay && currentDay.menuId) {
-                        <div
-                          (click)="
+                  <!-- Badge de Calorías del Día -->
+                  @if (assignedMenu) {
+                  <div
+                    class="bg-white border border-stone-200/90 px-3.5 py-1 rounded-full text-xs sm:text-sm font-extrabold text-stone-800 shadow-2xs">
+                    {{ assignedMenu.kcal }} kcal
+                  </div>
+                  } @else {
+                  <div
+                    class="bg-stone-50 border border-stone-200 px-3 py-1 rounded-full text-xs font-bold text-stone-400">
+                    0 kcal
+                  </div>
+                  }
+                </div>
+
+                <!-- Popover de Selección de Menús -->
+                <p-popover #opMenu appendTo="body"
+                  styleClass="!p-0 !bg-white !rounded-2xl !shadow-2xl !border !border-stone-100 !overflow-hidden">
+                  <div class="w-[260px] flex flex-col py-1 animate-fade-in">
+                    @if (currentDay && currentDay.menuId) {
+                    <div (click)="
                             assignMenuToDay(plan.id, dayIdx, null);
                             opMenu.hide();
                             $event.stopPropagation()
                           "
-                          class="w-full px-4 py-2 hover:bg-red-50 cursor-pointer flex items-center gap-2 transition-colors border-b border-stone-100/60"
-                        >
-                          <i class="pi pi-trash text-red-400 text-xs"></i>
-                          <span class="text-[11px] font-black uppercase tracking-widest text-red-500"
-                            >Quitar Menú</span
-                          >
-                        </div>
-                      }
+                      class="w-full px-4 py-2 hover:bg-red-50 cursor-pointer flex items-center gap-2 transition-colors border-b border-stone-100/60">
+                      <i class="pi pi-trash text-red-400 text-xs"></i>
+                      <span class="text-[11px] font-black uppercase tracking-widest text-red-500">Quitar Menú</span>
+                    </div>
+                    }
 
-                      <div class="max-h-[260px] overflow-y-auto awakin-scrollbar">
-                        @for (menu of catalogMenus(); track menu.id) {
-                          <div
-                            (click)="
+                    <div class="max-h-[260px] overflow-y-auto awakin-scrollbar">
+                      @for (menu of catalogMenus(); track menu.id) {
+                      <div (click)="
                               assignMenuToDay(plan.id, dayIdx, menu.id);
                               opMenu.hide();
                               $event.stopPropagation()
                             "
-                            class="w-full px-3.5 py-2.5 hover:bg-stone-50 cursor-pointer transition-colors border-b border-stone-50 last:border-none"
-                            [ngClass]="currentDay && currentDay.menuId === menu.id ? 'bg-awakin-sun/5' : ''"
-                          >
-                            <div class="flex justify-between items-center mb-0.5">
-                              <span
-                                class="text-xs font-bold flex items-center gap-2"
-                                [ngClass]="currentDay && currentDay.menuId === menu.id ? 'text-awakin-sun' : 'text-stone-800'"
-                              >
-                                @if (menu.coverImageUrl) {
-                                  <img [src]="menu.coverImageUrl" [alt]="menu.name" class="w-6 h-6 rounded-lg object-cover shrink-0" />
-                                } @else {
-                                  <span class="text-base shrink-0">{{ menu.coverIcon }}</span>
-                                }
-                                <span class="truncate">{{ menu.name }}</span>
-                              </span>
-                              @if (currentDay && currentDay.menuId === menu.id) {
-                                <i class="pi pi-check text-awakin-sun text-xs"></i>
-                              }
-                            </div>
-                            <div class="flex items-center gap-1.5 ml-8 mt-0.5">
-                              <span
-                                class="text-[9px] font-bold px-1.5 py-0.5 rounded"
-                                [ngClass]="isMenuFromCoach(menu) ? 'bg-[#5057FE]/10 text-[#5057FE]' : 'bg-[#00C48C]/10 text-[#00C48C]'"
-                              >
-                                {{ isMenuFromCoach(menu) ? 'De tu Coach' : 'Personal' }}
-                              </span>
-                              <span class="text-[10px] text-stone-500 font-medium">
-                                {{ menu.kcal }} kcal • {{ menu.macros }}
-                              </span>
-                            </div>
-                          </div>
-                        }
-                      </div>
-                    </div>
-                  </p-popover>
-
-                  <!-- Contenido del Menú Asignado (Agrupado por Meal Type) -->
-                  @if (assignedMenu) {
-                    @let activeMealTypes = getActiveMealTypes(assignedMenu);
-                    @if (activeMealTypes.length > 0) {
-                      <div class="space-y-4">
-                        @for (mType of activeMealTypes; track mType) {
-                          @let dishes = getDishesForMeal(assignedMenu, mType);
-                          @let loose = getLooseIngredientsForMeal(assignedMenu, mType);
-                          @let totalItems = dishes.length + loose.length;
-
-                          @if (totalItems > 0) {
-                            <div>
-                              <!-- Header del Tipo de Comida (DESAYUNO / 1 item) -->
-                              <div class="flex items-center justify-between mb-2 px-0.5">
-                                <span class="text-xs font-black text-stone-500 uppercase tracking-widest">
-                                  {{ mealTitles[mType] || mType }}
-                                </span>
-                                <span class="text-xs font-semibold text-stone-400">
-                                  {{ totalItems }} item{{ totalItems > 1 ? 's' : '' }}
-                                </span>
-                              </div>
-
-                              <!-- Platillos de esta comida (de intake_menu_dishes) -->
-                              @for (dish of dishes; track dish.id) {
-                                <div
-                                  class="bg-white border border-stone-200/70 rounded-2xl p-3 mb-2.5 shadow-2xs hover:border-stone-300 transition-all"
-                                >
-                                  <div class="flex items-start gap-3">
-                                    <!-- Foto cuadrada del platillo -->
-                                    <img
-                                      [src]="dish.coverImageUrl || 'https://images.unsplash.com/photo-1490645935967-10de6ba17061?auto=format&fit=crop&q=80'"
-                                      [alt]="dish.name"
-                                      class="w-14 h-14 sm:w-16 sm:h-16 rounded-xl object-cover shrink-0 border border-stone-100 shadow-2xs"
-                                    />
-
-                                    <!-- Datos del platillo -->
-                                    <div class="flex-1 min-w-0 pr-1">
-                                      <div class="flex items-center gap-1.5 flex-wrap">
-                                        <h4 class="font-bold text-xs sm:text-sm text-stone-900 leading-snug line-clamp-2">
-                                          {{ dish.name }}
-                                        </h4>
-                                      </div>
-                                      <div class="flex items-center gap-2 text-[11px] text-stone-500 font-medium mt-1">
-                                        <span class="flex items-center gap-1">
-                                          <i class="pi pi-clock text-[9px]"></i>
-                                          {{ dish.prepTimeMinutes || 15 }} min
-                                        </span>
-                                        <span class="font-bold text-stone-700">{{ dish.totalCalories }} kcal</span>
-                                      </div>
-                                      <div class="flex items-center gap-2 text-xs font-bold mt-1">
-                                        <span class="text-sky-500">{{ dish.totalProtein }}P</span>
-                                        <span class="text-amber-500">{{ dish.totalCarbs }}C</span>
-                                        <span class="text-rose-500">{{ dish.totalFats }}G</span>
-                                      </div>
-                                    </div>
-
-                                    <!-- Botón Expandir para Preview de Receta -->
-                                    <button
-                                      type="button"
-                                      (click)="openRecipePreview(dish, $event)"
-                                      class="w-7 h-7 rounded-lg border border-stone-200/80 bg-white hover:bg-stone-50 flex items-center justify-center text-stone-400 hover:text-stone-700 transition-colors shadow-2xs shrink-0 cursor-pointer"
-                                      title="Ver receta preview"
-                                    >
-                                      <i class="pi pi-arrows-alt text-xs"></i>
-                                    </button>
-                                  </div>
-
-                                  <!-- Toggle Acordeón de Ingredientes -->
-                                  <div
-                                    (click)="toggleDishIngredients(dish.id, $event)"
-                                    class="border-t border-stone-100 mt-2.5 pt-2 flex items-center justify-between cursor-pointer select-none"
-                                  >
-                                    <div class="flex items-center gap-1.5 text-xs text-stone-600 font-medium">
-                                      <i
-                                        class="pi pi-chevron-down text-[10px] text-stone-400 transition-transform duration-200"
-                                        [ngClass]="{ 'rotate-180': isDishIngredientsExpanded(dish.id) }"
-                                      ></i>
-                                      <span>Ver ingredientes ({{ dish.ingredients.length }})</span>
-                                    </div>
-                                    <span class="text-xs font-bold text-emerald-500 hover:text-emerald-600 transition-colors">
-                                      {{ isDishIngredientsExpanded(dish.id) ? 'Ocultar' : 'Desplegar' }}
-                                    </span>
-                                  </div>
-
-                                  <!-- Lista de Ingredientes desplegable -->
-                                  @if (isDishIngredientsExpanded(dish.id)) {
-                                    <div class="mt-2 pt-2 border-t border-stone-50 space-y-1 animate-fade-in">
-                                      @for (ing of dish.ingredients; track $index) {
-                                        <div class="flex items-center justify-between text-xs text-stone-600 py-0.5">
-                                          <span class="flex items-center gap-1.5 font-medium truncate">
-                                            <span class="text-emerald-500 font-bold">•</span>
-                                            {{ ing.name }}
-                                          </span>
-                                          <span class="text-stone-400 font-semibold shrink-0 ml-2">
-                                            {{ formatQuantity(ing.quantity, ing.unit, ing.mode) }}
-                                          </span>
-                                        </div>
-                                      }
-                                      @if (dish.ingredients.length === 0) {
-                                        <p class="text-[11px] text-stone-400 italic py-1">Sin ingredientes especificados</p>
-                                      }
-                                    </div>
-                                  }
-                                </div>
-                              }
-
-                              <!-- Ingredientes sueltos de esta comida (de intake_menu_ingredients) -->
-                              @for (ing of loose; track ing.id) {
-                                <div
-                                  class="bg-emerald-50/40 border border-emerald-100/90 rounded-2xl p-2.5 flex items-center justify-between gap-3 shadow-2xs mb-2"
-                                >
-                                  <div class="flex items-center gap-2.5 min-w-0 flex-1">
-                                    <div
-                                      class="w-10 h-10 rounded-xl bg-emerald-100/70 text-emerald-600 flex items-center justify-center text-base shrink-0 shadow-2xs"
-                                    >
-                                      <i class="pi pi-apple"></i>
-                                    </div>
-                                    <div class="min-w-0 flex-1">
-                                      <h5 class="font-bold text-xs sm:text-sm text-stone-900 truncate leading-tight">
-                                        {{ ing.name }}
-                                      </h5>
-                                      <div class="flex items-center gap-2 text-xs font-bold mt-0.5">
-                                        <span class="text-stone-700 font-extrabold">{{ ing.calories }} kcal</span>
-                                        <span class="text-sky-500">{{ ing.protein }}P</span>
-                                        <span class="text-amber-500">{{ ing.carbs }}C</span>
-                                        <span class="text-rose-500">{{ ing.fats }}G</span>
-                                      </div>
-                                    </div>
-                                  </div>
-
-                                  <span
-                                    class="bg-emerald-100/80 text-emerald-800 text-xs font-bold px-2.5 py-1 rounded-lg shrink-0"
-                                  >
-                                    {{ ing.quantity }} {{ ing.mode || ing.unit || 'g' }}
-                                  </span>
-                                </div>
-                              }
-                            </div>
+                        class="w-full px-3.5 py-2.5 hover:bg-stone-50 cursor-pointer transition-colors border-b border-stone-50 last:border-none"
+                        [ngClass]="currentDay && currentDay.menuId === menu.id ? 'bg-awakin-sun/5' : ''">
+                        <div class="flex justify-between items-center mb-0.5">
+                          <span class="text-xs font-bold flex items-center gap-2"
+                            [ngClass]="currentDay && currentDay.menuId === menu.id ? 'text-awakin-sun' : 'text-stone-800'">
+                            @if (menu.coverImageUrl) {
+                            <img [src]="menu.coverImageUrl" [alt]="menu.name"
+                              class="w-6 h-6 rounded-lg object-cover shrink-0" />
+                            } @else {
+                            <span class="text-base shrink-0">{{ menu.coverIcon }}</span>
+                            }
+                            <span class="truncate">{{ menu.name }}</span>
+                          </span>
+                          @if (currentDay && currentDay.menuId === menu.id) {
+                          <i class="pi pi-check text-awakin-sun text-xs"></i>
                           }
-                        }
+                        </div>
+                        <div class="flex items-center gap-1.5 ml-8 mt-0.5">
+                          <span class="text-[9px] font-bold px-1.5 py-0.5 rounded"
+                            [ngClass]="isMenuFromCoach(menu) ? 'bg-[#5057FE]/10 text-[#5057FE]' : 'bg-[#00C48C]/10 text-[#00C48C]'">
+                            {{ isMenuFromCoach(menu) ? 'De tu Coach' : 'Personal' }}
+                          </span>
+                          <span class="text-[10px] text-stone-500 font-medium">
+                            {{ menu.kcal }} kcal • {{ menu.macros }}
+                          </span>
+                        </div>
                       </div>
-                    } @else {
-                      <!-- Menú sin platillos registrados aún -->
-                      <div class="w-full py-8 px-4 text-center bg-stone-50/60 rounded-2xl border border-dashed border-stone-200">
-                        <i class="pi pi-info-circle text-stone-400 text-2xl mb-2"></i>
-                        <p class="text-xs font-bold text-stone-700">Este menú no tiene platillos configurados aún</p>
-                        <p class="text-[11px] text-stone-400 mt-0.5">Valores del menú: {{ assignedMenu.kcal }} kcal • {{ assignedMenu.macros }}</p>
-                      </div>
-                    }
-                  } @else {
-                    <!-- Día sin menú asignado -->
-                    <div class="w-full py-12 px-4 text-center bg-stone-50/60 rounded-2xl border-2 border-dashed border-stone-200 flex flex-col items-center justify-center">
-                      <div class="w-12 h-12 rounded-2xl bg-amber-500/10 text-amber-500 flex items-center justify-center mb-3">
-                        <i class="pi pi-calendar-plus text-xl"></i>
-                      </div>
-                      <h4 class="text-sm font-bold text-stone-800 mb-1">Sin menú asignado para {{ dayNamesFull[dayIdx] }}</h4>
-                      <p class="text-xs text-stone-400 max-w-xs mb-4">
-                        Selecciona un menú del catálogo para estructurar la alimentación de este día.
-                      </p>
-                      @if (!plan.isFromCoach) {
-                        <button
-                          #emptyBtnTarget
-                          type="button"
-                          (click)="opMenu.toggle($event, emptyBtnTarget)"
-                          class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-awakin-sun text-white font-bold text-xs shadow-md shadow-awakin-sun/20 hover:bg-[#E68800] active:scale-95 transition-all cursor-pointer"
-                        >
-                          <i class="pi pi-plus text-xs"></i>
-                          ASIGNAR MENÚ
-                        </button>
                       }
                     </div>
+                  </div>
+                </p-popover>
+
+                <!-- Contenido del Menú Asignado (Agrupado por Meal Type) -->
+                @if (assignedMenu) {
+                @let activeMealTypes = getActiveMealTypes(assignedMenu);
+                @if (activeMealTypes.length > 0) {
+                <div class="space-y-4">
+                  @for (mType of activeMealTypes; track mType) {
+                  @let dishes = getDishesForMeal(assignedMenu, mType);
+                  @let loose = getLooseIngredientsForMeal(assignedMenu, mType);
+                  @let totalItems = dishes.length + loose.length;
+
+                  @if (totalItems > 0) {
+                  <div>
+                    <!-- Header del Tipo de Comida (DESAYUNO / 1 item) -->
+                    <div class="flex items-center justify-between mb-2 px-0.5">
+                      <span class="text-xs font-black text-stone-500 uppercase tracking-widest">
+                        {{ mealTitles[mType] || mType }}
+                      </span>
+                      <span class="text-xs font-semibold text-stone-400">
+                        {{ totalItems }} item{{ totalItems > 1 ? 's' : '' }}
+                      </span>
+                    </div>
+
+                    <!-- Platillos de esta comida (de intake_menu_dishes_new) -->
+                    @for (dish of dishes; track dish.id) {
+                    <div
+                      class="bg-white border border-stone-200/70 rounded-2xl p-3 mb-2.5 shadow-2xs hover:border-stone-300 transition-all">
+                      <div class="flex items-start gap-3">
+                        <!-- Foto cuadrada del platillo -->
+                        <img
+                          [src]="dish.coverImageUrl || 'https://images.unsplash.com/photo-1490645935967-10de6ba17061?auto=format&fit=crop&q=80'"
+                          [alt]="dish.name"
+                          class="w-14 h-14 sm:w-16 sm:h-16 rounded-xl object-cover shrink-0 border border-stone-100 shadow-2xs" />
+
+                        <!-- Datos del platillo -->
+                        <div class="flex-1 min-w-0 pr-1">
+                          <div class="flex items-center gap-1.5 flex-wrap">
+                            <h4 class="font-bold text-xs sm:text-sm text-stone-900 leading-snug line-clamp-2">
+                              {{ dish.name }}
+                            </h4>
+                          </div>
+                          <div class="flex items-center gap-2 text-[11px] text-stone-500 font-medium mt-1">
+                            <span class="flex items-center gap-1">
+                              <i class="pi pi-clock text-[9px]"></i>
+                              {{ dish.prepTimeMinutes || 15 }} min
+                            </span>
+                            <span class="font-bold text-stone-700">{{ dish.totalCalories }} kcal</span>
+                          </div>
+                          <div class="flex items-center gap-2 text-xs font-bold mt-1">
+                            <span class="text-sky-500">{{ dish.totalProtein }}P</span>
+                            <span class="text-amber-500">{{ dish.totalCarbs }}C</span>
+                            <span class="text-rose-500">{{ dish.totalFats }}G</span>
+                          </div>
+                        </div>
+
+                        <!-- Botón Expandir para Preview de Receta -->
+                        <button type="button" (click)="openRecipePreview(dish, $event)"
+                          class="w-7 h-7 rounded-lg border border-stone-200/80 bg-white hover:bg-stone-50 flex items-center justify-center text-stone-400 hover:text-stone-700 transition-colors shadow-2xs shrink-0 cursor-pointer"
+                          title="Ver receta preview">
+                          <i class="pi pi-arrows-alt text-xs"></i>
+                        </button>
+                      </div>
+
+                      <!-- Toggle Acordeón de Ingredientes -->
+                      <div (click)="toggleDishIngredients(dish.id, $event)"
+                        class="border-t border-stone-100 mt-2.5 pt-2 flex items-center justify-between cursor-pointer select-none">
+                        <div class="flex items-center gap-1.5 text-xs text-stone-600 font-medium">
+                          <i class="pi pi-chevron-down text-[10px] text-stone-400 transition-transform duration-200"
+                            [ngClass]="{ 'rotate-180': isDishIngredientsExpanded(dish.id) }"></i>
+                          <span>Ver ingredientes ({{ dish.ingredients.length }})</span>
+                        </div>
+                        <span class="text-xs font-bold text-emerald-500 hover:text-emerald-600 transition-colors">
+                          {{ isDishIngredientsExpanded(dish.id) ? 'Ocultar' : 'Desplegar' }}
+                        </span>
+                      </div>
+
+                      <!-- Lista de Ingredientes desplegable -->
+                      @if (isDishIngredientsExpanded(dish.id)) {
+                      <div class="mt-2 pt-2 border-t border-stone-50 space-y-1 animate-fade-in">
+                        @for (ing of dish.ingredients; track $index) {
+                        <div class="flex items-center justify-between text-xs text-stone-600 py-0.5">
+                          <span class="flex items-center gap-1.5 font-medium truncate">
+                            <span class="text-emerald-500 font-bold">•</span>
+                            {{ ing.name }}
+                          </span>
+                          <span class="text-stone-400 font-semibold shrink-0 ml-2">
+                            {{ formatQuantity(ing.quantity, ing.unit, ing.mode) }}
+                          </span>
+                        </div>
+                        }
+                        @if (dish.ingredients.length === 0) {
+                        <p class="text-[11px] text-stone-400 italic py-1">Sin ingredientes especificados</p>
+                        }
+                      </div>
+                      }
+                    </div>
+                    }
+
+                    <!-- Ingredientes sueltos de esta comida (de intake_menu_ingredients) -->
+                    @for (ing of loose; track ing.id) {
+                    <div
+                      class="bg-emerald-50/40 border border-emerald-100/90 rounded-2xl p-2.5 flex items-center justify-between gap-3 shadow-2xs mb-2">
+                      <div class="flex items-center gap-2.5 min-w-0 flex-1">
+                        <div
+                          class="w-10 h-10 rounded-xl bg-emerald-100/70 text-emerald-600 flex items-center justify-center text-base shrink-0 shadow-2xs">
+                          <i class="pi pi-apple"></i>
+                        </div>
+                        <div class="min-w-0 flex-1">
+                          <h5 class="font-bold text-xs sm:text-sm text-stone-900 truncate leading-tight">
+                            {{ ing.name }}
+                          </h5>
+                          <div class="flex items-center gap-2 text-xs font-bold mt-0.5">
+                            <span class="text-stone-700 font-extrabold">{{ ing.calories }} kcal</span>
+                            <span class="text-sky-500">{{ ing.protein }}P</span>
+                            <span class="text-amber-500">{{ ing.carbs }}C</span>
+                            <span class="text-rose-500">{{ ing.fats }}G</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      <span
+                        class="bg-emerald-100/80 text-emerald-800 text-xs font-bold px-2.5 py-1 rounded-lg shrink-0">
+                        {{ ing.quantity }} {{ ing.mode || ing.unit || 'g' }}
+                      </span>
+                    </div>
+                    }
+                  </div>
+                  }
                   }
                 </div>
+                } @else {
+                <!-- Menú sin platillos registrados aún -->
+                <div
+                  class="w-full py-8 px-4 text-center bg-stone-50/60 rounded-2xl border border-dashed border-stone-200">
+                  <i class="pi pi-info-circle text-stone-400 text-2xl mb-2"></i>
+                  <p class="text-xs font-bold text-stone-700">Este menú no tiene platillos configurados aún</p>
+                  <p class="text-[11px] text-stone-400 mt-0.5">Valores del menú: {{ assignedMenu.kcal }} kcal • {{
+                    assignedMenu.macros }}</p>
+                </div>
+                }
+                } @else {
+                <!-- Día sin menú asignado -->
+                <div
+                  class="w-full py-12 px-4 text-center bg-stone-50/60 rounded-2xl border-2 border-dashed border-stone-200 flex flex-col items-center justify-center">
+                  <div
+                    class="w-12 h-12 rounded-2xl bg-amber-500/10 text-amber-500 flex items-center justify-center mb-3">
+                    <i class="pi pi-calendar-plus text-xl"></i>
+                  </div>
+                  <h4 class="text-sm font-bold text-stone-800 mb-1">Sin menú asignado para {{ dayNamesFull[dayIdx] }}
+                  </h4>
+                  <p class="text-xs text-stone-400 max-w-xs mb-4">
+                    Selecciona un menú del catálogo para estructurar la alimentación de este día.
+                  </p>
+                  @if (!plan.isFromCoach) {
+                  <button #emptyBtnTarget type="button" (click)="opMenu.toggle($event, emptyBtnTarget)"
+                    class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-awakin-sun text-white font-bold text-xs shadow-md shadow-awakin-sun/20 hover:bg-[#E68800] active:scale-95 transition-all cursor-pointer">
+                    <i class="pi pi-plus text-xs"></i>
+                    ASIGNAR MENÚ
+                  </button>
+                  }
+                </div>
+                }
               </div>
             </div>
-          </p-accordion-content>
-        </p-accordion-panel>
+          </div>
+        </p-accordion-content>
+      </p-accordion-panel>
       }
     </p-accordion>
 
@@ -551,160 +466,143 @@
 
       <div class="flex gap-4 overflow-x-auto pb-4 snap-x hide-scrollbar items-stretch">
         @for (menu of catalogMenus(); track menu.id) {
-          @let isCoach = isMenuFromCoach(menu);
-          @let isSelected = isMenuSelectedForActiveDay(menu.id, activeTemplateId());
-          @let images = getMenuDishImages(menu);
+        @let isCoach = isMenuFromCoach(menu);
+        @let isSelected = isMenuSelectedForActiveDay(menu.id, activeTemplateId());
+        @let images = getMenuDishImages(menu);
 
-          <div
-            class="bg-white rounded-2xl border border-stone-200/90 shadow-xs hover:shadow-md transition-all duration-300 flex flex-col min-w-[270px] max-w-[285px] w-[275px] snap-center relative overflow-hidden group select-none"
-            [ngClass]="isSelected ? 'ring-2 ring-[#00C48C]/40 border-[#00C48C]' : ''"
-          >
-            <!-- SECCIÓN COLLAGE AUTOMÁTICO DE RECETAS -->
-            <div class="h-44 w-full relative overflow-hidden bg-stone-100 select-none shrink-0">
-              @if (images.length === 1) {
-                <img
-                  [src]="images[0]"
-                  [alt]="menu.name"
-                  class="w-full h-full object-cover group-hover:scale-102 transition-transform duration-500"
-                />
-              } @else if (images.length === 2) {
-                <div class="grid grid-cols-2 h-full gap-[1.5px] bg-white">
-                  <img [src]="images[0]" [alt]="menu.name" class="w-full h-full object-cover" />
-                  <img [src]="images[1]" [alt]="menu.name" class="w-full h-full object-cover" />
-                </div>
-              } @else if (images.length === 3) {
-                <div class="grid grid-cols-3 h-full gap-[1.5px] bg-white">
-                  <img [src]="images[0]" [alt]="menu.name" class="w-full h-full object-cover" />
-                  <img [src]="images[1]" [alt]="menu.name" class="w-full h-full object-cover" />
-                  <img [src]="images[2]" [alt]="menu.name" class="w-full h-full object-cover" />
-                </div>
-              } @else if (images.length === 4) {
-                <!-- 4 platillos: Grilla 2x2 (Referencia Imágenes 1 y 3) -->
-                <div class="grid grid-cols-2 grid-rows-2 h-full gap-[1.5px] bg-white">
-                  <img [src]="images[0]" [alt]="menu.name" class="w-full h-full object-cover" />
-                  <img [src]="images[1]" [alt]="menu.name" class="w-full h-full object-cover" />
-                  <img [src]="images[2]" [alt]="menu.name" class="w-full h-full object-cover" />
-                  <img [src]="images[3]" [alt]="menu.name" class="w-full h-full object-cover" />
-                </div>
-              } @else if (images.length === 5) {
-                <!-- 5 platillos: 2 arriba, 3 abajo (Referencia Imagen 2) -->
-                <div class="flex flex-col h-full gap-[1.5px] bg-white">
-                  <div class="grid grid-cols-2 h-1/2 gap-[1.5px]">
-                    <img [src]="images[0]" [alt]="menu.name" class="w-full h-full object-cover" />
-                    <img [src]="images[1]" [alt]="menu.name" class="w-full h-full object-cover" />
-                  </div>
-                  <div class="grid grid-cols-3 h-1/2 gap-[1.5px]">
-                    <img [src]="images[2]" [alt]="menu.name" class="w-full h-full object-cover" />
-                    <img [src]="images[3]" [alt]="menu.name" class="w-full h-full object-cover" />
-                    <img [src]="images[4]" [alt]="menu.name" class="w-full h-full object-cover" />
-                  </div>
-                </div>
+        <div
+          class="bg-white rounded-2xl border border-stone-200/90 shadow-xs hover:shadow-md transition-all duration-300 flex flex-col min-w-[270px] max-w-[285px] w-[275px] snap-center relative overflow-hidden group select-none"
+          [ngClass]="isSelected ? 'ring-2 ring-[#00C48C]/40 border-[#00C48C]' : ''">
+          <!-- SECCIÓN COLLAGE AUTOMÁTICO DE RECETAS -->
+          <div class="h-44 w-full relative overflow-hidden bg-stone-100 select-none shrink-0">
+            @if (images.length === 1) {
+            <img [src]="images[0]" [alt]="menu.name"
+              class="w-full h-full object-cover group-hover:scale-102 transition-transform duration-500" />
+            } @else if (images.length === 2) {
+            <div class="grid grid-cols-2 h-full gap-[1.5px] bg-white">
+              <img [src]="images[0]" [alt]="menu.name" class="w-full h-full object-cover" />
+              <img [src]="images[1]" [alt]="menu.name" class="w-full h-full object-cover" />
+            </div>
+            } @else if (images.length === 3) {
+            <div class="grid grid-cols-3 h-full gap-[1.5px] bg-white">
+              <img [src]="images[0]" [alt]="menu.name" class="w-full h-full object-cover" />
+              <img [src]="images[1]" [alt]="menu.name" class="w-full h-full object-cover" />
+              <img [src]="images[2]" [alt]="menu.name" class="w-full h-full object-cover" />
+            </div>
+            } @else if (images.length === 4) {
+            <!-- 4 platillos: Grilla 2x2 (Referencia Imágenes 1 y 3) -->
+            <div class="grid grid-cols-2 grid-rows-2 h-full gap-[1.5px] bg-white">
+              <img [src]="images[0]" [alt]="menu.name" class="w-full h-full object-cover" />
+              <img [src]="images[1]" [alt]="menu.name" class="w-full h-full object-cover" />
+              <img [src]="images[2]" [alt]="menu.name" class="w-full h-full object-cover" />
+              <img [src]="images[3]" [alt]="menu.name" class="w-full h-full object-cover" />
+            </div>
+            } @else if (images.length === 5) {
+            <!-- 5 platillos: 2 arriba, 3 abajo (Referencia Imagen 2) -->
+            <div class="flex flex-col h-full gap-[1.5px] bg-white">
+              <div class="grid grid-cols-2 h-1/2 gap-[1.5px]">
+                <img [src]="images[0]" [alt]="menu.name" class="w-full h-full object-cover" />
+                <img [src]="images[1]" [alt]="menu.name" class="w-full h-full object-cover" />
+              </div>
+              <div class="grid grid-cols-3 h-1/2 gap-[1.5px]">
+                <img [src]="images[2]" [alt]="menu.name" class="w-full h-full object-cover" />
+                <img [src]="images[3]" [alt]="menu.name" class="w-full h-full object-cover" />
+                <img [src]="images[4]" [alt]="menu.name" class="w-full h-full object-cover" />
+              </div>
+            </div>
+            } @else {
+            <!-- 6 o más platillos: Grilla 3x2 -->
+            <div class="grid grid-cols-3 grid-rows-2 h-full gap-[1.5px] bg-white">
+              @for (img of images.slice(0, 6); track $index) {
+              <img [src]="img" [alt]="menu.name" class="w-full h-full object-cover" />
+              }
+            </div>
+            }
+
+            <!-- Badges Superpuestos (Esquina superior izquierda) -->
+            <div class="absolute top-2.5 left-2.5 flex flex-col items-start gap-1 z-10 pointer-events-none">
+              <!-- Tag de Creador (De tu Coach vs Personal) -->
+              @if (isCoach) {
+              <span
+                class="bg-[#5057FE] text-white text-[10px] font-bold px-2.5 py-0.5 rounded-full shadow-md flex items-center gap-1 leading-tight tracking-tight">
+                De tu Coach
+              </span>
               } @else {
-                <!-- 6 o más platillos: Grilla 3x2 -->
-                <div class="grid grid-cols-3 grid-rows-2 h-full gap-[1.5px] bg-white">
-                  @for (img of images.slice(0, 6); track $index) {
-                    <img [src]="img" [alt]="menu.name" class="w-full h-full object-cover" />
-                  }
-                </div>
+              <span
+                class="bg-[#00C48C] text-white text-[10px] font-bold px-2.5 py-0.5 rounded-full shadow-md flex items-center gap-1 leading-tight tracking-tight">
+                Personal
+              </span>
               }
 
-              <!-- Badges Superpuestos (Esquina superior izquierda) -->
-              <div class="absolute top-2.5 left-2.5 flex flex-col items-start gap-1 z-10 pointer-events-none">
-                <!-- Tag de Creador (De tu Coach vs Personal) -->
-                @if (isCoach) {
-                  <span
-                    class="bg-[#5057FE] text-white text-[10px] font-bold px-2.5 py-0.5 rounded-full shadow-md flex items-center gap-1 leading-tight tracking-tight"
-                  >
-                    De tu Coach
-                  </span>
-                } @else {
-                  <span
-                    class="bg-[#00C48C] text-white text-[10px] font-bold px-2.5 py-0.5 rounded-full shadow-md flex items-center gap-1 leading-tight tracking-tight"
-                  >
-                    Personal
-                  </span>
-                }
-
-                <!-- Tag de Día Seleccionado -->
-                @if (isSelected) {
-                  <span
-                    class="bg-[#00C48C] text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow-md flex items-center gap-1 leading-tight tracking-tight"
-                  >
-                    <i class="pi pi-calendar text-[9px]"></i> Día Seleccionado
-                  </span>
-                }
-              </div>
-
-              <!-- Botón de Acción en la esquina superior derecha (Duplicar) -->
-              <div class="absolute top-2.5 right-2.5 z-10 flex items-center gap-1">
-                <button
-                  type="button"
-                  (click)="duplicateMenu(menu, $event)"
-                  class="w-7 h-7 rounded-full bg-black/50 hover:bg-black/75 text-white backdrop-blur-md flex items-center justify-center transition-all cursor-pointer shadow-md text-xs active:scale-95"
-                  title="Duplicar menú"
-                >
-                  <i class="pi pi-copy text-[11px]"></i>
-                </button>
-              </div>
+              <!-- Tag de Día Seleccionado -->
+              @if (isSelected) {
+              <span
+                class="bg-[#00C48C] text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow-md flex items-center gap-1 leading-tight tracking-tight">
+                <i class="pi pi-calendar text-[9px]"></i> Día Seleccionado
+              </span>
+              }
             </div>
 
-            <!-- CUERPO DEL CARD -->
-            <div class="p-4 flex flex-col flex-1 justify-between">
-              <div>
-                <!-- Título del Menú -->
-                <h4
-                  class="font-black text-stone-900 text-sm sm:text-base leading-snug line-clamp-2 mb-2 group-hover:text-awakin-sun transition-colors"
-                >
-                  {{ menu.name }}
-                </h4>
-
-                <!-- Tags / Etiquetas (como en imagen 3: detox, antioxidantes) -->
-                @if (menu.tags && menu.tags.length > 0) {
-                  <div class="flex flex-wrap gap-1.5 mb-3">
-                    @for (tag of menu.tags; track tag) {
-                      <span
-                        class="text-[10px] font-semibold px-2 py-0.5 bg-stone-100 text-stone-600 rounded-full"
-                      >
-                        {{ tag }}
-                      </span>
-                    }
-                  </div>
-                }
-              </div>
-
-              <!-- Fila Inferior con Calorías y Macros coloreados -->
-              <div class="pt-3 border-t border-stone-100 flex items-center justify-between text-xs sm:text-sm mt-auto">
-                <span class="font-extrabold text-stone-900">
-                  {{ menu.kcal }} kcal
-                </span>
-                <span class="font-bold text-[#3B82F6]">
-                  {{ menu.protein }}P
-                </span>
-                <span class="font-bold text-[#F59E0B]">
-                  {{ menu.carbs }}C
-                </span>
-                <span class="font-bold text-[#EF4444]">
-                  {{ menu.fats }}G
-                </span>
-              </div>
+            <!-- Botón de Acción en la esquina superior derecha (Duplicar) -->
+            <div class="absolute top-2.5 right-2.5 z-10 flex items-center gap-1">
+              <button type="button" (click)="duplicateMenu(menu, $event)"
+                class="w-7 h-7 rounded-full bg-black/50 hover:bg-black/75 text-white backdrop-blur-md flex items-center justify-center transition-all cursor-pointer shadow-md text-xs active:scale-95"
+                title="Duplicar menú">
+                <i class="pi pi-copy text-[11px]"></i>
+              </button>
             </div>
           </div>
+
+          <!-- CUERPO DEL CARD -->
+          <div class="p-4 flex flex-col flex-1 justify-between">
+            <div>
+              <!-- Título del Menú -->
+              <h4
+                class="font-black text-stone-900 text-sm sm:text-base leading-snug line-clamp-2 mb-2 group-hover:text-awakin-sun transition-colors">
+                {{ menu.name }}
+              </h4>
+
+              <!-- Tags / Etiquetas (como en imagen 3: detox, antioxidantes) -->
+              @if (menu.tags && menu.tags.length > 0) {
+              <div class="flex flex-wrap gap-1.5 mb-3">
+                @for (tag of menu.tags; track tag) {
+                <span class="text-[10px] font-semibold px-2 py-0.5 bg-stone-100 text-stone-600 rounded-full">
+                  {{ tag }}
+                </span>
+                }
+              </div>
+              }
+            </div>
+
+            <!-- Fila Inferior con Calorías y Macros coloreados -->
+            <div class="pt-3 border-t border-stone-100 flex items-center justify-between text-xs sm:text-sm mt-auto">
+              <span class="font-extrabold text-stone-900">
+                {{ menu.kcal }} kcal
+              </span>
+              <span class="font-bold text-[#3B82F6]">
+                {{ menu.protein }}P
+              </span>
+              <span class="font-bold text-[#F59E0B]">
+                {{ menu.carbs }}C
+              </span>
+              <span class="font-bold text-[#EF4444]">
+                {{ menu.fats }}G
+              </span>
+            </div>
+          </div>
+        </div>
         }
 
         <!-- Botón para Crear Menú Personalizado -->
-        <button
-          type="button"
-          class="rounded-2xl p-4 border-2 border-dashed border-stone-200 bg-stone-50/50 hover:bg-white hover:border-[#FE970A] hover:shadow-md transition-all duration-300 flex flex-col items-center justify-center min-w-[200px] max-w-[200px] snap-center group cursor-pointer focus:outline-none shrink-0"
-        >
+        <button type="button"
+          class="rounded-2xl p-4 border-2 border-dashed border-stone-200 bg-stone-50/50 hover:bg-white hover:border-[#FE970A] hover:shadow-md transition-all duration-300 flex flex-col items-center justify-center min-w-[200px] max-w-[200px] snap-center group cursor-pointer focus:outline-none shrink-0">
           <div
-            class="w-12 h-12 rounded-xl bg-white border border-stone-100 group-hover:bg-[#FE970A] group-hover:border-[#FE970A] group-hover:-translate-y-1 flex items-center justify-center text-xl text-stone-400 group-hover:text-white transition-all duration-300 mb-3 shadow-xs"
-          >
+            class="w-12 h-12 rounded-xl bg-white border border-stone-100 group-hover:bg-[#FE970A] group-hover:border-[#FE970A] group-hover:-translate-y-1 flex items-center justify-center text-xl text-stone-400 group-hover:text-white transition-all duration-300 mb-3 shadow-xs">
             <i class="pi pi-plus font-bold"></i>
           </div>
 
           <h4
-            class="font-black text-stone-500 group-hover:text-stone-900 text-xs leading-tight mb-1 uppercase tracking-wide transition-colors text-center"
-          >
+            class="font-black text-stone-500 group-hover:text-stone-900 text-xs leading-tight mb-1 uppercase tracking-wide transition-colors text-center">
             Crear Menú Personalizado
           </h4>
 
@@ -720,19 +618,13 @@
 
   <ng-template #footer>
     <div class="flex items-stretch gap-2">
-      <p-button
-        (onClick)="onOpenShoppingList.emit()"
-        styleClass="!w-14 !h-full !bg-white !border !border-stone-200 !text-stone-700 !rounded-2xl !shadow-[0_4px_20px_rgb(0,0,0,0.05)] !flex !items-center !justify-center active:!scale-95 !transition-all hover:!border-awakin-sun/30 hover:!text-awakin-sun hover:!bg-white !p-0 !ring-0"
-      >
+      <p-button (onClick)="onOpenShoppingList.emit()"
+        styleClass="!w-14 !h-full !bg-white !border !border-stone-200 !text-stone-700 !rounded-2xl !shadow-[0_4px_20px_rgb(0,0,0,0.05)] !flex !items-center !justify-center active:!scale-95 !transition-all hover:!border-awakin-sun/30 hover:!text-awakin-sun hover:!bg-white !p-0 !ring-0">
         <i class="pi pi-shopping-bag"></i>
       </p-button>
 
-      <p-button
-        (onClick)="saveAll()"
-        [loading]="isSaving()"
-        class="flex-1"
-        styleClass="!w-full !bg-awakin-sun !text-white !font-bold !tracking-widest !rounded-2xl !py-4 !shadow-lg !shadow-awakin-sun/30 hover:!bg-[#E68800] !transition-colors active:!scale-[0.98] !border-none !justify-center !ring-0"
-      >
+      <p-button (onClick)="saveAll()" [loading]="isSaving()" class="flex-1"
+        styleClass="!w-full !bg-awakin-sun !text-white !font-bold !tracking-widest !rounded-2xl !py-4 !shadow-lg !shadow-awakin-sun/30 hover:!bg-[#E68800] !transition-colors active:!scale-[0.98] !border-none !justify-center !ring-0">
         GUARDAR PLAN
       </p-button>
     </div>
@@ -740,145 +632,139 @@
 </p-drawer>
 
 <!-- MODAL DE RECETA PREVIEW (Abierto con el botón de ampliar en la esquina superior derecha del platillo) -->
-<p-dialog
-  [(visible)]="isRecipePreviewOpen"
-  [modal]="true"
-  [draggable]="false"
-  [resizable]="false"
-  [dismissableMask]="true"
-  header="Detalles de la Receta"
-  styleClass="w-[94vw] max-w-lg bg-white rounded-3xl overflow-hidden shadow-2xl p-0"
->
+<p-dialog [(visible)]="isRecipePreviewOpen" [modal]="true" [draggable]="false" [resizable]="false"
+  [dismissableMask]="true" header="Detalles de la Receta"
+  styleClass="w-[94vw] max-w-lg bg-white rounded-3xl overflow-hidden shadow-2xl p-0">
   @if (selectedDishForPreview(); as dish) {
-    <div class="p-4 sm:p-6 space-y-4 max-h-[80vh] overflow-y-auto awakin-scrollbar">
-      <!-- Banner con imagen de la receta -->
-      <div class="relative w-full h-48 sm:h-56 rounded-2xl overflow-hidden shadow-sm">
-        <img
-          [src]="dish.coverImageUrl || 'https://images.unsplash.com/photo-1490645935967-10de6ba17061?auto=format&fit=crop&q=80'"
-          [alt]="dish.name"
-          class="w-full h-full object-cover"
-        />
-        <div class="absolute inset-0 bg-gradient-to-t from-black/75 via-black/20 to-transparent"></div>
-        <div class="absolute bottom-3 left-3 right-3 text-white">
-          <div class="flex items-center gap-1.5 mb-1.5 flex-wrap">
-            <span class="bg-black/50 backdrop-blur-md px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider">
-              {{ mealTitles[dish.mealType] || dish.mealType }}
-            </span>
-            <span class="bg-black/50 backdrop-blur-md px-2 py-0.5 rounded-md text-[10px] font-bold flex items-center gap-1">
-              <i class="pi pi-clock text-[9px]"></i>
-              {{ dish.prepTimeMinutes || 15 }} min
-            </span>
-            <span class="bg-black/50 backdrop-blur-md px-2 py-0.5 rounded-md text-[10px] font-bold">
-              {{ toFraction(dish.portions) }} porción{{ dish.portions > 1 ? 'es' : '' }}
-            </span>
-          </div>
-          <h3 class="text-base sm:text-lg font-black leading-snug drop-shadow-sm">
-            {{ dish.name }}
-          </h3>
-          <p class="text-[11px] text-white/80 font-medium mt-0.5">
-            Por {{ dish.authorName || 'Awakin Protocol' }}
-          </p>
+  <div class="p-4 sm:p-6 space-y-4 max-h-[80vh] overflow-y-auto awakin-scrollbar">
+    <!-- Banner con imagen de la receta -->
+    <div class="relative w-full h-48 sm:h-56 rounded-2xl overflow-hidden shadow-sm">
+      <img
+        [src]="dish.coverImageUrl || 'https://images.unsplash.com/photo-1490645935967-10de6ba17061?auto=format&fit=crop&q=80'"
+        [alt]="dish.name" class="w-full h-full object-cover" />
+      <div class="absolute inset-0 bg-gradient-to-t from-black/75 via-black/20 to-transparent"></div>
+      <div class="absolute bottom-3 left-3 right-3 text-white">
+        <div class="flex items-center gap-1.5 mb-1.5 flex-wrap">
+          <span
+            class="bg-black/50 backdrop-blur-md px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider">
+            {{ mealTitles[dish.mealType] || dish.mealType }}
+          </span>
+          <span
+            class="bg-black/50 backdrop-blur-md px-2 py-0.5 rounded-md text-[10px] font-bold flex items-center gap-1">
+            <i class="pi pi-clock text-[9px]"></i>
+            {{ dish.prepTimeMinutes || 15 }} min
+          </span>
+          <span class="bg-black/50 backdrop-blur-md px-2 py-0.5 rounded-md text-[10px] font-bold">
+            {{ toFraction(dish.portions) }} porción{{ dish.portions > 1 ? 'es' : '' }}
+          </span>
         </div>
+        <h3 class="text-base sm:text-lg font-black leading-snug drop-shadow-sm">
+          {{ dish.name }}
+        </h3>
+        <p class="text-[11px] text-white/80 font-medium mt-0.5">
+          Por {{ dish.authorName || 'Awakin Protocol' }}
+        </p>
       </div>
+    </div>
 
-      <!-- Macros Summary Cards -->
-      <div class="grid grid-cols-4 gap-2 text-center">
-        <div class="bg-stone-50 border border-stone-200/60 rounded-xl p-2.5">
-          <span class="text-[10px] font-bold text-stone-400 uppercase tracking-wider block">Calorías</span>
-          <span class="text-sm sm:text-base font-black text-stone-900">{{ dish.totalCalories }}</span>
-          <span class="text-[9px] text-stone-400 block font-medium">kcal</span>
-        </div>
-        <div class="bg-sky-50/60 border border-sky-100 rounded-xl p-2.5">
-          <span class="text-[10px] font-bold text-sky-600 uppercase tracking-wider block">Proteína</span>
-          <span class="text-sm sm:text-base font-black text-sky-700">{{ dish.totalProtein }}g</span>
-          <span class="text-[9px] text-sky-500 block font-bold">P</span>
-        </div>
-        <div class="bg-amber-50/60 border border-amber-100 rounded-xl p-2.5">
-          <span class="text-[10px] font-bold text-amber-600 uppercase tracking-wider block">Carbos</span>
-          <span class="text-sm sm:text-base font-black text-amber-700">{{ dish.totalCarbs }}g</span>
-          <span class="text-[9px] text-amber-500 block font-bold">C</span>
-        </div>
-        <div class="bg-rose-50/60 border border-rose-100 rounded-xl p-2.5">
-          <span class="text-[10px] font-bold text-rose-600 uppercase tracking-wider block">Grasas</span>
-          <span class="text-sm sm:text-base font-black text-rose-700">{{ dish.totalFats }}g</span>
-          <span class="text-[9px] text-rose-500 block font-bold">G</span>
-        </div>
+    <!-- Macros Summary Cards -->
+    <div class="grid grid-cols-4 gap-2 text-center">
+      <div class="bg-stone-50 border border-stone-200/60 rounded-xl p-2.5">
+        <span class="text-[10px] font-bold text-stone-400 uppercase tracking-wider block">Calorías</span>
+        <span class="text-sm sm:text-base font-black text-stone-900">{{ dish.totalCalories }}</span>
+        <span class="text-[9px] text-stone-400 block font-medium">kcal</span>
       </div>
-
-      <!-- Tags Chips -->
-      @if (dish.tags && dish.tags.length > 0) {
-        <div class="flex items-center gap-1.5 flex-wrap">
-          @for (tag of dish.tags; track tag) {
-            <span class="bg-stone-100 text-stone-600 text-[10px] font-bold px-2 py-0.5 rounded-md uppercase tracking-wider">
-              #{{ tag }}
-            </span>
-          }
-        </div>
-      }
-
-      <!-- Lista de Ingredientes -->
-      <div>
-        <h4 class="text-xs font-bold text-stone-800 uppercase tracking-widest mb-2 flex items-center gap-1.5">
-          <i class="pi pi-list text-awakin-sun text-xs"></i>
-          Ingredientes ({{ dish.ingredients.length }})
-        </h4>
-        <div class="bg-stone-50 rounded-2xl p-3 border border-stone-100 space-y-2">
-          @for (ing of dish.ingredients; track $index) {
-            <div class="flex items-center justify-between text-xs py-1 border-b border-stone-200/40 last:border-none">
-              <span class="font-medium text-stone-800 flex items-center gap-2">
-                <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
-                {{ ing.name }}
-              </span>
-              <span class="font-bold text-stone-700 bg-white px-2 py-0.5 rounded-md border border-stone-200/50 shadow-2xs">
-                {{ formatQuantity(ing.quantity, ing.unit, ing.mode) }}
-              </span>
-            </div>
-          }
-          @if (dish.ingredients.length === 0) {
-            <p class="text-stone-400 text-xs italic text-center py-2">Sin ingredientes especificados</p>
-          }
-        </div>
+      <div class="bg-sky-50/60 border border-sky-100 rounded-xl p-2.5">
+        <span class="text-[10px] font-bold text-sky-600 uppercase tracking-wider block">Proteína</span>
+        <span class="text-sm sm:text-base font-black text-sky-700">{{ dish.totalProtein }}g</span>
+        <span class="text-[9px] text-sky-500 block font-bold">P</span>
       </div>
+      <div class="bg-amber-50/60 border border-amber-100 rounded-xl p-2.5">
+        <span class="text-[10px] font-bold text-amber-600 uppercase tracking-wider block">Carbos</span>
+        <span class="text-sm sm:text-base font-black text-amber-700">{{ dish.totalCarbs }}g</span>
+        <span class="text-[9px] text-amber-500 block font-bold">C</span>
+      </div>
+      <div class="bg-rose-50/60 border border-rose-100 rounded-xl p-2.5">
+        <span class="text-[10px] font-bold text-rose-600 uppercase tracking-wider block">Grasas</span>
+        <span class="text-sm sm:text-base font-black text-rose-700">{{ dish.totalFats }}g</span>
+        <span class="text-[9px] text-rose-500 block font-bold">G</span>
+      </div>
+    </div>
 
-      <!-- Instrucciones de Preparación -->
-      @if (dish.instructions && dish.instructions.length > 0) {
-        <div>
-          <h4 class="text-xs font-bold text-stone-800 uppercase tracking-widest mb-2 flex items-center gap-1.5">
-            <i class="pi pi-book text-emerald-500 text-xs"></i>
-            Instrucciones de Preparación
-          </h4>
-          <div class="space-y-2">
-            @for (step of dish.instructions; track $index; let idx = $index) {
-              <div class="flex items-start gap-3 bg-white p-3 rounded-xl border border-stone-100 shadow-2xs">
-                <span class="w-6 h-6 rounded-full bg-emerald-100 text-emerald-700 font-black text-xs flex items-center justify-center shrink-0">
-                  {{ idx + 1 }}
-                </span>
-                <p class="text-xs text-stone-700 font-medium leading-relaxed pt-0.5">
-                  {{ step }}
-                </p>
-              </div>
-            }
-          </div>
-        </div>
-      }
-
-      <!-- Utensilios Necesarios -->
-      @if (dish.utensils && dish.utensils.length > 0) {
-        <div>
-          <h4 class="text-xs font-bold text-stone-800 uppercase tracking-widest mb-2 flex items-center gap-1.5">
-            <i class="pi pi-wrench text-stone-400 text-xs"></i>
-            Utensilios
-          </h4>
-          <div class="flex flex-wrap gap-1.5">
-            @for (utensil of dish.utensils; track utensil) {
-              <span class="bg-stone-100 text-stone-600 px-2.5 py-1 rounded-lg text-xs font-medium">
-                {{ utensil }}
-              </span>
-            }
-          </div>
-        </div>
+    <!-- Tags Chips -->
+    @if (dish.tags && dish.tags.length > 0) {
+    <div class="flex items-center gap-1.5 flex-wrap">
+      @for (tag of dish.tags; track tag) {
+      <span class="bg-stone-100 text-stone-600 text-[10px] font-bold px-2 py-0.5 rounded-md uppercase tracking-wider">
+        #{{ tag }}
+      </span>
       }
     </div>
+    }
+
+    <!-- Lista de Ingredientes -->
+    <div>
+      <h4 class="text-xs font-bold text-stone-800 uppercase tracking-widest mb-2 flex items-center gap-1.5">
+        <i class="pi pi-list text-awakin-sun text-xs"></i>
+        Ingredientes ({{ dish.ingredients.length }})
+      </h4>
+      <div class="bg-stone-50 rounded-2xl p-3 border border-stone-100 space-y-2">
+        @for (ing of dish.ingredients; track $index) {
+        <div class="flex items-center justify-between text-xs py-1 border-b border-stone-200/40 last:border-none">
+          <span class="font-medium text-stone-800 flex items-center gap-2">
+            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+            {{ ing.name }}
+          </span>
+          <span class="font-bold text-stone-700 bg-white px-2 py-0.5 rounded-md border border-stone-200/50 shadow-2xs">
+            {{ formatQuantity(ing.quantity, ing.unit, ing.mode) }}
+          </span>
+        </div>
+        }
+        @if (dish.ingredients.length === 0) {
+        <p class="text-stone-400 text-xs italic text-center py-2">Sin ingredientes especificados</p>
+        }
+      </div>
+    </div>
+
+    <!-- Instrucciones de Preparación -->
+    @if (dish.instructions && dish.instructions.length > 0) {
+    <div>
+      <h4 class="text-xs font-bold text-stone-800 uppercase tracking-widest mb-2 flex items-center gap-1.5">
+        <i class="pi pi-book text-emerald-500 text-xs"></i>
+        Instrucciones de Preparación
+      </h4>
+      <div class="space-y-2">
+        @for (step of dish.instructions; track $index; let idx = $index) {
+        <div class="flex items-start gap-3 bg-white p-3 rounded-xl border border-stone-100 shadow-2xs">
+          <span
+            class="w-6 h-6 rounded-full bg-emerald-100 text-emerald-700 font-black text-xs flex items-center justify-center shrink-0">
+            {{ idx + 1 }}
+          </span>
+          <p class="text-xs text-stone-700 font-medium leading-relaxed pt-0.5">
+            {{ step }}
+          </p>
+        </div>
+        }
+      </div>
+    </div>
+    }
+
+    <!-- Utensilios Necesarios -->
+    @if (dish.utensils && dish.utensils.length > 0) {
+    <div>
+      <h4 class="text-xs font-bold text-stone-800 uppercase tracking-widest mb-2 flex items-center gap-1.5">
+        <i class="pi pi-wrench text-stone-400 text-xs"></i>
+        Utensilios
+      </h4>
+      <div class="flex flex-wrap gap-1.5">
+        @for (utensil of dish.utensils; track utensil) {
+        <span class="bg-stone-100 text-stone-600 px-2.5 py-1 rounded-lg text-xs font-medium">
+          {{ utensil }}
+        </span>
+        }
+      </div>
+    </div>
+    }
+  </div>
   }
 </p-dialog>
-

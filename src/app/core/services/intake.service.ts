@@ -47,8 +47,12 @@ export class IntakeService {
         console.warn('Backend unavailable for menus, falling back to Supabase client directly:', err);
         const query = `
           id, name, created_at, cover_image_url, author_id, author_name, is_public, total_calories, total_protein, total_carbs, total_fats, tags, description, created_by, athlete_id,
-          intake_menu_dishes(dish_id, meal_type, is_optimizer_active, optimizer_targets, intake_dishes(*, intake_dish_ingredients!intake_dish_ingredients_dish_id_fkey(quantity, mode, intake_ingredients(id, name, unit, serving_size, unit_weight_grams, calories, protein, carbs, fats, source_classification)))),
-          intake_menu_ingredients(id, ingredient_id, meal_type, quantity, mode, intake_ingredients(id, name, unit, serving_size, unit_weight_grams, calories, protein, carbs, fats, source_classification))
+          intake_menu_dishes_new(
+            id, dish_id, meal_type,
+            intake_menu_dish_optimizers(id, is_optimizer_active, optimizer_targets),
+            intake_dishes(*, intake_dish_ingredients!intake_dish_ingredients_dish_id_fkey(*, intake_ingredients(*)))
+          ),
+          intake_menu_ingredients(id, ingredient_id, meal_type, quantity, mode, intake_ingredients(*))
         `;
         return from(
           this.supabase
@@ -132,11 +136,28 @@ export class IntakeService {
         const dishRows = menu.dishes.map((d) => ({
           menu_id: newMenu.id,
           dish_id: d.dishId || d.id,
-          meal_type: d.mealType,
-          is_optimizer_active: d.isOptimizerActive || false,
-          optimizer_targets: d.optimizerTargets || null
+          meal_type: d.mealType
         }));
-        await this.supabase.from('intake_menu_dishes').insert(dishRows);
+        const { data: insertedDishes, error: dishesErr } = await this.supabase
+          .from('intake_menu_dishes_new')
+          .insert(dishRows)
+          .select('id, dish_id, meal_type');
+
+        if (!dishesErr && insertedDishes && insertedDishes.length > 0) {
+          const optimizerRows: any[] = [];
+          menu.dishes.forEach((d, idx) => {
+            if (idx < insertedDishes.length && (d.isOptimizerActive || d.optimizerTargets)) {
+              optimizerRows.push({
+                intake_menu_dish_id: insertedDishes[idx].id,
+                is_optimizer_active: d.isOptimizerActive || false,
+                optimizer_targets: d.optimizerTargets || null
+              });
+            }
+          });
+          if (optimizerRows.length > 0) {
+            await this.supabase.from('intake_menu_dish_optimizers').insert(optimizerRows);
+          }
+        }
       }
 
       if (menu.looseIngredients && menu.looseIngredients.length > 0) {
@@ -289,14 +310,16 @@ export class IntakeService {
       const f = Math.round(Number(m.total_fats || 0));
       const tags = Array.isArray(m.tags) ? m.tags : [];
 
-      const rawDishes = m.dishes || m.intake_menu_dishes || [];
+      const rawDishes = m.dishes || m.intake_menu_dishes_new || [];
       const dishes: DishItem[] = rawDishes.map((d: any) => {
         const dishObj = d.intake_dishes || d;
         const rawDishIngs = dishObj.ingredients || dishObj.intake_dish_ingredients || [];
         const ingredients: DishIngredient[] = rawDishIngs.map((di: any) => {
-          const ing = di.intake_ingredients || di;
+          const ing = di.intake_ingredients || di.ingredient || di;
           return {
-            id: ing.id,
+            id: di.id || ing.id,
+            ingredient_id: di.ingredient_id || ing.id,
+            sub_dish_id: di.sub_dish_id || null,
             name: ing.name || 'Ingrediente',
             quantity: Number(di.quantity || ing.quantity || 0),
             mode: di.mode || ing.mode || 'g',
@@ -305,11 +328,43 @@ export class IntakeService {
             protein: Number(ing.protein || 0),
             carbs: Number(ing.carbs || 0),
             fats: Number(ing.fats || 0),
+            fiber: Number(ing.fiber || 0),
+            micros: ing.micros || {},
+            photo_urls: ing.photo_urls || [],
             serving_size: Number(ing.serving_size || di.serving_size || 100),
             unit_weight_grams: ing.unit_weight_grams ? Number(ing.unit_weight_grams) : undefined,
-            sourceClassification: ing.source_classification || di.source_classification
+            sourceClassification: ing.source_classification || di.source_classification || 'CARBOHIDRATO',
+            rawIngredientObj: {
+              id: ing.id,
+              name: ing.name,
+              unit: ing.unit || 'g',
+              calories: Number(ing.calories || 0),
+              protein: Number(ing.protein || 0),
+              carbs: Number(ing.carbs || 0),
+              fats: Number(ing.fats || 0),
+              fiber: Number(ing.fiber || 0),
+              micros: ing.micros || {},
+              photo_urls: ing.photo_urls || [],
+              author_id: ing.author_id || null,
+              author_name: ing.author_name || 'Awakin Protocol',
+              created_at: ing.created_at || null,
+              serving_size: Number(ing.serving_size || 100),
+              unit_weight_grams: Number(ing.unit_weight_grams || ing.serving_size || 100),
+              source_classification: ing.source_classification || 'CARBOHIDRATO'
+            }
           };
         });
+
+        // Extraer optimizador desde intake_menu_dish_optimizers o propiedades directas
+        const optRaw = d.intake_menu_dish_optimizers;
+        const opt = Array.isArray(optRaw) && optRaw.length > 0 
+          ? optRaw[0] 
+          : (optRaw && typeof optRaw === 'object' ? optRaw : {});
+
+        const isOptimizerActive = Boolean(
+          opt.is_optimizer_active ?? d.is_optimizer_active ?? dishObj.is_optimizer_active ?? d.isOptimizerActive
+        );
+        const optimizerTargets = opt.optimizer_targets ?? d.optimizer_targets ?? dishObj.optimizer_targets ?? d.optimizerTargets ?? null;
 
         return {
           id: String(d.id || d.dish_id || dishObj.id),
@@ -330,8 +385,8 @@ export class IntakeService {
           tags: Array.isArray(dishObj.tags) ? dishObj.tags : [],
           instructions: Array.isArray(dishObj.instructions) ? dishObj.instructions : [],
           utensils: Array.isArray(dishObj.utensils) ? dishObj.utensils : [],
-          isOptimizerActive: Boolean(d.is_optimizer_active || dishObj.is_optimizer_active),
-          optimizerTargets: d.optimizer_targets || dishObj.optimizer_targets || null,
+          isOptimizerActive,
+          optimizerTargets,
           ingredients
         };
       });
@@ -515,4 +570,95 @@ export class IntakeService {
         .insert(rows);
     }
   }
+
+  // ==========================================
+  // REGISTROS NUTRICIONALES DE PRUEBAS
+  // ==========================================
+
+  public loadFoodRecords(email: string, dateStr?: string): Observable<any[]> {
+    const params: any = { email };
+    if (dateStr) params.date = dateStr;
+    return this.http.get<any[]>(`${this.baseUrl}/records`, { params }).pipe(
+      catchError(async () => {
+        let q = this.supabase
+          .from('registros_nutricionales_pruebas')
+          .select('*')
+          .eq('email', email);
+        if (dateStr) {
+          q = q.ilike('id_original', `${dateStr}%`);
+        }
+        const { data } = await q.order('timestamp', { ascending: false });
+        return data || [];
+      })
+    );
+  }
+
+  public createFoodRecord(record: any): Observable<any> {
+    return this.http.post<any>(`${this.baseUrl}/records`, record).pipe(
+      catchError(async () => {
+        const { data, error } = await this.supabase
+          .from('registros_nutricionales_pruebas')
+          .insert(record)
+          .select()
+          .single();
+        if (error) throw error;
+        return data;
+      })
+    );
+  }
+
+  public updateFoodRecordStatus(idOriginal: string, isActive: boolean): Observable<any> {
+    return this.http.patch<any>(`${this.baseUrl}/records/${idOriginal}/status`, { is_active: isActive }).pipe(
+      catchError(async () => {
+        const { data, error } = await this.supabase
+          .from('registros_nutricionales_pruebas')
+          .update({ is_active: isActive })
+          .eq('id_original', idOriginal)
+          .select()
+          .single();
+        if (error) throw error;
+        return data;
+      })
+    );
+  }
+
+  public async uploadFoodReportImage(file: File, athleteId?: string): Promise<string> {
+    const ext = file.name.split('.').pop() || 'jpg';
+    const filename = `food_${athleteId || 'ath'}_${Date.now()}_${Math.random().toString(36).substring(2, 7)}.${ext}`;
+    
+    let backendDetail: string | null = null;
+    // 1. Intentar subir mediante endpoint de backend
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      const res: any = await this.http.post(
+        `${environment.apiUrl}/athletes/upload-media?bucket=Intake_Food_Report`,
+        formData
+      ).toPromise();
+      if (res && res.public_url) {
+        return res.public_url;
+      }
+    } catch (e: any) {
+      console.warn('Backend upload failed, attempting direct Supabase upload:', e);
+      backendDetail = e?.error?.detail || e?.message || null;
+    }
+
+    // 2. Fallback a Supabase Storage directo
+    const { error } = await this.supabase.storage
+      .from('Intake_Food_Report')
+      .upload(filename, file, { contentType: file.type || 'image/jpeg', upsert: true });
+
+    if (error) {
+      console.error('Error uploading image to Intake_Food_Report bucket:', error);
+      const msg = backendDetail || error.message || 'El bucket Intake_Food_Report no fue encontrado en Supabase.';
+      throw new Error(msg);
+    }
+
+    const { data: publicData } = this.supabase.storage
+      .from('Intake_Food_Report')
+      .getPublicUrl(filename);
+
+    return publicData.publicUrl;
+  }
 }
+

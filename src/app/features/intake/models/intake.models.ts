@@ -16,6 +16,8 @@ export interface FoodItem {
 
 export interface DishIngredient {
   id?: string;
+  ingredient_id?: string;
+  sub_dish_id?: string | null;
   name: string;
   quantity: number;
   mode?: string;
@@ -24,9 +26,13 @@ export interface DishIngredient {
   protein?: number;
   carbs?: number;
   fats?: number;
+  fiber?: number;
+  micros?: any;
+  photo_urls?: string[];
   sourceClassification?: string;
   serving_size?: number;
   unit_weight_grams?: number;
+  rawIngredientObj?: any;
 }
 
 export interface DishItem {

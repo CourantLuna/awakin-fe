@@ -3,6 +3,22 @@ import { DragDropModule } from '@angular/cdk/drag-drop';
 import { CommonModule } from '@angular/common';
 import { ChartModule } from 'primeng/chart';
 import { PrimeNGModule } from '../../shared/prime-ng.module';
+import html2canvas from 'html2canvas';
+
+export interface StoryShareData {
+  photoUrl: string;
+  dateFormatted: string;
+  mealTitle: string;
+  dishName: string;
+  emoji: string;
+  portionText: string;
+  kcal: number;
+  protein: number;
+  carbs: number;
+  fat: number;
+  ingredients?: any[] | null;
+  dishId?: string;
+}
 import {
   CalendarDay,
   WeekCalendarHeaderComponent,
@@ -10,13 +26,19 @@ import {
 import { IntakeScaleWidgetComponent } from './components/intake-scale-widget/intake-scale-widget';
 import { ProtocolMatrixDrawer } from './components/protocol-matrix-drawer/protocol-matrix-drawer';
 import { ShoppingListDrawer } from './components/shopping-list-drawer/shopping-list-drawer';
-import { WeeklyTemplate, MenuPlan, DayAssignment, ManualMenuSelection } from './models/intake.models';
+import { WeeklyTemplate, MenuPlan, DayAssignment, ManualMenuSelection, DishItem } from './models/intake.models';
 import { FormsModule } from '@angular/forms';
 import { IntakeService, determineCoverIcon } from '../../core/services/intake.service';
 import { AthleteService } from '../../core/services/athlete.service';
 import { AuthService } from '../../core/services/auth.service';
-import { formatQuantity, toFraction } from '../../core/helpers/nutrition-optimizer';
 import { IntakeTopBar } from '../../components/intake-top-bar/intake-top-bar';
+import {
+  formatQuantity,
+  toFraction,
+  applyOptimizationToDish,
+  getGramsForQuantity,
+  calculateIngredientMacros,
+} from '../../core/helpers/nutrition-optimizer';
 
 // 1. Tipos de comida del protocolo
 export type MealType =
@@ -95,6 +117,7 @@ export interface FoodItem {
   fat: number;
   isLogged: boolean;
   coverImageUrl?: string | null;
+  dishItem?: DishItem;
 }
 
 @Component({
@@ -118,6 +141,7 @@ export class IntakeUserComponent implements OnInit {
   public athleteService = inject(AthleteService);
   public authService = inject(AuthService);
   public intakeService = inject(IntakeService);
+  readonly Math = Math;
 
   currentAthleteId = computed(() => {
     return (
@@ -194,6 +218,38 @@ export class IntakeUserComponent implements OnInit {
       dayName: new Intl.DateTimeFormat('es-ES', { weekday: 'narrow' }).format(date).toUpperCase(),
       status: 'none',
     });
+    this.loadDayRecords();
+  }
+
+  loadDayRecords() {
+    const athlete = this.athleteService.currentAthlete();
+    const email = athlete?.email || this.authService.currentSession()?.avatar?.email || 'heydi0811@gmail.com';
+    const curDateStr = this.formatDateYMD(this.selectedDate());
+
+    this.intakeService.loadFoodRecords(email, curDateStr).subscribe({
+      next: (records) => {
+        const regMap: Record<string, any> = {};
+        const logMap: Record<string, boolean> = { ...this.loggedFoodMap() };
+
+        if (Array.isArray(records)) {
+          for (const rec of records) {
+            const prefix = `${curDateStr}_`;
+            let foodId = rec.id_original;
+            if (rec.id_original && rec.id_original.startsWith(prefix)) {
+              foodId = rec.id_original.substring(prefix.length);
+            }
+            if (foodId) {
+              regMap[foodId] = rec;
+              const logKey = `${curDateStr}_${foodId}`;
+              logMap[logKey] = !!rec.is_active;
+            }
+          }
+        }
+        this.registeredRecords.set(regMap);
+        this.loggedFoodMap.set(logMap);
+      },
+      error: (err) => console.error('Error cargando registros nutricionales:', err),
+    });
   }
 
   constructor() {
@@ -207,6 +263,7 @@ export class IntakeUserComponent implements OnInit {
           }
         });
       }
+      this.loadDayRecords();
     });
   }
 
@@ -428,6 +485,7 @@ export class IntakeUserComponent implements OnInit {
             carbs: Math.round(dish.totalCarbs || 0),
             fat: Math.round(dish.totalFats || 0),
             isLogged: this.isFoodLogged(fid),
+            dishItem: dish,
           });
         }
       }
@@ -528,12 +586,32 @@ export class IntakeUserComponent implements OnInit {
   // ==========================================
   isRegisterModalOpen = signal<boolean>(false);
   targetFoodItem = signal<FoodItem | null>(null);
+  selectedDishFor100 = signal<FoodItem | null>(null);
   uploadedPhotoUrl = signal<string | null>(null);
+  selectedFile = signal<File | null>(null);
+  isSubmittingFood = signal<boolean>(false);
   selectedMealType = signal<MealType>('LUNCH');
-  selectedAdherence = signal<'100' | 'ADAPTATION' | 'FREE' | null>('100');
+  selectedAdherence = signal<'100' | 'ADAPTATION' | 'FREE' | null>(null);
   notesText = signal<string>('');
+  registeredRecords = signal<Record<string, any>>({});
+  registerError = signal<string | null>(null);
 
-  // Opciones de tipo de comida para el formulario (mockup: Desayuno, Almuerzo, Merienda, Cena, Bebida)
+  // ==========================================
+  // MODAL DE HISTORIA COMPARTIBLE (Awakin Food Story)
+  // ==========================================
+  isStoryModalOpen = signal<boolean>(false);
+  storyData = signal<StoryShareData | null>(null);
+  showIngredientsInCard = signal<boolean>(false);
+  cardScale = signal<number>(1);
+  isGeneratingStory = signal<boolean>(false);
+  isSharingFeed = signal<boolean>(false);
+  storyShareSuccess = signal<string | null>(null);
+
+  availableDishesForSelectedDay = computed<FoodItem[]>(() => {
+    return this.foodItems().filter((f) => !f.id.startsWith('mock_') && !f.id.startsWith('custom_'));
+  });
+
+  // Opciones de tipo de comida para el formulario (Desayuno, Almuerzo, Merienda, Cena, Bebida)
   modalMealOptions: { type: MealType; label: string; icon: string }[] = [
     { type: 'BREAKFAST', label: 'Desayuno', icon: 'pi pi-sun' },
     { type: 'LUNCH', label: 'Almuerzo', icon: 'pi pi-compass' },
@@ -564,21 +642,87 @@ export class IntakeUserComponent implements OnInit {
     },
   ];
 
-  // Validación: foto obligatoria, tipo de comida obligatorio, evaluación de adherencia obligatoria
+  // Validación: foto obligatoria, tipo de comida obligatorio, evaluación de adherencia obligatoria.
+  // Si es 100% en el plan y hay platillos disponibles, debe seleccionarse el platillo correspondiente.
   isRegisterFormValid = computed(() => {
-    return (
-      !!this.uploadedPhotoUrl() &&
-      !!this.selectedMealType() &&
-      !!this.selectedAdherence()
-    );
+    if (!this.uploadedPhotoUrl() || !this.selectedMealType() || !this.selectedAdherence()) {
+      return false;
+    }
+    if (this.selectedAdherence() === '100') {
+      const dishes = this.availableDishesForSelectedDay();
+      if (dishes.length > 0 && !this.selectedDishFor100() && !this.targetFoodItem()) {
+        return false;
+      }
+    }
+    return true;
   });
 
-  // Handler al presionar el check de alguna receta
+  onAdherenceChange(adh: '100' | 'ADAPTATION' | 'FREE' | null) {
+    this.selectedAdherence.set(adh);
+    if (adh === '100') {
+      if (!this.selectedDishFor100()) {
+        if (this.targetFoodItem()) {
+          this.selectDishFor100(this.targetFoodItem()!);
+        } else {
+          const match =
+            this.availableDishesForSelectedDay().find((d) => d.mealType === this.selectedMealType()) ||
+            this.availableDishesForSelectedDay()[0] ||
+            null;
+          if (match) {
+            this.selectDishFor100(match);
+          }
+        }
+      }
+    }
+  }
+
+  selectDishFor100(dish: FoodItem) {
+    this.selectedDishFor100.set(dish);
+    this.selectedMealType.set(dish.mealType);
+    this.notesText.set(`${dish.name} (${this.formatQuantity(dish.portion, dish.unit)})`);
+  }
+
+  // Handler al presionar el check de alguna receta:
+  // - Si no está registrado ese día: se presenta obligatoriamente el formulario de registrar comida.
+  // - Si ya está registrado: al hacer uncheck se deshabilita (is_active = false) sin borrarlo; un segundo check lo vuelve a habilitar.
   handleFoodCheckClick(food: FoodItem) {
     if (!this.canLogForSelectedDate()) {
       return;
     }
-    this.toggleFoodLog(food);
+
+    const rec = this.registeredRecords()[food.id];
+    const curDateStr = this.formatDateYMD(this.selectedDate());
+    const idOriginal = `${curDateStr}_${food.id}`;
+    const logKey = this.getLogKey(food.id);
+
+    if (!rec) {
+      this.openRegisterModal(food.mealType, food);
+    } else {
+      const nextActive = !food.isLogged;
+      this.intakeService.updateFoodRecordStatus(idOriginal, nextActive).subscribe({
+        next: () => {
+          this.registeredRecords.update((curr) => ({
+            ...curr,
+            [food.id]: { ...(curr[food.id] || {}), is_active: nextActive },
+          }));
+          this.loggedFoodMap.update((map) => ({
+            ...map,
+            [logKey]: nextActive,
+          }));
+        },
+        error: (err) => {
+          console.error('Error actualizando is_active en registros_nutricionales_pruebas:', err);
+          this.registeredRecords.update((curr) => ({
+            ...curr,
+            [food.id]: { ...(curr[food.id] || {}), is_active: nextActive },
+          }));
+          this.loggedFoodMap.update((map) => ({
+            ...map,
+            [logKey]: nextActive,
+          }));
+        },
+      });
+    }
   }
 
   // Abrir modal de registro
@@ -586,10 +730,13 @@ export class IntakeUserComponent implements OnInit {
     if (!this.canLogForSelectedDate()) {
       return;
     }
+    this.registerError.set(null);
     this.targetFoodItem.set(food || null);
+    this.selectedDishFor100.set(food || null);
     this.selectedMealType.set(food ? food.mealType : (mealType || 'LUNCH'));
     this.uploadedPhotoUrl.set(null);
-    this.selectedAdherence.set('100');
+    this.selectedFile.set(null);
+    this.selectedAdherence.set(null); // Evaluación de adherencia vacía por defecto
     this.notesText.set(food ? `${food.name} (${this.formatQuantity(food.portion, food.unit)})` : '');
     this.isRegisterModalOpen.set(true);
   }
@@ -598,7 +745,9 @@ export class IntakeUserComponent implements OnInit {
   onPhotoSelected(event: Event) {
     const input = event.target as HTMLInputElement;
     if (input.files && input.files[0]) {
+      this.registerError.set(null);
       const file = input.files[0];
+      this.selectedFile.set(file);
       const reader = new FileReader();
       reader.onload = (e: any) => {
         this.uploadedPhotoUrl.set(e.target.result);
@@ -610,58 +759,453 @@ export class IntakeUserComponent implements OnInit {
   // Remover foto seleccionada
   removePhoto() {
     this.uploadedPhotoUrl.set(null);
+    this.selectedFile.set(null);
+    this.registerError.set(null);
   }
 
   // Foto de prueba para agilizar testing
   useDemoPhoto() {
+    this.registerError.set(null);
     this.uploadedPhotoUrl.set(
       'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=600&q=80',
     );
+    this.selectedFile.set(null);
   }
 
-  // Enviar reporte y registrar comida/bebida mock
-  submitRegisterFood() {
-    if (!this.canLogForSelectedDate() || !this.isRegisterFormValid()) return;
+  // Enviar reporte y registrar comida en Supabase Storage (Intake_Food_Report) y registros_nutricionales_pruebas
+  async submitRegisterFood() {
+    if (!this.canLogForSelectedDate() || !this.isRegisterFormValid() || this.isSubmittingFood()) return;
 
-    const target = this.targetFoodItem();
-    if (target) {
-      // Marcar como consumido el alimento específico
-      const key = this.getLogKey(target.id);
-      this.loggedFoodMap.update((map) => ({ ...map, [key]: true }));
-    } else {
-      // Registrar un nuevo alimento en la comida elegida
-      const def = this.mealDefinitions[this.selectedMealType()];
+    this.registerError.set(null);
+    this.isSubmittingFood.set(true);
+    try {
       const curDateStr = this.formatDateYMD(this.selectedDate());
-      const newFood: FoodItem & { targetDate: string } = {
-        id: 'mock_' + Date.now().toString(),
-        targetDate: curDateStr,
-        name: this.notesText()?.trim() || `Registro de ${def.title}`,
-        emoji:
-          this.selectedMealType() === 'BREAKFAST'
-            ? '🍳'
-            : this.selectedMealType() === 'LUNCH'
-              ? '🍲'
-              : this.selectedMealType() === 'DINNER'
-                ? '🥗'
-                : this.selectedMealType() === 'DRINK'
-                  ? '🥤'
-                  : '🥪',
-        mealType: this.selectedMealType(),
-        portion: 1,
-        unit: 'porción',
-        kcal: 450,
-        protein: 35,
-        carbs: 45,
-        fat: 14,
-        isLogged: true,
+      const athlete = this.athleteService.currentAthlete();
+      const email = athlete?.email || this.authService.currentSession()?.avatar?.email || 'heydi0811@gmail.com';
+      const athleteName = athlete?.first_name
+        ? `${athlete.first_name} ${athlete.last_name || ''}`.trim()
+        : (athlete?.username || 'Atleta');
+      const athleteId = this.currentAthleteId() || 'ath';
+
+      // 1. Subir imagen al bucket Intake_Food_Report de Supabase
+      let photoUrl = this.uploadedPhotoUrl() || '';
+      const file = this.selectedFile();
+      if (file) {
+        try {
+          photoUrl = await this.intakeService.uploadFoodReportImage(file, athleteId);
+        } catch (uploadErr: any) {
+          console.error('Error subiendo imagen al bucket Intake_Food_Report:', uploadErr);
+          const detailMsg = uploadErr?.message || uploadErr?.error?.detail || 'Error subiendo la foto a Supabase Storage.';
+          this.registerError.set(`No se pudo subir la foto: ${detailMsg}. Asegúrate de crear el bucket "Intake_Food_Report" en Supabase Storage.`);
+          this.isSubmittingFood.set(false);
+          return; // DETIENE EL REGISTRO: no se guarda en la base de datos si la foto falló
+        }
+      }
+
+      // Validar que la foto no sea una cadena base64 local si se seleccionó archivo
+      if (file && (!photoUrl || photoUrl.startsWith('data:'))) {
+        this.registerError.set('La foto no pudo guardarse en Supabase Storage. El registro ha sido cancelado.');
+        this.isSubmittingFood.set(false);
+        return;
+      }
+
+      // 2. Determinar platillo vinculado
+      const targetDish =
+        this.selectedAdherence() === '100'
+          ? (this.selectedDishFor100() || this.targetFoodItem())
+          : (this.targetFoodItem() || null);
+
+      const chosenMealType = targetDish ? targetDish.mealType : this.selectedMealType();
+      const foodId = targetDish ? targetDish.id : `custom_${Date.now()}`;
+      const idOriginal = `${curDateStr}_${foodId}`;
+
+      const calories = targetDish ? targetDish.kcal : 450;
+      const protein = targetDish ? targetDish.protein : 35;
+      const carbs = targetDish ? targetDish.carbs : 45;
+      const fat = targetDish ? targetDish.fat : 14;
+      const dishTitle = targetDish
+        ? targetDish.name
+        : (this.notesText()?.trim() || `Registro de ${chosenMealType}`);
+
+      // 3. Obtener lista de ingredientes del platillo (con cantidades optimizadas si el optimizador está activo)
+      let formattedIngredients: any[] | null = null;
+      if (targetDish && targetDish.dishItem) {
+        const dish = targetDish.dishItem;
+        const activeDish = (dish.isOptimizerActive && dish.optimizerTargets)
+          ? applyOptimizationToDish(dish)
+          : dish;
+
+        formattedIngredients = (activeDish.ingredients || []).map((di: any) => {
+          const raw = di.rawIngredientObj || {};
+          const ingObj = {
+            id: di.ingredient_id || raw.id || di.id,
+            name: di.name || raw.name || 'Ingrediente',
+            unit: di.unit || raw.unit || 'g',
+            calories: Number(di.calories ?? raw.calories ?? 0),
+            protein: Number(di.protein ?? raw.protein ?? 0),
+            carbs: Number(di.carbs ?? raw.carbs ?? 0),
+            fats: Number(di.fats ?? raw.fats ?? 0),
+            serving_size: Number(di.serving_size ?? raw.serving_size ?? 100),
+            unit_weight_grams: Number(di.unit_weight_grams ?? raw.unit_weight_grams ?? (di.serving_size ?? 100)),
+          };
+
+          const grams = getGramsForQuantity(ingObj, Number(di.quantity || 0), di.mode);
+          const macros = calculateIngredientMacros(ingObj, Number(di.quantity || 0), di.mode);
+
+          return {
+            nombre: ingObj.name,
+            cantidad_g: Math.round(grams * 10) / 10,
+            kcals: Math.round(macros.calories),
+            proteinas_g: Math.round(macros.protein * 10) / 10,
+            grasas_g: Math.round(macros.fat * 10) / 10,
+            carbohidratos_g: Math.round(macros.carbs * 10) / 10,
+          };
+        });
+      }
+
+      // 4. Crear registro en tabla public.registros_nutricionales_pruebas
+      const recordPayload = {
+        id_original: idOriginal,
+        email: email,
+        nombre: athleteName,
+        tipo_comida: chosenMealType,
+        adherencia: this.selectedAdherence(),
+        foto_url: photoUrl,
+        notas: this.notesText()?.trim() || null,
+        is_active: true,
+        calorias: calories,
+        proteinas: protein,
+        carbohidratos: carbs,
+        grasas: fat,
+        plato_estimado: dishTitle,
+        ingredientes: formattedIngredients,
       };
-      this.additionalMockFoods.update((items) => [...items, newFood]);
-      const key = this.getLogKey(newFood.id);
-      this.loggedFoodMap.update((map) => ({ ...map, [key]: true }));
+
+      await this.intakeService.createFoodRecord(recordPayload).toPromise();
+
+      // 4. Si era custom (fuera de menú), añadirlo a additionalMockFoods
+      if (!targetDish) {
+        const newFood: FoodItem & { targetDate: string } = {
+          id: foodId,
+          targetDate: curDateStr,
+          name: dishTitle,
+          emoji:
+            chosenMealType === 'BREAKFAST'
+              ? '🍳'
+              : chosenMealType === 'LUNCH'
+                ? '🍲'
+                : chosenMealType === 'DINNER'
+                  ? '🥗'
+                  : chosenMealType === 'DRINK'
+                    ? '🥤'
+                    : '🥪',
+          mealType: chosenMealType,
+          portion: 1,
+          unit: 'porción',
+          kcal: calories,
+          protein: protein,
+          carbs: carbs,
+          fat: fat,
+          isLogged: true,
+        };
+        this.additionalMockFoods.update((items) => [...items, newFood]);
+      }
+
+      // 5. Actualizar mapas reactivos locales
+      const logKey = this.getLogKey(foodId);
+      this.registeredRecords.update((curr) => ({
+        ...curr,
+        [foodId]: recordPayload,
+      }));
+      this.loggedFoodMap.update((map) => ({ ...map, [logKey]: true }));
+
+      // Cerrar modal
+      this.isRegisterModalOpen.set(false);
+      this.targetFoodItem.set(null);
+      this.selectedDishFor100.set(null);
+      this.selectedFile.set(null);
+      this.uploadedPhotoUrl.set(null);
+      this.selectedAdherence.set(null);
+      this.notesText.set('');
+
+      // 6. Abrir automáticamente la vista de Historia para compartir
+      this.openStoryShareModal({
+        photoUrl: photoUrl || '',
+        dateFormatted: this.getStoryDateFormatted(this.selectedDate()),
+        mealTitle: this.mealDefinitions[chosenMealType]?.title || chosenMealType,
+        dishName: dishTitle,
+        emoji:
+          targetDish?.emoji ||
+          (chosenMealType === 'BREAKFAST' ? '🍳' : chosenMealType === 'LUNCH' ? '🍲' : '🥗'),
+        portionText: `${targetDish ? targetDish.portion : 1} ${targetDish ? targetDish.unit : 'porción'}`,
+        kcal: calories,
+        protein: protein,
+        carbs: carbs,
+        fat: fat,
+        ingredients: formattedIngredients,
+        dishId: targetDish?.id,
+      });
+    } catch (err: any) {
+      console.error('Error guardando en registros_nutricionales_pruebas:', err);
+      const detail = err?.error?.detail || err?.message || 'Error guardando en la base de datos.';
+      this.registerError.set(`Error al guardar en registros nutricionales: ${detail}`);
+    } finally {
+      this.isSubmittingFood.set(false);
+    }
+  }
+
+  // ==========================================
+  // MÉTODOS DE HISTORIA Y COMPARTIR
+  // ==========================================
+
+  getStoryDateFormatted(date?: Date): string {
+    const d = date || this.selectedDate();
+    const dayName = new Intl.DateTimeFormat('es-ES', { weekday: 'short' }).format(d);
+    const dayNum = d.getDate();
+    const monthName = new Intl.DateTimeFormat('es-ES', { month: 'long' }).format(d);
+    const cleanDay = dayName.replace('.', '');
+    return `${cleanDay}, ${dayNum} de ${monthName}`;
+  }
+
+  async toDataUrl(url: string): Promise<string> {
+    if (!url || url.startsWith('data:')) return url;
+    try {
+      const res = await fetch(url, { mode: 'cors' });
+      const blob = await res.blob();
+      return new Promise((resolve) => {
+        const reader = new FileReader();
+        reader.onloadend = () => resolve(reader.result as string);
+        reader.onerror = () => resolve(url);
+        reader.readAsDataURL(blob);
+      });
+    } catch {
+      return url;
+    }
+  }
+
+  async openStoryShareModal(data: StoryShareData) {
+    this.storyData.set(data);
+    this.showIngredientsInCard.set(false);
+    this.cardScale.set(1);
+    this.storyShareSuccess.set(null);
+    this.isStoryModalOpen.set(true);
+
+    if (data.photoUrl && !data.photoUrl.startsWith('data:')) {
+      const safeUrl = await this.toDataUrl(data.photoUrl);
+      if (this.storyData()?.photoUrl === data.photoUrl) {
+        this.storyData.update((curr) => (curr ? { ...curr, photoUrl: safeUrl } : null));
+      }
+    }
+  }
+
+  openStoryForFood(food: FoodItem, event?: Event) {
+    if (event) event.stopPropagation();
+    const rec = this.registeredRecords()[food.id];
+    const photoUrl =
+      rec?.foto_url ||
+      food.coverImageUrl ||
+      'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=800&q=80';
+
+    let formattedIngs: any[] | null = null;
+    if (rec && rec.ingredientes && Array.isArray(rec.ingredientes)) {
+      formattedIngs = rec.ingredientes;
+    } else if (food.dishItem) {
+      const dish = food.dishItem;
+      const activeDish = dish.isOptimizerActive && dish.optimizerTargets ? applyOptimizationToDish(dish) : dish;
+      formattedIngs = (activeDish.ingredients || []).map((di: any) => {
+        const raw = di.rawIngredientObj || {};
+        const ingObj = {
+          id: di.ingredient_id || raw.id || di.id,
+          name: di.name || raw.name || 'Ingrediente',
+          unit: di.unit || raw.unit || 'g',
+          calories: Number(di.calories ?? raw.calories ?? 0),
+          protein: Number(di.protein ?? raw.protein ?? 0),
+          carbs: Number(di.carbs ?? raw.carbs ?? 0),
+          fats: Number(di.fats ?? raw.fats ?? 0),
+          serving_size: Number(di.serving_size ?? raw.serving_size ?? 100),
+          unit_weight_grams: Number(di.unit_weight_grams ?? raw.unit_weight_grams ?? (di.serving_size ?? 100)),
+        };
+        const grams = getGramsForQuantity(ingObj, Number(di.quantity || 0), di.mode);
+        const macros = calculateIngredientMacros(ingObj, Number(di.quantity || 0), di.mode);
+        return {
+          nombre: ingObj.name,
+          cantidad_g: Math.round(grams * 10) / 10,
+          kcals: Math.round(macros.calories),
+          proteinas_g: Math.round(macros.protein * 10) / 10,
+          grasas_g: Math.round(macros.fat * 10) / 10,
+          carbohidratos_g: Math.round(macros.carbs * 10) / 10,
+        };
+      });
     }
 
-    this.isRegisterModalOpen.set(false);
-    this.targetFoodItem.set(null);
+    this.openStoryShareModal({
+      photoUrl: photoUrl,
+      dateFormatted: this.getStoryDateFormatted(this.selectedDate()),
+      mealTitle: this.mealDefinitions[food.mealType]?.title || food.mealType,
+      dishName: food.name,
+      emoji: food.emoji,
+      portionText: `${food.portion} ${food.unit}`,
+      kcal: food.kcal,
+      protein: food.protein,
+      carbs: food.carbs,
+      fat: food.fat,
+      ingredients: formattedIngs,
+      dishId: food.dishItem?.id || food.id,
+    });
+  }
+
+  adjustCardScale(delta: number) {
+    this.cardScale.update((s) => {
+      const next = Math.round((s + delta) * 10) / 10;
+      return Math.min(1.4, Math.max(0.7, next));
+    });
+  }
+
+  resetCardScale() {
+    this.cardScale.set(1);
+  }
+
+  async generateStoryBlob(): Promise<Blob | null> {
+    const element = document.getElementById('storyCanvas');
+    if (!element) return null;
+
+    this.isGeneratingStory.set(true);
+    try {
+      const canvas = await html2canvas(element, {
+        useCORS: true,
+        allowTaint: true,
+        scale: 2,
+        backgroundColor: '#000000',
+        logging: false,
+      });
+
+      return new Promise<Blob | null>((resolve) => {
+        canvas.toBlob((blob) => resolve(blob), 'image/png', 0.95);
+      });
+    } catch (err) {
+      console.error('Error generating story canvas:', err);
+      return null;
+    } finally {
+      this.isGeneratingStory.set(false);
+    }
+  }
+
+  async saveStoryToGallery() {
+    const blob = await this.generateStoryBlob();
+    if (!blob) return;
+
+    const filename = `awakin-comida-${Date.now()}.png`;
+    const file = new File([blob], filename, { type: 'image/png' });
+
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+      try {
+        await navigator.share({
+          files: [file],
+          title: 'Mi Comida Awakin',
+          text: `${this.storyData()?.dishName} en Awakin Protocol`,
+        });
+        this.storyShareSuccess.set('¡Listo para guardar en tu galería!');
+        setTimeout(() => this.storyShareSuccess.set(null), 3500);
+        return;
+      } catch (e: any) {
+        if (e.name === 'AbortError') return;
+      }
+    }
+
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+
+    this.storyShareSuccess.set('¡Imagen descargada con éxito!');
+    setTimeout(() => this.storyShareSuccess.set(null), 3500);
+  }
+
+  async shareStoryToAwakinFeed() {
+    const athleteId = this.currentAthleteId();
+    if (!athleteId || this.isSharingFeed()) return;
+
+    this.isSharingFeed.set(true);
+    try {
+      const blob = await this.generateStoryBlob();
+      if (!blob) {
+        this.isSharingFeed.set(false);
+        return;
+      }
+
+      const filename = `story_feed_${Date.now()}.png`;
+      const uploadRes = await this.athleteService.uploadMedia(blob, 'feed_posts', filename).toPromise();
+      const mediaUrl = uploadRes?.public_url || this.storyData()?.photoUrl || '';
+
+      const data = this.storyData();
+      const caption = `🍽️ ${data?.mealTitle}: ${data?.dishName} (${data?.kcal} kcal · ${data?.protein}P ${data?.carbs}C ${data?.fat}G)`;
+      await this.athleteService
+        .createPost(athleteId, {
+          media_url: mediaUrl,
+          caption: caption,
+          module_source: 'intake',
+          related_intake_dish_id: data?.dishId || undefined,
+        })
+        .toPromise();
+
+      this.storyShareSuccess.set('¡Publicado en tu Feed de Awakin!');
+      setTimeout(() => this.storyShareSuccess.set(null), 4000);
+    } catch (err) {
+      console.error('Error publicando en feed de Awakin:', err);
+      this.storyShareSuccess.set('Error al publicar en el feed.');
+      setTimeout(() => this.storyShareSuccess.set(null), 4000);
+    } finally {
+      this.isSharingFeed.set(false);
+    }
+  }
+
+  async shareStoryWhatsApp() {
+    const blob = await this.generateStoryBlob();
+    const data = this.storyData();
+    const text = `🍽️ Mi comida en Awakin Protocol:\n${data?.mealTitle}: ${data?.dishName}\n🔥 ${data?.kcal} kcal | ${data?.protein}g P | ${data?.carbs}g C | ${data?.fat}g G`;
+
+    if (blob && navigator.canShare) {
+      const file = new File([blob], 'comida-awakin.png', { type: 'image/png' });
+      if (navigator.canShare({ files: [file] })) {
+        try {
+          await navigator.share({
+            files: [file],
+            title: 'Awakin Protocol',
+            text: text,
+          });
+          return;
+        } catch (e: any) {
+          if (e.name === 'AbortError') return;
+        }
+      }
+    }
+
+    const url = `https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`;
+    window.open(url, '_blank');
+  }
+
+  async shareStoryNative(type?: string) {
+    const blob = await this.generateStoryBlob();
+    if (!blob) return;
+
+    const file = new File([blob], 'historia-awakin.png', { type: 'image/png' });
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+      try {
+        await navigator.share({
+          files: [file],
+          title: 'Historia Awakin',
+          text: `Awakin Protocol - ${this.storyData()?.dishName}`,
+        });
+      } catch (e: any) {
+        if (e.name === 'AbortError') return;
+      }
+    } else {
+      await this.saveStoryToGallery();
+    }
   }
 
   @ViewChild(WeekCalendarHeaderComponent) calendar!: WeekCalendarHeaderComponent;
