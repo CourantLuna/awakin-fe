@@ -1,78 +1,49 @@
 <div class="min-h-screen bg-awakin-base pb-20">
   <!-- 1. Barra Superior (hace scroll con la página) -->
   <div class="w-full bg-white pt-2">
-    <app-intake-top-bar
-      [streak]="streak()"
-      [currentLabel]="currentLabel()"
-      [isMonthView]="calendar.viewMode() === 'month'"
-      (onMenuClick)="calendar.onMenuClick.emit()"
-      (onNavigate)="calendar.navigate($event)"
-      (onTodayClick)="handleTopBtnAction()"
-      (onToggleView)="toggleCalendarViewMode()"
-    >
+    <app-intake-top-bar [streak]="streak()" [currentLabel]="currentLabel()"
+      [isMonthView]="calendar.viewMode() === 'month'" (onMenuClick)="calendar.onMenuClick.emit()"
+      (onNavigate)="calendar.navigate($event)" (onTodayClick)="handleTopBtnAction()"
+      (onToggleView)="toggleCalendarViewMode()">
     </app-intake-top-bar>
   </div>
 
   <!-- 2. Header selector de días (se ancla al top al hacer scroll) -->
   <div class="sticky top-0 z-30 w-full">
-    <app-week-calendar-header
-      #calendar
-      [streak]="streak()"
-      [weekStart]="1"
-      (onLabelChange)="updateLabel($event)"
-      (onDateChange)="onDateSelected($event)"
-    >
+    <app-week-calendar-header #calendar [streak]="streak()" [weekStart]="1" (onLabelChange)="updateLabel($event)"
+      (onDateChange)="onDateSelected($event)">
     </app-week-calendar-header>
   </div>
 
   <!-- 2. CONTENIDO PRINCIPAL (Dashboard de Comida) -->
   <div class="px-4 z-10 py-5">
-    <app-intake-scale-widget
-      [minA]="minBasal()"
-      [maintC]="maintenanceLevel()"
-      [proteinEated]="totalLoggedProtein()"
-      [proteinGoal]="currentDayMenu()?.protein || 120"
-      [carbsEated]="totalLoggedCarbs()"
-      [carbsGoal]="currentDayMenu()?.carbs || 210"
-      [fatsEated]="totalLoggedFat()"
-      [fatsGoal]="currentDayMenu()?.fats || 60"
-      [burnedKcals]="220"
-      [kinData]="{ name: 'Alpha Kin', logo: 'wolf-icon.png' }"
-    >
+    <app-intake-scale-widget [minA]="minBasal()" [maintC]="maintenanceLevel()" [goalKcals]="dailyGoalCalories()"
+      [caloriesEated]="totalLoggedCalories()" [proteinEated]="totalLoggedProtein()" [proteinGoal]="dailyGoalProtein()"
+      [carbsEated]="totalLoggedCarbs()" [carbsGoal]="dailyGoalCarbs()" [fatsEated]="totalLoggedFat()"
+      [fatsGoal]="dailyGoalFats()" [burnedKcals]="0" [kinData]="{ name: 'Alpha Kin', logo: 'wolf-icon.png' }">
     </app-intake-scale-widget>
 
-    <app-protocol-matrix-drawer
-      [(isOpen)]="isMatrixOpen"
-      [(weeklyTemplates)]="weeklyTemplates"
-      [(activeTemplateId)]="activeTemplateId"
-      [athleteId]="currentAthleteId()"
-      [availableMenus]="availableMenus()"
-      (onOpenShoppingList)="openShoppingListModal()"
-    >
+    <app-protocol-matrix-drawer [(isOpen)]="isMatrixOpen" [(weeklyTemplates)]="weeklyTemplates"
+      [(activeTemplateId)]="activeTemplateId" [athleteId]="currentAthleteId()" [availableMenus]="availableMenus()"
+      (onOpenShoppingList)="openShoppingListModal()">
     </app-protocol-matrix-drawer>
 
-    <app-shopping-list-drawer
-      [(isOpen)]="isShoppingListModalOpen"
-      [weekAssignments]="weeklyTemplates()"
-      [availableMenus]="availableMenus()"
-    >
+    <app-shopping-list-drawer [(isOpen)]="isShoppingListModalOpen" [weekAssignments]="weeklyTemplates()"
+      [availableMenus]="availableMenus()">
     </app-shopping-list-drawer>
 
     <div class="px-4 mt-2 relative z-10">
-      <button
-        (click)="openFuelMatrix()"
-        class="w-full relative overflow-hidden bg-white border border-stone-200 rounded-2xl p-4 flex items-center justify-between group transition-all active:scale-[0.98] shadow-[0_4px_20px_rgb(0,0,0,0.03)] hover:shadow-[0_4px_20px_rgb(0,0,0,0.06)] hover:border-awakin-sun/30"
-      >
+      <button (click)="openFuelMatrix()"
+        class="w-full relative overflow-hidden bg-white border border-stone-200 rounded-2xl p-4 flex items-center justify-between group transition-all active:scale-[0.98] shadow-[0_4px_20px_rgb(0,0,0,0.03)] hover:shadow-[0_4px_20px_rgb(0,0,0,0.06)] hover:border-awakin-sun/30">
         <div class="absolute inset-0 bg-gradient-to-r from-stone-50 to-white"></div>
 
         <div
-          class="absolute inset-0 bg-gradient-to-r from-awakin-sun/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"
-        ></div>
+          class="absolute inset-0 bg-gradient-to-r from-awakin-sun/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500">
+        </div>
 
         <div class="flex items-center gap-3 relative z-10">
           <div
-            class="w-10 h-10 rounded-xl bg-awakin-sun/10 border border-awakin-sun/20 flex items-center justify-center text-awakin-sun group-hover:scale-105 transition-transform duration-300"
-          >
+            class="w-10 h-10 rounded-xl bg-awakin-sun/10 border border-awakin-sun/20 flex items-center justify-center text-awakin-sun group-hover:scale-105 transition-transform duration-300">
             <i class="pi pi-map text-lg"></i>
           </div>
 
@@ -87,8 +58,7 @@
         </div>
 
         <div
-          class="relative z-10 w-8 h-8 rounded-full bg-stone-100 flex items-center justify-center text-stone-400 group-hover:text-awakin-sun group-hover:bg-awakin-sun/10 transition-all"
-        >
+          class="relative z-10 w-8 h-8 rounded-full bg-stone-100 flex items-center justify-center text-stone-400 group-hover:text-awakin-sun group-hover:bg-awakin-sun/10 transition-all">
           <i class="pi pi-arrow-right text-xs"></i>
         </div>
       </button>
@@ -102,25 +72,24 @@
               {{ planLabel() }}
             </h3>
             @if (currentDayMenu(); as menu) {
-              <span class="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-awakin-sun/10 text-awakin-sun border border-awakin-sun/20 truncate">
-                {{ menu.name }}
-              </span>
+            <span
+              class="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-awakin-sun/10 text-awakin-sun border border-awakin-sun/20 truncate">
+              {{ menu.name }}
+            </span>
             }
           </div>
           @if (activeWeeklyPlan(); as plan) {
-            <p class="text-[10px] text-stone-400 font-medium truncate mt-0.5">
-              {{ plan.name }}
-              @if (plan.startDate && plan.endDate) {
-                <span>({{ plan.startDate }} ~ {{ plan.endDate }})</span>
-              }
-            </p>
+          <p class="text-[10px] text-stone-400 font-medium truncate mt-0.5">
+            {{ plan.name }}
+            @if (plan.startDate && plan.endDate) {
+            <span>({{ plan.startDate }} ~ {{ plan.endDate }})</span>
+            }
+          </p>
           }
         </div>
 
-        <p-button
-          (onClick)="openRegisterModal()"
-          styleClass="!text-awakin-sun !tracking-widest !text-xs !font-bold !bg-awakin-sun/10 !rounded-full hover:!bg-awakin-sun/20 transition-colors !border-none !shadow-none !ring-0 !px-3 !py-1.5 shrink-0"
-        >
+        <p-button (onClick)="openRegisterModal()"
+          styleClass="!text-awakin-sun !tracking-widest !text-xs !font-bold !bg-awakin-sun/10 !rounded-full hover:!bg-awakin-sun/20 transition-colors !border-none !shadow-none !ring-0 !px-3 !py-1.5 shrink-0">
           <div class="flex items-center justify-center">
             <i class="pi pi-plus text-[10px] mr-1"></i> REGISTRAR COMIDA
           </div>
@@ -130,160 +99,140 @@
       <!-- Contenedores por Tipo de Comida (Estilo Fitia adaptado al diseño de Awakin) -->
       <div class="space-y-4">
         @for (mealType of configuredMealTypes(); track mealType) {
-          @let def = mealDefinitions[mealType];
-          @let totals = getMealTotals(mealType);
-          @let foods = getFoodsForMeal(mealType);
+        @let def = mealDefinitions[mealType];
+        @let totals = getMealTotals(mealType);
+        @let foods = getFoodsForMeal(mealType);
 
-          <div
-            class="bg-white rounded-3xl p-5 border border-stone-200/80 shadow-[0_4px_20px_rgb(0,0,0,0.03)] hover:shadow-[0_6px_25px_rgb(0,0,0,0.06)] transition-all"
-          >
-            <!-- Header de la Comida: Título + Macros + Icono representativo -->
-            <div class="flex items-center justify-between mb-4">
-              <div>
-                <h3 class="text-base font-black text-stone-900 tracking-tight leading-tight">
-                  {{ def.title }}
-                </h3>
-                <div class="flex items-center gap-1.5 text-[11px] font-bold text-stone-400 mt-1">
-                  <span class="text-stone-700 font-extrabold flex items-center gap-1">
-                    <i class="pi pi-bolt text-awakin-sun text-[10px]"></i>
-                    {{ totals.kcal }} kcal
-                  </span>
-                  <span class="text-stone-300">•</span>
-                  <span>{{ totals.protein }} P</span>
-                  <span class="text-stone-300">|</span>
-                  <span>{{ totals.carbs }} C</span>
-                  <span class="text-stone-300">|</span>
-                  <span>{{ totals.fat }} G</span>
-                </div>
-              </div>
-
-              <!-- Icono según tipo de comida (sin marcas comerciales) -->
-              <div
-                class="w-10 h-10 rounded-2xl flex items-center justify-center border shadow-xs transition-transform"
-                [ngClass]="def.badgeBg"
-                [title]="def.title"
-              >
-                <i [class]="def.icon" class="text-base"></i>
+        <div
+          class="bg-white rounded-3xl p-5 border border-stone-200/80 shadow-[0_4px_20px_rgb(0,0,0,0.03)] hover:shadow-[0_6px_25px_rgb(0,0,0,0.06)] transition-all">
+          <!-- Header de la Comida: Título + Macros + Icono representativo -->
+          <div class="flex items-center justify-between mb-4">
+            <div>
+              <h3 class="text-base font-black text-stone-900 tracking-tight leading-tight">
+                {{ def.title }}
+              </h3>
+              <div class="flex items-center gap-1.5 text-[11px] font-bold text-stone-400 mt-1">
+                <span class="text-stone-700 font-extrabold flex items-center gap-1">
+                  <i class="pi pi-bolt text-awakin-sun text-[10px]"></i>
+                  {{ totals.kcal }} kcal
+                </span>
+                <span class="text-stone-300">•</span>
+                <span>{{ totals.protein }} P</span>
+                <span class="text-stone-300">|</span>
+                <span>{{ totals.carbs }} C</span>
+                <span class="text-stone-300">|</span>
+                <span>{{ totals.fat }} G</span>
               </div>
             </div>
 
-            <!-- Lista de Alimentos de esta comida -->
-            @if (foods.length > 0) {
-              <div class="space-y-2 mb-3">
-                @for (food of foods; track food.id) {
-                  <div
-                    class="flex items-center justify-between p-2.5 sm:p-3 rounded-2xl border transition-all"
-                    [ngClass]="food.isLogged
+            <!-- Icono según tipo de comida (sin marcas comerciales) -->
+            <div class="w-10 h-10 rounded-2xl flex items-center justify-center border shadow-xs transition-transform"
+              [ngClass]="def.badgeBg" [title]="def.title">
+              <i [class]="def.icon" class="text-base"></i>
+            </div>
+          </div>
+
+          <!-- Lista de Alimentos de esta comida -->
+          @if (foods.length > 0) {
+          <div class="space-y-2 mb-3">
+            @for (food of foods; track food.id) {
+            <div class="flex items-center justify-between p-2.5 sm:p-3 rounded-2xl border transition-all" [ngClass]="food.isLogged
                       ? 'bg-stone-50/70 border-stone-200/60'
-                      : 'bg-white border-stone-200/40 opacity-80'"
-                  >
-                    <div class="flex items-center gap-3 min-w-0 flex-1">
-                      <!-- Miniatura / Emoji -->
-                      <div
-                        class="w-11 h-11 rounded-xl bg-stone-100 border border-stone-200 overflow-hidden flex items-center justify-center text-xl shrink-0 shadow-xs"
-                      >
-                        @if (food.coverImageUrl) {
-                          <img [src]="food.coverImageUrl" [alt]="food.name" class="w-full h-full object-cover" />
-                        } @else {
-                          <span>{{ food.emoji }}</span>
-                        }
-                      </div>
+                      : 'bg-white border-stone-200/40 opacity-80'">
+              <div class="flex items-center gap-3 min-w-0 flex-1">
+                <!-- Miniatura / Emoji -->
+                <div
+                  class="w-11 h-11 rounded-xl bg-stone-100 border border-stone-200 overflow-hidden flex items-center justify-center text-xl shrink-0 shadow-xs">
+                  @if (food.coverImageUrl) {
+                  <img [src]="food.coverImageUrl" [alt]="food.name" class="w-full h-full object-cover" />
+                  } @else {
+                  <span>{{ food.emoji }}</span>
+                  }
+                </div>
 
-                      <div class="min-w-0 pr-2">
-                        <h4 class="font-bold text-xs sm:text-sm text-stone-800 truncate leading-snug">
-                          {{ food.name }}
-                        </h4>
-                        <div class="flex items-center gap-2 mt-0.5">
-                          <span class="text-[11px] text-stone-400 font-medium truncate">
-                            {{ formatQuantity(food.portion, food.unit) }}
-                          </span>
-                          <span class="text-stone-300 text-[10px]">•</span>
-                          <span class="text-[10px] text-stone-400 font-semibold">
-                            {{ food.protein }}P · {{ food.carbs }}C · {{ food.fat }}G
-                          </span>
-                        </div>
-                      </div>
-                    </div>
+                <div class="min-w-0 pr-2">
+                  <h4 class="font-bold text-xs sm:text-sm text-stone-800 truncate leading-snug">
+                    {{ food.name }}
+                  </h4>
+                  <div class="flex items-center gap-2 mt-0.5">
+                    <span class="text-[11px] text-stone-400 font-medium truncate">
+                      {{ formatQuantity(food.portion, food.unit) }}
+                    </span>
+                    <span class="text-stone-300 text-[10px]">•</span>
+                    <span class="text-[10px] text-stone-400 font-semibold">
+                      {{ food.protein }}P · {{ food.carbs }}C · {{ food.fat }}G
+                    </span>
+                  </div>
+                </div>
+              </div>
 
-                    <!-- Calorías y Radio/Checkbox de estado consumido -->
-                    <div class="flex items-center gap-3 shrink-0">
-                      <div class="text-right">
-                        <span class="text-xs font-black text-stone-800 tabular-nums block leading-tight">
-                          {{ food.kcal }}
-                        </span>
-                        <span class="text-[9px] font-bold text-stone-400 uppercase tracking-wider block">
-                          kcal
-                        </span>
-                      </div>
+              <!-- Calorías y Radio/Checkbox de estado consumido -->
+              <div class="flex items-center gap-3 shrink-0">
+                <div class="text-right">
+                  <span class="text-xs font-black text-stone-800 tabular-nums block leading-tight">
+                    {{ food.kcal }}
+                  </span>
+                  <span class="text-[9px] font-bold text-stone-400 uppercase tracking-wider block">
+                    kcal
+                  </span>
+                </div>
 
-                      <button
-                        type="button"
-                        (click)="handleFoodCheckClick(food)"
-                        class="w-6 h-6 rounded-full flex items-center justify-center transition-all cursor-pointer focus:outline-none"
-                        [ngClass]="food.isLogged
+                <button type="button" (click)="handleFoodCheckClick(food)"
+                  class="w-6 h-6 rounded-full flex items-center justify-center transition-all cursor-pointer focus:outline-none"
+                  [ngClass]="food.isLogged
                           ? 'bg-module-intake text-white shadow-xs'
                           : 'border-2 border-stone-300 hover:border-module-intake text-transparent bg-transparent'"
-                        [title]="food.isLogged ? 'Marcar como pendiente' : 'Marcar como consumido'"
-                      >
-                        <i
-                          class="pi pi-check text-[10px] font-bold"
-                          [ngClass]="{'opacity-100': food.isLogged, 'opacity-0': !food.isLogged}"
-                        ></i>
-                      </button>
-                    </div>
-                  </div>
-                }
+                  [title]="food.isLogged ? 'Marcar como pendiente' : 'Marcar como consumido'">
+                  <i class="pi pi-check text-[10px] font-bold"
+                    [ngClass]="{'opacity-100': food.isLogged, 'opacity-0': !food.isLogged}"></i>
+                </button>
               </div>
-            } @else {
-              <!-- Estado vacío (como Desayuno en la imagen de referencia) -->
-              <div class="py-2 mb-2 text-center text-stone-400 text-xs italic font-medium">
-                Sin alimentos registrados
-              </div>
+            </div>
             }
-
-            <!-- Botón ancho con '+' para registrar alimento a este tipo de comida -->
-            <button
-              type="button"
-              (click)="openRegisterModal(mealType)"
-              class="w-full py-2.5 rounded-2xl bg-stone-100 hover:bg-stone-200/80 active:scale-[0.99] text-stone-500 hover:text-stone-800 transition-all flex items-center justify-center cursor-pointer group shadow-xs"
-              [title]="'Añadir alimento a ' + def.title"
-            >
-              <i class="pi pi-plus text-xs group-hover:scale-125 transition-transform duration-200"></i>
-            </button>
           </div>
+          } @else {
+          <!-- Estado vacío (como Desayuno en la imagen de referencia) -->
+          <div class="py-2 mb-2 text-center text-stone-400 text-xs italic font-medium">
+            Sin alimentos registrados
+          </div>
+          }
+
+          <!-- Botón ancho con '+' para registrar alimento a este tipo de comida -->
+          <button type="button" (click)="openRegisterModal(mealType)"
+            class="w-full py-2.5 rounded-2xl bg-stone-100 hover:bg-stone-200/80 active:scale-[0.99] text-stone-500 hover:text-stone-800 transition-all flex items-center justify-center cursor-pointer group shadow-xs"
+            [title]="'Añadir alimento a ' + def.title">
+            <i class="pi pi-plus text-xs group-hover:scale-125 transition-transform duration-200"></i>
+          </button>
+        </div>
         }
       </div>
     </div>
   </div>
 
   <!-- MODAL DE REGISTRO DE COMIDA (Estilo y componentes estándar Awakin) -->
-  <p-dialog
-    [(visible)]="isRegisterModalOpen"
-    [modal]="true"
-    [draggable]="false"
-    [resizable]="false"
-    [dismissableMask]="true"
-    header="Registrar Comida"
-    styleClass="w-[92vw] max-w-lg bg-white rounded-3xl overflow-hidden shadow-2xl p-0"
-  >
+  <p-dialog [(visible)]="isRegisterModalOpen" [modal]="true" [draggable]="false" [resizable]="false"
+    [dismissableMask]="true" header="Registrar Comida"
+    styleClass="w-[92vw] max-w-lg bg-white rounded-3xl overflow-hidden shadow-2xl p-0">
     <div class="p-5 sm:p-6 space-y-4 text-stone-800">
       @if (targetFoodItem(); as target) {
-        <div class="flex items-center gap-3 p-3 bg-stone-50 border border-stone-200 rounded-2xl">
-          <div class="w-10 h-10 rounded-xl bg-white border border-stone-200 flex items-center justify-center text-lg shadow-xs shrink-0">
-            {{ target.emoji }}
-          </div>
-          <div class="min-w-0 flex-1">
-            <h4 class="font-bold text-xs sm:text-sm text-stone-800 truncate">
-              {{ target.name }}
-            </h4>
-            <p class="text-[11px] text-stone-400 font-medium">
-              {{ target.portion }} {{ target.unit }} · {{ target.kcal }} kcal
-            </p>
-          </div>
-          <span class="text-[10px] font-bold text-awakin-sun bg-awakin-sun/10 border border-awakin-sun/20 px-2 py-0.5 rounded-full shrink-0">
-            Sugerencia
-          </span>
+      <div class="flex items-center gap-3 p-3 bg-stone-50 border border-stone-200 rounded-2xl">
+        <div
+          class="w-10 h-10 rounded-xl bg-white border border-stone-200 flex items-center justify-center text-lg shadow-xs shrink-0">
+          {{ target.emoji }}
         </div>
+        <div class="min-w-0 flex-1">
+          <h4 class="font-bold text-xs sm:text-sm text-stone-800 truncate">
+            {{ target.name }}
+          </h4>
+          <p class="text-[11px] text-stone-400 font-medium">
+            {{ target.portion }} {{ target.unit }} · {{ target.kcal }} kcal
+          </p>
+        </div>
+        <span
+          class="text-[10px] font-bold text-awakin-sun bg-awakin-sun/10 border border-awakin-sun/20 px-2 py-0.5 rounded-full shrink-0">
+          Sugerencia
+        </span>
+      </div>
       }
 
       <!-- 1. Foto de la Comida o Bebida (Obligatoria) -->
@@ -293,64 +242,44 @@
             Foto del Plato o Bebida <span class="text-awakin-sun">*</span>
           </label>
           @if (uploadedPhotoUrl()) {
-            <span class="text-[10px] font-bold text-emerald-600 flex items-center gap-1">
-              <i class="pi pi-check text-[9px]"></i> Adjuntada
-            </span>
+          <span class="text-[10px] font-bold text-emerald-600 flex items-center gap-1">
+            <i class="pi pi-check text-[9px]"></i> Adjuntada
+          </span>
           }
         </div>
 
-        <input
-          #fileInput
-          type="file"
-          accept="image/*"
-          capture="environment"
-          (change)="onPhotoSelected($event)"
-          class="hidden"
-        />
+        <input #fileInput type="file" accept="image/*" capture="environment" (change)="onPhotoSelected($event)"
+          class="hidden" />
 
         @if (!uploadedPhotoUrl()) {
+        <div (click)="fileInput.click()"
+          class="flex flex-col items-center justify-center p-5 bg-stone-50 hover:bg-stone-100/70 border-2 border-dashed border-stone-200 hover:border-awakin-sun/50 rounded-2xl cursor-pointer transition-all">
+          <div class="w-12 h-12 rounded-xl bg-awakin-sun/10 text-awakin-sun flex items-center justify-center mb-2">
+            <i class="pi pi-camera text-xl"></i>
+          </div>
+          <span class="text-xs font-bold text-stone-800">Tomar foto o subir imagen</span>
+          <span class="text-[11px] text-stone-400 font-medium mt-0.5">Cámara o desde tu galería (JPG, PNG)</span>
+          <button type="button" (click)="$event.stopPropagation(); useDemoPhoto()"
+            class="text-[11px] font-bold text-awakin-sun hover:underline mt-2.5 cursor-pointer">
+            Usar foto de demostración
+          </button>
+        </div>
+        } @else {
+        <div class="relative rounded-2xl overflow-hidden border border-stone-200 bg-stone-100 shadow-sm group">
+          <img [src]="uploadedPhotoUrl()" alt="Foto del plato" class="w-full h-44 object-cover object-center" />
           <div
-            (click)="fileInput.click()"
-            class="flex flex-col items-center justify-center p-5 bg-stone-50 hover:bg-stone-100/70 border-2 border-dashed border-stone-200 hover:border-awakin-sun/50 rounded-2xl cursor-pointer transition-all"
-          >
-            <div class="w-12 h-12 rounded-xl bg-awakin-sun/10 text-awakin-sun flex items-center justify-center mb-2">
-              <i class="pi pi-camera text-xl"></i>
-            </div>
-            <span class="text-xs font-bold text-stone-800">Tomar foto o subir imagen</span>
-            <span class="text-[11px] text-stone-400 font-medium mt-0.5">Cámara o desde tu galería (JPG, PNG)</span>
-            <button
-              type="button"
-              (click)="$event.stopPropagation(); useDemoPhoto()"
-              class="text-[11px] font-bold text-awakin-sun hover:underline mt-2.5 cursor-pointer"
-            >
-              Usar foto de demostración
+            class="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent flex items-end justify-between p-3">
+            <button type="button" (click)="fileInput.click()"
+              class="px-3 py-1.5 rounded-xl bg-white/95 hover:bg-white text-stone-800 text-[11px] font-bold flex items-center gap-1.5 shadow-md border border-stone-200/80 cursor-pointer transition-all active:scale-95">
+              <i class="pi pi-camera text-xs text-awakin-sun"></i> Cambiar
+            </button>
+            <button type="button" (click)="removePhoto()"
+              class="w-8 h-8 rounded-xl bg-red-500 hover:bg-red-600 text-white flex items-center justify-center shadow-md cursor-pointer transition-all active:scale-95"
+              title="Eliminar foto">
+              <i class="pi pi-trash text-xs"></i>
             </button>
           </div>
-        } @else {
-          <div class="relative rounded-2xl overflow-hidden border border-stone-200 bg-stone-100 shadow-sm group">
-            <img
-              [src]="uploadedPhotoUrl()"
-              alt="Foto del plato"
-              class="w-full h-44 object-cover object-center"
-            />
-            <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent flex items-end justify-between p-3">
-              <button
-                type="button"
-                (click)="fileInput.click()"
-                class="px-3 py-1.5 rounded-xl bg-white/95 hover:bg-white text-stone-800 text-[11px] font-bold flex items-center gap-1.5 shadow-md border border-stone-200/80 cursor-pointer transition-all active:scale-95"
-              >
-                <i class="pi pi-camera text-xs text-awakin-sun"></i> Cambiar
-              </button>
-              <button
-                type="button"
-                (click)="removePhoto()"
-                class="w-8 h-8 rounded-xl bg-red-500 hover:bg-red-600 text-white flex items-center justify-center shadow-md cursor-pointer transition-all active:scale-95"
-                title="Eliminar foto"
-              >
-                <i class="pi pi-trash text-xs"></i>
-              </button>
-            </div>
-          </div>
+        </div>
         }
       </div>
 
@@ -361,20 +290,17 @@
         </label>
         <div class="grid grid-cols-6 gap-2">
           @for (opt of modalMealOptions; track opt.type; let idx = $index) {
-            <button
-              type="button"
-              (click)="selectedMealType.set(opt.type)"
-              class="p-2.5 rounded-xl border text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer"
-              [ngClass]="[
+          <button type="button" (click)="selectedMealType.set(opt.type)"
+            class="p-2.5 rounded-xl border text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer"
+            [ngClass]="[
                 idx < 3 ? 'col-span-2' : 'col-span-3',
                 selectedMealType() === opt.type
                   ? 'bg-awakin-sun text-white border-awakin-sun shadow-sm'
                   : 'bg-stone-50 hover:bg-stone-100 text-stone-600 border-stone-200 hover:text-stone-900'
-              ]"
-            >
-              <i [class]="opt.icon" class="text-xs"></i>
-              <span>{{ opt.label }}</span>
-            </button>
+              ]">
+            <i [class]="opt.icon" class="text-xs"></i>
+            <span>{{ opt.label }}</span>
+          </button>
           }
         </div>
       </div>
@@ -391,26 +317,21 @@
         </div>
         <div class="space-y-2">
           @for (adh of adherenceOptions; track adh.id) {
-            <label
-              class="flex items-center gap-3 p-3 bg-stone-50 hover:bg-stone-100/70 border rounded-2xl cursor-pointer transition-all"
-              [ngClass]="selectedAdherence() === adh.id ? 'border-awakin-sun bg-awakin-sun/5' : 'border-stone-200'"
-            >
-              <p-radioButton
-                name="adherenceGroup"
-                [value]="adh.id"
-                [ngModel]="selectedAdherence()"
-                (ngModelChange)="selectedAdherence.set($event)"
-              ></p-radioButton>
-              <div class="flex-1 min-w-0">
-                <div class="flex items-center justify-between">
-                  <span class="text-xs sm:text-sm font-bold text-stone-800">{{ adh.title }}</span>
-                  <span class="text-[10px] font-black text-awakin-sun bg-awakin-sun/10 px-2 py-0.5 rounded-md">
-                    +{{ adh.pts }} pts
-                  </span>
-                </div>
-                <p class="text-[11px] text-stone-400 mt-0.5">{{ adh.desc }}</p>
+          <label
+            class="flex items-center gap-3 p-3 bg-stone-50 hover:bg-stone-100/70 border rounded-2xl cursor-pointer transition-all"
+            [ngClass]="selectedAdherence() === adh.id ? 'border-awakin-sun bg-awakin-sun/5' : 'border-stone-200'">
+            <p-radioButton name="adherenceGroup" [value]="adh.id" [ngModel]="selectedAdherence()"
+              (ngModelChange)="selectedAdherence.set($event)"></p-radioButton>
+            <div class="flex-1 min-w-0">
+              <div class="flex items-center justify-between">
+                <span class="text-xs sm:text-sm font-bold text-stone-800">{{ adh.title }}</span>
+                <span class="text-[10px] font-black text-awakin-sun bg-awakin-sun/10 px-2 py-0.5 rounded-md">
+                  +{{ adh.pts }} pts
+                </span>
               </div>
-            </label>
+              <p class="text-[11px] text-stone-400 mt-0.5">{{ adh.desc }}</p>
+            </div>
+          </label>
           }
         </div>
       </div>
@@ -420,26 +341,18 @@
         <label class="block text-[10px] font-bold uppercase tracking-wider text-stone-500 mb-1.5">
           Notas o Ingredientes <span class="text-stone-400 font-normal lowercase">(opcional)</span>
         </label>
-        <textarea
-          rows="2"
-          [ngModel]="notesText()"
-          (ngModelChange)="notesText.set($event)"
+        <textarea rows="2" [ngModel]="notesText()" (ngModelChange)="notesText.set($event)"
           placeholder="Ej: Pollo a la plancha 150g, arroz 100g, ensalada..."
-          class="w-full bg-stone-50 border border-stone-200 rounded-xl p-3 text-xs sm:text-sm text-stone-900 placeholder-stone-400 focus:outline-none focus:border-awakin-sun resize-none"
-        ></textarea>
+          class="w-full bg-stone-50 border border-stone-200 rounded-xl p-3 text-xs sm:text-sm text-stone-900 placeholder-stone-400 focus:outline-none focus:border-awakin-sun resize-none"></textarea>
       </div>
 
       <!-- 5. Footer solo con botón Registrar Comida/Bebida -->
       <div class="pt-2 border-t border-stone-100">
-        <button
-          type="button"
-          (click)="submitRegisterFood()"
-          [disabled]="!isRegisterFormValid()"
+        <button type="button" (click)="submitRegisterFood()" [disabled]="!isRegisterFormValid()"
           class="w-full py-3.5 px-4 rounded-xl font-black text-xs uppercase tracking-wider transition-all flex items-center justify-center gap-2 shadow-sm cursor-pointer"
           [ngClass]="isRegisterFormValid()
             ? 'bg-awakin-sun hover:bg-awakin-sun-dim text-white active:scale-[0.99]'
-            : 'bg-stone-100 text-stone-400 border border-stone-200 cursor-not-allowed shadow-none opacity-60'"
-        >
+            : 'bg-stone-100 text-stone-400 border border-stone-200 cursor-not-allowed shadow-none opacity-60'">
           <i class="pi pi-check text-xs font-bold"></i>
           <span>Registrar Comida/Bebida</span>
         </button>

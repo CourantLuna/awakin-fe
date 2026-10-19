@@ -267,16 +267,22 @@ export class ProtocolMatrixDrawer {
 
   assignMenuToDay(templateId: string, dayIndex: number, menuId: string | null, event?: Event) {
     if (event) event.stopPropagation();
+    let updatedPlanToSave: WeeklyTemplate | null = null;
     this.weeklyTemplates.update((templates) => {
       return templates.map((template) => {
         if (template.id === templateId) {
           const newAssignments = [...template.assignments];
           newAssignments[dayIndex] = { ...newAssignments[dayIndex], menuId };
-          return { ...template, assignments: newAssignments };
+          const updated = { ...template, assignments: newAssignments };
+          updatedPlanToSave = updated;
+          return updated;
         }
         return template;
       });
     });
+    if (updatedPlanToSave) {
+      this.intakeService.saveWeeklyPlan(updatedPlanToSave).subscribe();
+    }
     this.openDropdownKey.set(null);
   }
 

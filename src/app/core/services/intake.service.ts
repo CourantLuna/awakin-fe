@@ -355,17 +355,48 @@ export class IntakeService {
         };
       });
 
+      let finalKcal = kcal;
+      let finalP = p;
+      let finalC = c;
+      let finalF = f;
+
+      if (dishes.length > 0 || looseIngredients.length > 0) {
+        let sumKcal = 0;
+        let sumP = 0;
+        let sumC = 0;
+        let sumF = 0;
+        for (const d of dishes) {
+          sumKcal += Number(d.totalCalories) || 0;
+          sumP += Number(d.totalProtein) || 0;
+          sumC += Number(d.totalCarbs) || 0;
+          sumF += Number(d.totalFats) || 0;
+        }
+        for (const li of looseIngredients) {
+          const factor = (Number(li.quantity) || 100) / 100;
+          sumKcal += (Number(li.calories) || 0) * factor;
+          sumP += (Number(li.protein) || 0) * factor;
+          sumC += (Number(li.carbs) || 0) * factor;
+          sumF += (Number(li.fats) || 0) * factor;
+        }
+        finalKcal = Math.round(sumKcal);
+        finalP = Math.round(sumP);
+        finalC = Math.round(sumC);
+        finalF = Math.round(sumF);
+      } else if (finalKcal === 0 && (finalP > 0 || finalC > 0 || finalF > 0)) {
+        finalKcal = (finalP * 4) + (finalC * 4) + (finalF * 9);
+      }
+
       const initialMenu: MenuPlan = {
         id: String(m.id),
         name: m.name || 'Menú sin nombre',
         coverIcon: determineCoverIcon(m.name || '', tags),
         coverImageUrl: m.cover_image_url || null,
         tags,
-        kcal,
-        macros: `${p}P • ${c}C • ${f}G`,
-        protein: p,
-        carbs: c,
-        fats: f,
+        kcal: finalKcal,
+        macros: `${finalP}P • ${finalC}C • ${finalF}G`,
+        protein: finalP,
+        carbs: finalC,
+        fats: finalF,
         authorName: m.author_name || 'Awakin Protocol',
         description: m.description || null,
         createdBy: m.created_by || m.createdBy || null,

@@ -22,6 +22,8 @@ export class IntakeScaleWidgetComponent {
   burnedKcals = input.required<number>();
   minA = input.required<number>();
   maintC = input.required<number>();
+  goalKcals = input<number>();
+  caloriesEated = input<number>();
 
   // --- MACROS ---
   proteinEated = input.required<number>();
@@ -32,7 +34,7 @@ export class IntakeScaleWidgetComponent {
   fatsGoal = input.required<number>();
 
   targetGoal = computed(() => {
-    return this.proteinGoal() * 4 + this.carbsGoal() * 4 + this.fatsGoal() * 9;
+    return this.goalKcals() ?? (this.proteinGoal() * 4 + this.carbsGoal() * 4 + this.fatsGoal() * 9);
   });
 
   // --- CONTEXTO DEL SISTEMA ---
@@ -66,9 +68,9 @@ export class IntakeScaleWidgetComponent {
     animation: { animateScale: true, animateRotate: true },
   };
 
-  // Calculamos el total de calorías ingeridas (sin restar el ejercicio aún para esta barra)
+  // Calculamos el total de calorías ingeridas (usa el valor exacto de los alimentos marcados si está disponible)
   totalEated = computed(
-    () => this.proteinEated() * 4 + this.carbsEated() * 4 + this.fatsEated() * 9,
+    () => this.caloriesEated() ?? (this.proteinEated() * 4 + this.carbsEated() * 4 + this.fatsEated() * 9),
   );
 
   // Definimos el límite máximo común para que las barras sean comparables

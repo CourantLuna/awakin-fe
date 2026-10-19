@@ -211,21 +211,27 @@ export class IntakeUserComponent implements OnInit {
     return this.availableMenus().find((m) => m.id === assignment.menuId) || null;
   });
 
-  // Protocolo de Set Points reactivos según el menú asignado del día
-  minBasal = computed(() => {
-    const menu = this.currentDayMenu();
-    return menu ? Math.round(menu.kcal * 0.6) : 700;
-  });
+  // Metas nutricionales independientes del perfil / protocolo (Hardcodeadas por ahora, desacopladas del menú)
+  // Valores definidos: Goal = 2100 kcal, Maint = 1850 kcal, TBM = 1450 kcal (Protocolo: Superávit)
+  readonly defaultProfileNutrition = {
+    calories: 2100,
+    protein: 150,
+    carbs: 250,
+    fats: 55,
+    tbm: 1450,
+    maintenance: 1850,
+  };
 
-  targetGoal = computed(() => {
-    const menu = this.currentDayMenu();
-    return menu ? menu.kcal : 885;
-  });
+  // Metas nutricionales independientes del día
+  dailyGoalCalories = signal<number>(2100);
+  dailyGoalProtein = signal<number>(150);
+  dailyGoalCarbs = signal<number>(250);
+  dailyGoalFats = signal<number>(55);
 
-  maintenanceLevel = computed(() => {
-    const menu = this.currentDayMenu();
-    return menu ? Math.round(menu.kcal * 1.2) : 1500;
-  });
+  // Set Points del protocolo (TBM, Goal, Maint)
+  minBasal = signal<number>(1450);         // TBM = 1450 kcal
+  targetGoal = signal<number>(2100);       // GOAL = 2100 kcal
+  maintenanceLevel = signal<number>(1850); // MAINT = 1850 kcal
 
   // En intake-user.component.ts
   currentLabel = signal<string>('Hoy');
@@ -428,7 +434,15 @@ export class IntakeUserComponent implements OnInit {
     return all;
   });
 
-  // Cálculos de macros totales registrados (dinámicos para el scale-widget)
+  // Cálculos de macros y calorías totales registrados (dinámicos para el scale-widget)
+  totalLoggedCalories = computed(() =>
+    Math.round(
+      this.foodItems()
+        .filter((f) => f.isLogged)
+        .reduce((sum, f) => sum + f.kcal, 0),
+    ),
+  );
+
   totalLoggedProtein = computed(() =>
     Math.round(
       this.foodItems()

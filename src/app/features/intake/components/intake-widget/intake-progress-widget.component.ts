@@ -28,7 +28,7 @@ export class IntakeProgressWidgetComponent {
 
   // El porcentaje de llenado del arco
   progressStroke = computed(() => {
-    const percentage = Math.min(this.consumed() / this.maxLimit(), 1);
+    const percentage = Math.min(Math.max(this.consumed(), 0) / this.maxLimit(), 1);
     const totalLength = 280;
     return `${percentage * totalLength}, 1000`;
   });
