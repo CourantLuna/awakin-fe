@@ -20,6 +20,7 @@
       [streak]="streak()"
       [weekStart]="1"
       (onLabelChange)="updateLabel($event)"
+      (onDateChange)="onDateSelected($event)"
     >
     </app-week-calendar-header>
   </div>
@@ -30,11 +31,11 @@
       [minA]="minBasal()"
       [maintC]="maintenanceLevel()"
       [proteinEated]="totalLoggedProtein()"
-      [proteinGoal]="120"
+      [proteinGoal]="currentDayMenu()?.protein || 120"
       [carbsEated]="totalLoggedCarbs()"
-      [carbsGoal]="210"
+      [carbsGoal]="currentDayMenu()?.carbs || 210"
       [fatsEated]="totalLoggedFat()"
-      [fatsGoal]="60"
+      [fatsGoal]="currentDayMenu()?.fats || 60"
       [burnedKcals]="220"
       [kinData]="{ name: 'Alpha Kin', logo: 'wolf-icon.png' }"
     >
@@ -96,9 +97,24 @@
     <div class="mt-6 px-4">
       <div class="flex items-center justify-between mb-4 gap-2">
         <div class="flex-1 min-w-0">
-          <h3 class="text-sm font-bold text-stone-800 uppercase tracking-widest truncate">
-            {{ planLabel() }}
-          </h3>
+          <div class="flex items-center gap-2 flex-wrap">
+            <h3 class="text-sm font-black text-stone-800 uppercase tracking-widest truncate">
+              {{ planLabel() }}
+            </h3>
+            @if (currentDayMenu(); as menu) {
+              <span class="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-awakin-sun/10 text-awakin-sun border border-awakin-sun/20 truncate">
+                {{ menu.name }}
+              </span>
+            }
+          </div>
+          @if (activeWeeklyPlan(); as plan) {
+            <p class="text-[10px] text-stone-400 font-medium truncate mt-0.5">
+              {{ plan.name }}
+              @if (plan.startDate && plan.endDate) {
+                <span>({{ plan.startDate }} ~ {{ plan.endDate }})</span>
+              }
+            </p>
+          }
         </div>
 
         <p-button
@@ -164,9 +180,13 @@
                     <div class="flex items-center gap-3 min-w-0 flex-1">
                       <!-- Miniatura / Emoji -->
                       <div
-                        class="w-11 h-11 rounded-xl bg-white border border-stone-200 flex items-center justify-center text-xl shrink-0 shadow-xs"
+                        class="w-11 h-11 rounded-xl bg-stone-100 border border-stone-200 overflow-hidden flex items-center justify-center text-xl shrink-0 shadow-xs"
                       >
-                        {{ food.emoji }}
+                        @if (food.coverImageUrl) {
+                          <img [src]="food.coverImageUrl" [alt]="food.name" class="w-full h-full object-cover" />
+                        } @else {
+                          <span>{{ food.emoji }}</span>
+                        }
                       </div>
 
                       <div class="min-w-0 pr-2">
@@ -175,7 +195,7 @@
                         </h4>
                         <div class="flex items-center gap-2 mt-0.5">
                           <span class="text-[11px] text-stone-400 font-medium truncate">
-                            {{ food.portion }} {{ food.unit }}
+                            {{ formatQuantity(food.portion, food.unit) }}
                           </span>
                           <span class="text-stone-300 text-[10px]">•</span>
                           <span class="text-[10px] text-stone-400 font-semibold">
@@ -203,7 +223,7 @@
                         [ngClass]="food.isLogged
                           ? 'bg-module-intake text-white shadow-xs'
                           : 'border-2 border-stone-300 hover:border-module-intake text-transparent bg-transparent'"
-                        [title]="food.isLogged ? 'Marcar como pendiente' : 'Registrar foto de comida'"
+                        [title]="food.isLogged ? 'Marcar como pendiente' : 'Marcar como consumido'"
                       >
                         <i
                           class="pi pi-check text-[10px] font-bold"

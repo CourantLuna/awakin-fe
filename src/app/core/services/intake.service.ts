@@ -4,10 +4,11 @@ import { Observable, from, of, catchError, map, switchMap } from 'rxjs';
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import { environment } from '../../../environments/environment';
 import { MenuPlan, WeeklyTemplate, DayAssignment, DishItem, DishIngredient, LooseIngredientItem } from '../../features/intake/models/intake.models';
+import { applyOptimizationToMenu } from '../helpers/nutrition-optimizer';
 
 const DAY_NAMES = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
 
-function determineCoverIcon(name: string, tags: string[] = []): string {
+export function determineCoverIcon(name: string, tags: string[] = []): string {
   const text = (name + ' ' + tags.join(' ')).toLowerCase();
   if (text.includes('pollo') || text.includes('pavo')) return '🍗';
   if (text.includes('carne') || text.includes('res') || text.includes('steak')) return '🥩';
@@ -46,8 +47,8 @@ export class IntakeService {
         console.warn('Backend unavailable for menus, falling back to Supabase client directly:', err);
         const query = `
           id, name, created_at, cover_image_url, author_id, author_name, is_public, total_calories, total_protein, total_carbs, total_fats, tags, description, created_by, athlete_id,
-          intake_menu_dishes(dish_id, meal_type, is_optimizer_active, optimizer_targets, intake_dishes(*, intake_dish_ingredients!intake_dish_ingredients_dish_id_fkey(quantity, mode, intake_ingredients(id, name, unit, calories, protein, carbs, fats, source_classification)))),
-          intake_menu_ingredients(id, ingredient_id, meal_type, quantity, mode, intake_ingredients(id, name, unit, calories, protein, carbs, fats, source_classification))
+          intake_menu_dishes(dish_id, meal_type, is_optimizer_active, optimizer_targets, intake_dishes(*, intake_dish_ingredients!intake_dish_ingredients_dish_id_fkey(quantity, mode, intake_ingredients(id, name, unit, serving_size, unit_weight_grams, calories, protein, carbs, fats, source_classification)))),
+          intake_menu_ingredients(id, ingredient_id, meal_type, quantity, mode, intake_ingredients(id, name, unit, serving_size, unit_weight_grams, calories, protein, carbs, fats, source_classification))
         `;
         return from(
           this.supabase
@@ -132,7 +133,8 @@ export class IntakeService {
           menu_id: newMenu.id,
           dish_id: d.dishId || d.id,
           meal_type: d.mealType,
-          is_optimizer_active: d.isOptimizerActive || false
+          is_optimizer_active: d.isOptimizerActive || false,
+          optimizer_targets: d.optimizerTargets || null
         }));
         await this.supabase.from('intake_menu_dishes').insert(dishRows);
       }
@@ -303,6 +305,8 @@ export class IntakeService {
             protein: Number(ing.protein || 0),
             carbs: Number(ing.carbs || 0),
             fats: Number(ing.fats || 0),
+            serving_size: Number(ing.serving_size || di.serving_size || 100),
+            unit_weight_grams: ing.unit_weight_grams ? Number(ing.unit_weight_grams) : undefined,
             sourceClassification: ing.source_classification || di.source_classification
           };
         });
@@ -326,7 +330,8 @@ export class IntakeService {
           tags: Array.isArray(dishObj.tags) ? dishObj.tags : [],
           instructions: Array.isArray(dishObj.instructions) ? dishObj.instructions : [],
           utensils: Array.isArray(dishObj.utensils) ? dishObj.utensils : [],
-          isOptimizerActive: Boolean(d.is_optimizer_active),
+          isOptimizerActive: Boolean(d.is_optimizer_active || dishObj.is_optimizer_active),
+          optimizerTargets: d.optimizer_targets || dishObj.optimizer_targets || null,
           ingredients
         };
       });
@@ -350,7 +355,7 @@ export class IntakeService {
         };
       });
 
-      return {
+      const initialMenu: MenuPlan = {
         id: String(m.id),
         name: m.name || 'Menú sin nombre',
         coverIcon: determineCoverIcon(m.name || '', tags),
@@ -368,6 +373,8 @@ export class IntakeService {
         dishes,
         looseIngredients
       };
+
+      return applyOptimizationToMenu(initialMenu);
     });
   }
 
@@ -397,6 +404,8 @@ export class IntakeService {
       name: p.name || 'Mi Plan Semanal',
       isFromCoach,
       createdBy: p.created_by || null,
+      startDate: p.start_date || p.startDate || undefined,
+      endDate: p.end_date || p.endDate || undefined,
       assignments
     };
   }
@@ -404,7 +413,7 @@ export class IntakeService {
   private async fetchWeeklyPlansFromSupabase(athleteId: string): Promise<WeeklyTemplate[]> {
     const { data: plans, error: ep } = await this.supabase
       .from('intake_weekly_plans')
-      .select('id, athlete_id, name, created_at, created_by')
+      .select('id, athlete_id, name, created_at, created_by, start_date, end_date')
       .eq('athlete_id', athleteId)
       .order('created_at');
 
@@ -441,6 +450,8 @@ export class IntakeService {
         name: plan.name || 'Mi Plan Semanal',
         isFromCoach,
         createdBy: plan.created_by || null,
+        startDate: plan.start_date || undefined,
+        endDate: plan.end_date || undefined,
         assignments
       };
     });

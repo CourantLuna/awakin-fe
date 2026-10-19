@@ -2,7 +2,8 @@ export interface FoodItem {
   id: string;
   name: string;
   emoji: string;
-  category: string;
+  mealType?: string;
+  category?: string;
   portion: number;
   unit: string;
   kcal: number;
@@ -10,6 +11,7 @@ export interface FoodItem {
   carbs: number;
   fat: number;
   isLogged: boolean;
+  coverImageUrl?: string | null;
 }
 
 export interface DishIngredient {
@@ -23,6 +25,8 @@ export interface DishIngredient {
   carbs?: number;
   fats?: number;
   sourceClassification?: string;
+  serving_size?: number;
+  unit_weight_grams?: number;
 }
 
 export interface DishItem {
@@ -45,6 +49,7 @@ export interface DishItem {
   instructions: string[];
   utensils: string[];
   isOptimizerActive?: boolean;
+  optimizerTargets?: any;
   ingredients: DishIngredient[];
 }
 
@@ -99,6 +104,8 @@ export interface WeeklyTemplate {
   name: string;
   isFromCoach: boolean; // REEMPLAZA A isDefault
   createdBy?: string | null;
+  startDate?: string;
+  endDate?: string;
   assignments: DayAssignment[];
 }
 

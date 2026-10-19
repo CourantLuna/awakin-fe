@@ -386,9 +386,11 @@
 
                                     <!-- Datos del platillo -->
                                     <div class="flex-1 min-w-0 pr-1">
-                                      <h4 class="font-bold text-xs sm:text-sm text-stone-900 leading-snug line-clamp-2">
-                                        {{ dish.name }}
-                                      </h4>
+                                      <div class="flex items-center gap-1.5 flex-wrap">
+                                        <h4 class="font-bold text-xs sm:text-sm text-stone-900 leading-snug line-clamp-2">
+                                          {{ dish.name }}
+                                        </h4>
+                                      </div>
                                       <div class="flex items-center gap-2 text-[11px] text-stone-500 font-medium mt-1">
                                         <span class="flex items-center gap-1">
                                           <i class="pi pi-clock text-[9px]"></i>
@@ -441,7 +443,7 @@
                                             {{ ing.name }}
                                           </span>
                                           <span class="text-stone-400 font-semibold shrink-0 ml-2">
-                                            {{ ing.quantity }} {{ ing.unit || ing.mode || 'g' }}
+                                            {{ formatQuantity(ing.quantity, ing.unit, ing.mode) }}
                                           </span>
                                         </div>
                                       }
@@ -762,7 +764,7 @@
               {{ dish.prepTimeMinutes || 15 }} min
             </span>
             <span class="bg-black/50 backdrop-blur-md px-2 py-0.5 rounded-md text-[10px] font-bold">
-              {{ dish.portions }} porción{{ dish.portions > 1 ? 'es' : '' }}
+              {{ toFraction(dish.portions) }} porción{{ dish.portions > 1 ? 'es' : '' }}
             </span>
           </div>
           <h3 class="text-base sm:text-lg font-black leading-snug drop-shadow-sm">
@@ -823,7 +825,7 @@
                 {{ ing.name }}
               </span>
               <span class="font-bold text-stone-700 bg-white px-2 py-0.5 rounded-md border border-stone-200/50 shadow-2xs">
-                {{ ing.quantity }} {{ ing.unit || ing.mode || 'g' }}
+                {{ formatQuantity(ing.quantity, ing.unit, ing.mode) }}
               </span>
             </div>
           }

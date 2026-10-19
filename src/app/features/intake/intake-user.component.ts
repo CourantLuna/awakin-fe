@@ -12,10 +12,11 @@ import { ProtocolMatrixDrawer } from './components/protocol-matrix-drawer/protoc
 import { ShoppingListDrawer } from './components/shopping-list-drawer/shopping-list-drawer';
 import { WeeklyTemplate, MenuPlan, DayAssignment, ManualMenuSelection } from './models/intake.models';
 import { FormsModule } from '@angular/forms';
-import { IntakeTopBar } from '../../components/intake-top-bar/intake-top-bar';
-import { IntakeService } from '../../core/services/intake.service';
+import { IntakeService, determineCoverIcon } from '../../core/services/intake.service';
 import { AthleteService } from '../../core/services/athlete.service';
 import { AuthService } from '../../core/services/auth.service';
+import { formatQuantity, toFraction } from '../../core/helpers/nutrition-optimizer';
+import { IntakeTopBar } from '../../components/intake-top-bar/intake-top-bar';
 
 // 1. Tipos de comida del protocolo
 export type MealType =
@@ -93,6 +94,7 @@ export interface FoodItem {
   carbs: number;
   fat: number;
   isLogged: boolean;
+  coverImageUrl?: string | null;
 }
 
 @Component({
@@ -130,10 +132,28 @@ export class IntakeUserComponent implements OnInit {
   streak = signal<number>(12);
   weekDays = signal<CalendarDay[]>([]); // Se llenará dinámicamente
   selectedDay = signal<CalendarDay | null>(null);
+  selectedDate = signal<Date>(new Date());
   // Datos Gráfico
   macroData: any;
   macroOptions: any;
   caloriesTarget = 2200;
+
+  formatDateYMD(d: Date): string {
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  }
+
+  onDateSelected(date: Date) {
+    this.selectedDate.set(new Date(date));
+    this.selectedDay.set({
+      date: date.getDate(),
+      fullDate: new Date(date),
+      dayName: new Intl.DateTimeFormat('es-ES', { weekday: 'narrow' }).format(date).toUpperCase(),
+      status: 'none',
+    });
+  }
 
   constructor() {
     effect(() => {
@@ -149,11 +169,63 @@ export class IntakeUserComponent implements OnInit {
     });
   }
 
+  activeWeeklyPlan = computed<WeeklyTemplate | null>(() => {
+    const plans = this.weeklyTemplates();
+    if (!plans || plans.length === 0) return null;
 
-  // Protocolo de Set Points (Normalmente vendrían de un ProfileService)
-  minBasal = signal(700); // Punto A
-  targetGoal = signal(885); // Punto B
-  maintenanceLevel = signal(1500); // Punto C
+    const selDate = this.selectedDate();
+    const dateStr = this.formatDateYMD(selDate);
+
+    // 1. Prioriza plan que contenga la fecha seleccionada en su rango [startDate, endDate]
+    const matchingPlan = plans.find((p) => {
+      if (!p.startDate || !p.endDate) return false;
+      return dateStr >= p.startDate && dateStr <= p.endDate;
+    });
+
+    if (matchingPlan) return matchingPlan;
+
+    // 2. Fallback a activeTemplateId si coincide
+    const activeId = this.activeTemplateId();
+    if (activeId) {
+      const byId = plans.find((p) => p.id === activeId);
+      if (byId) return byId;
+    }
+
+    // 3. Fallback al primer plan
+    return plans[0];
+  });
+
+  currentDayIndex = computed<number>(() => {
+    const d = this.selectedDate();
+    return (d.getDay() + 6) % 7; // Lunes=0, Domingo=6
+  });
+
+  currentDayMenu = computed<MenuPlan | null>(() => {
+    const plan = this.activeWeeklyPlan();
+    if (!plan || !plan.assignments) return null;
+
+    const dayIdx = this.currentDayIndex();
+    const assignment = plan.assignments[dayIdx];
+    if (!assignment || !assignment.menuId) return null;
+
+    return this.availableMenus().find((m) => m.id === assignment.menuId) || null;
+  });
+
+  // Protocolo de Set Points reactivos según el menú asignado del día
+  minBasal = computed(() => {
+    const menu = this.currentDayMenu();
+    return menu ? Math.round(menu.kcal * 0.6) : 700;
+  });
+
+  targetGoal = computed(() => {
+    const menu = this.currentDayMenu();
+    return menu ? menu.kcal : 885;
+  });
+
+  maintenanceLevel = computed(() => {
+    const menu = this.currentDayMenu();
+    return menu ? Math.round(menu.kcal * 1.2) : 1500;
+  });
 
   // En intake-user.component.ts
   currentLabel = signal<string>('Hoy');
@@ -269,100 +341,116 @@ export class IntakeUserComponent implements OnInit {
   // Definiciones de tipos de comida y configuración activa (mockup con las 5 opciones)
   mealDefinitions = MEAL_DEFINITIONS;
 
-  configuredMealTypes = signal<MealType[]>([
-    'BREAKFAST',
-    'SNACK_AM',
-    'LUNCH',
-    'SNACK_PM',
-    'DINNER',
-  ]);
+  // Formateadores culinarios para porciones e ingredientes sin decimales
+  formatQuantity = formatQuantity;
+  toFraction = toFraction;
 
-  // Señal con las comidas del día agrupadas por MealType (Sugerencias + Registradas)
-  foodItems = signal<FoodItem[]>([
-    {
-      id: '1',
-      name: 'Pechuga de Pavo con Tostadas',
-      emoji: '🥪',
-      mealType: 'BREAKFAST',
-      portion: 2,
-      unit: 'tostadas (180g)',
-      kcal: 290,
-      protein: 26,
-      carbs: 32,
-      fat: 6,
-      isLogged: true,
-    },
-    {
-      id: '2',
-      name: 'Huevos Revueltos con Aguacate',
-      emoji: '🍳',
-      mealType: 'BREAKFAST',
-      portion: 2,
-      unit: 'huevos',
-      kcal: 310,
-      protein: 18,
-      carbs: 4,
-      fat: 24,
-      isLogged: true,
-    },
-    {
-      id: '3',
-      name: 'Bowl de Avena con Whey y Frutos Rojos',
-      emoji: '🥣',
-      mealType: 'SNACK_AM',
-      portion: 120,
-      unit: 'g',
-      kcal: 320,
-      protein: 25,
-      carbs: 40,
-      fat: 8,
-      isLogged: true,
-    },
-    {
-      id: '4',
-      name: 'Pechuga De Pollo Con Pasta Y Tomate',
-      emoji: '🍗',
-      mealType: 'LUNCH',
-      portion: 1,
-      unit: 'porción (456 g)',
-      kcal: 549,
-      protein: 44,
-      carbs: 50,
-      fat: 19,
-      isLogged: true,
-    },
-    {
-      id: '5',
-      name: 'Omelet De Huevo Y Claras Con Papa',
-      emoji: '🥚',
-      mealType: 'DINNER',
-      portion: 1,
-      unit: 'porción (489 g)',
-      kcal: 370,
-      protein: 29,
-      carbs: 34,
-      fat: 13,
-      isLogged: false,
-    },
-  ]);
+  // Mapa de registro mock de alimentos (clave: fecha_idAlimento)
+  loggedFoodMap = signal<Record<string, boolean>>({});
+  additionalMockFoods = signal<Array<FoodItem & { targetDate: string }>>([]);
+
+  getLogKey(foodId: string, date?: Date): string {
+    const d = date || this.selectedDate();
+    return `${this.formatDateYMD(d)}_${foodId}`;
+  }
+
+  isFoodLogged(foodId: string): boolean {
+    return !!this.loggedFoodMap()[this.getLogKey(foodId)];
+  }
+
+  // Comidas reactivas sincronizadas con el menú del día seleccionado en el calendario
+  foodItems = computed<FoodItem[]>(() => {
+    const menu = this.currentDayMenu();
+    const curDateStr = this.formatDateYMD(this.selectedDate());
+    const items: FoodItem[] = [];
+
+    if (menu) {
+      if (menu.dishes && menu.dishes.length > 0) {
+        for (const dish of menu.dishes) {
+          const fid = `dish_${dish.dishId || dish.id}_${dish.mealType}`;
+          items.push({
+            id: fid,
+            name: dish.name,
+            emoji: determineCoverIcon(dish.name, dish.tags || [dish.mealType]),
+            coverImageUrl: dish.coverImageUrl,
+            mealType: (dish.mealType?.toUpperCase() as MealType) || 'LUNCH',
+            portion: dish.portions || 1,
+            unit: 'porción',
+            kcal: Math.round(dish.totalCalories || 0),
+            protein: Math.round(dish.totalProtein || 0),
+            carbs: Math.round(dish.totalCarbs || 0),
+            fat: Math.round(dish.totalFats || 0),
+            isLogged: this.isFoodLogged(fid),
+          });
+        }
+      }
+
+      if (menu.looseIngredients && menu.looseIngredients.length > 0) {
+        for (const ing of menu.looseIngredients) {
+          const fid = `loose_${ing.id || ing.name}_${ing.mealType}`;
+          items.push({
+            id: fid,
+            name: ing.name,
+            emoji: determineCoverIcon(ing.name, [ing.mealType]),
+            mealType: (ing.mealType?.toUpperCase() as MealType) || 'SNACK_PM',
+            portion: ing.quantity || 1,
+            unit: ing.unit || 'g',
+            kcal: Math.round(ing.calories || 0),
+            protein: Math.round(ing.protein || 0),
+            carbs: Math.round(ing.carbs || 0),
+            fat: Math.round(ing.fats || 0),
+            isLogged: this.isFoodLogged(fid),
+          });
+        }
+      }
+    }
+
+    const extra = this.additionalMockFoods()
+      .filter((f) => f.targetDate === curDateStr)
+      .map((f) => ({
+        ...f,
+        isLogged: this.isFoodLogged(f.id),
+      }));
+
+    items.push(...extra);
+    return items;
+  });
+
+  configuredMealTypes = computed<MealType[]>(() => {
+    const defaultTypes: MealType[] = ['BREAKFAST', 'SNACK_AM', 'LUNCH', 'SNACK_PM', 'DINNER'];
+    const activeFoodMealTypes = new Set(this.foodItems().map((f) => f.mealType));
+    const all = [...defaultTypes];
+    for (const mt of ['SNACK_EXTRA', 'DRINK'] as MealType[]) {
+      if (activeFoodMealTypes.has(mt) && !all.includes(mt)) {
+        all.push(mt);
+      }
+    }
+    return all;
+  });
 
   // Cálculos de macros totales registrados (dinámicos para el scale-widget)
   totalLoggedProtein = computed(() =>
-    this.foodItems()
-      .filter((f) => f.isLogged)
-      .reduce((sum, f) => sum + f.protein, 0),
+    Math.round(
+      this.foodItems()
+        .filter((f) => f.isLogged)
+        .reduce((sum, f) => sum + f.protein, 0),
+    ),
   );
 
   totalLoggedCarbs = computed(() =>
-    this.foodItems()
-      .filter((f) => f.isLogged)
-      .reduce((sum, f) => sum + f.carbs, 0),
+    Math.round(
+      this.foodItems()
+        .filter((f) => f.isLogged)
+        .reduce((sum, f) => sum + f.carbs, 0),
+    ),
   );
 
   totalLoggedFat = computed(() =>
-    this.foodItems()
-      .filter((f) => f.isLogged)
-      .reduce((sum, f) => sum + f.fat, 0),
+    Math.round(
+      this.foodItems()
+        .filter((f) => f.isLogged)
+        .reduce((sum, f) => sum + f.fat, 0),
+    ),
   );
 
   getFoodsForMeal(type: MealType): FoodItem[] {
@@ -432,13 +520,7 @@ export class IntakeUserComponent implements OnInit {
 
   // Handler al presionar el check de alguna receta
   handleFoodCheckClick(food: FoodItem) {
-    if (food.isLogged) {
-      // Si ya estaba marcada, la desmarca directamente
-      this.toggleFoodLog(food);
-    } else {
-      // Si no estaba marcada, abre primero el modal para registrar
-      this.openRegisterModal(food.mealType, food);
-    }
+    this.toggleFoodLog(food);
   }
 
   // Abrir modal de registro
@@ -447,7 +529,7 @@ export class IntakeUserComponent implements OnInit {
     this.selectedMealType.set(food ? food.mealType : (mealType || 'LUNCH'));
     this.uploadedPhotoUrl.set(null);
     this.selectedAdherence.set('100');
-    this.notesText.set(food ? `${food.name} (${food.portion} ${food.unit})` : '');
+    this.notesText.set(food ? `${food.name} (${this.formatQuantity(food.portion, food.unit)})` : '');
     this.isRegisterModalOpen.set(true);
   }
 
@@ -476,21 +558,22 @@ export class IntakeUserComponent implements OnInit {
     );
   }
 
-  // Enviar reporte y registrar comida/bebida
+  // Enviar reporte y registrar comida/bebida mock
   submitRegisterFood() {
     if (!this.isRegisterFormValid()) return;
 
     const target = this.targetFoodItem();
     if (target) {
       // Marcar como consumido el alimento específico
-      this.foodItems.update((items) =>
-        items.map((i) => (i.id === target.id ? { ...i, isLogged: true } : i)),
-      );
+      const key = this.getLogKey(target.id);
+      this.loggedFoodMap.update((map) => ({ ...map, [key]: true }));
     } else {
       // Registrar un nuevo alimento en la comida elegida
       const def = this.mealDefinitions[this.selectedMealType()];
-      const newFood: FoodItem = {
-        id: Date.now().toString(),
+      const curDateStr = this.formatDateYMD(this.selectedDate());
+      const newFood: FoodItem & { targetDate: string } = {
+        id: 'mock_' + Date.now().toString(),
+        targetDate: curDateStr,
         name: this.notesText()?.trim() || `Registro de ${def.title}`,
         emoji:
           this.selectedMealType() === 'BREAKFAST'
@@ -511,7 +594,9 @@ export class IntakeUserComponent implements OnInit {
         fat: 14,
         isLogged: true,
       };
-      this.foodItems.update((items) => [...items, newFood]);
+      this.additionalMockFoods.update((items) => [...items, newFood]);
+      const key = this.getLogKey(newFood.id);
+      this.loggedFoodMap.update((map) => ({ ...map, [key]: true }));
     }
 
     this.isRegisterModalOpen.set(false);
@@ -628,11 +713,13 @@ export class IntakeUserComponent implements OnInit {
     console.log('Abrir calendario completo');
   }
 
-  // 3. NUEVO: Lógica para marcar/desmarcar la comida
+  // Lógica para marcar/desmarcar alimento consumido en mock frontend
   toggleFoodLog(item: FoodItem) {
-    this.foodItems.update((items) =>
-      items.map((i) => (i.id === item.id ? { ...i, isLogged: !i.isLogged } : i)),
-    );
+    const key = this.getLogKey(item.id);
+    this.loggedFoodMap.update((map) => ({
+      ...map,
+      [key]: !map[key],
+    }));
   }
 
   // 1. Opciones de ingesta (Protocolo de Categorías)
@@ -650,7 +737,7 @@ export class IntakeUserComponent implements OnInit {
   // 4. Método para aplicar el cambio
   changeCategory(foodId: string, newCategory: string, event: Event) {
     event.stopPropagation();
-    this.foodItems.update((items) =>
+    this.additionalMockFoods.update((items) =>
       items.map((item) => (item.id === foodId ? { ...item, category: newCategory } : item)),
     );
     this.openMenuId.set(null); // Cerramos el menú tras elegir

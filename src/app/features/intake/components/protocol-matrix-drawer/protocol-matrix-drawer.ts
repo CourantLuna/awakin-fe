@@ -6,6 +6,7 @@ import { PrimeNGModule } from '../../../../shared/prime-ng.module';
 import { SelectModule } from 'primeng/select';
 import { PopoverModule } from 'primeng/popover';
 import { IntakeService } from '../../../../core/services/intake.service';
+import { formatQuantity, toFraction } from '../../../../core/helpers/nutrition-optimizer';
 
 @Component({
   selector: 'app-protocol-matrix-drawer',
@@ -399,6 +400,14 @@ export class ProtocolMatrixDrawer {
   getAssignedMenu(menuId: string | null): MenuPlan | null {
     if (!menuId) return null;
     return this.availableMenus().find((m) => m.id === menuId) || null;
+  }
+
+  formatQuantity(quantity: number, unit?: string, mode?: string): string {
+    return formatQuantity(quantity, unit, mode);
+  }
+
+  toFraction(val: number): string {
+    return toFraction(val);
   }
 }
 
