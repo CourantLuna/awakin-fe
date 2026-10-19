@@ -2,7 +2,8 @@
     <app-intake-progress-widget 
       [consumed]="totalEated()"
       [minA]="minA()" [goalB]="targetGoal()" [maintC]="maintC()"
-      [showCurves]="isExpanded()">
+      [showCurves]="isExpanded()"
+      [kinData]="kinData()">
     </app-intake-progress-widget>
 
     @if (isExpanded()) {

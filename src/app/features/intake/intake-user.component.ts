@@ -127,12 +127,53 @@ export class IntakeUserComponent implements OnInit {
     );
   });
 
+  athleteKin = computed(() => {
+    return this.athleteService.currentAthlete()?.kin || null;
+  });
+
   activeTemplateId = signal<string | null>(null);
 
   streak = signal<number>(12);
   weekDays = signal<CalendarDay[]>([]); // Se llenará dinámicamente
   selectedDay = signal<CalendarDay | null>(null);
   selectedDate = signal<Date>(new Date());
+
+  // Validación de rango permitido para registrar/marcar alimentos:
+  // - No se permite en días futuros (diffDays > 0)
+  // - No se permite en días anteriores que pasen de 7 días (diffDays < -7)
+  // - Días permitidos: hoy y los 7 días anteriores (-7 <= diff <= 0)
+  dateLogStatus = computed(() => {
+    const sel = new Date(this.selectedDate());
+    sel.setHours(0, 0, 0, 0);
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const diffMs = sel.getTime() - today.getTime();
+    const diffDays = Math.round(diffMs / (1000 * 60 * 60 * 24));
+
+    if (diffDays > 0) {
+      return {
+        canLog: false,
+        reason: 'future' as const,
+        message: 'No se puede agregar ni marcar comida de días futuros.',
+      };
+    }
+    if (diffDays < -7) {
+      return {
+        canLog: false,
+        reason: 'expired' as const,
+        message: 'No se puede agregar ni marcar comida de más de 7 días anteriores.',
+      };
+    }
+    return {
+      canLog: true,
+      reason: 'valid' as const,
+      message: '',
+    };
+  });
+
+  canLogForSelectedDate = computed(() => this.dateLogStatus().canLog);
   // Datos Gráfico
   macroData: any;
   macroOptions: any;
@@ -534,11 +575,17 @@ export class IntakeUserComponent implements OnInit {
 
   // Handler al presionar el check de alguna receta
   handleFoodCheckClick(food: FoodItem) {
+    if (!this.canLogForSelectedDate()) {
+      return;
+    }
     this.toggleFoodLog(food);
   }
 
   // Abrir modal de registro
   openRegisterModal(mealType?: MealType, food?: FoodItem) {
+    if (!this.canLogForSelectedDate()) {
+      return;
+    }
     this.targetFoodItem.set(food || null);
     this.selectedMealType.set(food ? food.mealType : (mealType || 'LUNCH'));
     this.uploadedPhotoUrl.set(null);
@@ -574,7 +621,7 @@ export class IntakeUserComponent implements OnInit {
 
   // Enviar reporte y registrar comida/bebida mock
   submitRegisterFood() {
-    if (!this.isRegisterFormValid()) return;
+    if (!this.canLogForSelectedDate() || !this.isRegisterFormValid()) return;
 
     const target = this.targetFoodItem();
     if (target) {
@@ -729,6 +776,9 @@ export class IntakeUserComponent implements OnInit {
 
   // Lógica para marcar/desmarcar alimento consumido en mock frontend
   toggleFoodLog(item: FoodItem) {
+    if (!this.canLogForSelectedDate()) {
+      return;
+    }
     const key = this.getLogKey(item.id);
     this.loggedFoodMap.update((map) => ({
       ...map,

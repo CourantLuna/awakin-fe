@@ -1,5 +1,6 @@
-import { Component, input, computed, ViewChild, ElementRef, signal } from '@angular/core';
+import { Component, input, computed, ViewChild, ElementRef, signal, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { KinInfo } from '../../../../core/services/athlete.service';
 
 @Component({
   selector: 'app-intake-progress-widget',
@@ -13,6 +14,42 @@ export class IntakeProgressWidgetComponent {
   goalB = input.required<number>();
   maintC = input.required<number>();
   showCurves = input<boolean>(true);
+  kinData = input<KinInfo | null>(null);
+
+  imgError = signal<boolean>(false);
+
+  kinTeamName = computed(() => {
+    return this.kinData()?.team_name?.trim() || 'Alpha Kin';
+  });
+
+  kinLogoUrl = computed(() => {
+    return this.kinData()?.team_logo_url?.trim() || null;
+  });
+
+  hasValidLogo = computed(() => {
+    return !!this.kinLogoUrl() && !this.imgError();
+  });
+
+  kinInitials = computed(() => {
+    const name = this.kinTeamName();
+    const words = name.split(/\s+/).filter(Boolean);
+    if (words.length >= 2) {
+      return (words[0][0] + words[1][0]).toUpperCase();
+    }
+    return name.slice(0, 3).toUpperCase() || 'KIN';
+  });
+
+  onLogoError() {
+    this.imgError.set(true);
+  }
+
+  constructor() {
+    effect(() => {
+      // Reintentar cargar si la URL del logo cambia
+      this.kinLogoUrl();
+      this.imgError.set(false);
+    });
+  }
 
   @ViewChild('trackPath') trackPath!: ElementRef<SVGPathElement>;
 

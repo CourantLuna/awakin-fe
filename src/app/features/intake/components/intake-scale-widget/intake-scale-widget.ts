@@ -2,6 +2,8 @@ import { Component, input, computed, ViewChild, ElementRef, signal } from '@angu
 import { CommonModule } from '@angular/common';
 import { ChartModule } from 'primeng/chart';
 import { IntakeProgressWidgetComponent } from '../intake-widget/intake-progress-widget.component';
+import { KinInfo } from '../../../../core/services/athlete.service';
+
 
 @Component({
   selector: 'app-intake-scale-widget',
@@ -38,7 +40,7 @@ export class IntakeScaleWidgetComponent {
   });
 
   // --- CONTEXTO DEL SISTEMA ---
-  kinData = input<{ name: string; logo: string }>({ name: 'Alpha Kin', logo: 'A' });
+  kinData = input<KinInfo | null>(null);
   // --- CONFIGURACIÓN REACTIVA DEL GRÁFICO (Chart.js) ---
   macroData = computed(() => {
     // Colores del sistema Sunrise Tech (Fallback a Hex en caso de no leer variables CSS)
