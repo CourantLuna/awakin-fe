@@ -3,7 +3,7 @@ import { DragDropModule } from '@angular/cdk/drag-drop';
 import { CommonModule } from '@angular/common';
 import { ChartModule } from 'primeng/chart';
 import { PrimeNGModule } from '../../shared/prime-ng.module';
-import html2canvas from 'html2canvas';
+import * as htmlToImage from 'html-to-image';
 
 export interface StoryShareData {
   photoUrl: string;
@@ -604,8 +604,15 @@ export class IntakeUserComponent implements OnInit {
   showIngredientsInCard = signal<boolean>(false);
   cardScale = signal<number>(1);
   isGeneratingStory = signal<boolean>(false);
-  isSharingFeed = signal<boolean>(false);
   storyShareSuccess = signal<string | null>(null);
+
+  // Modal para compartir en Awakin Feed
+  isShareFeedModalOpen = signal<boolean>(false);
+  feedPostCaption = signal<string>('');
+  feedPostPreviewBlob = signal<Blob | null>(null);
+  feedPostPreviewUrl = signal<string | null>(null);
+  isPublishingFeed = signal<boolean>(false);
+  kinLogoDataUrl = signal<string | null>(null);
 
   availableDishesForSelectedDay = computed<FoodItem[]>(() => {
     return this.foodItems().filter((f) => !f.id.startsWith('mock_') && !f.id.startsWith('custom_'));
@@ -736,7 +743,7 @@ export class IntakeUserComponent implements OnInit {
     this.selectedMealType.set(food ? food.mealType : (mealType || 'LUNCH'));
     this.uploadedPhotoUrl.set(null);
     this.selectedFile.set(null);
-    this.selectedAdherence.set(null); // Evaluación de adherencia vacía por defecto
+    this.selectedAdherence.set(food ? '100' : null);
     this.notesText.set(food ? `${food.name} (${this.formatQuantity(food.portion, food.unit)})` : '');
     this.isRegisterModalOpen.set(true);
   }
@@ -851,9 +858,14 @@ export class IntakeUserComponent implements OnInit {
 
           const grams = getGramsForQuantity(ingObj, Number(di.quantity || 0), di.mode);
           const macros = calculateIngredientMacros(ingObj, Number(di.quantity || 0), di.mode);
+          const displayQty = formatQuantity(Number(di.quantity || 0), di.unit || ingObj.unit, di.mode);
 
           return {
             nombre: ingObj.name,
+            cantidad_display: displayQty,
+            cantidad_original: Number(di.quantity || 0),
+            unidad_original: di.unit || ingObj.unit || 'g',
+            modo: di.mode || 'g',
             cantidad_g: Math.round(grams * 10) / 10,
             kcals: Math.round(macros.calories),
             proteinas_g: Math.round(macros.protein * 10) / 10,
@@ -919,6 +931,8 @@ export class IntakeUserComponent implements OnInit {
       }));
       this.loggedFoodMap.update((map) => ({ ...map, [logKey]: true }));
 
+      const localPhotoData = this.uploadedPhotoUrl() || photoUrl || '';
+
       // Cerrar modal
       this.isRegisterModalOpen.set(false);
       this.targetFoodItem.set(null);
@@ -930,7 +944,7 @@ export class IntakeUserComponent implements OnInit {
 
       // 6. Abrir automáticamente la vista de Historia para compartir
       this.openStoryShareModal({
-        photoUrl: photoUrl || '',
+        photoUrl: localPhotoData,
         dateFormatted: this.getStoryDateFormatted(this.selectedDate()),
         mealTitle: this.mealDefinitions[chosenMealType]?.title || chosenMealType,
         dishName: dishTitle,
@@ -979,7 +993,24 @@ export class IntakeUserComponent implements OnInit {
         reader.readAsDataURL(blob);
       });
     } catch {
-      return url;
+      return new Promise((resolve) => {
+        const img = new Image();
+        img.crossOrigin = 'anonymous';
+        img.onload = () => {
+          try {
+            const canvas = document.createElement('canvas');
+            canvas.width = img.naturalWidth || img.width;
+            canvas.height = img.naturalHeight || img.height;
+            const ctx = canvas.getContext('2d');
+            ctx?.drawImage(img, 0, 0);
+            resolve(canvas.toDataURL('image/png'));
+          } catch {
+            resolve(url);
+          }
+        };
+        img.onerror = () => resolve(url);
+        img.src = url;
+      });
     }
   }
 
@@ -996,6 +1027,14 @@ export class IntakeUserComponent implements OnInit {
         this.storyData.update((curr) => (curr ? { ...curr, photoUrl: safeUrl } : null));
       }
     }
+
+    if (this.athleteKin()?.team_logo_url) {
+      this.toDataUrl(this.athleteKin()!.team_logo_url!).then((safeKinLogo) => {
+        this.kinLogoDataUrl.set(safeKinLogo);
+      });
+    } else {
+      this.kinLogoDataUrl.set(null);
+    }
   }
 
   openStoryForFood(food: FoodItem, event?: Event) {
@@ -1007,10 +1046,8 @@ export class IntakeUserComponent implements OnInit {
       'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=800&q=80';
 
     let formattedIngs: any[] | null = null;
-    if (rec && rec.ingredientes && Array.isArray(rec.ingredientes)) {
-      formattedIngs = rec.ingredientes;
-    } else if (food.dishItem) {
-      const dish = food.dishItem;
+    const dish = food.dishItem;
+    if (dish && dish.ingredients && dish.ingredients.length > 0) {
       const activeDish = dish.isOptimizerActive && dish.optimizerTargets ? applyOptimizationToDish(dish) : dish;
       formattedIngs = (activeDish.ingredients || []).map((di: any) => {
         const raw = di.rawIngredientObj || {};
@@ -1025,10 +1062,17 @@ export class IntakeUserComponent implements OnInit {
           serving_size: Number(di.serving_size ?? raw.serving_size ?? 100),
           unit_weight_grams: Number(di.unit_weight_grams ?? raw.unit_weight_grams ?? (di.serving_size ?? 100)),
         };
+
         const grams = getGramsForQuantity(ingObj, Number(di.quantity || 0), di.mode);
         const macros = calculateIngredientMacros(ingObj, Number(di.quantity || 0), di.mode);
+        const displayQty = formatQuantity(Number(di.quantity || 0), di.unit || ingObj.unit, di.mode);
+
         return {
           nombre: ingObj.name,
+          cantidad_display: displayQty,
+          cantidad_original: Number(di.quantity || 0),
+          unidad_original: di.unit || ingObj.unit || 'g',
+          modo: di.mode || 'g',
           cantidad_g: Math.round(grams * 10) / 10,
           kcals: Math.round(macros.calories),
           proteinas_g: Math.round(macros.protein * 10) / 10,
@@ -1036,6 +1080,8 @@ export class IntakeUserComponent implements OnInit {
           carbohidratos_g: Math.round(macros.carbs * 10) / 10,
         };
       });
+    } else if (rec && rec.ingredientes && Array.isArray(rec.ingredientes)) {
+      formattedIngs = rec.ingredientes;
     }
 
     this.openStoryShareModal({
@@ -1071,19 +1117,22 @@ export class IntakeUserComponent implements OnInit {
 
     this.isGeneratingStory.set(true);
     try {
-      const canvas = await html2canvas(element, {
-        useCORS: true,
-        allowTaint: true,
-        scale: 2,
+      const blob = await htmlToImage.toBlob(element, {
+        pixelRatio: 2,
         backgroundColor: '#000000',
-        logging: false,
+        cacheBust: false,
       });
+      if (blob) return blob;
 
-      return new Promise<Blob | null>((resolve) => {
-        canvas.toBlob((blob) => resolve(blob), 'image/png', 0.95);
+      const dataUrl = await htmlToImage.toPng(element, {
+        pixelRatio: 2,
+        backgroundColor: '#000000',
+        cacheBust: false,
       });
+      const res = await fetch(dataUrl);
+      return await res.blob();
     } catch (err) {
-      console.error('Error generating story canvas:', err);
+      console.error('Error generating story image with html-to-image:', err);
       return null;
     } finally {
       this.isGeneratingStory.set(false);
@@ -1091,75 +1140,103 @@ export class IntakeUserComponent implements OnInit {
   }
 
   async saveStoryToGallery() {
+    this.storyShareSuccess.set('Preparando descarga...');
     const blob = await this.generateStoryBlob();
-    if (!blob) return;
-
-    const filename = `awakin-comida-${Date.now()}.png`;
-    const file = new File([blob], filename, { type: 'image/png' });
-
-    if (navigator.canShare && navigator.canShare({ files: [file] })) {
-      try {
-        await navigator.share({
-          files: [file],
-          title: 'Mi Comida Awakin',
-          text: `${this.storyData()?.dishName} en Awakin Protocol`,
-        });
-        this.storyShareSuccess.set('¡Listo para guardar en tu galería!');
-        setTimeout(() => this.storyShareSuccess.set(null), 3500);
-        return;
-      } catch (e: any) {
-        if (e.name === 'AbortError') return;
-      }
+    if (!blob) {
+      this.storyShareSuccess.set('Error al generar la imagen.');
+      setTimeout(() => this.storyShareSuccess.set(null), 3500);
+      return;
     }
 
+    const filename = `awakin-comida-${Date.now()}.png`;
+
+    // 1. Descarga directa en navegador (100% confiable en PC, Android y navegadores)
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
     a.download = filename;
     document.body.appendChild(a);
     a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+    setTimeout(() => {
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }, 1000);
+
+    // 2. Si es dispositivo móvil y soporta compartir archivos, ofrecerlo para guardar en carrete
+    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+    const file = new File([blob], filename, { type: 'image/png' });
+    if (isMobile && navigator.canShare && navigator.canShare({ files: [file] })) {
+      try {
+        await navigator.share({
+          files: [file],
+          title: 'Mi Comida Awakin',
+        });
+      } catch (e: any) {
+        if (e.name === 'AbortError') return;
+      }
+    }
 
     this.storyShareSuccess.set('¡Imagen descargada con éxito!');
     setTimeout(() => this.storyShareSuccess.set(null), 3500);
   }
 
-  async shareStoryToAwakinFeed() {
-    const athleteId = this.currentAthleteId();
-    if (!athleteId || this.isSharingFeed()) return;
-
-    this.isSharingFeed.set(true);
+  async openSocialFeedModal() {
+    this.isGeneratingStory.set(true);
+    this.storyShareSuccess.set('Preparando publicación...');
     try {
       const blob = await this.generateStoryBlob();
       if (!blob) {
-        this.isSharingFeed.set(false);
+        this.storyShareSuccess.set('Error preparando la imagen.');
+        setTimeout(() => this.storyShareSuccess.set(null), 3500);
         return;
       }
 
+      this.feedPostPreviewBlob.set(blob);
+      if (this.feedPostPreviewUrl()) {
+        URL.revokeObjectURL(this.feedPostPreviewUrl()!);
+      }
+      this.feedPostPreviewUrl.set(URL.createObjectURL(blob));
+
+      const data = this.storyData();
+      const defaultCaption = `🍽️ ${data?.mealTitle || 'Comida'}: ${data?.dishName || 'Platillo'} (${data?.kcal || 0} kcal · ${data?.protein || 0}P ${data?.carbs || 0}C ${data?.fat || 0}G)`;
+      this.feedPostCaption.set(defaultCaption);
+      this.storyShareSuccess.set(null);
+      this.isShareFeedModalOpen.set(true);
+    } finally {
+      this.isGeneratingStory.set(false);
+    }
+  }
+
+  async confirmPublishFeed() {
+    const athleteId = this.currentAthleteId();
+    const blob = this.feedPostPreviewBlob();
+    if (!athleteId || !blob || this.isPublishingFeed()) return;
+
+    this.isPublishingFeed.set(true);
+    try {
       const filename = `story_feed_${Date.now()}.png`;
       const uploadRes = await this.athleteService.uploadMedia(blob, 'feed_posts', filename).toPromise();
       const mediaUrl = uploadRes?.public_url || this.storyData()?.photoUrl || '';
 
-      const data = this.storyData();
-      const caption = `🍽️ ${data?.mealTitle}: ${data?.dishName} (${data?.kcal} kcal · ${data?.protein}P ${data?.carbs}C ${data?.fat}G)`;
+      const caption = this.feedPostCaption()?.trim() || '';
       await this.athleteService
         .createPost(athleteId, {
           media_url: mediaUrl,
           caption: caption,
           module_source: 'intake',
-          related_intake_dish_id: data?.dishId || undefined,
+          related_intake_dish_id: this.storyData()?.dishId || undefined,
         })
         .toPromise();
 
-      this.storyShareSuccess.set('¡Publicado en tu Feed de Awakin!');
+      this.isShareFeedModalOpen.set(false);
+      this.storyShareSuccess.set('¡Publicado con éxito en tu Feed de Awakin!');
       setTimeout(() => this.storyShareSuccess.set(null), 4000);
     } catch (err) {
       console.error('Error publicando en feed de Awakin:', err);
       this.storyShareSuccess.set('Error al publicar en el feed.');
       setTimeout(() => this.storyShareSuccess.set(null), 4000);
     } finally {
-      this.isSharingFeed.set(false);
+      this.isPublishingFeed.set(false);
     }
   }
 

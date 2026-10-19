@@ -93,15 +93,15 @@
             ? '!text-awakin-sun !tracking-widest !text-xs !font-bold !bg-awakin-sun/10 !rounded-full hover:!bg-awakin-sun/20 transition-colors !border-none !shadow-none !ring-0 !px-3 !py-1.5 shrink-0'
             : '!text-stone-400 !tracking-widest !text-xs !font-bold !bg-stone-100 !rounded-full opacity-60 !border-none !shadow-none !ring-0 !px-3 !py-1.5 shrink-0 cursor-not-allowed'">
           <div class="flex items-center justify-center">
-            <i [class]="canLogForSelectedDate() ? 'pi pi-plus' : 'pi pi-lock'" class="text-[10px] mr-1"></i> REGISTRAR COMIDA
+            <i [class]="canLogForSelectedDate() ? 'pi pi-plus' : 'pi pi-lock'" class="text-[10px] mr-1"></i> REGISTRAR
+            COMIDA
           </div>
         </p-button>
       </div>
 
       <!-- Aviso cuando la fecha seleccionada está fuera de plazo (futuro o más de 7 días atrás) -->
       @if (!canLogForSelectedDate()) {
-      <div class="mb-4 px-4 py-3 rounded-2xl border flex items-center gap-3 transition-all"
-        [ngClass]="dateLogStatus().reason === 'future'
+      <div class="mb-4 px-4 py-3 rounded-2xl border flex items-center gap-3 transition-all" [ngClass]="dateLogStatus().reason === 'future'
           ? 'bg-amber-50/80 border-amber-200/80 text-amber-900'
           : 'bg-stone-100/90 border-stone-200 text-stone-700'">
         <div class="w-8 h-8 rounded-xl flex items-center justify-center shrink-0 shadow-xs"
@@ -207,8 +207,7 @@
                 </button>
                 }
 
-                <button type="button" (click)="handleFoodCheckClick(food)"
-                  [disabled]="!canLogForSelectedDate()"
+                <button type="button" (click)="handleFoodCheckClick(food)" [disabled]="!canLogForSelectedDate()"
                   class="w-6 h-6 rounded-full flex items-center justify-center transition-all focus:outline-none"
                   [ngClass]="[
                     canLogForSelectedDate() ? 'cursor-pointer' : 'cursor-not-allowed opacity-40',
@@ -232,18 +231,16 @@
           }
 
           <!-- Botón ancho con '+' para registrar alimento a este tipo de comida -->
-          <button type="button" (click)="openRegisterModal(mealType)"
-            [disabled]="!canLogForSelectedDate()"
-            class="w-full py-2.5 rounded-2xl transition-all flex items-center justify-center group shadow-xs"
-            [ngClass]="canLogForSelectedDate()
+          <button type="button" (click)="openRegisterModal(mealType)" [disabled]="!canLogForSelectedDate()"
+            class="w-full py-2.5 rounded-2xl transition-all flex items-center justify-center group shadow-xs" [ngClass]="canLogForSelectedDate()
               ? 'bg-stone-100 hover:bg-stone-200/80 active:scale-[0.99] text-stone-500 hover:text-stone-800 cursor-pointer'
               : 'bg-stone-100/50 text-stone-300 border border-stone-100 cursor-not-allowed opacity-50'"
             [title]="!canLogForSelectedDate() ? dateLogStatus().message : ('Añadir alimento a ' + def.title)">
             @if (canLogForSelectedDate()) {
-              <i class="pi pi-plus text-xs group-hover:scale-125 transition-transform duration-200"></i>
+            <i class="pi pi-plus text-xs group-hover:scale-125 transition-transform duration-200"></i>
             } @else {
-              <i class="pi pi-lock text-[11px] text-stone-400 mr-1.5"></i>
-              <span class="text-[10px] font-bold uppercase tracking-wider text-stone-400">Bloqueado</span>
+            <i class="pi pi-lock text-[11px] text-stone-400 mr-1.5"></i>
+            <span class="text-[10px] font-bold uppercase tracking-wider text-stone-400">Bloqueado</span>
             }
           </button>
         </div>
@@ -257,24 +254,117 @@
     [dismissableMask]="true" header="Registrar Comida"
     styleClass="w-[92vw] max-w-lg bg-white rounded-3xl overflow-hidden shadow-2xl p-0">
     <div class="p-5 sm:p-6 space-y-4 text-stone-800">
+      <!-- Platillo del plan seleccionado (Sin emojis aleatorios, con macros y kcals) -->
       @if (targetFoodItem(); as target) {
-      <div class="flex items-center gap-3 p-3 bg-stone-50 border border-stone-200 rounded-2xl">
-        <div
-          class="w-10 h-10 rounded-xl bg-white border border-stone-200 flex items-center justify-center text-lg shadow-xs shrink-0">
-          {{ target.emoji }}
+      <div
+        class="p-3.5 bg-gradient-to-br from-stone-50 to-stone-100/70 border border-stone-200 rounded-2xl space-y-2.5 shadow-xs">
+        <div class="flex items-start justify-between gap-3">
+          <div class="flex items-center gap-3 min-w-0">
+            @if (target.coverImageUrl) {
+            <img [src]="target.coverImageUrl" [alt]="target.name"
+              class="w-12 h-12 rounded-xl object-cover border border-stone-200/80 shrink-0" />
+            } @else {
+            <div
+              class="w-12 h-12 rounded-xl bg-awakin-sun/10 border border-awakin-sun/20 flex items-center justify-center text-awakin-sun shrink-0">
+              <i class="pi pi-bookmark text-lg"></i>
+            </div>
+            }
+            <div class="min-w-0 flex-1">
+              <div class="flex items-center gap-1.5 flex-wrap">
+                <span
+                  class="text-[9px] font-black text-awakin-sun bg-awakin-sun/10 px-2 py-0.5 rounded uppercase tracking-wider">
+                  {{ mealDefinitions[target.mealType].title }}
+                </span>
+                <span class="text-[11px] text-stone-500 font-semibold">
+                  {{ formatQuantity(target.portion, target.unit) }}
+                </span>
+              </div>
+              <h4 class="font-extrabold text-xs sm:text-sm text-stone-900 truncate mt-0.5">
+                {{ target.name }}
+              </h4>
+            </div>
+          </div>
+          <div class="text-right shrink-0">
+            <span
+              class="inline-block text-xs font-black text-stone-900 bg-white border border-stone-200 px-2.5 py-1 rounded-xl shadow-xs tabular-nums">
+              {{ target.kcal }} <span class="text-[10px] font-bold text-stone-500">kcal</span>
+            </span>
+          </div>
         </div>
-        <div class="min-w-0 flex-1">
-          <h4 class="font-bold text-xs sm:text-sm text-stone-800 truncate">
-            {{ target.name }}
-          </h4>
-          <p class="text-[11px] text-stone-400 font-medium">
-            {{ target.portion }} {{ target.unit }} · {{ target.kcal }} kcal
-          </p>
+
+        <!-- Macros detallados del platillo -->
+        <div class="grid grid-cols-3 gap-2 pt-2 border-t border-stone-200/60 text-center">
+          <div class="bg-white border border-stone-200/70 rounded-xl py-1 px-2 shadow-2xs">
+            <span class="text-[9px] font-bold text-stone-400 block uppercase tracking-wider">Proteínas</span>
+            <span class="text-xs font-black text-stone-800 tabular-nums">{{ target.protein }}g</span>
+          </div>
+          <div class="bg-white border border-stone-200/70 rounded-xl py-1 px-2 shadow-2xs">
+            <span class="text-[9px] font-bold text-stone-400 block uppercase tracking-wider">Carbos</span>
+            <span class="text-xs font-black text-stone-800 tabular-nums">{{ target.carbs }}g</span>
+          </div>
+          <div class="bg-white border border-stone-200/70 rounded-xl py-1 px-2 shadow-2xs">
+            <span class="text-[9px] font-bold text-stone-400 block uppercase tracking-wider">Grasas</span>
+            <span class="text-xs font-black text-stone-800 tabular-nums">{{ target.fat }}g</span>
+          </div>
         </div>
-        <span
-          class="text-[10px] font-bold text-awakin-sun bg-awakin-sun/10 border border-awakin-sun/20 px-2 py-0.5 rounded-full shrink-0">
-          Sugerencia
-        </span>
+      </div>
+      }
+
+      <!-- Selector de Platillo del Menú Asignado (Encima de la foto cuando la evaluación manual es 100% en el plan) -->
+      @if (!targetFoodItem() && selectedAdherence() === '100') {
+      <div class="p-3 bg-stone-50 border border-awakin-sun/40 rounded-2xl space-y-2.5 animate-fadeIn shadow-xs">
+        <div class="flex items-center justify-between">
+          <label class="block text-[10px] font-bold uppercase tracking-wider text-awakin-sun flex items-center gap-1.5">
+            <i class="pi pi-check-square text-xs"></i>
+            Platillo del Menú a Registrar <span class="text-awakin-sun">*</span>
+          </label>
+          <span class="text-[10px] font-semibold text-stone-500">
+            {{ availableDishesForSelectedDay().length }} disponibles hoy
+          </span>
+        </div>
+
+        @if (availableDishesForSelectedDay().length > 0) {
+        <div class="grid grid-cols-1 gap-2 max-h-48 overflow-y-auto pr-1">
+          @for (dish of availableDishesForSelectedDay(); track dish.id) {
+          <div (click)="selectDishFor100(dish)"
+            class="flex items-center gap-2.5 p-2.5 rounded-xl border cursor-pointer transition-all" [ngClass]="selectedDishFor100()?.id === dish.id
+              ? 'bg-awakin-sun/10 border-awakin-sun shadow-xs ring-1 ring-awakin-sun'
+              : 'bg-white border-stone-200 hover:border-stone-300'">
+            <div
+              class="w-10 h-10 rounded-xl bg-stone-100 border border-stone-200 overflow-hidden flex items-center justify-center shrink-0">
+              @if (dish.coverImageUrl) {
+              <img [src]="dish.coverImageUrl" [alt]="dish.name" class="w-full h-full object-cover" />
+              } @else {
+              <i class="pi pi-bookmark text-stone-400 text-sm"></i>
+              }
+            </div>
+            <div class="min-w-0 flex-1">
+              <div class="flex items-center justify-between gap-1">
+                <h5 class="text-xs font-bold text-stone-800 truncate">{{ dish.name }}</h5>
+                <span class="text-[9px] font-bold px-1.5 py-0.5 rounded-md uppercase" [ngClass]="selectedDishFor100()?.id === dish.id
+                    ? 'bg-awakin-sun text-white'
+                    : 'bg-stone-100 text-stone-600'">
+                  {{ mealDefinitions[dish.mealType].title }}
+                </span>
+              </div>
+              <p class="text-[10px] text-stone-500 font-medium mt-0.5">
+                {{ formatQuantity(dish.portion, dish.unit) }} · <span class="font-bold text-stone-700">{{ dish.kcal }}
+                  kcal</span> · {{ dish.protein }}P · {{ dish.carbs }}C · {{ dish.fat }}G
+              </p>
+            </div>
+            <div class="shrink-0">
+              <i class="pi" [ngClass]="selectedDishFor100()?.id === dish.id
+                  ? 'pi-check-circle text-awakin-sun text-base'
+                  : 'pi-circle text-stone-300 text-base'"></i>
+            </div>
+          </div>
+          }
+        </div>
+        } @else {
+        <p class="text-[11px] text-stone-500 italic py-1">
+          No hay platillos en el menú asignado para esta fecha. Puedes registrar tu comida libremente.
+        </p>
+        }
       </div>
       }
 
@@ -355,10 +445,27 @@
             Evaluación de Adherencia <span class="text-awakin-sun">*</span>
           </label>
           <span class="text-[10px] font-bold text-awakin-sun bg-awakin-sun/10 px-2 py-0.5 rounded-full">
-            Puntos: 10 / 5 / 2
+            {{ targetFoodItem() ? '10 pts' : 'Puntos: 10 / 5 / 2' }}
           </span>
         </div>
         <div class="space-y-2">
+          @if (targetFoodItem()) {
+          <!-- Solo 100% en el plan y disabled cuando viene de un platillo del plan -->
+          <div
+            class="flex items-center gap-3 p-3 bg-awakin-sun/5 border border-awakin-sun/50 rounded-2xl opacity-90 cursor-not-allowed">
+            <p-radioButton name="adherenceGroup" value="100" [ngModel]="'100'" [disabled]="true"></p-radioButton>
+            <div class="flex-1 min-w-0">
+              <div class="flex items-center justify-between">
+                <span class="text-xs sm:text-sm font-bold text-stone-800">Sí, 100% en el plan</span>
+                <span class="text-[10px] font-black text-awakin-sun bg-awakin-sun/10 px-2 py-0.5 rounded-md">
+                  +10 pts
+                </span>
+              </div>
+              <p class="text-[11px] text-stone-400 mt-0.5">Ingredientes y porciones exactas del plan asignado</p>
+            </div>
+          </div>
+          } @else {
+          <!-- Selección manual de adherencia cuando se registra libremente -->
           @for (adh of adherenceOptions; track adh.id) {
           <label
             class="flex items-center gap-3 p-3 bg-stone-50 hover:bg-stone-100/70 border rounded-2xl cursor-pointer transition-all"
@@ -376,68 +483,9 @@
             </div>
           </label>
           }
-        </div>
-      </div>
-
-      <!-- Selector de Platillo del Menú Asignado (Aparece cuando se elige 'Sí, 100% en el plan') -->
-      @if (selectedAdherence() === '100') {
-      <div class="p-3 bg-stone-50 border border-awakin-sun/40 rounded-2xl space-y-2 animate-fadeIn">
-        <div class="flex items-center justify-between">
-          <label class="block text-[10px] font-bold uppercase tracking-wider text-awakin-sun flex items-center gap-1.5">
-            <i class="pi pi-check-square text-xs"></i>
-            Platillo del Menú a Registrar <span class="text-awakin-sun">*</span>
-          </label>
-          <span class="text-[10px] font-semibold text-stone-500">
-            {{ availableDishesForSelectedDay().length }} disponibles hoy
-          </span>
-        </div>
-
-        @if (availableDishesForSelectedDay().length > 0) {
-        <div class="grid grid-cols-1 gap-2 max-h-48 overflow-y-auto pr-1">
-          @for (dish of availableDishesForSelectedDay(); track dish.id) {
-          <div (click)="selectDishFor100(dish)"
-            class="flex items-center gap-2.5 p-2.5 rounded-xl border cursor-pointer transition-all"
-            [ngClass]="(selectedDishFor100()?.id === dish.id || (!selectedDishFor100() && targetFoodItem()?.id === dish.id))
-              ? 'bg-awakin-sun/10 border-awakin-sun shadow-xs ring-1 ring-awakin-sun'
-              : 'bg-white border-stone-200 hover:border-stone-300'">
-            <div
-              class="w-9 h-9 rounded-lg bg-stone-100 border border-stone-200 overflow-hidden flex items-center justify-center text-lg shrink-0">
-              @if (dish.coverImageUrl) {
-              <img [src]="dish.coverImageUrl" [alt]="dish.name" class="w-full h-full object-cover" />
-              } @else {
-              <span>{{ dish.emoji }}</span>
-              }
-            </div>
-            <div class="min-w-0 flex-1">
-              <div class="flex items-center justify-between gap-1">
-                <h5 class="text-xs font-bold text-stone-800 truncate">{{ dish.name }}</h5>
-                <span class="text-[9px] font-bold px-1.5 py-0.5 rounded-md uppercase"
-                  [ngClass]="(selectedDishFor100()?.id === dish.id || (!selectedDishFor100() && targetFoodItem()?.id === dish.id))
-                    ? 'bg-awakin-sun text-white'
-                    : 'bg-stone-100 text-stone-600'">
-                  {{ mealDefinitions[dish.mealType].title }}
-                </span>
-              </div>
-              <p class="text-[10px] text-stone-500 font-medium mt-0.5">
-                {{ formatQuantity(dish.portion, dish.unit) }} · <span class="font-bold text-stone-700">{{ dish.kcal }} kcal</span> · {{ dish.protein }}P {{ dish.carbs }}C {{ dish.fat }}G
-              </p>
-            </div>
-            <div class="shrink-0">
-              <i class="pi"
-                [ngClass]="(selectedDishFor100()?.id === dish.id || (!selectedDishFor100() && targetFoodItem()?.id === dish.id))
-                  ? 'pi-check-circle text-awakin-sun text-base'
-                  : 'pi-circle text-stone-300 text-base'"></i>
-            </div>
-          </div>
           }
         </div>
-        } @else {
-        <p class="text-[11px] text-stone-500 italic py-1">
-          No hay platillos en el menú asignado para esta fecha. Puedes registrar tu comida libremente.
-        </p>
-        }
       </div>
-      }
 
       <!-- 4. Notas o Ingredientes (Opcional con textarea estándar) -->
       <div>
@@ -451,7 +499,8 @@
 
       <!-- Mensaje de error si falla la subida o el registro -->
       @if (registerError()) {
-      <div class="p-3 bg-red-50 border border-red-200/80 rounded-2xl flex items-start gap-2.5 text-red-700 animate-fadeIn">
+      <div
+        class="p-3 bg-red-50 border border-red-200/80 rounded-2xl flex items-start gap-2.5 text-red-700 animate-fadeIn">
         <i class="pi pi-exclamation-triangle text-base mt-0.5 shrink-0 text-red-500"></i>
         <div class="flex-1 min-w-0">
           <p class="text-xs font-bold text-red-900">Error al registrar la comida</p>
@@ -459,7 +508,8 @@
             {{ registerError() }}
           </p>
         </div>
-        <button type="button" (click)="registerError.set(null)" class="text-red-400 hover:text-red-600 cursor-pointer p-1">
+        <button type="button" (click)="registerError.set(null)"
+          class="text-red-400 hover:text-red-600 cursor-pointer p-1">
           <i class="pi pi-times text-xs"></i>
         </button>
       </div>
@@ -489,17 +539,17 @@
   <!-- ========================================================= -->
   <p-dialog [(visible)]="isStoryModalOpen" [modal]="true" [draggable]="false" [resizable]="false"
     [dismissableMask]="true" [showHeader]="false"
-    styleClass="w-[96vw] max-w-md bg-stone-950/95 rounded-3xl overflow-hidden shadow-2xl p-0 border border-stone-800">
-    <div class="flex flex-col h-full max-h-[92vh] text-white p-3 sm:p-4 justify-between select-none">
-      
+    styleClass="w-[96vw] max-w-md bg-white rounded-3xl overflow-hidden shadow-2xl p-0 border border-stone-200">
+    <div class="flex flex-col h-full max-h-[92vh] bg-white text-stone-800 p-3 sm:p-4 justify-between select-none">
+
       <!-- 1. Header con botón cerrar -->
-      <div class="flex items-center justify-between pb-2 border-b border-stone-800/80">
+      <div class="flex items-center justify-between pb-2 border-b border-stone-200">
         <div class="flex items-center gap-2">
-          <span class="w-2 h-2 rounded-full bg-awakin-sun animate-pulse"></span>
-          <span class="text-xs font-black uppercase tracking-wider text-stone-300">Historia de Comida</span>
+          <span class="w-2.5 h-2.5 rounded-full bg-awakin-sun animate-pulse"></span>
+          <span class="text-xs font-black uppercase tracking-wider text-stone-700">Historia de Comida</span>
         </div>
         <button type="button" (click)="isStoryModalOpen.set(false)"
-          class="w-8 h-8 rounded-full bg-stone-800/80 hover:bg-stone-700 text-stone-300 hover:text-white flex items-center justify-center transition-all cursor-pointer">
+          class="w-8 h-8 rounded-full bg-stone-100 hover:bg-stone-200 text-stone-500 hover:text-stone-800 flex items-center justify-center transition-all cursor-pointer">
           <i class="pi pi-times text-xs"></i>
         </button>
       </div>
@@ -508,7 +558,7 @@
       <div class="flex-1 flex items-center justify-center my-2 overflow-hidden">
         <div id="storyCanvas"
           class="relative w-full max-w-[320px] aspect-[9/16] rounded-3xl overflow-hidden shadow-2xl bg-stone-900 border border-stone-800/80 flex flex-col justify-center items-center">
-          
+
           <!-- Imagen de fondo del plato registrado -->
           @if (storyData()?.photoUrl) {
           <img [src]="storyData()?.photoUrl" alt="Foto plato" crossOrigin="anonymous"
@@ -518,108 +568,146 @@
           }
 
           <!-- Viñeta degradada sutil para contraste -->
-          <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/40 pointer-events-none"></div>
-
-          <!-- Marca de agua Awakin superior -->
-          <div class="absolute top-4 left-4 z-10 flex items-center gap-1.5 bg-black/40 backdrop-blur-md px-2.5 py-1 rounded-full border border-white/10 pointer-events-none">
-            <span class="w-1.5 h-1.5 rounded-full bg-awakin-sun"></span>
-            <span class="text-[9px] font-black uppercase tracking-widest text-white/90">AWAKIN PROTOCOL</span>
+          <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/40 pointer-events-none">
           </div>
 
-          <!-- Card Flotante Interactivo (Draggable con el dedo y escalable) -->
+          <!-- Marca de agua Awakin superior con Logo Oficial -->
+          <div
+            class="absolute top-4 left-4 z-10 flex items-center gap-2 bg-black/25 backdrop-blur-md px-2.5 py-1.5 rounded-full border border-white/15 pointer-events-none shadow-md">
+            <img src="/icons/intake-active.png" alt="Awakin Intake" class="w-6 h-6 object-contain shrink-0" />
+
+          </div>
+
+          <!-- Card Flotante Interactivo: Contenedor Externo Drag (Posicionamiento) -->
           <div cdkDrag [cdkDragBoundary]="'#storyCanvas'"
-            class="touch-none select-none z-20 cursor-grab active:cursor-grabbing max-w-[92%]"
-            [style.transform]="'scale(' + cardScale() + ')'"
-            style="transform-origin: center center;">
-            <div
-              class="bg-stone-950/85 backdrop-blur-md text-white rounded-2xl p-4 shadow-[0_12px_40px_rgba(0,0,0,0.7)] border border-white/15 w-68 sm:w-72">
-              
-              <!-- Cabecera del Card: Fecha, Tipo Comida y Logo Awakin -->
-              <div class="flex items-start justify-between gap-2">
-                <div>
-                  <p class="text-[10px] text-stone-300 font-medium capitalize">{{ storyData()?.dateFormatted }}</p>
-                  <h3 class="text-base font-black text-white leading-tight mt-0.5 tracking-tight">{{ storyData()?.mealTitle }}</h3>
-                </div>
+            class="touch-none select-none z-20 cursor-grab active:cursor-grabbing max-w-[94%]">
 
-                <!-- Logo y branding de Awakin -->
-                <div class="flex items-center gap-1.5 bg-white/10 border border-white/15 px-2 py-1 rounded-xl shrink-0">
-                  <div class="w-4 h-4 rounded-full bg-awakin-sun flex items-center justify-center text-[9px] font-black text-stone-950">
-                    A
+            <!-- Contenedor Interno Escala (Ajuste de tamaño sin interferir con drag) -->
+            <div [style.transform]="'scale(' + cardScale() + ')'"
+              style="transform-origin: center center; transition: transform 0.12s ease-out;">
+              <div
+                class="bg-stone-950/85 backdrop-blur-md text-white rounded-2xl p-3.5 sm:p-4 shadow-[0_12px_40px_rgba(0,0,0,0.7)] border border-white/15 w-68 sm:w-72 h-auto">
+
+                <!-- Cabecera del Card: Fecha, Tipo Comida y Logo Awakin -->
+                <div class="flex items-start justify-between gap-2">
+                  <div>
+                    <p class="text-[10px] text-stone-300 font-medium capitalize">{{ storyData()?.dateFormatted }}</p>
+                    <h3 class="text-base font-black text-white leading-tight mt-0.5 tracking-tight">{{
+                      storyData()?.mealTitle }}</h3>
                   </div>
-                  <div class="flex flex-col">
-                    <span class="text-[9px] font-black tracking-wider text-white uppercase leading-none">AWAKIN</span>
-                    <span class="text-[7px] font-black tracking-widest text-amber-300 uppercase leading-none mt-0.5">PROTOCOL</span>
+
+                  <!-- Logo y branding de Awakin -->
+                  <div
+                    class="flex items-center gap-1.5 bg-white/10 border border-white/15 px-2 py-1 rounded-xl shrink-0">
+                    <img src="/icons/intake-active.png" alt="Awakin Intake" class="w-6 h-6 object-contain shrink-0" />
+                    @if (athleteKin()?.team_logo_url) {
+                    <img [src]="kinLogoDataUrl() || athleteKin()?.team_logo_url"
+                      [alt]="athleteKin()?.team_name || 'Tribu'" crossOrigin="anonymous"
+                      class="w-6 h-6 rounded-full object-cover border shadow-2xs shrink-0" />
+                    } @else {
+                    <div
+                      class="w-4 h-4 rounded-full bg-awakin-sun/20 border border-awakin-sun/50 flex items-center justify-center text-[8px] font-black text-awakin-sun shrink-0">
+                      {{ athleteKin()?.team_name?.charAt(0) || 'K' }}
+                    </div>
+                    }
+
                   </div>
                 </div>
-              </div>
 
-              <!-- Macros y Calorías -->
-              <div class="flex items-center justify-between text-xs font-bold py-2 my-2 border-y border-white/10 text-stone-300">
-                <span class="text-sm font-black text-white tabular-nums">{{ storyData()?.kcal }} kcal</span>
-                <span class="text-stone-600">|</span>
-                <span class="tabular-nums"><span class="text-white">{{ storyData()?.protein }}</span>P</span>
-                <span class="text-stone-600">|</span>
-                <span class="tabular-nums"><span class="text-white">{{ storyData()?.carbs }}</span>C</span>
-                <span class="text-stone-600">|</span>
-                <span class="tabular-nums"><span class="text-white">{{ storyData()?.fat }}</span>G</span>
-              </div>
-
-              <!-- Fila del Platillo -->
-              <div class="flex items-center gap-2.5">
-                <div class="w-8 h-8 rounded-xl bg-white/10 border border-white/15 flex items-center justify-center text-base shrink-0 overflow-hidden shadow-xs">
-                  {{ storyData()?.emoji }}
+                <!-- Macros y Calorías -->
+                <div
+                  class="flex items-center justify-between text-xs font-bold py-1.5 my-1.5 border-y border-white/10 text-stone-300">
+                  <span class="text-sm font-black text-white tabular-nums">{{ storyData()?.kcal }} kcal</span>
+                  <span class="text-stone-600">|</span>
+                  <span class="tabular-nums"><span class="text-white">{{ storyData()?.protein }}</span>P</span>
+                  <span class="text-stone-600">|</span>
+                  <span class="tabular-nums"><span class="text-white">{{ storyData()?.carbs }}</span>C</span>
+                  <span class="text-stone-600">|</span>
+                  <span class="tabular-nums"><span class="text-white">{{ storyData()?.fat }}</span>G</span>
                 </div>
-                <div class="min-w-0 flex-1">
-                  <h4 class="font-bold text-xs text-white truncate">{{ storyData()?.dishName }}</h4>
+
+                <!-- Fila del Platillo (Sin iconos aleatorios) -->
+                <div class="pt-0.5">
+                  <h4 class="font-extrabold text-xs sm:text-sm text-white truncate leading-tight">{{
+                    storyData()?.dishName }}</h4>
                   <p class="text-[10px] text-stone-400 font-medium mt-0.5">
                     {{ storyData()?.portionText }} · {{ storyData()?.kcal }} kcal
                   </p>
                 </div>
-              </div>
 
-              <!-- Card Extendido Opcional: Ingredientes y Cantidades -->
-              @if (showIngredientsInCard() && storyData()?.ingredients && storyData()!.ingredients!.length > 0) {
-              <div class="mt-3 pt-2.5 border-t border-white/10 space-y-1.5 animate-fadeIn">
-                <p class="text-[9px] font-black uppercase tracking-wider text-awakin-sun flex items-center gap-1">
-                  <i class="pi pi-check text-[8px]"></i> Ingredientes de la receta
-                </p>
-                <div class="space-y-1 max-h-32 overflow-y-auto pr-1">
-                  @for (ing of storyData()?.ingredients; track $index) {
-                  <div class="flex items-center justify-between text-[10px] text-stone-300 bg-white/5 px-2 py-1 rounded-lg">
-                    <span class="truncate pr-2 font-medium">• {{ ing.nombre || ing.ingredient?.name || ing.name }}</span>
-                    <span class="font-black text-white shrink-0 tabular-nums">
-                      {{ ing.cantidad_g !== undefined ? (ing.cantidad_g + 'g') : (ing.quantity + ' ' + (ing.mode === 'portions' ? 'un' : (ing.ingredient?.unit || 'g'))) }}
-                    </span>
+                <!-- Card Extendido Opcional: Ingredientes y Cantidades (Sin scroll, adaptativo vertical) -->
+                @if (showIngredientsInCard() && storyData()?.ingredients && storyData()!.ingredients!.length > 0) {
+                <div class="mt-2.5 pt-2 border-t border-white/10 space-y-1.5 animate-fadeIn">
+                  <p class="text-[9px] font-black uppercase tracking-wider text-awakin-sun flex items-center gap-1">
+                    <i class="pi pi-check text-[8px]"></i> Ingredientes de la receta
+                  </p>
+                  <div class="space-y-1">
+                    @for (ing of storyData()?.ingredients; track $index) {
+                    <div
+                      class="flex items-center justify-between text-[10px] text-stone-300 bg-white/5 px-2 py-0.5 rounded-lg">
+                      <span class="truncate pr-2 font-medium">• {{ ing.nombre || ing.ingredient?.name || ing.name
+                        }}</span>
+                      <span class="font-black text-white shrink-0 tabular-nums">
+                        {{ ing.cantidad_display || (ing.cantidad_original ? formatQuantity(ing.cantidad_original,
+                        ing.unidad_original, ing.modo) : (ing.quantity ? formatQuantity(ing.quantity, ing.unit ||
+                        ing.ingredient?.unit, ing.mode) : (ing.cantidad_g !== undefined ? (ing.cantidad_g + ' g') :
+                        ''))) }}
+                      </span>
+                    </div>
+                    }
                   </div>
-                  }
                 </div>
+                }
               </div>
-              }
             </div>
           </div>
+
+          <!-- Marca de agua de Tribu/Kin (Esquina inferior derecha con transparencia premium) -->
+          @if (athleteKin()?.team_name) {
+          <div
+            class="absolute bottom-4 right-4 z-10 flex items-center gap-2 bg-black/45 backdrop-blur-md px-3 py-1.5 rounded-full border border-white/15 pointer-events-none shadow-lg opacity-90 transition-opacity">
+            @if (athleteKin()?.team_logo_url) {
+            <img [src]="kinLogoDataUrl() || athleteKin()?.team_logo_url" [alt]="athleteKin()?.team_name || 'Tribu'"
+              crossOrigin="anonymous" class="w-6 h-6 rounded-full object-cover border  shadow-2xs shrink-0" />
+            } @else {
+            <div
+              class="w-6 h-6 rounded-full bg-awakin-sun/20 border border-awakin-sun/50 flex items-center justify-center text-[8px] font-black text-awakin-sun shrink-0">
+              {{ athleteKin()?.team_name?.charAt(0) || 'K' }}
+            </div>
+            }
+            <div class="flex items-center gap-1 leading-none">
+              <span class="text-[9px] font-black uppercase tracking-wider text-white/95 max-w-[110px] truncate">
+                {{ athleteKin()?.team_name }}
+              </span>
+            </div>
+          </div>
+          }
         </div>
       </div>
 
       <!-- 3. Controles interactivos: Ingredientes extendidos y Tamaño del Card -->
-      <div class="flex items-center justify-between px-3 py-2 bg-stone-900/80 rounded-2xl border border-stone-800 text-xs my-1">
+      <div
+        class="flex items-center justify-between px-3 py-2 bg-stone-100/90 rounded-2xl border border-stone-200 text-xs my-1">
         <!-- Toggle Ingredientes -->
         <button type="button" (click)="showIngredientsInCard.set(!showIngredientsInCard())"
           class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl font-bold transition-all cursor-pointer"
-          [ngClass]="showIngredientsInCard() ? 'bg-awakin-sun text-stone-950 shadow-sm' : 'bg-stone-800 text-stone-300 hover:text-white'">
+          [ngClass]="showIngredientsInCard() ? 'bg-awakin-sun text-stone-950 shadow-xs' : 'bg-white text-stone-700 hover:bg-stone-50 border border-stone-200/80 shadow-2xs'">
           <i class="pi" [ngClass]="showIngredientsInCard() ? 'pi-eye-slash' : 'pi-list'"></i>
-          <span class="text-[11px]">{{ showIngredientsInCard() ? 'Ocultar ingredientes' : 'Mostrar ingredientes' }}</span>
+          <span class="text-[11px]">{{ showIngredientsInCard() ? 'Ocultar ingredientes' : 'Mostrar ingredientes'
+            }}</span>
         </button>
 
         <!-- Ajuste de Escala / Tamaño con +/- -->
         <div class="flex items-center gap-2">
-          <span class="text-[10px] text-stone-400 font-bold uppercase hidden sm:inline">Tamaño:</span>
+          <span class="text-[10px] text-stone-500 font-bold uppercase hidden sm:inline">Tamaño:</span>
           <button type="button" (click)="adjustCardScale(-0.1)" title="Reducir tamaño"
-            class="w-7 h-7 rounded-lg bg-stone-800 hover:bg-stone-700 text-white flex items-center justify-center font-bold text-xs cursor-pointer active:scale-95">
+            class="w-7 h-7 rounded-lg bg-white hover:bg-stone-50 text-stone-700 hover:text-stone-900 border border-stone-200/80 flex items-center justify-center font-bold text-xs cursor-pointer active:scale-95 shadow-2xs">
             -
           </button>
-          <span class="text-[11px] font-black text-white tabular-nums w-8 text-center">{{ Math.round(cardScale() * 100) }}%</span>
+          <span class="text-[11px] font-black text-stone-800 tabular-nums w-8 text-center">{{ Math.round(cardScale() * 100)
+            }}%</span>
           <button type="button" (click)="adjustCardScale(0.1)" title="Aumentar tamaño"
-            class="w-7 h-7 rounded-lg bg-stone-800 hover:bg-stone-700 text-white flex items-center justify-center font-bold text-xs cursor-pointer active:scale-95">
+            class="w-7 h-7 rounded-lg bg-white hover:bg-stone-50 text-stone-700 hover:text-stone-900 border border-stone-200/80 flex items-center justify-center font-bold text-xs cursor-pointer active:scale-95 shadow-2xs">
             +
           </button>
         </div>
@@ -627,70 +715,115 @@
 
       <!-- Mensaje de éxito al compartir o guardar -->
       @if (storyShareSuccess()) {
-      <div class="mx-auto mt-1 px-4 py-1.5 rounded-full bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 text-xs font-bold text-center animate-fadeIn flex items-center gap-2">
+      <div
+        class="mx-auto mt-1 px-4 py-1.5 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-bold text-center animate-fadeIn flex items-center gap-2">
         <i class="pi pi-check text-xs"></i>
         <span>{{ storyShareSuccess() }}</span>
       </div>
       }
 
       <!-- 4. Barra de Acciones Inferior (Guardar, Social, WhatsApp, Historias, Mensajes) -->
-      <div class="flex items-center justify-center gap-3 sm:gap-5 pt-3 pb-1 border-t border-stone-800/80">
+      <div class="flex items-center justify-center gap-3 sm:gap-5 pt-3 pb-1 border-t border-stone-200">
         <!-- Guardar (Galería iOS / Android / PC) -->
         <button type="button" (click)="saveStoryToGallery()" [disabled]="isGeneratingStory()"
           class="flex flex-col items-center gap-1.5 group cursor-pointer">
           <div
-            class="w-12 h-12 sm:w-13 sm:h-13 rounded-full bg-stone-800 hover:bg-stone-700 text-white flex items-center justify-center shadow-lg transition-transform active:scale-95 border border-stone-700">
+            class="w-12 h-12 sm:w-13 sm:h-13 rounded-full bg-stone-900 hover:bg-stone-800 text-white flex items-center justify-center shadow-md transition-transform active:scale-95">
             @if (isGeneratingStory()) {
             <i class="pi pi-spin pi-spinner text-base"></i>
             } @else {
             <i class="pi pi-download text-base sm:text-lg"></i>
             }
           </div>
-          <span class="text-[10px] font-bold text-stone-300 group-hover:text-white">Guardar</span>
+          <span class="text-[11px] font-bold text-stone-700 group-hover:text-stone-950 transition-colors">Guardar</span>
         </button>
 
-        <!-- Social (Feed Post en Awakin) -->
-        <button type="button" (click)="shareStoryToAwakinFeed()" [disabled]="isSharingFeed() || isGeneratingStory()"
+        <!-- Social (Feed Post en Awakin con Modal) -->
+        <button type="button" (click)="openSocialFeedModal()" [disabled]="isGeneratingStory()"
           class="flex flex-col items-center gap-1.5 group cursor-pointer">
           <div
-            class="w-12 h-12 sm:w-13 sm:h-13 rounded-full bg-amber-400 hover:bg-amber-300 text-stone-950 flex items-center justify-center shadow-lg transition-transform active:scale-95">
-            @if (isSharingFeed()) {
+            class="w-12 h-12 sm:w-13 sm:h-13 rounded-full bg-awakin-sun hover:bg-amber-400 text-stone-950 flex items-center justify-center shadow-md transition-transform active:scale-95">
+            @if (isGeneratingStory()) {
             <i class="pi pi-spin pi-spinner text-base"></i>
             } @else {
             <i class="pi pi-bolt text-lg sm:text-xl font-black"></i>
             }
           </div>
-          <span class="text-[10px] font-bold text-stone-300 group-hover:text-white">Social</span>
+          <span class="text-[11px] font-bold text-stone-700 group-hover:text-stone-950 transition-colors">Social</span>
         </button>
 
         <!-- WhatsApp -->
         <button type="button" (click)="shareStoryWhatsApp()" [disabled]="isGeneratingStory()"
           class="flex flex-col items-center gap-1.5 group cursor-pointer">
           <div
-            class="w-12 h-12 sm:w-13 sm:h-13 rounded-full bg-emerald-500 hover:bg-emerald-400 text-white flex items-center justify-center shadow-lg transition-transform active:scale-95">
+            class="w-12 h-12 sm:w-13 sm:h-13 rounded-full bg-emerald-500 hover:bg-emerald-600 text-white flex items-center justify-center shadow-md transition-transform active:scale-95">
             <i class="pi pi-whatsapp text-xl sm:text-2xl"></i>
           </div>
-          <span class="text-[10px] font-bold text-stone-300 group-hover:text-white">WhatsApp</span>
+          <span class="text-[11px] font-bold text-stone-700 group-hover:text-stone-950 transition-colors">WhatsApp</span>
         </button>
 
         <!-- Historias (Instagram Stories / Redes) -->
         <button type="button" (click)="shareStoryNative('historias')" [disabled]="isGeneratingStory()"
           class="flex flex-col items-center gap-1.5 group cursor-pointer">
           <div
-            class="w-12 h-12 sm:w-13 sm:h-13 rounded-full bg-gradient-to-tr from-amber-500 via-rose-500 to-purple-600 hover:opacity-90 text-white flex items-center justify-center shadow-lg transition-transform active:scale-95">
+            class="w-12 h-12 sm:w-13 sm:h-13 rounded-full bg-gradient-to-tr from-amber-500 via-rose-500 to-purple-600 hover:opacity-90 text-white flex items-center justify-center shadow-md transition-transform active:scale-95">
             <i class="pi pi-instagram text-lg sm:text-xl"></i>
           </div>
-          <span class="text-[10px] font-bold text-stone-300 group-hover:text-white">Historias</span>
+          <span class="text-[11px] font-bold text-stone-700 group-hover:text-stone-950 transition-colors">Historias</span>
         </button>
 
         <!-- Mensajes -->
         <button type="button" (click)="shareStoryNative('mensajes')" [disabled]="isGeneratingStory()"
           class="flex flex-col items-center gap-1.5 group cursor-pointer">
           <div
-            class="w-12 h-12 sm:w-13 sm:h-13 rounded-full bg-gradient-to-tr from-purple-600 to-indigo-600 hover:opacity-90 text-white flex items-center justify-center shadow-lg transition-transform active:scale-95">
+            class="w-12 h-12 sm:w-13 sm:h-13 rounded-full bg-gradient-to-tr from-purple-600 to-indigo-600 hover:opacity-90 text-white flex items-center justify-center shadow-md transition-transform active:scale-95">
             <i class="pi pi-send text-base sm:text-lg"></i>
           </div>
-          <span class="text-[10px] font-bold text-stone-300 group-hover:text-white">Mensajes</span>
+          <span class="text-[11px] font-bold text-stone-700 group-hover:text-stone-950 transition-colors">Mensajes</span>
+        </button>
+      </div>
+    </div>
+  </p-dialog>
+
+  <!-- MODAL PARA COMPARTIR EN AWAKIN FEED -->
+  <p-dialog [(visible)]="isShareFeedModalOpen" [modal]="true" [draggable]="false" [resizable]="false"
+    [dismissableMask]="true" header="Compartir en Feed de Awakin"
+    styleClass="w-[94vw] max-w-md bg-white rounded-3xl overflow-hidden shadow-2xl p-0 border border-stone-200">
+    <div class="p-5 space-y-4 text-stone-800">
+      <!-- Preview de la Imagen Generada -->
+      @if (feedPostPreviewUrl()) {
+      <div
+        class="relative w-full aspect-[9/16] max-h-64 rounded-2xl overflow-hidden border border-stone-200 bg-stone-900 mx-auto flex items-center justify-center shadow-inner">
+        <img [src]="feedPostPreviewUrl()" alt="Preview del post" class="h-full w-auto object-contain" />
+      </div>
+      }
+
+      <!-- Caption / Descripción editable -->
+      <div>
+        <label class="block text-[10px] font-bold uppercase tracking-wider text-stone-600 mb-1.5">
+          Descripción de la Publicación
+        </label>
+        <textarea rows="3" [ngModel]="feedPostCaption()" (ngModelChange)="feedPostCaption.set($event)"
+          placeholder="Escribe un mensaje o reflexión sobre tu plato..."
+          class="w-full bg-stone-50 border border-stone-300 rounded-xl p-3 text-xs sm:text-sm text-stone-900 placeholder-stone-400 focus:outline-none focus:border-awakin-sun focus:bg-white resize-none transition-all"></textarea>
+      </div>
+
+      <!-- Botones de Acción -->
+      <div class="flex items-center gap-2 pt-2 border-t border-stone-200">
+        <button type="button" (click)="isShareFeedModalOpen.set(false)"
+          class="flex-1 py-3 px-4 rounded-xl bg-stone-100 hover:bg-stone-200 text-stone-700 font-bold text-xs cursor-pointer transition-all">
+          Cancelar
+        </button>
+        <button type="button" (click)="confirmPublishFeed()" [disabled]="isPublishingFeed()"
+          class="flex-1 py-3 px-4 rounded-xl bg-awakin-sun hover:bg-amber-400 text-stone-950 font-black text-xs uppercase tracking-wider flex items-center justify-center gap-1.5 shadow-md cursor-pointer transition-all active:scale-[0.98]"
+          [class.opacity-60]="isPublishingFeed()">
+          @if (isPublishingFeed()) {
+          <i class="pi pi-spin pi-spinner text-xs"></i>
+          <span>Publicando...</span>
+          } @else {
+          <i class="pi pi-bolt text-xs"></i>
+          <span>Publicar en Feed</span>
+          }
         </button>
       </div>
     </div>
