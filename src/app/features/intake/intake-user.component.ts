@@ -1,4 +1,4 @@
-import { Component, computed, OnInit, signal, ViewChild } from '@angular/core';
+import { Component, computed, OnInit, signal, ViewChild, inject, effect } from '@angular/core';
 import { DragDropModule } from '@angular/cdk/drag-drop';
 import { CommonModule } from '@angular/common';
 import { ChartModule } from 'primeng/chart';
@@ -10,9 +10,12 @@ import {
 import { IntakeScaleWidgetComponent } from './components/intake-scale-widget/intake-scale-widget';
 import { ProtocolMatrixDrawer } from './components/protocol-matrix-drawer/protocol-matrix-drawer';
 import { ShoppingListDrawer } from './components/shopping-list-drawer/shopping-list-drawer';
-import { WeeklyTemplate } from './models/intake.models';
+import { WeeklyTemplate, MenuPlan, DayAssignment, ManualMenuSelection } from './models/intake.models';
 import { FormsModule } from '@angular/forms';
 import { IntakeTopBar } from '../../components/intake-top-bar/intake-top-bar';
+import { IntakeService } from '../../core/services/intake.service';
+import { AthleteService } from '../../core/services/athlete.service';
+import { AuthService } from '../../core/services/auth.service';
 
 // 1. Tipos de comida del protocolo
 export type MealType =
@@ -92,27 +95,6 @@ export interface FoodItem {
   isLogged: boolean;
 }
 
-// 1. INTERFACES ACTUALIZADAS (Arriba en tu archivo)
-export interface MenuPlan {
-  id: string;
-  name: string; // Ej: "Menú 1"
-  coverIcon: string; // Para darle identidad visual (Emoji o URL de img)
-  tags: string[]; // Ej: ['Alta Demanda', 'Low Carb']
-  kcal: number;
-  macros: string;
-}
-
-export interface DayAssignment {
-  dayName: string;
-  menuId: string | null;
-}
-
-export interface ManualMenuSelection {
-  menuId: string;
-  selected: boolean;
-  quantity: number;
-}
-
 @Component({
   selector: 'app-intake-user',
   standalone: true,
@@ -131,6 +113,20 @@ export interface ManualMenuSelection {
   templateUrl: './intake-user.component.html',
 })
 export class IntakeUserComponent implements OnInit {
+  public athleteService = inject(AthleteService);
+  public authService = inject(AuthService);
+  public intakeService = inject(IntakeService);
+
+  currentAthleteId = computed(() => {
+    return (
+      this.athleteService.currentAthlete()?.id ||
+      this.authService.currentSession()?.avatar?.id ||
+      localStorage.getItem('awakin_active_athlete_id')
+    );
+  });
+
+  activeTemplateId = signal<string | null>(null);
+
   streak = signal<number>(12);
   weekDays = signal<CalendarDay[]>([]); // Se llenará dinámicamente
   selectedDay = signal<CalendarDay | null>(null);
@@ -138,6 +134,21 @@ export class IntakeUserComponent implements OnInit {
   macroData: any;
   macroOptions: any;
   caloriesTarget = 2200;
+
+  constructor() {
+    effect(() => {
+      const ath = this.athleteService.currentAthlete();
+      const athleteId = ath?.id || this.currentAthleteId();
+      if (athleteId) {
+        this.intakeService.loadWeeklyPlansForAthlete(athleteId).subscribe((plans) => {
+          if (plans.length > 0 && (!this.activeTemplateId() || !plans.some((p) => p.id === this.activeTemplateId()))) {
+            this.activeTemplateId.set(plans[0].id);
+          }
+        });
+      }
+    });
+  }
+
 
   // Protocolo de Set Points (Normalmente vendrían de un ProfileService)
   minBasal = signal(700); // Punto A
@@ -248,67 +259,10 @@ export class IntakeUserComponent implements OnInit {
     this.isShoppingListModalOpen.set(false);
   }
 
-  // 1. Datos del Coach (Menús Agnósticos con Tags)
-  availableMenus = signal<MenuPlan[]>([
-    {
-      id: '1',
-      name: 'Menú 1',
-      coverIcon: '🥩',
-      tags: ['Alta Demanda', 'Día de Entrenamiento'],
-      kcal: 2800,
-      macros: '200P • 300C • 80G',
-    },
-    {
-      id: '2',
-      name: 'Menú 2',
-      coverIcon: '🥗',
-      tags: ['Descanso', 'Low Carb'],
-      kcal: 1900,
-      macros: '160P • 100C • 60G',
-    },
-    {
-      id: '3',
-      name: 'Menú 3',
-      coverIcon: '🥑',
-      tags: ['Mantenimiento', 'Equilibrado'],
-      kcal: 2400,
-      macros: '180P • 200C • 70G',
-    },
-  ]);
+  // Catálogo de Menús Diarios y Plantillas Semanales reactivas desde IntakeService
+  availableMenus = this.intakeService.availableMenus;
+  weeklyTemplates = this.intakeService.weeklyPlans;
 
-  // ==========================================
-  // ESTADO GLOBAL: PLANTILLAS SEMANALES (Protocolos)
-  // ==========================================
-  weeklyTemplates = signal<WeeklyTemplate[]>([
-    {
-      id: 'coach-t1',
-      name: 'Semana 1 y 2 (Adaptación)',
-      isFromCoach: true,
-      assignments: [
-        { dayName: 'Lunes', menuId: '1' },
-        { dayName: 'Martes', menuId: '1' },
-        { dayName: 'Miércoles', menuId: '3' },
-        { dayName: 'Jueves', menuId: '2' },
-        { dayName: 'Viernes', menuId: '1' },
-        { dayName: 'Sábado', menuId: '2' },
-        { dayName: 'Domingo', menuId: '2' },
-      ],
-    },
-    {
-      id: 'coach-t2',
-      name: 'Semana 3 y 4 (Sobrecarga)',
-      isFromCoach: true,
-      assignments: [
-        { dayName: 'Lunes', menuId: '1' },
-        { dayName: 'Martes', menuId: '3' },
-        { dayName: 'Miércoles', menuId: '1' },
-        { dayName: 'Jueves', menuId: '3' },
-        { dayName: 'Viernes', menuId: '1' },
-        { dayName: 'Sábado', menuId: '2' },
-        { dayName: 'Domingo', menuId: '3' },
-      ],
-    },
-  ]);
 
   openDayMenuIndex = signal<number | null>(null);
 
@@ -583,7 +537,23 @@ export class IntakeUserComponent implements OnInit {
   ngOnInit() {
     this.generateCurrentWeek(); // <--- Generar fechas reales al iniciar
     this.initChart();
+    this.intakeService.loadAvailableMenus().subscribe();
+
+    const athleteId = this.currentAthleteId();
+    if (athleteId) {
+      if (!this.athleteService.currentAthlete()) {
+        this.athleteService.loadAthleteProfile(athleteId);
+      }
+      this.intakeService.loadWeeklyPlansForAthlete(athleteId).subscribe((plans) => {
+        if (plans.length > 0 && !this.activeTemplateId()) {
+          this.activeTemplateId.set(plans[0].id);
+        }
+      });
+    } else {
+      this.athleteService.loadInitialAthletes();
+    }
   }
+
 
   // Lógica para generar la semana actual real
   generateCurrentWeek() {

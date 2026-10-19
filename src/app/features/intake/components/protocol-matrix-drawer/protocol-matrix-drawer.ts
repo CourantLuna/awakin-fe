@@ -1,10 +1,11 @@
-import { Component, input, model, signal, output, computed } from '@angular/core';
+import { Component, input, model, signal, output, computed, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { MenuPlan, WeeklyTemplate } from '../../models/intake.models';
+import { MenuPlan, WeeklyTemplate, DishItem, DishIngredient, LooseIngredientItem } from '../../models/intake.models';
 import { PrimeNGModule } from '../../../../shared/prime-ng.module';
 import { SelectModule } from 'primeng/select';
 import { PopoverModule } from 'primeng/popover';
+import { IntakeService } from '../../../../core/services/intake.service';
 
 @Component({
   selector: 'app-protocol-matrix-drawer',
@@ -14,51 +15,147 @@ import { PopoverModule } from 'primeng/popover';
   styleUrl: './protocol-matrix-drawer.css',
 })
 export class ProtocolMatrixDrawer {
-  isOpen = model<boolean>(false);
+  private intakeService = inject(IntakeService);
 
-  // NUEVO: Controla cuál es el plan que rige la semana actual
-  activeTemplateId = model<string | null>('coach-t1'); // Inicializado con el primer plan
+  isOpen = model<boolean>(false);
+  athleteId = input<string | null>(null);
+
+  // Controla cuál es el plan que rige la semana actual
+  activeTemplateId = model<string | null>(null);
 
   maxTemplates = input<number>(5);
 
-  weeklyTemplates = model<WeeklyTemplate[]>([
-    {
-      id: 'coach-t1',
-      name: 'Semana 1 y 2 (Adaptación)',
-      isFromCoach: true,
-      assignments: [
-        { dayName: 'Lun', menuId: '1' },
-        { dayName: 'Mar', menuId: '1' },
-        { dayName: 'Mié', menuId: '3' },
-        { dayName: 'Jue', menuId: '2' },
-        { dayName: 'Vie', menuId: '1' },
-        { dayName: 'Sáb', menuId: '2' },
-        { dayName: 'Dom', menuId: '2' },
-      ],
-    },
-    {
-      id: 'coach-t2',
-      name: 'Semana 3 y 4 (Sobrecarga)',
-      isFromCoach: true,
-      assignments: [
-        { dayName: 'Lun', menuId: '1' },
-        { dayName: 'Mar', menuId: '3' },
-        { dayName: 'Mié', menuId: '1' },
-        { dayName: 'Jue', menuId: '3' },
-        { dayName: 'Vie', menuId: '1' },
-        { dayName: 'Sáb', menuId: '2' },
-        { dayName: 'Dom', menuId: '3' },
-      ],
-    },
-  ]);
+  weeklyTemplates = model<WeeklyTemplate[]>([]);
 
   availableMenus = input<MenuPlan[]>([]);
   onOpenShoppingList = output<void>();
+  onSavePlan = output<WeeklyTemplate[]>();
 
+  isSaving = signal<boolean>(false);
   openDropdownKey = signal<string | null>(null);
   canAddMore = computed(() => this.weeklyTemplates().length < this.maxTemplates());
 
-  // NUEVO: Método para cambiar el plan maestro
+  // Navegación de días en el carrusel (índice 0 a 6 por plan)
+  activeDayIndex = signal<Record<string, number>>({});
+
+  readonly dayNamesFull = [
+    'Lunes',
+    'Martes',
+    'Miércoles',
+    'Jueves',
+    'Viernes',
+    'Sábado',
+    'Domingo',
+  ];
+
+  // Orden y títulos de tipos de comida
+  readonly mealOrder = [
+    'BREAKFAST',
+    'SNACK_AM',
+    'LUNCH',
+    'SNACK_PM',
+    'DINNER',
+    'SNACK_EXTRA',
+    'DRINK',
+  ];
+
+  readonly mealTitles: Record<string, string> = {
+    BREAKFAST: 'DESAYUNO',
+    SNACK_AM: 'MERIENDA AM',
+    LUNCH: 'ALMUERZO',
+    SNACK_PM: 'MERIENDA PM',
+    DINNER: 'CENA',
+    SNACK_EXTRA: 'MERIENDA EXTRA',
+    DRINK: 'BEBIDAS',
+  };
+
+  // Estado del acordeón de ingredientes de cada platillo
+  expandedDishIngredients = signal<Record<string, boolean>>({});
+
+  // Modal de Recipe Preview
+  selectedDishForPreview = signal<DishItem | null>(null);
+  isRecipePreviewOpen = signal<boolean>(false);
+
+  getDayIndex(planId: string): number {
+    return this.activeDayIndex()[planId] ?? 0;
+  }
+
+  setDayIndex(planId: string, idx: number, event?: Event) {
+    if (event) event.stopPropagation();
+    this.activeDayIndex.update((state) => ({ ...state, [planId]: idx }));
+  }
+
+  prevDay(planId: string, event?: Event) {
+    if (event) event.stopPropagation();
+    const current = this.getDayIndex(planId);
+    const prev = current > 0 ? current - 1 : 6;
+    this.setDayIndex(planId, prev);
+  }
+
+  nextDay(planId: string, event?: Event) {
+    if (event) event.stopPropagation();
+    const current = this.getDayIndex(planId);
+    const next = current < 6 ? current + 1 : 0;
+    this.setDayIndex(planId, next);
+  }
+
+  toggleDishIngredients(dishKey: string, event?: Event) {
+    if (event) {
+      event.preventDefault();
+      event.stopPropagation();
+    }
+    this.expandedDishIngredients.update((state) => ({
+      ...state,
+      [dishKey]: !state[dishKey],
+    }));
+  }
+
+  isDishIngredientsExpanded(dishKey: string): boolean {
+    return Boolean(this.expandedDishIngredients()[dishKey]);
+  }
+
+  openRecipePreview(dish: DishItem, event?: Event) {
+    if (event) {
+      event.preventDefault();
+      event.stopPropagation();
+    }
+    this.selectedDishForPreview.set(dish);
+    this.isRecipePreviewOpen.set(true);
+  }
+
+  closeRecipePreview() {
+    this.isRecipePreviewOpen.set(false);
+    this.selectedDishForPreview.set(null);
+  }
+
+  getDishesForMeal(menu: MenuPlan | null, mealType: string): DishItem[] {
+    if (!menu || !menu.dishes) return [];
+    return menu.dishes.filter((d) => d.mealType === mealType);
+  }
+
+  getLooseIngredientsForMeal(menu: MenuPlan | null, mealType: string): LooseIngredientItem[] {
+    if (!menu || !menu.looseIngredients) return [];
+    return menu.looseIngredients.filter((li) => li.mealType === mealType);
+  }
+
+  getMealItemCount(menu: MenuPlan | null, mealType: string): number {
+    return (
+      this.getDishesForMeal(menu, mealType).length +
+      this.getLooseIngredientsForMeal(menu, mealType).length
+    );
+  }
+
+  getActiveMealTypes(menu: MenuPlan | null): string[] {
+    if (!menu) return [];
+    const active = this.mealOrder.filter((mType) => this.getMealItemCount(menu, mType) > 0);
+    // Si no tiene nada mapeado por tipo, pero tiene platillos o ingredientes sueltos:
+    if (active.length === 0 && ((menu.dishes && menu.dishes.length > 0) || (menu.looseIngredients && menu.looseIngredients.length > 0))) {
+      return ['BREAKFAST', 'LUNCH', 'DINNER'];
+    }
+    return active;
+  }
+
+  // Método para cambiar el plan maestro
   setActiveTemplate(templateId: string, event: Event) {
     event.stopPropagation();
     this.activeTemplateId.set(templateId);
@@ -88,11 +185,32 @@ export class ProtocolMatrixDrawer {
   addNewTemplate() {
     if (!this.canAddMore()) return;
 
+    const athlete = this.athleteId();
+    const planName = `Mi Plan ${this.weeklyTemplates().length + 1}`;
+
+    if (athlete) {
+      this.intakeService.createWeeklyPlan(athlete, planName).subscribe({
+        next: (created) => {
+          if (created && !this.activeTemplateId()) {
+            this.activeTemplateId.set(created.id);
+          }
+        },
+        error: (err) => {
+          console.warn('Error creating plan via service, adding locally:', err);
+          this.addLocalTemplate(planName);
+        }
+      });
+    } else {
+      this.addLocalTemplate(planName);
+    }
+  }
+
+  private addLocalTemplate(name: string) {
     this.weeklyTemplates.update((templates) => {
       const newId = `t-${Date.now()}`;
       const newTemplate: WeeklyTemplate = {
         id: newId,
-        name: `Mi Plan ${templates.length + 1}`,
+        name,
         isFromCoach: false,
         assignments: [
           { dayName: 'Lun', menuId: null },
@@ -104,6 +222,9 @@ export class ProtocolMatrixDrawer {
           { dayName: 'Dom', menuId: null },
         ],
       };
+      if (!this.activeTemplateId()) {
+        this.activeTemplateId.set(newId);
+      }
       return [...templates, newTemplate];
     });
   }
@@ -112,12 +233,37 @@ export class ProtocolMatrixDrawer {
     event.stopPropagation();
     if (!this.canAddMore()) return;
 
+    const athlete = this.athleteId();
+    const copyName = `${plan.name} (Copia)`;
+
+    if (athlete) {
+      this.intakeService.createWeeklyPlan(athlete, copyName).subscribe({
+        next: (created) => {
+          if (created) {
+            const duplicated: WeeklyTemplate = {
+              ...created,
+              assignments: [...plan.assignments]
+            };
+            this.intakeService.saveWeeklyPlan(duplicated).subscribe();
+            this.weeklyTemplates.update((templates) =>
+              templates.map((t) => (t.id === created.id ? duplicated : t))
+            );
+          }
+        },
+        error: () => this.duplicateLocalTemplate(plan, copyName)
+      });
+    } else {
+      this.duplicateLocalTemplate(plan, copyName);
+    }
+  }
+
+  private duplicateLocalTemplate(plan: WeeklyTemplate, copyName: string) {
     this.weeklyTemplates.update((templates) => {
       const newId = `t-${Date.now()}`;
       const newTemplate: WeeklyTemplate = {
         ...plan,
         id: newId,
-        name: `${plan.name} (Copia)`,
+        name: copyName,
         isFromCoach: false,
       };
       return [...templates, newTemplate];
@@ -132,7 +278,55 @@ export class ProtocolMatrixDrawer {
 
   deleteTemplate(templateId: string, event: Event) {
     event.stopPropagation();
-    this.weeklyTemplates.update((templates) => templates.filter((t) => t.id !== templateId));
+    this.intakeService.deleteWeeklyPlan(templateId).subscribe({
+      next: () => {
+        this.weeklyTemplates.update((templates) => templates.filter((t) => t.id !== templateId));
+        if (this.activeTemplateId() === templateId) {
+          const remaining = this.weeklyTemplates().filter((t) => t.id !== templateId);
+          this.activeTemplateId.set(remaining[0]?.id || null);
+        }
+      },
+      error: (err) => {
+        console.warn('Error deleting plan via service, removing locally:', err);
+        this.weeklyTemplates.update((templates) => templates.filter((t) => t.id !== templateId));
+      }
+    });
+  }
+
+  saveAll() {
+    this.isSaving.set(true);
+    const plans = this.weeklyTemplates();
+    
+    // Guardar todos los planes
+    const saveOps = plans.map((p) => this.intakeService.saveWeeklyPlan(p));
+    
+    if (saveOps.length === 0) {
+      this.isSaving.set(false);
+      this.isOpen.set(false);
+      return;
+    }
+
+    let completed = 0;
+    saveOps.forEach((op) => {
+      op.subscribe({
+        next: () => {
+          completed++;
+          if (completed >= saveOps.length) {
+            this.isSaving.set(false);
+            this.onSavePlan.emit(plans);
+            this.isOpen.set(false);
+          }
+        },
+        error: () => {
+          completed++;
+          if (completed >= saveOps.length) {
+            this.isSaving.set(false);
+            this.onSavePlan.emit(plans);
+            this.isOpen.set(false);
+          }
+        }
+      });
+    });
   }
 
   getAssignedMenu(menuId: string | null): MenuPlan | null {
@@ -140,3 +334,4 @@ export class ProtocolMatrixDrawer {
     return this.availableMenus().find((m) => m.id === menuId) || null;
   }
 }
+

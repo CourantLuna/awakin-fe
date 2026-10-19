@@ -43,6 +43,8 @@
     <app-protocol-matrix-drawer
       [(isOpen)]="isMatrixOpen"
       [(weeklyTemplates)]="weeklyTemplates"
+      [(activeTemplateId)]="activeTemplateId"
+      [athleteId]="currentAthleteId()"
       [availableMenus]="availableMenus()"
       (onOpenShoppingList)="openShoppingListModal()"
     >

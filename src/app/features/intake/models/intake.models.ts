@@ -12,13 +12,72 @@ export interface FoodItem {
   isLogged: boolean;
 }
 
+export interface DishIngredient {
+  id?: string;
+  name: string;
+  quantity: number;
+  mode?: string;
+  unit: string;
+  calories?: number;
+  protein?: number;
+  carbs?: number;
+  fats?: number;
+  sourceClassification?: string;
+}
+
+export interface DishItem {
+  id: string;
+  dishId: string;
+  name: string;
+  mealType: string;
+  prepTimeMinutes: number;
+  coverImageUrl?: string | null;
+  authorName?: string;
+  portions: number;
+  totalCalories: number;
+  totalProtein: number;
+  totalCarbs: number;
+  totalFats: number;
+  totalFiber?: number;
+  totalWeightGrams?: number;
+  satietyIndex?: number;
+  tags: string[];
+  instructions: string[];
+  utensils: string[];
+  isOptimizerActive?: boolean;
+  ingredients: DishIngredient[];
+}
+
+export interface LooseIngredientItem {
+  id: string;
+  ingredientId: string;
+  name: string;
+  mealType: string;
+  quantity: number;
+  mode: string;
+  unit: string;
+  calories: number;
+  protein: number;
+  carbs: number;
+  fats: number;
+  sourceClassification?: string;
+}
+
 export interface MenuPlan {
   id: string;
   name: string;
   coverIcon: string;
+  coverImageUrl?: string | null;
   tags: string[];
   kcal: number;
   macros: string;
+  protein?: number;
+  carbs?: number;
+  fats?: number;
+  authorName?: string;
+  description?: string | null;
+  dishes?: DishItem[];
+  looseIngredients?: LooseIngredientItem[];
 }
 
 export interface DayAssignment {
@@ -32,11 +91,6 @@ export interface ManualMenuSelection {
   quantity: number;
 }
 
-export interface DayAssignment {
-  dayName: string;
-  menuId: string | null;
-}
-
 // NUEVA INTERFAZ: El contenedor de la semana
 export interface WeeklyTemplate {
   id: string;
@@ -44,3 +98,4 @@ export interface WeeklyTemplate {
   isFromCoach: boolean; // REEMPLAZA A isDefault
   assignments: DayAssignment[];
 }
+

@@ -1,33 +1,28 @@
 import { ApplicationConfig, provideBrowserGlobalErrorListeners, isDevMode } from '@angular/core';
 import { provideRouter } from '@angular/router';
 import { provideAnimationsAsync } from '@angular/platform-browser/animations/async';
-import { providePrimeNG } from 'primeng/config'; // IMPORTANTE
+import { providePrimeNG } from 'primeng/config';
 import { routes } from './app.routes';
 import { provideServiceWorker } from '@angular/service-worker';
-import Aura from '@primeuix/themes/aura';
 import { AwakinPreset } from './theme/awakin-preset';
-
 
 export const appConfig: ApplicationConfig = {
   providers: [
     provideBrowserGlobalErrorListeners(),
-    provideRouter(routes), provideAnimationsAsync(),provideServiceWorker('ngsw-worker.js', {
-            enabled: !isDevMode(),
-            registrationStrategy: 'registerWhenStable:30000'
-          }),
-    // 2. Configurar el Tema Aura (Moderno)
-   providePrimeNG({
+    provideRouter(routes),
+    provideAnimationsAsync(),
+    provideServiceWorker('ngsw-worker.js', {
+      enabled: !isDevMode(),
+      registrationStrategy: 'registerWhenStable:30000',
+    }),
+    providePrimeNG({
       theme: {
         preset: AwakinPreset,
         options: {
-          darkModeSelector: '.my-app-dark', // O 'system' si quieres detectar el SO
-          ripple: true
-        }
-      }
-    }), provideServiceWorker('ngsw-worker.js', {
-            enabled: !isDevMode(),
-            registrationStrategy: 'registerWhenStable:30000'
-          })
-    
-  ]
+          darkModeSelector: '.my-app-dark',
+          ripple: true,
+        },
+      },
+    }),
+  ],
 };
