@@ -45,7 +45,7 @@ export class IntakeService {
       catchError((err) => {
         console.warn('Backend unavailable for menus, falling back to Supabase client directly:', err);
         const query = `
-          id, name, created_at, cover_image_url, author_id, author_name, is_public, total_calories, total_protein, total_carbs, total_fats, tags, description,
+          id, name, created_at, cover_image_url, author_id, author_name, is_public, total_calories, total_protein, total_carbs, total_fats, tags, description, created_by, athlete_id,
           intake_menu_dishes(dish_id, meal_type, is_optimizer_active, optimizer_targets, intake_dishes(*, intake_dish_ingredients!intake_dish_ingredients_dish_id_fkey(quantity, mode, intake_ingredients(id, name, unit, calories, protein, carbs, fats, source_classification)))),
           intake_menu_ingredients(id, ingredient_id, meal_type, quantity, mode, intake_ingredients(id, name, unit, calories, protein, carbs, fats, source_classification))
         `;
@@ -69,6 +69,98 @@ export class IntakeService {
         return menus;
       })
     );
+  }
+
+  /**
+   * Duplica un menú existente (ej. creado por coach) para permitir su personalización por parte del atleta.
+   */
+  public duplicateMenu(menu: MenuPlan, newName?: string): Observable<MenuPlan | null> {
+    const athleteId = this.currentAthleteId();
+    const copyName = newName || `${menu.name} (Copia)`;
+
+    return this.http
+      .post<any>(`${this.baseUrl}/menus/${menu.id}/duplicate?athlete_id=${athleteId}`, {})
+      .pipe(
+        map((res) => {
+          const mapped = this.mapMenusToPlan([res])[0];
+          return mapped;
+        }),
+        catchError((err) => {
+          console.warn('Backend unavailable for duplicating menu, falling back to Supabase directly:', err);
+          return from(this.duplicateMenuViaSupabase(menu, copyName, athleteId));
+        }),
+        map((newMenu) => {
+          if (newMenu) {
+            this.availableMenus.update((menus) => [...menus, newMenu]);
+          }
+          return newMenu;
+        })
+      );
+  }
+
+  private async duplicateMenuViaSupabase(
+    menu: MenuPlan,
+    copyName: string,
+    athleteId: string | null
+  ): Promise<MenuPlan | null> {
+    try {
+      const { data: newMenu, error: menuErr } = await this.supabase
+        .from('intake_menus')
+        .insert({
+          name: copyName,
+          created_by: athleteId,
+          athlete_id: athleteId,
+          author_name: 'Atleta',
+          cover_image_url: menu.coverImageUrl,
+          total_calories: menu.kcal,
+          total_protein: menu.protein,
+          total_carbs: menu.carbs,
+          total_fats: menu.fats,
+          tags: menu.tags || [],
+          description: menu.description || null
+        })
+        .select()
+        .single();
+
+      if (menuErr || !newMenu) {
+        console.error('Error duplicating menu in Supabase:', menuErr);
+        return null;
+      }
+
+      if (menu.dishes && menu.dishes.length > 0) {
+        const dishRows = menu.dishes.map((d) => ({
+          menu_id: newMenu.id,
+          dish_id: d.dishId || d.id,
+          meal_type: d.mealType,
+          is_optimizer_active: d.isOptimizerActive || false
+        }));
+        await this.supabase.from('intake_menu_dishes').insert(dishRows);
+      }
+
+      if (menu.looseIngredients && menu.looseIngredients.length > 0) {
+        const looseRows = menu.looseIngredients.map((li) => ({
+          menu_id: newMenu.id,
+          ingredient_id: li.ingredientId || li.id,
+          meal_type: li.mealType,
+          quantity: li.quantity,
+          mode: li.mode
+        }));
+        await this.supabase.from('intake_menu_ingredients').insert(looseRows);
+      }
+
+      return {
+        ...menu,
+        id: newMenu.id,
+        name: newMenu.name,
+        createdBy: athleteId ?? undefined,
+        athleteId: athleteId ?? undefined,
+        dishes: [...(menu.dishes || [])],
+        looseIngredients: [...(menu.looseIngredients || [])]
+      };
+    } catch (e) {
+      console.error('Failed to duplicate menu via Supabase:', e);
+      return null;
+    }
   }
 
   /**
@@ -98,6 +190,7 @@ export class IntakeService {
   public createWeeklyPlan(athleteId: string, name: string): Observable<WeeklyTemplate | null> {
     const payload = {
       name,
+      created_by: athleteId,
       assignments: [1, 2, 3, 4, 5, 6, 7].map((d) => ({ day_of_week: d, menu_id: null }))
     };
 
@@ -108,7 +201,7 @@ export class IntakeService {
         return from(
           this.supabase
             .from('intake_weekly_plans')
-            .insert({ athlete_id: athleteId, name })
+            .insert({ athlete_id: athleteId, name, created_by: athleteId })
             .select()
             .single()
         ).pipe(
@@ -121,6 +214,7 @@ export class IntakeService {
               id: data.id,
               name: data.name,
               isFromCoach: false,
+              createdBy: athleteId,
               assignments: DAY_NAMES.map((dayName) => ({ dayName, menuId: null }))
             };
             return template;
@@ -269,6 +363,8 @@ export class IntakeService {
         fats: f,
         authorName: m.author_name || 'Awakin Protocol',
         description: m.description || null,
+        createdBy: m.created_by || m.createdBy || null,
+        athleteId: m.athlete_id || m.athleteId || null,
         dishes,
         looseIngredients
       };
@@ -291,10 +387,16 @@ export class IntakeService {
       menuId: assignmentsMap.get(dayNum) || null
     }));
 
+    const athleteId = this.currentAthleteId();
+    const isFromCoach = p.is_from_coach !== undefined
+      ? Boolean(p.is_from_coach)
+      : Boolean(!p.created_by || p.created_by !== athleteId);
+
     return {
       id: String(p.id),
       name: p.name || 'Mi Plan Semanal',
-      isFromCoach: false,
+      isFromCoach,
+      createdBy: p.created_by || null,
       assignments
     };
   }
@@ -302,7 +404,7 @@ export class IntakeService {
   private async fetchWeeklyPlansFromSupabase(athleteId: string): Promise<WeeklyTemplate[]> {
     const { data: plans, error: ep } = await this.supabase
       .from('intake_weekly_plans')
-      .select('id, athlete_id, name, created_at')
+      .select('id, athlete_id, name, created_at, created_by')
       .eq('athlete_id', athleteId)
       .order('created_at');
 
@@ -332,10 +434,13 @@ export class IntakeService {
         menuId: dayMap.get(dayNum) || null
       }));
 
+      const isFromCoach = Boolean(!plan.created_by || plan.created_by !== athleteId);
+
       return {
         id: String(plan.id),
         name: plan.name || 'Mi Plan Semanal',
-        isFromCoach: false,
+        isFromCoach,
+        createdBy: plan.created_by || null,
         assignments
       };
     });

@@ -76,6 +76,8 @@ export interface MenuPlan {
   fats?: number;
   authorName?: string;
   description?: string | null;
+  createdBy?: string | null;
+  athleteId?: string | null;
   dishes?: DishItem[];
   looseIngredients?: LooseIngredientItem[];
 }
@@ -96,6 +98,7 @@ export interface WeeklyTemplate {
   id: string;
   name: string;
   isFromCoach: boolean; // REEMPLAZA A isDefault
+  createdBy?: string | null;
   assignments: DayAssignment[];
 }
 

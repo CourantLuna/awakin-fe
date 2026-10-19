@@ -97,9 +97,15 @@
 
                 @if (plan.isFromCoach) {
                   <span
-                    class="bg-awakin-sun/10 text-awakin-sun border border-awakin-sun/20 text-[8px] px-1.5 py-0.5 rounded flex items-center gap-1 font-bold tracking-widest uppercase shadow-sm"
+                    class="bg-[#5057FE] text-white text-[9px] px-2.5 py-0.5 rounded-full flex items-center gap-1 font-bold tracking-wider uppercase shadow-xs"
                   >
-                    <i class="pi pi-verified text-[5px]"></i> COACH
+                    <i class="pi pi-verified text-[8px]"></i> De tu Coach
+                  </span>
+                } @else {
+                  <span
+                    class="bg-[#00C48C] text-white text-[9px] px-2.5 py-0.5 rounded-full flex items-center gap-1 font-bold tracking-wider uppercase shadow-xs"
+                  >
+                    Personal
                   </span>
                 }
               </div>
@@ -300,7 +306,7 @@
                       }
 
                       <div class="max-h-[260px] overflow-y-auto awakin-scrollbar">
-                        @for (menu of availableMenus(); track menu.id) {
+                        @for (menu of catalogMenus(); track menu.id) {
                           <div
                             (click)="
                               assignMenuToDay(plan.id, dayIdx, menu.id);
@@ -326,9 +332,17 @@
                                 <i class="pi pi-check text-awakin-sun text-xs"></i>
                               }
                             </div>
-                            <p class="text-[10px] text-stone-500 ml-8 font-medium">
-                              {{ menu.kcal }} kcal • {{ menu.macros }}
-                            </p>
+                            <div class="flex items-center gap-1.5 ml-8 mt-0.5">
+                              <span
+                                class="text-[9px] font-bold px-1.5 py-0.5 rounded"
+                                [ngClass]="isMenuFromCoach(menu) ? 'bg-[#5057FE]/10 text-[#5057FE]' : 'bg-[#00C48C]/10 text-[#00C48C]'"
+                              >
+                                {{ isMenuFromCoach(menu) ? 'De tu Coach' : 'Personal' }}
+                              </span>
+                              <span class="text-[10px] text-stone-500 font-medium">
+                                {{ menu.kcal }} kcal • {{ menu.macros }}
+                              </span>
+                            </div>
                           </div>
                         }
                       </div>
@@ -514,62 +528,177 @@
     </p-accordion>
 
     <div class="border-t border-stone-200/60 py-5 mt-4">
-      <h3 class="text-xs font-bold text-stone-800 uppercase tracking-widest mb-4">
-        Catálogo de Menus Diarios
-      </h3>
+      <div class="flex items-center justify-between mb-4">
+        <div>
+          <h3 class="text-xs font-bold text-stone-800 uppercase tracking-widest">
+            Catálogo de Menús
+          </h3>
+          <p class="text-[11px] text-stone-400 mt-0.5">
+            Menús asignados a tu plan y menús personales creados por ti
+          </p>
+        </div>
+        <span class="text-[11px] font-bold text-stone-500 bg-stone-100 px-2.5 py-1 rounded-lg">
+          {{ catalogMenus().length }} disponible{{ catalogMenus().length !== 1 ? 's' : '' }}
+        </span>
+      </div>
 
-      <div class="flex gap-3 overflow-x-auto pb-4 snap-x hide-scrollbar items-stretch">
-        @for (menu of availableMenus(); track menu.id) {
+      <div class="flex gap-4 overflow-x-auto pb-4 snap-x hide-scrollbar items-stretch">
+        @for (menu of catalogMenus(); track menu.id) {
+          @let isCoach = isMenuFromCoach(menu);
+          @let isSelected = isMenuSelectedForActiveDay(menu.id, activeTemplateId());
+          @let images = getMenuDishImages(menu);
+
           <div
-            class="bg-white rounded-2xl p-4 shadow-sm border border-stone-100 flex flex-col min-w-[170px] max-w-[170px] snap-center relative"
+            class="bg-white rounded-2xl border border-stone-200/90 shadow-xs hover:shadow-md transition-all duration-300 flex flex-col min-w-[270px] max-w-[285px] w-[275px] snap-center relative overflow-hidden group select-none"
+            [ngClass]="isSelected ? 'ring-2 ring-[#00C48C]/40 border-[#00C48C]' : ''"
           >
-            <div
-              class="w-12 h-12 rounded-xl bg-stone-50 flex items-center justify-center text-2xl mb-3 border border-stone-100 shrink-0 overflow-hidden"
-            >
-              @if (menu.coverImageUrl) {
-                <img [src]="menu.coverImageUrl" [alt]="menu.name" class="w-full h-full object-cover" />
+            <!-- SECCIÓN COLLAGE AUTOMÁTICO DE RECETAS -->
+            <div class="h-44 w-full relative overflow-hidden bg-stone-100 select-none shrink-0">
+              @if (images.length === 1) {
+                <img
+                  [src]="images[0]"
+                  [alt]="menu.name"
+                  class="w-full h-full object-cover group-hover:scale-102 transition-transform duration-500"
+                />
+              } @else if (images.length === 2) {
+                <div class="grid grid-cols-2 h-full gap-[1.5px] bg-white">
+                  <img [src]="images[0]" [alt]="menu.name" class="w-full h-full object-cover" />
+                  <img [src]="images[1]" [alt]="menu.name" class="w-full h-full object-cover" />
+                </div>
+              } @else if (images.length === 3) {
+                <div class="grid grid-cols-3 h-full gap-[1.5px] bg-white">
+                  <img [src]="images[0]" [alt]="menu.name" class="w-full h-full object-cover" />
+                  <img [src]="images[1]" [alt]="menu.name" class="w-full h-full object-cover" />
+                  <img [src]="images[2]" [alt]="menu.name" class="w-full h-full object-cover" />
+                </div>
+              } @else if (images.length === 4) {
+                <!-- 4 platillos: Grilla 2x2 (Referencia Imágenes 1 y 3) -->
+                <div class="grid grid-cols-2 grid-rows-2 h-full gap-[1.5px] bg-white">
+                  <img [src]="images[0]" [alt]="menu.name" class="w-full h-full object-cover" />
+                  <img [src]="images[1]" [alt]="menu.name" class="w-full h-full object-cover" />
+                  <img [src]="images[2]" [alt]="menu.name" class="w-full h-full object-cover" />
+                  <img [src]="images[3]" [alt]="menu.name" class="w-full h-full object-cover" />
+                </div>
+              } @else if (images.length === 5) {
+                <!-- 5 platillos: 2 arriba, 3 abajo (Referencia Imagen 2) -->
+                <div class="flex flex-col h-full gap-[1.5px] bg-white">
+                  <div class="grid grid-cols-2 h-1/2 gap-[1.5px]">
+                    <img [src]="images[0]" [alt]="menu.name" class="w-full h-full object-cover" />
+                    <img [src]="images[1]" [alt]="menu.name" class="w-full h-full object-cover" />
+                  </div>
+                  <div class="grid grid-cols-3 h-1/2 gap-[1.5px]">
+                    <img [src]="images[2]" [alt]="menu.name" class="w-full h-full object-cover" />
+                    <img [src]="images[3]" [alt]="menu.name" class="w-full h-full object-cover" />
+                    <img [src]="images[4]" [alt]="menu.name" class="w-full h-full object-cover" />
+                  </div>
+                </div>
               } @else {
-                {{ menu.coverIcon }}
+                <!-- 6 o más platillos: Grilla 3x2 -->
+                <div class="grid grid-cols-3 grid-rows-2 h-full gap-[1.5px] bg-white">
+                  @for (img of images.slice(0, 6); track $index) {
+                    <img [src]="img" [alt]="menu.name" class="w-full h-full object-cover" />
+                  }
+                </div>
               }
-            </div>
 
-            <h4 class="font-black text-stone-900 text-[13px] leading-tight mb-1">
-              {{ menu.name }}
-            </h4>
+              <!-- Badges Superpuestos (Esquina superior izquierda) -->
+              <div class="absolute top-2.5 left-2.5 flex flex-col items-start gap-1 z-10 pointer-events-none">
+                <!-- Tag de Creador (De tu Coach vs Personal) -->
+                @if (isCoach) {
+                  <span
+                    class="bg-[#5057FE] text-white text-[10px] font-bold px-2.5 py-0.5 rounded-full shadow-md flex items-center gap-1 leading-tight tracking-tight"
+                  >
+                    De tu Coach
+                  </span>
+                } @else {
+                  <span
+                    class="bg-[#00C48C] text-white text-[10px] font-bold px-2.5 py-0.5 rounded-full shadow-md flex items-center gap-1 leading-tight tracking-tight"
+                  >
+                    Personal
+                  </span>
+                }
 
-            <div class="flex items-center flex-wrap gap-1 text-[9px] font-bold tracking-wide mb-3">
-              <span class="text-stone-800"
-                >{{ menu.kcal }} <span class="uppercase text-[8px] text-stone-400">kcal</span></span
-              >
-              <span class="text-stone-300">&bull;</span>
-              <span class="text-stone-500">{{ menu.macros }}</span>
-            </div>
+                <!-- Tag de Día Seleccionado -->
+                @if (isSelected) {
+                  <span
+                    class="bg-[#00C48C] text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow-md flex items-center gap-1 leading-tight tracking-tight"
+                  >
+                    <i class="pi pi-calendar text-[9px]"></i> Día Seleccionado
+                  </span>
+                }
+              </div>
 
-            <div class="flex flex-wrap gap-1 mt-auto">
-              @for (tag of (menu.tags || []); track tag) {
-                <span
-                  class="text-[8px] font-bold uppercase tracking-wider px-1.5 py-0.5 bg-stone-100 text-stone-600 rounded"
+              <!-- Botón de Acción en la esquina superior derecha (Duplicar) -->
+              <div class="absolute top-2.5 right-2.5 z-10 flex items-center gap-1">
+                <button
+                  type="button"
+                  (click)="duplicateMenu(menu, $event)"
+                  class="w-7 h-7 rounded-full bg-black/50 hover:bg-black/75 text-white backdrop-blur-md flex items-center justify-center transition-all cursor-pointer shadow-md text-xs active:scale-95"
+                  title="Duplicar menú"
                 >
-                  {{ tag }}
+                  <i class="pi pi-copy text-[11px]"></i>
+                </button>
+              </div>
+            </div>
+
+            <!-- CUERPO DEL CARD -->
+            <div class="p-4 flex flex-col flex-1 justify-between">
+              <div>
+                <!-- Título del Menú -->
+                <h4
+                  class="font-black text-stone-900 text-sm sm:text-base leading-snug line-clamp-2 mb-2 group-hover:text-awakin-sun transition-colors"
+                >
+                  {{ menu.name }}
+                </h4>
+
+                <!-- Tags / Etiquetas (como en imagen 3: detox, antioxidantes) -->
+                @if (menu.tags && menu.tags.length > 0) {
+                  <div class="flex flex-wrap gap-1.5 mb-3">
+                    @for (tag of menu.tags; track tag) {
+                      <span
+                        class="text-[10px] font-semibold px-2 py-0.5 bg-stone-100 text-stone-600 rounded-full"
+                      >
+                        {{ tag }}
+                      </span>
+                    }
+                  </div>
+                }
+              </div>
+
+              <!-- Fila Inferior con Calorías y Macros coloreados -->
+              <div class="pt-3 border-t border-stone-100 flex items-center justify-between text-xs sm:text-sm mt-auto">
+                <span class="font-extrabold text-stone-900">
+                  {{ menu.kcal }} kcal
                 </span>
-              }
+                <span class="font-bold text-[#3B82F6]">
+                  {{ menu.protein }}P
+                </span>
+                <span class="font-bold text-[#F59E0B]">
+                  {{ menu.carbs }}C
+                </span>
+                <span class="font-bold text-[#EF4444]">
+                  {{ menu.fats }}G
+                </span>
+              </div>
             </div>
           </div>
         }
 
+        <!-- Botón para Crear Menú Personalizado -->
         <button
-          class="rounded-2xl p-4 border-2 border-dashed border-stone-200 bg-[var(--color-awakin-base)] hover:bg-white hover:border-[#FE970A] hover:shadow-md transition-all duration-300 flex flex-col items-center justify-center min-w-[170px] max-w-[170px] snap-center group cursor-pointer focus:outline-none"
+          type="button"
+          class="rounded-2xl p-4 border-2 border-dashed border-stone-200 bg-stone-50/50 hover:bg-white hover:border-[#FE970A] hover:shadow-md transition-all duration-300 flex flex-col items-center justify-center min-w-[200px] max-w-[200px] snap-center group cursor-pointer focus:outline-none shrink-0"
         >
           <div
-            class="w-12 h-12 rounded-xl bg-white border border-stone-100 group-hover:bg-[#FE970A] group-hover:border-[#FE970A] group-hover:-translate-y-1 flex items-center justify-center text-xl text-stone-400 group-hover:text-white transition-all duration-300 mb-3 shadow-sm"
+            class="w-12 h-12 rounded-xl bg-white border border-stone-100 group-hover:bg-[#FE970A] group-hover:border-[#FE970A] group-hover:-translate-y-1 flex items-center justify-center text-xl text-stone-400 group-hover:text-white transition-all duration-300 mb-3 shadow-xs"
           >
             <i class="pi pi-plus font-bold"></i>
           </div>
 
           <h4
-            class="font-black text-stone-500 group-hover:text-stone-900 text-[13px] leading-tight mb-1 uppercase tracking-wide transition-colors"
+            class="font-black text-stone-500 group-hover:text-stone-900 text-xs leading-tight mb-1 uppercase tracking-wide transition-colors text-center"
           >
-            Crear Menu Personalizado
+            Crear Menú Personalizado
           </h4>
 
           <div class="flex items-center flex-wrap gap-1 text-[9px] font-bold tracking-wide mt-1">

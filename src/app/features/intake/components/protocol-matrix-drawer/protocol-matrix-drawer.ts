@@ -35,6 +35,73 @@ export class ProtocolMatrixDrawer {
   openDropdownKey = signal<string | null>(null);
   canAddMore = computed(() => this.weeklyTemplates().length < this.maxTemplates());
 
+  // Catálogo filtrado: solo menús asignados en la semana/planes Y aquellos creados por el atleta logueado
+  catalogMenus = computed(() => {
+    const athleteId = this.athleteId();
+    const allMenus = this.availableMenus();
+    const templates = this.weeklyTemplates();
+
+    const assignedMenuIds = new Set<string>();
+    for (const t of templates) {
+      for (const a of t.assignments) {
+        if (a.menuId) assignedMenuIds.add(a.menuId);
+      }
+    }
+
+    return allMenus.filter((m) => {
+      const isAssigned = assignedMenuIds.has(m.id);
+      const isCreatedByAthlete = Boolean(
+        athleteId && (m.createdBy === athleteId || m.athleteId === athleteId)
+      );
+      return isAssigned || isCreatedByAthlete;
+    });
+  });
+
+  isMenuFromCoach(menu: MenuPlan): boolean {
+    const athleteId = this.athleteId();
+    if (!athleteId) return true;
+    return !(menu.createdBy === athleteId || menu.athleteId === athleteId);
+  }
+
+  isMenuSelectedForActiveDay(menuId: string, planId: string | null): boolean {
+    if (!planId) return false;
+    const plan = this.weeklyTemplates().find((p) => p.id === planId);
+    if (!plan) return false;
+    const dayIdx = this.getDayIndex(planId);
+    return plan.assignments[dayIdx]?.menuId === menuId;
+  }
+
+  duplicateMenu(menu: MenuPlan, event?: Event) {
+    if (event) event.stopPropagation();
+    this.intakeService.duplicateMenu(menu).subscribe();
+  }
+
+  assignMenuToCurrentDay(menuId: string, event?: Event) {
+    if (event) event.stopPropagation();
+    const activeId = this.activeTemplateId();
+    if (!activeId) return;
+    const plan = this.weeklyTemplates().find((p) => p.id === activeId);
+    if (!plan || plan.isFromCoach) return;
+    const dayIdx = this.getDayIndex(activeId);
+    this.assignMenuToDay(activeId, dayIdx, menuId);
+  }
+
+  getMenuDishImages(menu: MenuPlan): string[] {
+    if (!menu.dishes || menu.dishes.length === 0) {
+      return menu.coverImageUrl
+        ? [menu.coverImageUrl]
+        : ['https://images.unsplash.com/photo-1490645935967-10de6ba17061?auto=format&fit=crop&q=80'];
+    }
+    const imgs = menu.dishes
+      .map((d) => d.coverImageUrl)
+      .filter((img): img is string => Boolean(img));
+    return imgs.length > 0
+      ? imgs
+      : (menu.coverImageUrl
+          ? [menu.coverImageUrl]
+          : ['https://images.unsplash.com/photo-1490645935967-10de6ba17061?auto=format&fit=crop&q=80']);
+  }
+
   // Navegación de días en el carrusel (índice 0 a 6 por plan)
   activeDayIndex = signal<Record<string, number>>({});
 
