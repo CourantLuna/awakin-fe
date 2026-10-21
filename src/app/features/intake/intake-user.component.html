@@ -555,9 +555,9 @@
       </div>
 
       <!-- 2. Story Canvas Viewport (9:16 Aspect Ratio) -->
-      <div class="flex-1 flex items-center justify-center my-2 overflow-hidden">
+      <div class="flex-1 flex items-center justify-center my-2  overflow-hidden">
         <div id="storyCanvas"
-          class="relative w-full max-w-[320px] aspect-[9/16] rounded-3xl overflow-hidden shadow-2xl bg-stone-900 border border-stone-800/80 flex flex-col justify-center items-center">
+          class="relative w-full max-w-[320px] aspect-[9/16]  overflow-hidden  flex flex-col justify-center items-center">
 
           <!-- Imagen de fondo del plato registrado -->
           @if (storyData()?.photoUrl) {
@@ -571,12 +571,6 @@
           <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/40 pointer-events-none">
           </div>
 
-          <!-- Marca de agua Awakin superior con Logo Oficial -->
-          <div
-            class="absolute top-4 left-4 z-10 flex items-center gap-2 bg-black/25 backdrop-blur-md px-2.5 py-1.5 rounded-full border border-white/15 pointer-events-none shadow-md">
-            <img src="/icons/intake-active.png" alt="Awakin Intake" class="w-6 h-6 object-contain shrink-0" />
-
-          </div>
 
           <!-- Card Flotante Interactivo: Contenedor Externo Drag (Posicionamiento) -->
           <div cdkDrag [cdkDragBoundary]="'#storyCanvas'"
@@ -586,7 +580,7 @@
             <div [style.transform]="'scale(' + cardScale() + ')'"
               style="transform-origin: center center; transition: transform 0.12s ease-out;">
               <div
-                class="bg-stone-950/85 backdrop-blur-md text-white rounded-2xl p-3.5 sm:p-4 shadow-[0_12px_40px_rgba(0,0,0,0.7)] border border-white/15 w-68 sm:w-72 h-auto">
+                class="bg-stone-950/40 backdrop-blur-xs text-white rounded-2xl p-3.5 sm:p-4 shadow-[0_12px_40px_rgba(0,0,0,0.7)] border border-white/15 w-68 sm:w-72 h-auto">
 
                 <!-- Cabecera del Card: Fecha, Tipo Comida y Logo Awakin -->
                 <div class="flex items-start justify-between gap-2">
@@ -597,13 +591,12 @@
                   </div>
 
                   <!-- Logo y branding de Awakin -->
-                  <div
-                    class="flex items-center gap-1.5 bg-white/10 border border-white/15 px-2 py-1 rounded-xl shrink-0">
-                    <img src="/icons/intake-active.png" alt="Awakin Intake" class="w-6 h-6 object-contain shrink-0" />
+                  <div class="flex items-center gap-1.5  px-2 py-1 shrink-0">
+                    <img src="/icons/intake-active.png" alt="Awakin Intake" class="w-6 h-6 object-contain shrink-0 " />
                     @if (athleteKin()?.team_logo_url) {
                     <img [src]="kinLogoDataUrl() || athleteKin()?.team_logo_url"
                       [alt]="athleteKin()?.team_name || 'Tribu'" crossOrigin="anonymous"
-                      class="w-6 h-6 rounded-full object-cover border shadow-2xs shrink-0" />
+                      class="w-6 h-6  object-cover  shadow-2xs shrink-0" />
                     } @else {
                     <div
                       class="w-4 h-4 rounded-full bg-awakin-sun/20 border border-awakin-sun/50 flex items-center justify-center text-[8px] font-black text-awakin-sun shrink-0">
@@ -662,26 +655,7 @@
             </div>
           </div>
 
-          <!-- Marca de agua de Tribu/Kin (Esquina inferior derecha con transparencia premium) -->
-          @if (athleteKin()?.team_name) {
-          <div
-            class="absolute bottom-4 right-4 z-10 flex items-center gap-2 bg-black/45 backdrop-blur-md px-3 py-1.5 rounded-full border border-white/15 pointer-events-none shadow-lg opacity-90 transition-opacity">
-            @if (athleteKin()?.team_logo_url) {
-            <img [src]="kinLogoDataUrl() || athleteKin()?.team_logo_url" [alt]="athleteKin()?.team_name || 'Tribu'"
-              crossOrigin="anonymous" class="w-6 h-6 rounded-full object-cover border  shadow-2xs shrink-0" />
-            } @else {
-            <div
-              class="w-6 h-6 rounded-full bg-awakin-sun/20 border border-awakin-sun/50 flex items-center justify-center text-[8px] font-black text-awakin-sun shrink-0">
-              {{ athleteKin()?.team_name?.charAt(0) || 'K' }}
-            </div>
-            }
-            <div class="flex items-center gap-1 leading-none">
-              <span class="text-[9px] font-black uppercase tracking-wider text-white/95 max-w-[110px] truncate">
-                {{ athleteKin()?.team_name }}
-              </span>
-            </div>
-          </div>
-          }
+
         </div>
       </div>
 
@@ -704,7 +678,8 @@
             class="w-7 h-7 rounded-lg bg-white hover:bg-stone-50 text-stone-700 hover:text-stone-900 border border-stone-200/80 flex items-center justify-center font-bold text-xs cursor-pointer active:scale-95 shadow-2xs">
             -
           </button>
-          <span class="text-[11px] font-black text-stone-800 tabular-nums w-8 text-center">{{ Math.round(cardScale() * 100)
+          <span class="text-[11px] font-black text-stone-800 tabular-nums w-8 text-center">{{ Math.round(cardScale() *
+            100)
             }}%</span>
           <button type="button" (click)="adjustCardScale(0.1)" title="Aumentar tamaño"
             class="w-7 h-7 rounded-lg bg-white hover:bg-stone-50 text-stone-700 hover:text-stone-900 border border-stone-200/80 flex items-center justify-center font-bold text-xs cursor-pointer active:scale-95 shadow-2xs">
@@ -759,7 +734,8 @@
             class="w-12 h-12 sm:w-13 sm:h-13 rounded-full bg-emerald-500 hover:bg-emerald-600 text-white flex items-center justify-center shadow-md transition-transform active:scale-95">
             <i class="pi pi-whatsapp text-xl sm:text-2xl"></i>
           </div>
-          <span class="text-[11px] font-bold text-stone-700 group-hover:text-stone-950 transition-colors">WhatsApp</span>
+          <span
+            class="text-[11px] font-bold text-stone-700 group-hover:text-stone-950 transition-colors">WhatsApp</span>
         </button>
 
         <!-- Historias (Instagram Stories / Redes) -->
@@ -769,7 +745,8 @@
             class="w-12 h-12 sm:w-13 sm:h-13 rounded-full bg-gradient-to-tr from-amber-500 via-rose-500 to-purple-600 hover:opacity-90 text-white flex items-center justify-center shadow-md transition-transform active:scale-95">
             <i class="pi pi-instagram text-lg sm:text-xl"></i>
           </div>
-          <span class="text-[11px] font-bold text-stone-700 group-hover:text-stone-950 transition-colors">Historias</span>
+          <span
+            class="text-[11px] font-bold text-stone-700 group-hover:text-stone-950 transition-colors">Historias</span>
         </button>
 
         <!-- Mensajes -->
@@ -779,7 +756,8 @@
             class="w-12 h-12 sm:w-13 sm:h-13 rounded-full bg-gradient-to-tr from-purple-600 to-indigo-600 hover:opacity-90 text-white flex items-center justify-center shadow-md transition-transform active:scale-95">
             <i class="pi pi-send text-base sm:text-lg"></i>
           </div>
-          <span class="text-[11px] font-bold text-stone-700 group-hover:text-stone-950 transition-colors">Mensajes</span>
+          <span
+            class="text-[11px] font-bold text-stone-700 group-hover:text-stone-950 transition-colors">Mensajes</span>
         </button>
       </div>
     </div>
