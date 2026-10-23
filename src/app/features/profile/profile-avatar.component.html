@@ -218,8 +218,8 @@
       [class.text-stone-900]="activeTab() === 'posts'" [class.text-stone-400]="activeTab() !== 'posts'"
       title="Publicaciones">
       <div class="relative w-8 h-8 flex items-center justify-center">
-        <i class="pi pi-th-large text-lg transition-transform duration-200"
-          [class.scale-110]="activeTab() === 'posts'" [class.opacity-40]="activeTab() !== 'posts'"></i>
+        <i class="pi pi-th-large text-lg transition-transform duration-200" [class.scale-110]="activeTab() === 'posts'"
+          [class.opacity-40]="activeTab() !== 'posts'"></i>
         @if (posts().length > 0) {
         <span
           class="absolute -top-1 -right-2.5 min-w-[16px] h-4 px-1 rounded-full bg-stone-100 border border-stone-200 text-stone-700 text-[8px] font-black flex items-center justify-center shadow-xs">
@@ -236,12 +236,10 @@
       [class.text-stone-900]="activeTab() === 'meals'" [class.text-stone-400]="activeTab() !== 'meals'"
       title="Comidas (Intake)">
       <div class="relative w-8 h-8 flex items-center justify-center">
-        <img
-          [src]="activeTab() === 'meals' ? 'icons/intake-active.png' : 'icons/intake-gray.png'"
+        <img [src]="activeTab() === 'meals' ? 'icons/intake-active.png' : 'icons/intake-gray.png'"
           class="w-7 h-7 object-contain transition-all duration-200"
           [ngClass]="activeTab() === 'meals' ? 'scale-110 drop-shadow-xs' : 'opacity-50 hover:opacity-80'"
-          alt="Comidas"
-        />
+          alt="Comidas" />
         @if (mealPhotos().length > 0) {
         <span
           class="absolute -top-1 -right-2.5 min-w-[16px] h-4 px-1 rounded-full bg-stone-100 border border-stone-200 text-stone-700 text-[8px] font-black flex items-center justify-center shadow-xs">
@@ -258,14 +256,36 @@
       [class.text-stone-900]="activeTab() === 'workouts'" [class.text-stone-400]="activeTab() !== 'workouts'"
       title="Workouts">
       <div class="relative w-8 h-8 flex items-center justify-center">
-        <img
-          [src]="activeTab() === 'workouts' ? 'icons/workout-active.png' : 'icons/workout-gray.png'"
+        <img [src]="activeTab() === 'workouts' ? 'icons/workout-active.png' : 'icons/workout-gray.png'"
           class="w-7 h-7 object-contain transition-all duration-200"
           [ngClass]="activeTab() === 'workouts' ? 'scale-110 drop-shadow-xs' : 'opacity-50 hover:opacity-80'"
-          alt="Workouts"
-        />
+          alt="Workouts" />
       </div>
     </button>
+
+    <!-- Pestaña 4: Mi Progreso Corporal (PRIVADO: Solo visible para el dueño de la cuenta) -->
+    @if (isOwner()) {
+    <button (click)="setTab('progress')"
+      class="flex-1 py-3 text-center transition-all cursor-pointer relative flex items-center justify-center"
+      [class.border-b-2]="activeTab() === 'progress'" [class.border-emerald-600]="activeTab() === 'progress'"
+      [class.text-emerald-600]="activeTab() === 'progress'" [class.text-stone-400]="activeTab() !== 'progress'"
+      title="Mi Progreso Corporal">
+      <div class="relative w-8 h-8 flex items-center justify-center">
+        <svg class="w-6 h-6 transition-transform duration-200" [class.scale-110]="activeTab() === 'progress'"
+          viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round"
+          stroke-linejoin="round">
+          <polyline points="22 7 13.5 15.5 8.5 10.5 2 17"></polyline>
+          <polyline points="16 7 22 7 22 13"></polyline>
+        </svg>
+        @if (progressRecords().length > 0) {
+        <span
+          class="absolute -top-1 -right-2.5 min-w-[16px] h-4 px-1 rounded-full bg-emerald-50 border border-emerald-300 text-emerald-700 text-[8px] font-black flex items-center justify-center shadow-xs">
+          {{ progressRecords().length }}
+        </span>
+        }
+      </div>
+    </button>
+    }
   </div>
 
 
@@ -380,6 +400,514 @@
       class="inline-flex items-center gap-1.5 px-3 py-1 bg-amber-500/10 border border-amber-500/30 rounded-full text-amber-800 text-[10px] font-bold">
       <i class="pi pi-clock text-[10px]"></i>
       <span>En Construcción</span>
+    </div>
+  </div>
+  }
+
+  <!-- ========================================== -->
+  <!-- CONTENIDO TAB 4: MI PROGRESO CORPORAL (PRIVADO) -->
+  <!-- ========================================== -->
+  @if (activeTab() === 'progress' && isOwner()) {
+  <div class="mt-2 px-3 md:px-5 animate-fade-in">
+    <!-- CONTENEDOR PRINCIPAL ESTILO DASHBOARD OSCURO PREMIUM (MATCHING SCREENSHOT 1) -->
+    <div
+      class="bg-gradient-to-b from-[#0e1626] via-[#101827] to-[#0a0f1d] text-slate-100 rounded-3xl p-4 md:p-6 shadow-2xl border border-slate-800/90 relative overflow-hidden">
+
+      <!-- GLOW AMBIENTAL ESMERALDA DE FONDO -->
+      <div class="absolute -top-24 -left-24 w-72 h-72 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none">
+      </div>
+      <div class="absolute top-1/2 -right-24 w-72 h-72 bg-teal-500/10 rounded-full blur-3xl pointer-events-none"></div>
+
+      <!-- CABECERA DE PROGRESO: TÍTULO, SUBTÍTULO Y BOTÓN NUEVO REGISTRO (+) -->
+      <div class="flex items-start justify-between mb-4 relative z-10">
+        <div>
+          <div class="flex items-center gap-2">
+            <svg class="w-6 h-6 text-emerald-400 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+              stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="22 7 13.5 15.5 8.5 10.5 2 17"></polyline>
+              <polyline points="16 7 22 7 22 13"></polyline>
+            </svg>
+            <h2 class="text-xl md:text-2xl font-black text-white tracking-tight">
+              Mi Progreso Corporal
+            </h2>
+          </div>
+          <p class="text-xs text-slate-400 mt-1 font-medium">
+            Registra tu peso, medidas y fotos para ver tu evolución.
+          </p>
+        </div>
+
+        <!-- BOTÓN (+) PARA AÑADIR NUEVO REGISTRO (MATCHING SCREENSHOT 1) -->
+        <button (click)="openNewProgressModal()"
+          class="w-10 h-10 rounded-full bg-emerald-600 hover:bg-emerald-500 text-white flex items-center justify-center shadow-lg shadow-emerald-600/30 active:scale-95 transition-all cursor-pointer shrink-0"
+          title="Nuevo Registro de Progreso">
+          <i class="pi pi-plus text-base font-black"></i>
+        </button>
+      </div>
+
+      <!-- BARRA DE ACCIÓN: COMPARTIR GRÁFICOS Y SELECTOR DE UNIDAD KG / LB -->
+      <div class="flex items-center justify-between gap-2 mb-5 relative z-10">
+        <button (click)="shareProgressCharts()"
+          class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#1b253b] hover:bg-[#22304c] border border-slate-700/80 text-blue-300 hover:text-white text-xs font-bold transition-all shadow-sm cursor-pointer active:scale-95">
+          <i class="pi pi-share-alt text-xs"></i>
+          <span>Compartir Gráficos</span>
+        </button>
+
+        <!-- SELECTOR DE UNIDAD KG / LB -->
+        <div class="inline-flex items-center p-0.5 bg-[#172135] rounded-full border border-slate-700/80">
+          <button (click)="toggleWeightUnit('lb')"
+            class="px-3 py-1 rounded-full text-[10px] font-black transition-all cursor-pointer"
+            [ngClass]="preferredWeightUnit() === 'lb' ? 'bg-emerald-500 text-white shadow-xs' : 'text-slate-400 hover:text-white'">
+            LB
+          </button>
+          <button (click)="toggleWeightUnit('kg')"
+            class="px-3 py-1 rounded-full text-[10px] font-black transition-all cursor-pointer"
+            [ngClass]="preferredWeightUnit() === 'kg' ? 'bg-emerald-500 text-white shadow-xs' : 'text-slate-400 hover:text-white'">
+            KG
+          </button>
+        </div>
+      </div>
+
+      <!-- RESUMEN KPI EN TIEMPO REAL (ÚLTIMO PESO, DELTA, MEDIDAS) -->
+      @if (latestRecord()) {
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5 mb-6 relative z-10">
+        <!-- Último Peso -->
+        <div class="bg-[#141d2e]/90 border border-slate-800 rounded-2xl p-3 shadow-inner">
+          <span class="text-[9px] font-black uppercase tracking-wider text-slate-400">Último Peso</span>
+          <div class="flex items-baseline gap-1 mt-0.5">
+            <span class="text-xl font-black text-white">
+              {{ convertWeight(latestRecord()!.peso || 0, latestRecord()!.unidad_peso, preferredWeightUnit()) |
+              number:'1.1-1' }}
+            </span>
+            <span class="text-xs font-bold text-emerald-400 uppercase">{{ preferredWeightUnit() }}</span>
+          </div>
+        </div>
+
+        <!-- Variación Total -->
+        <div class="bg-[#141d2e]/90 border border-slate-800 rounded-2xl p-3 shadow-inner">
+          <span class="text-[9px] font-black uppercase tracking-wider text-slate-400">Variación Total</span>
+          <div class="flex items-baseline gap-1 mt-0.5">
+            @if (weightDelta()) {
+            <span class="text-xl font-black" [ngClass]="weightDelta()!.isLoss ? 'text-emerald-400' : 'text-amber-400'">
+              {{ weightDelta()!.diff > 0 ? '+' : '' }}{{ weightDelta()!.diff }}
+            </span>
+            <span class="text-[10px] font-semibold text-slate-400">
+              {{ weightDelta()!.unit }} ({{ weightDelta()!.percent }}%)
+            </span>
+            } @else {
+            <span class="text-sm font-bold text-slate-500">Inicial</span>
+            }
+          </div>
+        </div>
+
+        <!-- Cintura Actual -->
+        <div class="bg-[#141d2e]/90 border border-slate-800 rounded-2xl p-3 shadow-inner">
+          <span class="text-[9px] font-black uppercase tracking-wider text-slate-400">Cintura</span>
+          <div class="flex items-baseline gap-1 mt-0.5">
+            <span class="text-xl font-black text-amber-300">
+              {{ latestRecord()!.cintura || '--' }}
+            </span>
+            <span class="text-xs font-bold text-slate-400">cm</span>
+          </div>
+        </div>
+
+        <!-- Cadera Actual -->
+        <div class="bg-[#141d2e]/90 border border-slate-800 rounded-2xl p-3 shadow-inner">
+          <span class="text-[9px] font-black uppercase tracking-wider text-slate-400">Cadera</span>
+          <div class="flex items-baseline gap-1 mt-0.5">
+            <span class="text-xl font-black text-sky-300">
+              {{ latestRecord()!.cadera || '--' }}
+            </span>
+            <span class="text-xs font-bold text-slate-400">cm</span>
+          </div>
+        </div>
+      </div>
+      }
+
+      <!-- ========================================== -->
+      <!-- CARD 1: EVOLUCIÓN DE PESO (LB / KG)         -->
+      <!-- MATCHING SCREENSHOT 1                      -->
+      <!-- ========================================== -->
+      <div class="bg-[#141d2e]/95 border border-slate-800/90 rounded-3xl p-4 md:p-5 shadow-xl relative mb-5">
+        <div class="flex items-center justify-between mb-3">
+          <div class="flex items-center gap-2">
+            <!-- Icono rosa / salmón -->
+            <div
+              class="w-7 h-7 rounded-lg bg-rose-500/20 border border-rose-500/30 flex items-center justify-center text-rose-400">
+              <i class="pi pi-chart-line text-xs font-bold"></i>
+            </div>
+            <h3 class="text-sm md:text-base font-black text-white tracking-tight">
+              Evolución de Peso ({{ preferredWeightUnit() }})
+            </h3>
+          </div>
+
+          @if (weightDelta()) {
+          <span class="text-[10px] font-black px-2 py-0.5 rounded-full"
+            [ngClass]="weightDelta()!.isLoss ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40' : 'bg-amber-500/20 text-amber-300 border border-amber-500/40'">
+            {{ weightDelta()!.diff > 0 ? '+' : '' }}{{ weightDelta()!.diff }} {{ weightDelta()!.unit }}
+          </span>
+          }
+        </div>
+
+        <!-- GRÁFICO SVG INTERACTIVO DE PESO -->
+        @if (weightChartData().hasData) {
+        <div class="relative w-full overflow-hidden select-none">
+          <svg [attr.viewBox]="'0 0 ' + weightChartData().width + ' ' + weightChartData().height"
+            class="w-full h-auto overflow-visible">
+            <defs>
+              <linearGradient id="weightGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                <stop offset="0%" stop-color="#10b981" stop-opacity="0.35" />
+                <stop offset="100%" stop-color="#10b981" stop-opacity="0.0" />
+              </linearGradient>
+            </defs>
+
+            <!-- LÍNEAS GUÍA HORIZONTALES DISCONTINUAS CON VALORES DE PESO A LA IZQUIERDA -->
+            @for (line of weightChartData().gridLines; track line.y) {
+            <g>
+              <line x1="38" [attr.y1]="line.y" [attr.x2]="weightChartData().width - 15" [attr.y2]="line.y"
+                stroke="#334155" stroke-dasharray="3 3" stroke-width="1" />
+              <text x="32" [attr.y]="line.y + 3" fill="#64748b" font-size="9" font-weight="700" text-anchor="end">
+                {{ line.val }}
+              </text>
+            </g>
+            }
+
+            <!-- ÁREA SOMBREADA BAJO LA CURVA -->
+            @if (weightChartData().areaPath) {
+            <path [attr.d]="weightChartData().areaPath" fill="url(#weightGrad)" />
+            }
+
+            <!-- LÍNEA DE TENDENCIA ESMERALDA -->
+            <path [attr.d]="weightChartData().path" fill="none" stroke="#10b981" stroke-width="3" stroke-linecap="round"
+              stroke-linejoin="round" />
+
+            <!-- PUNTOS DEL GRÁFICO CON FECHAS EN EJE X -->
+            @for (pt of weightChartData().points; track pt.id) {
+            <g (mouseenter)="showTooltip('weight', pt.x, pt.y, pt.weight + ' ' + preferredWeightUnit(), pt.dateLabel)"
+              (click)="showTooltip('weight', pt.x, pt.y, pt.weight + ' ' + preferredWeightUnit(), pt.dateLabel)"
+              class="cursor-pointer group">
+              <!-- Círculo exterior de pulsación -->
+              <circle [attr.cx]="pt.x" [attr.cy]="pt.y" r="8" fill="#10b981" fill-opacity="0.2"
+                class="group-hover:scale-125 transition-transform" />
+              <!-- Círculo de punto blanco con borde verde -->
+              <circle [attr.cx]="pt.x" [attr.cy]="pt.y" r="4.5" fill="#ffffff" stroke="#10b981" stroke-width="2.5" />
+              <!-- Etiqueta de Fecha en el eje X -->
+              <text [attr.x]="pt.x" [attr.y]="weightChartData().height - 5" fill="#94a3b8" font-size="9"
+                font-weight="700" text-anchor="middle">
+                {{ pt.dateLabel }}
+              </text>
+            </g>
+            }
+          </svg>
+
+          <!-- TOOLTIP FLOTANTE INTERACTIVO -->
+          @if (activeTooltip() && activeTooltip()!.type === 'weight') {
+          <div
+            class="absolute bg-slate-900 border border-emerald-500/50 text-white text-[11px] font-black px-2.5 py-1 rounded-xl shadow-xl pointer-events-none transform -translate-x-1/2 -translate-y-full mb-2"
+            [style.left.px]="activeTooltip()!.x" [style.top.px]="activeTooltip()!.y">
+            <div class="text-emerald-400">{{ activeTooltip()!.text }}</div>
+            <div class="text-[9px] text-slate-400 font-semibold">{{ activeTooltip()!.subtext }}</div>
+          </div>
+          }
+        </div>
+        } @else {
+        <!-- Estado sin datos de peso -->
+        <div class="py-8 text-center">
+          <p class="text-xs text-slate-400 mb-2">Aún no hay registros de peso corporal.</p>
+          <button (click)="openNewProgressModal()"
+            class="px-3 py-1.5 bg-emerald-600/30 border border-emerald-500/50 text-emerald-300 rounded-xl text-xs font-bold hover:bg-emerald-600/50 transition-all cursor-pointer">
+            + Registrar Peso
+          </button>
+        </div>
+        }
+      </div>
+
+      <!-- ========================================== -->
+      <!-- CARD 2: MEDIDAS CORPORALES (CM)            -->
+      <!-- MATCHING SCREENSHOT 1 (CADERA, CINTURA, PECHO) -->
+      <!-- ========================================== -->
+      <div class="bg-[#141d2e]/95 border border-slate-800/90 rounded-3xl p-4 md:p-5 shadow-xl relative mb-5">
+        <div class="flex items-center gap-2 mb-3">
+          <div
+            class="w-7 h-7 rounded-lg bg-sky-500/20 border border-sky-500/30 flex items-center justify-center text-sky-400">
+            <i class="pi pi-pencil text-xs font-bold"></i>
+          </div>
+          <h3 class="text-sm md:text-base font-black text-white tracking-tight">
+            Medidas Corporales (cm)
+          </h3>
+        </div>
+
+        @if (bodyMetricsChartData().hasData) {
+        <div class="relative w-full overflow-hidden select-none">
+          <svg [attr.viewBox]="'0 0 ' + bodyMetricsChartData().width + ' ' + bodyMetricsChartData().height"
+            class="w-full h-auto overflow-visible">
+
+            <!-- LÍNEAS GUÍA HORIZONTALES DISCONTINUAS -->
+            @for (line of bodyMetricsChartData().gridLines; track line.y) {
+            <g>
+              <line x1="38" [attr.y1]="line.y" [attr.x2]="bodyMetricsChartData().width - 15" [attr.y2]="line.y"
+                stroke="#334155" stroke-dasharray="3 3" stroke-width="1" />
+              <text x="32" [attr.y]="line.y + 3" fill="#64748b" font-size="9" font-weight="700" text-anchor="end">
+                {{ line.val }}
+              </text>
+            </g>
+            }
+
+            <!-- LÍNEA CADERA (AZUL SKY) -->
+            @if (bodyMetricsChartData().caderaPath) {
+            <path [attr.d]="bodyMetricsChartData().caderaPath" fill="none" stroke="#38bdf8" stroke-width="2.5"
+              stroke-linecap="round" stroke-linejoin="round" />
+            }
+
+            <!-- LÍNEA CINTURA (AMBER / AMARILLO) -->
+            @if (bodyMetricsChartData().cinturaPath) {
+            <path [attr.d]="bodyMetricsChartData().cinturaPath" fill="none" stroke="#fbbf24" stroke-width="2.5"
+              stroke-linecap="round" stroke-linejoin="round" />
+            }
+
+            <!-- LÍNEA PECHO (ROSA / MAGENTA) -->
+            @if (bodyMetricsChartData().pechoPath) {
+            <path [attr.d]="bodyMetricsChartData().pechoPath" fill="none" stroke="#f472b6" stroke-width="2.5"
+              stroke-linecap="round" stroke-linejoin="round" />
+            }
+
+            <!-- PUNTOS CADERA (AZUL) -->
+            @for (pt of bodyMetricsChartData().caderaPoints; track pt.id) {
+            <g (mouseenter)="showTooltip('metric', pt.x, pt.y, 'Cadera: ' + pt.val + ' cm', pt.dateLabel)"
+              (click)="showTooltip('metric', pt.x, pt.y, 'Cadera: ' + pt.val + ' cm', pt.dateLabel)"
+              class="cursor-pointer">
+              <circle [attr.cx]="pt.x" [attr.cy]="pt.y" r="4.5" fill="#38bdf8" stroke="#ffffff" stroke-width="1.5" />
+              <!-- Fechas X -->
+              <text [attr.x]="pt.x" [attr.y]="bodyMetricsChartData().height - 5" fill="#94a3b8" font-size="9"
+                font-weight="700" text-anchor="middle">
+                {{ pt.dateLabel }}
+              </text>
+            </g>
+            }
+
+            <!-- PUNTOS CINTURA (AMBER) -->
+            @for (pt of bodyMetricsChartData().cinturaPoints; track pt.id) {
+            <g (mouseenter)="showTooltip('metric', pt.x, pt.y, 'Cintura: ' + pt.val + ' cm', pt.dateLabel)"
+              (click)="showTooltip('metric', pt.x, pt.y, 'Cintura: ' + pt.val + ' cm', pt.dateLabel)"
+              class="cursor-pointer">
+              <circle [attr.cx]="pt.x" [attr.cy]="pt.y" r="4.5" fill="#fbbf24" stroke="#ffffff" stroke-width="1.5" />
+            </g>
+            }
+
+            <!-- PUNTOS PECHO (ROSA) -->
+            @for (pt of bodyMetricsChartData().pechoPoints; track pt.id) {
+            <g (mouseenter)="showTooltip('metric', pt.x, pt.y, 'Pecho: ' + pt.val + ' cm', pt.dateLabel)"
+              (click)="showTooltip('metric', pt.x, pt.y, 'Pecho: ' + pt.val + ' cm', pt.dateLabel)"
+              class="cursor-pointer">
+              <circle [attr.cx]="pt.x" [attr.cy]="pt.y" r="4.5" fill="#f472b6" stroke="#ffffff" stroke-width="1.5" />
+            </g>
+            }
+          </svg>
+
+          <!-- TOOLTIP FLOTANTE INTERACTIVO -->
+          @if (activeTooltip() && activeTooltip()!.type === 'metric') {
+          <div
+            class="absolute bg-slate-900 border border-slate-700 text-white text-[11px] font-black px-2.5 py-1 rounded-xl shadow-xl pointer-events-none transform -translate-x-1/2 -translate-y-full mb-2"
+            [style.left.px]="activeTooltip()!.x" [style.top.px]="activeTooltip()!.y">
+            <div>{{ activeTooltip()!.text }}</div>
+            <div class="text-[9px] text-slate-400 font-semibold">{{ activeTooltip()!.subtext }}</div>
+          </div>
+          }
+        </div>
+
+        <!-- LEYENDA INFERIOR DE COLOR (MATCHING SCREENSHOT 1) -->
+        <div
+          class="flex items-center justify-center gap-5 mt-4 pt-3 border-t border-slate-800 text-xs font-bold select-none">
+          <div class="flex items-center gap-1.5">
+            <span class="w-3 h-3 rounded-full bg-[#38bdf8] shadow-xs"></span>
+            <span class="text-slate-300">Cadera</span>
+          </div>
+          <div class="flex items-center gap-1.5">
+            <span class="w-3 h-3 rounded-full bg-[#fbbf24] shadow-xs"></span>
+            <span class="text-slate-300">Cintura</span>
+          </div>
+          <div class="flex items-center gap-1.5">
+            <span class="w-3 h-3 rounded-full bg-[#f472b6] shadow-xs"></span>
+            <span class="text-slate-300">Pecho</span>
+          </div>
+        </div>
+        } @else {
+        <div class="py-8 text-center">
+          <p class="text-xs text-slate-400 mb-2">Aún no hay registros de medidas corporales.</p>
+          <button (click)="openNewProgressModal()"
+            class="px-3 py-1.5 bg-sky-600/30 border border-sky-500/50 text-sky-300 rounded-xl text-xs font-bold hover:bg-sky-600/50 transition-all cursor-pointer">
+            + Registrar Medidas
+          </button>
+        </div>
+        }
+      </div>
+
+      <!-- ========================================== -->
+      <!-- CARD 3: LOG FOTOGRÁFICO                   -->
+      <!-- MATCHING SCREENSHOT 1 (FRONTAL, LATERAL, ESPALDA) -->
+      <!-- ========================================== -->
+      <div class="mt-8">
+        <div class="flex items-center justify-between mb-3">
+          <div class="flex items-center gap-2">
+            <span class="text-lg">📸</span>
+            <h3 class="text-base font-black text-white tracking-tight">
+              Log Fotográfico
+            </h3>
+          </div>
+          @if (descendingProgress().length > 0) {
+          <span class="text-[10px] font-bold text-slate-400">
+            {{ descendingProgress().length }} check-ins registrados
+          </span>
+          }
+        </div>
+
+        @if (descendingProgress().length > 0) {
+        <div class="space-y-4">
+          @for (rec of descendingProgress(); track rec.id) {
+          <div
+            class="bg-[#141d2e]/95 border border-slate-800/90 rounded-3xl p-4 shadow-xl hover:border-slate-700 transition-all">
+            <!-- CABECERA DEL CHECK-IN (FECHA, MEDIDAS, COMPARTIR, ELIMINAR) -->
+            <div class="flex items-center justify-between mb-3 pb-2 border-b border-slate-800/80">
+              <div class="flex items-center gap-2 flex-wrap">
+                <i class="pi pi-calendar text-emerald-400 text-xs"></i>
+                <span class="text-xs font-black text-white tracking-tight">
+                  {{ formatDateSpanish(rec.timestamp) }}
+                </span>
+
+                @if (rec.peso) {
+                <span
+                  class="text-[9px] font-black px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                  {{ rec.peso }} {{ rec.unidad_peso || 'lb' }}
+                </span>
+                }
+                @if (rec.cintura) {
+                <span class="text-[9px] font-bold text-amber-300 bg-amber-500/10 px-1.5 py-0.5 rounded-md">
+                  C: {{ rec.cintura }}cm
+                </span>
+                }
+                @if (rec.cadera) {
+                <span class="text-[9px] font-bold text-sky-300 bg-sky-500/10 px-1.5 py-0.5 rounded-md">
+                  Cad: {{ rec.cadera }}cm
+                </span>
+                }
+                @if (rec.pecho) {
+                <span class="text-[9px] font-bold text-pink-300 bg-pink-500/10 px-1.5 py-0.5 rounded-md">
+                  P: {{ rec.pecho }}cm
+                </span>
+                }
+              </div>
+
+              <!-- BOTONES DE ACCIÓN: COMPARTIR Y ELIMINAR -->
+              <div class="flex items-center gap-1.5 shrink-0">
+                <button (click)="shareProgressRecord(rec)"
+                  class="w-7 h-7 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white flex items-center justify-center text-xs transition-all cursor-pointer shadow-xs"
+                  title="Compartir este check-in">
+                  <i class="pi pi-share-alt text-[10px]"></i>
+                </button>
+                <button (click)="deleteProgress(rec.id)"
+                  class="w-7 h-7 rounded-lg bg-rose-950/60 hover:bg-rose-900 border border-rose-800/50 text-rose-300 hover:text-white flex items-center justify-center text-xs transition-all cursor-pointer shadow-xs"
+                  title="Eliminar este check-in">
+                  <i class="pi pi-trash text-[10px]"></i>
+                </button>
+              </div>
+            </div>
+
+            <!-- FOTOS: 3 COLUMNAS (FRONTAL, LATERAL, ESPALDA) MATCHING SCREENSHOT 1 -->
+            <div class="grid grid-cols-3 gap-2">
+              <!-- Foto Frontal -->
+              <div class="flex flex-col">
+                <span
+                  class="text-[9px] font-black uppercase text-slate-400 tracking-wider mb-1 text-center">Frontal</span>
+                <div
+                  class="aspect-[3/4] rounded-2xl bg-[#0b101b] border border-slate-800 overflow-hidden relative group">
+                  @if (rec.foto_frontal_url) {
+                  <img [src]="rec.foto_frontal_url" alt="Foto Frontal"
+                    (click)="openLightbox(rec.foto_frontal_url!, 'Vista Frontal', rec.timestamp)"
+                    class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 cursor-pointer" />
+                  <div
+                    class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center pointer-events-none">
+                    <i class="pi pi-search-plus text-white text-base"></i>
+                  </div>
+                  } @else {
+                  <div class="w-full h-full flex flex-col items-center justify-center text-slate-600 p-2 text-center">
+                    <i class="pi pi-camera text-base mb-1"></i>
+                    <span class="text-[8px] font-semibold leading-tight">Sin foto frontal</span>
+                  </div>
+                  }
+                </div>
+              </div>
+
+              <!-- Foto Lateral -->
+              <div class="flex flex-col">
+                <span
+                  class="text-[9px] font-black uppercase text-slate-400 tracking-wider mb-1 text-center">Lateral</span>
+                <div
+                  class="aspect-[3/4] rounded-2xl bg-[#0b101b] border border-slate-800 overflow-hidden relative group">
+                  @if (rec.foto_lateral_url) {
+                  <img [src]="rec.foto_lateral_url" alt="Foto Lateral"
+                    (click)="openLightbox(rec.foto_lateral_url!, 'Vista Lateral', rec.timestamp)"
+                    class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 cursor-pointer" />
+                  <div
+                    class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center pointer-events-none">
+                    <i class="pi pi-search-plus text-white text-base"></i>
+                  </div>
+                  } @else {
+                  <div class="w-full h-full flex flex-col items-center justify-center text-slate-600 p-2 text-center">
+                    <i class="pi pi-camera text-base mb-1"></i>
+                    <span class="text-[8px] font-semibold leading-tight">Sin foto lateral</span>
+                  </div>
+                  }
+                </div>
+              </div>
+
+              <!-- Foto Espalda -->
+              <div class="flex flex-col">
+                <span
+                  class="text-[9px] font-black uppercase text-slate-400 tracking-wider mb-1 text-center">Espalda</span>
+                <div
+                  class="aspect-[3/4] rounded-2xl bg-[#0b101b] border border-slate-800 overflow-hidden relative group">
+                  @if (rec.foto_espalda_url) {
+                  <img [src]="rec.foto_espalda_url" alt="Foto Espalda"
+                    (click)="openLightbox(rec.foto_espalda_url!, 'Vista Espalda', rec.timestamp)"
+                    class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 cursor-pointer" />
+                  <div
+                    class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center pointer-events-none">
+                    <i class="pi pi-search-plus text-white text-base"></i>
+                  </div>
+                  } @else {
+                  <div class="w-full h-full flex flex-col items-center justify-center text-slate-600 p-2 text-center">
+                    <i class="pi pi-camera text-base mb-1"></i>
+                    <span class="text-[8px] font-semibold leading-tight">Sin foto espalda</span>
+                  </div>
+                  }
+                </div>
+              </div>
+            </div>
+          </div>
+          }
+        </div>
+        } @else {
+        <!-- ESTADO VACÍO ELEGANTE -->
+        <div class="py-12 px-4 text-center bg-[#141d2e]/60 border border-dashed border-slate-800 rounded-3xl">
+          <div
+            class="w-14 h-14 mx-auto rounded-2xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 mb-3 shadow-inner">
+            <i class="pi pi-camera text-2xl"></i>
+          </div>
+          <h4 class="text-sm font-black text-white uppercase tracking-wider mb-1">
+            Sin Fotos de Progreso Registradas
+          </h4>
+          <p class="text-xs text-slate-400 max-w-sm mx-auto mb-4 leading-relaxed">
+            Captura tus fotos de progreso frontal, lateral y de espalda para que tus gráficos y comparativas visuales
+            cobren vida.
+          </p>
+          <button (click)="openNewProgressModal()"
+            class="inline-flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold text-xs rounded-2xl shadow-lg shadow-emerald-600/30 active:scale-95 transition-all cursor-pointer">
+            <i class="pi pi-plus text-xs"></i>
+            <span>Registrar Primera Medición</span>
+          </button>
+        </div>
+        }
+      </div>
+
     </div>
   </div>
   }
@@ -820,3 +1348,256 @@
   </div>
 </p-dialog>
 }
+
+<!-- ========================================== -->
+<!-- MODAL: NUEVO REGISTRO DE PROGRESO         -->
+<!-- MATCHING SCREENSHOT 2                      -->
+<!-- ========================================== -->
+<p-dialog [(visible)]="isNewProgressModalOpen" [modal]="true" [draggable]="false" [resizable]="false" [closable]="false"
+  styleClass="w-[94vw] max-w-md bg-[#131b2a] text-slate-100 rounded-3xl overflow-hidden shadow-2xl p-0 border border-slate-800">
+
+  <div class="p-5 space-y-4 bg-[#131b2a]">
+    <!-- CABECERA DEL MODAL: TÍTULO Y BOTÓN CERRAR (X) -->
+    <div class="flex items-center justify-between pb-2 border-b border-slate-800">
+      <h3 class="text-base font-black text-white tracking-tight">
+        Nuevo Registro
+      </h3>
+      <button type="button" (click)="closeNewProgressModal()"
+        class="w-8 h-8 rounded-full bg-slate-800/80 hover:bg-slate-700 text-slate-400 hover:text-white flex items-center justify-center text-sm transition-all cursor-pointer">
+        <i class="pi pi-times"></i>
+      </button>
+    </div>
+
+    <!-- FECHA DEL REGISTRO (MATCHING SCREENSHOT 2) -->
+    <div>
+      <label class="block text-[10px] font-black uppercase tracking-wider text-slate-400 mb-1.5">
+        FECHA DEL REGISTRO
+      </label>
+      <div class="relative">
+        <input type="date" [ngModel]="progressDate()" (ngModelChange)="progressDate.set($event)"
+          class="w-full bg-[#0d1422] border border-slate-700/80 rounded-xl text-xs px-3 py-2.5 text-white font-bold focus:outline-none focus:border-emerald-500" />
+      </div>
+    </div>
+
+    <!-- PESO CON SELECTOR DE UNIDAD KG / LB (MATCHING SCREENSHOT 2) -->
+    <div>
+      <label class="block text-[10px] font-black uppercase tracking-wider text-slate-400 mb-1.5">
+        PESO
+      </label>
+      <div
+        class="flex items-center bg-[#0d1422] border border-slate-700/80 rounded-xl overflow-hidden focus-within:border-emerald-500">
+        <input type="number" step="0.1" [ngModel]="progressWeight()" (ngModelChange)="progressWeight.set($event)"
+          placeholder="Ej: 70.5"
+          class="flex-1 bg-transparent border-0 text-xs px-3 py-2.5 text-white font-bold placeholder:text-slate-600 focus:outline-none" />
+
+        <select [ngModel]="progressWeightUnit()" (ngModelChange)="progressWeightUnit.set($event)"
+          class="bg-[#172135] text-slate-200 text-xs font-black px-3 py-2.5 border-l border-slate-700/80 focus:outline-none cursor-pointer">
+          <option value="kg">KG</option>
+          <option value="lb">LB</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- MEDIDAS PRINCIPALES: CINTURA, CADERA, PECHO (MATCHING SCREENSHOT 2) -->
+    <div class="grid grid-cols-3 gap-2">
+      <div>
+        <label class="block text-[9px] font-black uppercase tracking-wider text-slate-400 mb-1 text-center">
+          CINTURA (CM)
+        </label>
+        <input type="number" step="0.5" [ngModel]="progressWaist()" (ngModelChange)="progressWaist.set($event)"
+          placeholder="-- cm"
+          class="w-full bg-[#0d1422] border border-slate-700/80 rounded-xl text-xs px-2.5 py-2.5 text-white text-center font-bold placeholder:text-slate-600 focus:outline-none focus:border-emerald-500" />
+      </div>
+
+      <div>
+        <label class="block text-[9px] font-black uppercase tracking-wider text-slate-400 mb-1 text-center">
+          CADERA (CM)
+        </label>
+        <input type="number" step="0.5" [ngModel]="progressHip()" (ngModelChange)="progressHip.set($event)"
+          placeholder="-- cm"
+          class="w-full bg-[#0d1422] border border-slate-700/80 rounded-xl text-xs px-2.5 py-2.5 text-white text-center font-bold placeholder:text-slate-600 focus:outline-none focus:border-emerald-500" />
+      </div>
+
+      <div>
+        <label class="block text-[9px] font-black uppercase tracking-wider text-slate-400 mb-1 text-center">
+          PECHO (CM)
+        </label>
+        <input type="number" step="0.5" [ngModel]="progressChest()" (ngModelChange)="progressChest.set($event)"
+          placeholder="-- cm"
+          class="w-full bg-[#0d1422] border border-slate-700/80 rounded-xl text-xs px-2.5 py-2.5 text-white text-center font-bold placeholder:text-slate-600 focus:outline-none focus:border-emerald-500" />
+      </div>
+    </div>
+
+    <!-- MEDIDAS AVANZADAS COLAPSABLES -->
+    <div>
+      <button type="button" (click)="toggleAdvancedMetrics()"
+        class="text-[10px] font-bold text-emerald-400 hover:text-emerald-300 transition-colors flex items-center gap-1 cursor-pointer">
+        <i class="pi" [ngClass]="showAdvancedMetrics() ? 'pi-chevron-down' : 'pi-chevron-right'"></i>
+        <span>{{ showAdvancedMetrics() ? 'Ocultar medidas adicionales' : '+ Medidas adicionales (Cuello, Bíceps, %
+          Grasa...)' }}</span>
+      </button>
+
+      @if (showAdvancedMetrics()) {
+      <div class="grid grid-cols-2 gap-2 mt-2 pt-2 border-t border-slate-800 animate-fade-in">
+        <div>
+          <label class="block text-[8px] font-bold uppercase text-slate-400 mb-1">Cuello (cm)</label>
+          <input type="number" step="0.5" [ngModel]="progressNeck()" (ngModelChange)="progressNeck.set($event)"
+            class="w-full bg-[#0d1422] border border-slate-700/80 rounded-xl text-xs px-2.5 py-2 text-white font-bold" />
+        </div>
+        <div>
+          <label class="block text-[8px] font-bold uppercase text-slate-400 mb-1">Bíceps (cm)</label>
+          <input type="number" step="0.5" [ngModel]="progressBiceps()" (ngModelChange)="progressBiceps.set($event)"
+            class="w-full bg-[#0d1422] border border-slate-700/80 rounded-xl text-xs px-2.5 py-2 text-white font-bold" />
+        </div>
+        <div>
+          <label class="block text-[8px] font-bold uppercase text-slate-400 mb-1">Muslo (cm)</label>
+          <input type="number" step="0.5" [ngModel]="progressThigh()" (ngModelChange)="progressThigh.set($event)"
+            class="w-full bg-[#0d1422] border border-slate-700/80 rounded-xl text-xs px-2.5 py-2 text-white font-bold" />
+        </div>
+        <div>
+          <label class="block text-[8px] font-bold uppercase text-slate-400 mb-1">% Grasa Corporal</label>
+          <input type="number" step="0.1" [ngModel]="progressBodyFat()" (ngModelChange)="progressBodyFat.set($event)"
+            class="w-full bg-[#0d1422] border border-slate-700/80 rounded-xl text-xs px-2.5 py-2 text-white font-bold" />
+        </div>
+      </div>
+      }
+    </div>
+
+    <!-- FOTOS (OPCIONAL PERO RECOMENDADO) - MATCHING SCREENSHOT 2 -->
+    <div>
+      <label class="block text-[10px] font-black uppercase tracking-wider text-slate-400 mb-2">
+        FOTOS (OPCIONAL PERO RECOMENDADO)
+      </label>
+
+      <div class="grid grid-cols-3 gap-2">
+        <!-- FRONTAL -->
+        <div class="flex flex-col">
+          <span class="text-[9px] font-black uppercase text-slate-400 tracking-wider mb-1 text-center">FRONTAL</span>
+          <div (click)="frontInput.click()"
+            class="aspect-[3/4] rounded-2xl border-2 border-dashed border-slate-600 hover:border-emerald-500 bg-[#f8fafc] text-slate-700 hover:bg-emerald-50/20 flex flex-col items-center justify-center p-2 cursor-pointer transition-all relative overflow-hidden group select-none shadow-sm">
+            @if (photoFrontPreview()) {
+            <img [src]="photoFrontPreview()" alt="Preview Frontal" class="w-full h-full object-cover rounded-xl" />
+            <button type="button" (click)="$event.stopPropagation(); removeProgressPhoto('front')"
+              class="absolute top-1.5 right-1.5 w-6 h-6 rounded-full bg-black/75 hover:bg-rose-600 text-white flex items-center justify-center text-[10px] transition-all cursor-pointer shadow-md">
+              <i class="pi pi-times"></i>
+            </button>
+            <div
+              class="absolute bottom-1 bg-emerald-600/90 text-white text-[8px] font-black px-1.5 py-0.5 rounded-full">
+              Listo ✓
+            </div>
+            } @else {
+            <i
+              class="pi pi-camera text-2xl text-slate-400 mb-1 group-hover:scale-110 group-hover:text-emerald-500 transition-all"></i>
+            <span class="text-[10px] font-bold text-slate-500 group-hover:text-emerald-600">Tocar</span>
+            }
+          </div>
+          <input #frontInput type="file" accept="image/*" (change)="onProgressPhotoSelected($event, 'front')"
+            class="hidden" />
+        </div>
+
+        <!-- LATERAL -->
+        <div class="flex flex-col">
+          <span class="text-[9px] font-black uppercase text-slate-400 tracking-wider mb-1 text-center">LATERAL</span>
+          <div (click)="sideInput.click()"
+            class="aspect-[3/4] rounded-2xl border-2 border-dashed border-slate-600 hover:border-emerald-500 bg-[#f8fafc] text-slate-700 hover:bg-emerald-50/20 flex flex-col items-center justify-center p-2 cursor-pointer transition-all relative overflow-hidden group select-none shadow-sm">
+            @if (photoSidePreview()) {
+            <img [src]="photoSidePreview()" alt="Preview Lateral" class="w-full h-full object-cover rounded-xl" />
+            <button type="button" (click)="$event.stopPropagation(); removeProgressPhoto('side')"
+              class="absolute top-1.5 right-1.5 w-6 h-6 rounded-full bg-black/75 hover:bg-rose-600 text-white flex items-center justify-center text-[10px] transition-all cursor-pointer shadow-md">
+              <i class="pi pi-times"></i>
+            </button>
+            <div
+              class="absolute bottom-1 bg-emerald-600/90 text-white text-[8px] font-black px-1.5 py-0.5 rounded-full">
+              Listo ✓
+            </div>
+            } @else {
+            <i
+              class="pi pi-camera text-2xl text-slate-400 mb-1 group-hover:scale-110 group-hover:text-emerald-500 transition-all"></i>
+            <span class="text-[10px] font-bold text-slate-500 group-hover:text-emerald-600">Tocar</span>
+            }
+          </div>
+          <input #sideInput type="file" accept="image/*" (change)="onProgressPhotoSelected($event, 'side')"
+            class="hidden" />
+        </div>
+
+        <!-- ESPALDA -->
+        <div class="flex flex-col">
+          <span class="text-[9px] font-black uppercase text-slate-400 tracking-wider mb-1 text-center">ESPALDA</span>
+          <div (click)="backInput.click()"
+            class="aspect-[3/4] rounded-2xl border-2 border-dashed border-slate-600 hover:border-emerald-500 bg-[#f8fafc] text-slate-700 hover:bg-emerald-50/20 flex flex-col items-center justify-center p-2 cursor-pointer transition-all relative overflow-hidden group select-none shadow-sm">
+            @if (photoBackPreview()) {
+            <img [src]="photoBackPreview()" alt="Preview Espalda" class="w-full h-full object-cover rounded-xl" />
+            <button type="button" (click)="$event.stopPropagation(); removeProgressPhoto('back')"
+              class="absolute top-1.5 right-1.5 w-6 h-6 rounded-full bg-black/75 hover:bg-rose-600 text-white flex items-center justify-center text-[10px] transition-all cursor-pointer shadow-md">
+              <i class="pi pi-times"></i>
+            </button>
+            <div
+              class="absolute bottom-1 bg-emerald-600/90 text-white text-[8px] font-black px-1.5 py-0.5 rounded-full">
+              Listo ✓
+            </div>
+            } @else {
+            <i
+              class="pi pi-camera text-2xl text-slate-400 mb-1 group-hover:scale-110 group-hover:text-emerald-500 transition-all"></i>
+            <span class="text-[10px] font-bold text-slate-500 group-hover:text-emerald-600">Tocar</span>
+            }
+          </div>
+          <input #backInput type="file" accept="image/*" (change)="onProgressPhotoSelected($event, 'back')"
+            class="hidden" />
+        </div>
+      </div>
+    </div>
+
+    <!-- MENSAJES DE ESTADO / ERROR -->
+    @if (savingStepText()) {
+    <div class="text-[10px] font-semibold text-emerald-400 flex items-center gap-1.5 justify-center py-1">
+      <i class="pi pi-spin pi-spinner text-xs"></i>
+      <span>{{ savingStepText() }}</span>
+    </div>
+    }
+
+    @if (saveProgressError()) {
+    <div class="p-2.5 rounded-xl bg-rose-950/60 border border-rose-800/60 text-rose-300 text-[11px] font-semibold">
+      <i class="pi pi-exclamation-triangle mr-1"></i>{{ saveProgressError() }}
+    </div>
+    }
+
+    <!-- BOTÓN GUARDAR PROGRESO (MATCHING SCREENSHOT 2) -->
+    <div class="pt-2">
+      <button type="button" (click)="saveProgress()" [disabled]="isSavingProgress()"
+        class="w-full py-3.5 px-4 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white font-black text-sm rounded-2xl flex items-center justify-center gap-2 shadow-lg shadow-emerald-600/30 active:scale-98 transition-all cursor-pointer">
+        @if (isSavingProgress()) {
+        <i class="pi pi-spin pi-spinner"></i>
+        <span>Guardando...</span>
+        } @else if (saveProgressSuccess()) {
+        <i class="pi pi-check"></i>
+        <span>¡Guardado Exitosamente!</span>
+        } @else {
+        <i class="pi pi-save text-base"></i>
+        <span>Guardar Progreso</span>
+        }
+      </button>
+    </div>
+  </div>
+</p-dialog>
+
+<!-- ========================================== -->
+<!-- MODAL: LIGHTBOX PARA AMPLIAR FOTO          -->
+<!-- ========================================== -->
+<p-dialog [(visible)]="lightboxOpen" [modal]="true" [draggable]="false" [resizable]="false"
+  styleClass="w-[94vw] max-w-lg bg-black text-white rounded-3xl overflow-hidden p-0 border border-stone-800">
+  <div class="relative bg-black flex flex-col items-center justify-center p-2">
+    <div class="w-full flex items-center justify-between p-2">
+      <span class="text-xs font-black text-emerald-400 uppercase tracking-wider">
+        {{ lightboxTitle() }} • {{ lightboxDate() }}
+      </span>
+      <button (click)="closeLightbox()"
+        class="w-8 h-8 rounded-full bg-stone-800 text-stone-300 hover:text-white flex items-center justify-center text-xs cursor-pointer">
+        <i class="pi pi-times"></i>
+      </button>
+    </div>
+    @if (lightboxPhotoUrl()) {
+    <img [src]="lightboxPhotoUrl()" [alt]="lightboxTitle()"
+      class="w-full max-h-[75vh] object-contain rounded-2xl shadow-2xl" />
+    }
+  </div>
+</p-dialog>

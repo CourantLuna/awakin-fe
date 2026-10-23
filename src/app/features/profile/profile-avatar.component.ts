@@ -1,6 +1,7 @@
 import { Component, inject, OnInit, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { firstValueFrom } from 'rxjs';
 import { PrimeNGModule } from '../../shared/prime-ng.module';
 import { AuthService } from '../../core/services/auth.service';
 import {
@@ -8,10 +9,11 @@ import {
   AthleteProfile,
   AthleteFeedPost,
   KinInfo,
-  NutritionMealRecord
+  NutritionMealRecord,
+  ProgressMetricRecord
 } from '../../core/services/athlete.service';
 
-export type ProfileFeedTab = 'posts' | 'meals' | 'workouts';
+export type ProfileFeedTab = 'posts' | 'meals' | 'workouts' | 'progress';
 
 @Component({
   selector: 'app-profile-avatar.component',
@@ -85,6 +87,298 @@ export class ProfileAvatarComponent implements OnInit {
     return list.filter((m) => !!m.foto_url);
   });
 
+  // ==========================================
+  // PRIVACIDAD: CONTROL DE ACCESO AL 4TO TAB
+  // Solo el dueño de la cuenta puede ver sus medidas corporales y logs de progreso
+  // ==========================================
+  isOwner = computed(() => {
+    const current = this.athlete();
+    const session = this.authService.currentSession();
+    if (!current) return false;
+
+    // 1. Coincide ID del usuario autenticado
+    if (session?.avatar?.id && current.id && session.avatar.id === current.id) {
+      return true;
+    }
+
+    // 2. Coincide email del usuario autenticado
+    const sEmail = session?.avatar?.email?.trim().toLowerCase();
+    const aEmail = current.email?.trim().toLowerCase();
+    if (sEmail && aEmail && sEmail === aEmail) {
+      return true;
+    }
+
+    // 3. Atleta activo seleccionado en localStorage
+    const savedId = localStorage.getItem('awakin_active_athlete_id');
+    if (savedId && savedId === current.id) {
+      return true;
+    }
+
+    return false;
+  });
+
+  // Preferencia de unidad de peso en visualización ('lb' o 'kg')
+  preferredWeightUnit = signal<'kg' | 'lb'>('lb');
+
+  // Registros de progreso
+  progressRecords = computed(() => {
+    return this.records()?.progress || [];
+  });
+
+  // Orden cronológico (antiguo -> nuevo) para gráficos
+  chronologicalProgress = computed(() => {
+    return [...this.progressRecords()].sort(
+      (a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
+    );
+  });
+
+  // Orden descendente (nuevo -> antiguo) para el log fotográfico
+  descendingProgress = computed(() => {
+    return [...this.progressRecords()].sort(
+      (a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+    );
+  });
+
+  // Último registro
+  latestRecord = computed(() => {
+    const list = this.descendingProgress();
+    return list.length > 0 ? list[0] : null;
+  });
+
+  // Primer registro
+  firstRecord = computed(() => {
+    const list = this.chronologicalProgress();
+    return list.length > 0 ? list[0] : null;
+  });
+
+  // Delta de peso (cambio total desde el inicio)
+  weightDelta = computed(() => {
+    const first = this.firstRecord();
+    const latest = this.latestRecord();
+    if (!first || !latest || first.peso == null || latest.peso == null) return null;
+
+    const unit = this.preferredWeightUnit();
+    const firstW = this.convertWeight(Number(first.peso), first.unidad_peso, unit);
+    const latestW = this.convertWeight(Number(latest.peso), latest.unidad_peso, unit);
+    const diff = latestW - firstW;
+    return {
+      diff: Number(diff.toFixed(1)),
+      unit: unit,
+      percent: Number(((diff / firstW) * 100).toFixed(1)),
+      isLoss: diff < 0
+    };
+  });
+
+  // Gráfico 1: Evolución de Peso (SVG interactivo)
+  weightChartData = computed(() => {
+    const items = this.chronologicalProgress();
+    const targetUnit = this.preferredWeightUnit();
+    const width = 460;
+    const height = 190;
+    const paddingX = 45;
+    const paddingY = 25;
+
+    const validPoints = items
+      .filter((item) => item.peso != null && Number(item.peso) > 0)
+      .map((item) => {
+        const date = new Date(item.timestamp);
+        const dateLabel = `${date.getDate()}/${date.getMonth() + 1}`;
+        const weightVal = this.convertWeight(Number(item.peso), item.unidad_peso, targetUnit);
+        return {
+          id: item.id,
+          dateLabel,
+          weight: Number(weightVal.toFixed(1)),
+          original: item
+        };
+      });
+
+    if (validPoints.length === 0) {
+      return { hasData: false, points: [], path: '', areaPath: '', gridLines: [], width, height, minW: 0, maxW: 100 };
+    }
+
+    const weights = validPoints.map((p) => p.weight);
+    let minW = Math.min(...weights);
+    let maxW = Math.max(...weights);
+
+    if (minW === maxW) {
+      minW = Math.max(0, minW - 5);
+      maxW = maxW + 5;
+    } else {
+      const margin = Math.max(2, (maxW - minW) * 0.18);
+      minW = Math.max(0, minW - margin);
+      maxW = maxW + margin;
+    }
+
+    const gridCount = 4;
+    const gridLines = [];
+    for (let i = 0; i <= gridCount; i++) {
+      const val = minW + ((maxW - minW) * (gridCount - i)) / gridCount;
+      const y = paddingY + (height - 2 * paddingY) * (i / gridCount);
+      gridLines.push({
+        y,
+        val: Math.round(val)
+      });
+    }
+
+    const plotWidth = width - 2 * paddingX;
+    const plotHeight = height - 2 * paddingY;
+    const count = validPoints.length;
+
+    const points = validPoints.map((p, idx) => {
+      const x = count === 1 ? width / 2 : paddingX + (plotWidth * idx) / (count - 1);
+      const y = paddingY + plotHeight * (1 - (p.weight - minW) / (maxW - minW));
+      return { ...p, x, y };
+    });
+
+    let path = '';
+    let areaPath = '';
+    if (points.length === 1) {
+      path = `M ${points[0].x - 12} ${points[0].y} L ${points[0].x + 12} ${points[0].y}`;
+      areaPath = '';
+    } else {
+      path = points.reduce((acc, p, i) => `${acc} ${i === 0 ? 'M' : 'L'} ${p.x.toFixed(1)} ${p.y.toFixed(1)}`, '');
+      const last = points[points.length - 1];
+      const first = points[0];
+      const bottomY = height - paddingY;
+      areaPath = `${path} L ${last.x.toFixed(1)} ${bottomY} L ${first.x.toFixed(1)} ${bottomY} Z`;
+    }
+
+    return {
+      hasData: true,
+      points,
+      path,
+      areaPath,
+      gridLines,
+      width,
+      height,
+      minW,
+      maxW
+    };
+  });
+
+  // Gráfico 2: Medidas Corporales (Cadera, Cintura, Pecho)
+  bodyMetricsChartData = computed(() => {
+    const items = this.chronologicalProgress();
+    const width = 460;
+    const height = 190;
+    const paddingX = 45;
+    const paddingY = 25;
+
+    const validItems = items.filter(
+      (it) => it.cadera != null || it.cintura != null || it.pecho != null
+    );
+
+    if (validItems.length === 0) {
+      return { hasData: false, width, height, gridLines: [], caderaPoints: [], cinturaPoints: [], pechoPoints: [], caderaPath: '', cinturaPath: '', pechoPath: '' };
+    }
+
+    const allVals: number[] = [];
+    validItems.forEach((it) => {
+      if (it.cadera != null) allVals.push(Number(it.cadera));
+      if (it.cintura != null) allVals.push(Number(it.cintura));
+      if (it.pecho != null) allVals.push(Number(it.pecho));
+    });
+
+    let minV = Math.min(...allVals);
+    let maxV = Math.max(...allVals);
+    if (minV === maxV) {
+      minV = Math.max(0, minV - 10);
+      maxV = maxV + 10;
+    } else {
+      const margin = Math.max(3, (maxV - minV) * 0.18);
+      minV = Math.max(0, minV - margin);
+      maxV = maxV + margin;
+    }
+
+    const gridCount = 4;
+    const gridLines = [];
+    for (let i = 0; i <= gridCount; i++) {
+      const val = minV + ((maxV - minV) * (gridCount - i)) / gridCount;
+      const y = paddingY + (height - 2 * paddingY) * (i / gridCount);
+      gridLines.push({
+        y,
+        val: Math.round(val)
+      });
+    }
+
+    const plotWidth = width - 2 * paddingX;
+    const plotHeight = height - 2 * paddingY;
+    const count = validItems.length;
+
+    const buildSeries = (key: 'cadera' | 'cintura' | 'pecho') => {
+      return validItems
+        .map((it, idx) => {
+          const val = it[key] != null ? Number(it[key]) : null;
+          if (val == null) return null;
+          const x = count === 1 ? width / 2 : paddingX + (plotWidth * idx) / (count - 1);
+          const y = paddingY + plotHeight * (1 - (val - minV) / (maxV - minV));
+          const date = new Date(it.timestamp);
+          const dateLabel = `${date.getDate()}/${date.getMonth() + 1}`;
+          return { id: it.id, dateLabel, val, x, y };
+        })
+        .filter((pt): pt is { id: string; dateLabel: string; val: number; x: number; y: number } => pt !== null);
+    };
+
+    const caderaPoints = buildSeries('cadera');
+    const cinturaPoints = buildSeries('cintura');
+    const pechoPoints = buildSeries('pecho');
+
+    const toPath = (pts: { x: number; y: number }[]) => {
+      if (pts.length <= 1) return '';
+      return pts.reduce((acc, p, i) => `${acc} ${i === 0 ? 'M' : 'L'} ${p.x.toFixed(1)} ${p.y.toFixed(1)}`, '');
+    };
+
+    return {
+      hasData: true,
+      width,
+      height,
+      gridLines,
+      caderaPoints,
+      cinturaPoints,
+      pechoPoints,
+      caderaPath: toPath(caderaPoints),
+      cinturaPath: toPath(cinturaPoints),
+      pechoPath: toPath(pechoPoints)
+    };
+  });
+
+  // Modal de Nuevo Registro de Progreso
+  isNewProgressModalOpen = signal<boolean>(false);
+  progressDate = signal<string>(new Date().toISOString().split('T')[0]);
+  progressWeight = signal<number | null>(null);
+  progressWeightUnit = signal<'kg' | 'lb'>('lb');
+  progressWaist = signal<number | null>(null); // Cintura
+  progressHip = signal<number | null>(null);   // Cadera
+  progressChest = signal<number | null>(null); // Pecho
+  showAdvancedMetrics = signal<boolean>(false);
+  progressNeck = signal<number | null>(null);
+  progressBiceps = signal<number | null>(null);
+  progressThigh = signal<number | null>(null);
+  progressBodyFat = signal<number | null>(null);
+  progressMuscleMass = signal<number | null>(null);
+
+  // Archivos de fotos y previsualizaciones
+  photoFrontFile = signal<File | null>(null);
+  photoFrontPreview = signal<string | null>(null);
+  photoSideFile = signal<File | null>(null);
+  photoSidePreview = signal<string | null>(null);
+  photoBackFile = signal<File | null>(null);
+  photoBackPreview = signal<string | null>(null);
+
+  isSavingProgress = signal<boolean>(false);
+  saveProgressSuccess = signal<boolean>(false);
+  saveProgressError = signal<string | null>(null);
+  savingStepText = signal<string>('');
+
+  // Lightbox para ver foto grande
+  lightboxOpen = signal<boolean>(false);
+  lightboxPhotoUrl = signal<string | null>(null);
+  lightboxTitle = signal<string>('');
+  lightboxDate = signal<string>('');
+
+  // Tooltip interactivo en gráficos
+  activeTooltip = signal<{ type: 'weight' | 'metric'; x: number; y: number; text: string; subtext?: string } | null>(null);
+
   ngOnInit() {
     // Cargar bajo demanda el perfil del atleta autenticado
     const current = this.athlete();
@@ -101,8 +395,12 @@ export class ProfileAvatarComponent implements OnInit {
     }
   }
 
-  // Cambiar pestaña del feed
+  // Cambiar pestaña del feed garantizando privacidad
   setTab(tab: ProfileFeedTab) {
+    if (tab === 'progress' && !this.isOwner()) {
+      this.activeTab.set('posts');
+      return;
+    }
     this.activeTab.set(tab);
   }
 
@@ -594,6 +892,301 @@ export class ProfileAvatarComponent implements OnInit {
       return ath.first_name.slice(0, 2).toUpperCase();
     }
     return (ath.username || 'A').slice(0, 2).toUpperCase();
+  }
+
+  // ==========================================
+  // GESTIÓN DE MÉTRICAS Y PROGRESO CORPORAL
+  // ==========================================
+
+  // Conversión reactiva de pesos entre KG y LB
+  convertWeight(val: number, fromUnit?: string, toUnit: 'kg' | 'lb' = 'lb'): number {
+    if (val == null) return 0;
+    const from = (fromUnit || 'kg').toLowerCase();
+    const to = toUnit.toLowerCase();
+    if (from === to) return val;
+    if (from === 'kg' && to === 'lb') {
+      return val * 2.20462;
+    }
+    if (from === 'lb' && to === 'kg') {
+      return val / 2.20462;
+    }
+    return val;
+  }
+
+  // Alternar unidad entre KG y LB
+  toggleWeightUnit(unit?: 'kg' | 'lb') {
+    if (unit) {
+      this.preferredWeightUnit.set(unit);
+    } else {
+      this.preferredWeightUnit.update((u) => (u === 'lb' ? 'kg' : 'lb'));
+    }
+  }
+
+  // Alternar visualización de medidas avanzadas
+  toggleAdvancedMetrics() {
+    this.showAdvancedMetrics.update((v) => !v);
+  }
+
+  // Abrir modal de nuevo registro
+  openNewProgressModal() {
+    this.progressDate.set(new Date().toISOString().split('T')[0]);
+    this.progressWeight.set(null);
+    this.progressWeightUnit.set(this.preferredWeightUnit());
+    this.progressWaist.set(null);
+    this.progressHip.set(null);
+    this.progressChest.set(null);
+    this.showAdvancedMetrics.set(false);
+    this.progressNeck.set(null);
+    this.progressBiceps.set(null);
+    this.progressThigh.set(null);
+    this.progressBodyFat.set(null);
+    this.progressMuscleMass.set(null);
+
+    this.photoFrontFile.set(null);
+    this.photoFrontPreview.set(null);
+    this.photoSideFile.set(null);
+    this.photoSidePreview.set(null);
+    this.photoBackFile.set(null);
+    this.photoBackPreview.set(null);
+
+    this.isSavingProgress.set(false);
+    this.saveProgressSuccess.set(false);
+    this.saveProgressError.set(null);
+    this.savingStepText.set('');
+
+    this.isNewProgressModalOpen.set(true);
+  }
+
+  closeNewProgressModal() {
+    this.isNewProgressModalOpen.set(false);
+  }
+
+  // Selección de foto para frontal, lateral o espalda
+  onProgressPhotoSelected(event: Event, angle: 'front' | 'side' | 'back') {
+    const input = event.target as HTMLInputElement;
+    if (!input.files || input.files.length === 0) return;
+    const file = input.files[0];
+    const reader = new FileReader();
+
+    reader.onload = (e) => {
+      const preview = e.target?.result as string;
+      if (angle === 'front') {
+        this.photoFrontFile.set(file);
+        this.photoFrontPreview.set(preview);
+      } else if (angle === 'side') {
+        this.photoSideFile.set(file);
+        this.photoSidePreview.set(preview);
+      } else if (angle === 'back') {
+        this.photoBackFile.set(file);
+        this.photoBackPreview.set(preview);
+      }
+    };
+    reader.readAsDataURL(file);
+    input.value = '';
+  }
+
+  // Quitar foto seleccionada
+  removeProgressPhoto(angle: 'front' | 'side' | 'back') {
+    if (angle === 'front') {
+      this.photoFrontFile.set(null);
+      this.photoFrontPreview.set(null);
+    } else if (angle === 'side') {
+      this.photoSideFile.set(null);
+      this.photoSidePreview.set(null);
+    } else if (angle === 'back') {
+      this.photoBackFile.set(null);
+      this.photoBackPreview.set(null);
+    }
+  }
+
+  // Guardar nuevo registro en BD Supabase
+  async saveProgress() {
+    const ath = this.athlete();
+    if (!ath) {
+      this.saveProgressError.set('No se ha podido identificar el perfil del atleta.');
+      return;
+    }
+
+    if (this.progressWeight() == null && !this.progressWaist() && !this.photoFrontFile()) {
+      this.saveProgressError.set('Por favor ingresa al menos el peso, una medida o una foto.');
+      return;
+    }
+
+    this.isSavingProgress.set(true);
+    this.saveProgressError.set(null);
+    this.saveProgressSuccess.set(false);
+
+    try {
+      let fotoFrontUrl: string | undefined;
+      let fotoSideUrl: string | undefined;
+      let fotoBackUrl: string | undefined;
+
+      // 1. Subir fotos si se seleccionaron
+      if (this.photoFrontFile()) {
+        this.savingStepText.set('Subiendo foto frontal...');
+        const res = await firstValueFrom(
+          this.athleteService.uploadMedia(this.photoFrontFile()!, 'progress_photos', `front_${Date.now()}.jpg`)
+        );
+        fotoFrontUrl = res.public_url;
+      }
+
+      if (this.photoSideFile()) {
+        this.savingStepText.set('Subiendo foto lateral...');
+        const res = await firstValueFrom(
+          this.athleteService.uploadMedia(this.photoSideFile()!, 'progress_photos', `side_${Date.now()}.jpg`)
+        );
+        fotoSideUrl = res.public_url;
+      }
+
+      if (this.photoBackFile()) {
+        this.savingStepText.set('Subiendo foto espalda...');
+        const res = await firstValueFrom(
+          this.athleteService.uploadMedia(this.photoBackFile()!, 'progress_photos', `back_${Date.now()}.jpg`)
+        );
+        fotoBackUrl = res.public_url;
+      }
+
+      // 2. Construir payload de progreso
+      this.savingStepText.set('Guardando métricas en tu expediente...');
+      const dateVal = this.progressDate() ? new Date(this.progressDate()).toISOString() : new Date().toISOString();
+
+      const payload: Partial<ProgressMetricRecord> = {
+        timestamp: dateVal,
+        peso: this.progressWeight() != null ? Number(this.progressWeight()) : null,
+        unidad_peso: this.progressWeightUnit(),
+        cintura: this.progressWaist() != null ? Number(this.progressWaist()) : null,
+        cadera: this.progressHip() != null ? Number(this.progressHip()) : null,
+        pecho: this.progressChest() != null ? Number(this.progressChest()) : null,
+        foto_frontal_url: fotoFrontUrl,
+        foto_lateral_url: fotoSideUrl,
+        foto_espalda_url: fotoBackUrl,
+        cuello: this.progressNeck() != null ? Number(this.progressNeck()) : null,
+        biceps: this.progressBiceps() != null ? Number(this.progressBiceps()) : null,
+        muslo: this.progressThigh() != null ? Number(this.progressThigh()) : null,
+        porcentaje_grasa: this.progressBodyFat() != null ? Number(this.progressBodyFat()) : null,
+        masa_muscular: this.progressMuscleMass() != null ? Number(this.progressMuscleMass()) : null
+      };
+
+      await firstValueFrom(this.athleteService.createProgressRecord(ath.id, payload));
+
+      this.isSavingProgress.set(false);
+      this.saveProgressSuccess.set(true);
+      setTimeout(() => {
+        this.isNewProgressModalOpen.set(false);
+        this.saveProgressSuccess.set(false);
+      }, 700);
+    } catch (err: any) {
+      console.error('Error guardando progreso:', err);
+      this.isSavingProgress.set(false);
+      this.saveProgressError.set(err?.error?.detail || err?.message || 'Error al guardar el registro.');
+    }
+  }
+
+  // Eliminar un registro de progreso
+  deleteProgress(progressId: string) {
+    const ath = this.athlete();
+    if (!ath) return;
+
+    if (!confirm('¿Deseas eliminar este registro de progreso y sus fotos?')) {
+      return;
+    }
+
+    this.athleteService.deleteProgressRecord(ath.id, progressId).subscribe({
+      next: () => {
+        // Registro eliminado reactivamente
+      },
+      error: (err) => {
+        console.error('Error al eliminar registro:', err);
+        alert('No se pudo eliminar el registro. Intenta nuevamente.');
+      }
+    });
+  }
+
+  // Compartir resumen de gráficos
+  shareProgressCharts() {
+    const latest = this.latestRecord();
+    const delta = this.weightDelta();
+    let text = '⚡ Mi Progreso Corporal en Awakin:\n';
+    if (latest && latest.peso) {
+      text += `• Peso Actual: ${latest.peso} ${latest.unidad_peso || 'lb'}\n`;
+    }
+    if (delta) {
+      text += `• Evolución Total: ${delta.diff > 0 ? '+' : ''}${delta.diff} ${delta.unit} (${delta.percent}%)\n`;
+    }
+    if (latest?.cintura) text += `• Cintura: ${latest.cintura} cm\n`;
+    if (latest?.cadera) text += `• Cadera: ${latest.cadera} cm\n`;
+    if (latest?.pecho) text += `• Pecho: ${latest.pecho} cm\n`;
+    text += `Construyendo disciplina un día a la vez. 🔥`;
+
+    if (navigator.share) {
+      navigator.share({
+        title: 'Mi Progreso Corporal - Awakin',
+        text
+      }).catch(() => { });
+    } else {
+      navigator.clipboard.writeText(text).then(() => {
+        alert('¡Resumen de métricas copiado al portapapeles!');
+      });
+    }
+  }
+
+  // Compartir un registro fotográfico puntual
+  shareProgressRecord(record: ProgressMetricRecord) {
+    const dateFormatted = this.formatDateSpanish(record.timestamp);
+    let text = `📸 Check-in de Progreso (${dateFormatted})\n`;
+    if (record.peso) text += `• Peso: ${record.peso} ${record.unidad_peso || 'lb'}\n`;
+    if (record.cintura) text += `• Cintura: ${record.cintura} cm\n`;
+    if (record.cadera) text += `• Cadera: ${record.cadera} cm\n`;
+    if (record.pecho) text += `• Pecho: ${record.pecho} cm\n`;
+    text += `Awakin OS.`;
+
+    if (navigator.share) {
+      navigator.share({
+        title: `Check-in ${dateFormatted}`,
+        text
+      }).catch(() => { });
+    } else {
+      navigator.clipboard.writeText(text).then(() => {
+        alert('¡Datos del check-in copiados al portapapeles!');
+      });
+    }
+  }
+
+  // Visualizador Lightbox de fotos
+  openLightbox(url: string, title: string, dateStr: string) {
+    this.lightboxPhotoUrl.set(url);
+    this.lightboxTitle.set(title);
+    this.lightboxDate.set(this.formatDateSpanish(dateStr));
+    this.lightboxOpen.set(true);
+  }
+
+  closeLightbox() {
+    this.lightboxOpen.set(false);
+    this.lightboxPhotoUrl.set(null);
+  }
+
+  // Tooltip interactivo sobre puntos del gráfico
+  showTooltip(type: 'weight' | 'metric', x: number, y: number, text: string, subtext?: string) {
+    this.activeTooltip.set({ type, x, y, text, subtext });
+  }
+
+  hideTooltip() {
+    this.activeTooltip.set(null);
+  }
+
+  // Formato de fecha amigable en español
+  formatDateSpanish(dateStr: string): string {
+    if (!dateStr) return '';
+    try {
+      const d = new Date(dateStr);
+      return d.toLocaleDateString('es-ES', {
+        day: 'numeric',
+        month: 'short',
+        year: 'numeric'
+      });
+    } catch {
+      return dateStr;
+    }
   }
 }
 

@@ -57,15 +57,23 @@ export interface NutritionMealRecord {
 
 export interface ProgressMetricRecord {
   id: string;
-  foto_frontal_url?: string;
-  foto_lateral_url?: string;
-  foto_espalda_url?: string;
-  peso?: number;
+  id_original?: string | null;
+  email?: string;
+  timestamp: string;
+  peso?: number | null;
   unidad_peso?: string;
-  cintura?: number;
-  cadera?: number;
-  pecho?: number;
-  timestamp?: string;
+  cintura?: number | null;
+  cadera?: number | null;
+  pecho?: number | null;
+  foto_frontal_url?: string | null;
+  foto_lateral_url?: string | null;
+  foto_espalda_url?: string | null;
+  porcentaje_grasa?: number | null;
+  masa_muscular?: number | null;
+  cuello?: number | null;
+  biceps?: number | null;
+  muslo?: number | null;
+  created_at?: string;
 }
 
 export interface AthleteRecordsResponse {
@@ -253,7 +261,7 @@ export class AthleteService {
    */
   public uploadMedia(
     file: File | Blob,
-    bucket: 'avatars' | 'feed_posts' = 'feed_posts',
+    bucket: 'avatars' | 'feed_posts' | 'progress_photos' | 'fotos_comidas' = 'feed_posts',
     filename: string = 'media.jpg'
   ): Observable<{ status: string; bucket: string; filename: string; public_url: string }> {
     const formData = new FormData();
@@ -261,6 +269,48 @@ export class AthleteService {
     return this.http.post<{ status: string; bucket: string; filename: string; public_url: string }>(
       `${this.baseUrl}/upload-media?bucket=${bucket}`,
       formData
+    );
+  }
+
+  /**
+   * Guarda un nuevo registro de medidas/progreso corporal del atleta en la BD
+   */
+  public createProgressRecord(
+    athleteId: string,
+    record: Partial<ProgressMetricRecord>
+  ): Observable<ProgressMetricRecord> {
+    return this.http.post<ProgressMetricRecord>(`${this.baseUrl}/${athleteId}/progress`, record).pipe(
+      tap((newRecord) => {
+        this.currentRecords.update((curr) => {
+          if (!curr) {
+            return { athlete_id: athleteId, meals: [], progress: [newRecord], posts: [] };
+          }
+          return {
+            ...curr,
+            progress: [newRecord, ...curr.progress.filter((p) => p.id !== newRecord.id)]
+          };
+        });
+      })
+    );
+  }
+
+  /**
+   * Elimina un registro de progreso corporal del atleta
+   */
+  public deleteProgressRecord(
+    athleteId: string,
+    progressId: string
+  ): Observable<{ status: string; id: string }> {
+    return this.http.delete<{ status: string; id: string }>(`${this.baseUrl}/${athleteId}/progress/${progressId}`).pipe(
+      tap(() => {
+        this.currentRecords.update((curr) => {
+          if (!curr) return null;
+          return {
+            ...curr,
+            progress: curr.progress.filter((p) => p.id !== progressId)
+          };
+        });
+      })
     );
   }
 
