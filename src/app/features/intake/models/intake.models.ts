@@ -56,6 +56,7 @@ export interface DishItem {
   utensils: string[];
   isOptimizerActive?: boolean;
   optimizerTargets?: any;
+  optimizerAthleteId?: string | null;
   ingredients: DishIngredient[];
 }
 

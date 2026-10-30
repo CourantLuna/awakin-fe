@@ -257,6 +257,7 @@ export class IntakeUserComponent implements OnInit {
       const ath = this.athleteService.currentAthlete();
       const athleteId = ath?.id || this.currentAthleteId();
       if (athleteId) {
+        this.intakeService.loadAvailableMenus(athleteId).subscribe();
         this.intakeService.loadWeeklyPlansForAthlete(athleteId).subscribe((plans) => {
           if (plans.length > 0 && (!this.activeTemplateId() || !plans.some((p) => p.id === this.activeTemplateId()))) {
             this.activeTemplateId.set(plans[0].id);
@@ -839,7 +840,7 @@ export class IntakeUserComponent implements OnInit {
       if (targetDish && targetDish.dishItem) {
         const dish = targetDish.dishItem;
         const activeDish = (dish.isOptimizerActive && dish.optimizerTargets)
-          ? applyOptimizationToDish(dish)
+          ? applyOptimizationToDish(dish, this.currentAthleteId())
           : dish;
 
         formattedIngredients = (activeDish.ingredients || []).map((di: any) => {
@@ -1048,7 +1049,7 @@ export class IntakeUserComponent implements OnInit {
     let formattedIngs: any[] | null = null;
     const dish = food.dishItem;
     if (dish && dish.ingredients && dish.ingredients.length > 0) {
-      const activeDish = dish.isOptimizerActive && dish.optimizerTargets ? applyOptimizationToDish(dish) : dish;
+      const activeDish = dish.isOptimizerActive && dish.optimizerTargets ? applyOptimizationToDish(dish, this.currentAthleteId()) : dish;
       formattedIngs = (activeDish.ingredients || []).map((di: any) => {
         const raw = di.rawIngredientObj || {};
         const ingObj = {
@@ -1304,7 +1305,7 @@ export class IntakeUserComponent implements OnInit {
   ngOnInit() {
     this.generateCurrentWeek(); // <--- Generar fechas reales al iniciar
     this.initChart();
-    this.intakeService.loadAvailableMenus().subscribe();
+    this.intakeService.loadAvailableMenus(this.currentAthleteId()).subscribe();
 
     const athleteId = this.currentAthleteId();
     if (athleteId) {

@@ -6,7 +6,7 @@ export const environment = {
   modules: {
     home: true,
     intake: true,
-    workout: false,
+    workout: true,
     kin: false,
     avatar: true,
   },

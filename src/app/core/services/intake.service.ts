@@ -40,12 +40,24 @@ export class IntakeService {
   /**
    * Carga el catálogo de menús de intake_menus (obviando shared_plan_id y athlete_id).
    */
-  public loadAvailableMenus(): Observable<MenuPlan[]> {
-    return this.http.get<any[]>(`${this.baseUrl}/menus`).pipe(
-      map((menus) => this.mapMenusToPlan(menus)),
+  public loadAvailableMenus(athleteId?: string): Observable<MenuPlan[]> {
+    const athId = athleteId || this.currentAthleteId();
+    const url = athId ? `${this.baseUrl}/menus?athlete_id=${athId}` : `${this.baseUrl}/menus`;
+
+    return this.http.get<any[]>(url).pipe(
+      map((menus) => this.mapMenusToPlan(menus, athId)),
       catchError((err) => {
         console.warn('Backend unavailable for menus, falling back to Supabase client directly:', err);
-        const query = `
+        const queryWithAthlete = `
+          id, name, created_at, cover_image_url, author_id, author_name, is_public, total_calories, total_protein, total_carbs, total_fats, tags, description, created_by, athlete_id,
+          intake_menu_dishes_new(
+            id, dish_id, meal_type,
+            intake_menu_dish_optimizers(id, is_optimizer_active, optimizer_targets, athlete_id),
+            intake_dishes(*, intake_dish_ingredients!intake_dish_ingredients_dish_id_fkey(*, intake_ingredients(*)))
+          ),
+          intake_menu_ingredients(id, ingredient_id, meal_type, quantity, mode, intake_ingredients(*))
+        `;
+        const queryFallback = `
           id, name, created_at, cover_image_url, author_id, author_name, is_public, total_calories, total_protein, total_carbs, total_fats, tags, description, created_by, athlete_id,
           intake_menu_dishes_new(
             id, dish_id, meal_type,
@@ -57,16 +69,23 @@ export class IntakeService {
         return from(
           this.supabase
             .from('intake_menus')
-            .select(query)
+            .select(queryWithAthlete)
             .order('name')
         ).pipe(
-          map(({ data, error }) => {
+          switchMap(({ data, error }) => {
             if (error) {
-              console.error('Error fetching menus from Supabase:', error);
-              return [];
+              return from(
+                this.supabase
+                  .from('intake_menus')
+                  .select(queryFallback)
+                  .order('name')
+              ).pipe(
+                map(({ data: fallbackData }) => fallbackData || [])
+              );
             }
-            return this.mapMenusToPlan(data || []);
-          })
+            return of(data || []);
+          }),
+          map((data) => this.mapMenusToPlan(data || [], athId))
         );
       }),
       map((menus) => {
@@ -87,7 +106,7 @@ export class IntakeService {
       .post<any>(`${this.baseUrl}/menus/${menu.id}/duplicate?athlete_id=${athleteId}`, {})
       .pipe(
         map((res) => {
-          const mapped = this.mapMenusToPlan([res])[0];
+          const mapped = this.mapMenusToPlan([res], athleteId)[0];
           return mapped;
         }),
         catchError((err) => {
@@ -150,12 +169,17 @@ export class IntakeService {
               optimizerRows.push({
                 intake_menu_dish_id: insertedDishes[idx].id,
                 is_optimizer_active: d.isOptimizerActive || false,
-                optimizer_targets: d.optimizerTargets || null
+                optimizer_targets: d.optimizerTargets || null,
+                athlete_id: athleteId || null
               });
             }
           });
           if (optimizerRows.length > 0) {
-            await this.supabase.from('intake_menu_dish_optimizers').insert(optimizerRows);
+            const { error: insErr } = await this.supabase.from('intake_menu_dish_optimizers').insert(optimizerRows);
+            if (insErr && insErr.message && insErr.message.includes('athlete_id')) {
+              const cleaned = optimizerRows.map(({ athlete_id, ...rest }) => rest);
+              await this.supabase.from('intake_menu_dish_optimizers').insert(cleaned);
+            }
           }
         }
       }
@@ -302,7 +326,7 @@ export class IntakeService {
 
   // --- Métodos Privados de Mapeo y Supabase Directo ---
 
-  private mapMenusToPlan(rawMenus: any[]): MenuPlan[] {
+  private mapMenusToPlan(rawMenus: any[], targetAthleteId?: string | null): MenuPlan[] {
     return (rawMenus || []).map((m) => {
       const kcal = Math.round(Number(m.total_calories || 0));
       const p = Math.round(Number(m.total_protein || 0));
@@ -357,14 +381,23 @@ export class IntakeService {
 
         // Extraer optimizador desde intake_menu_dish_optimizers o propiedades directas
         const optRaw = d.intake_menu_dish_optimizers;
-        const opt = Array.isArray(optRaw) && optRaw.length > 0 
-          ? optRaw[0] 
-          : (optRaw && typeof optRaw === 'object' ? optRaw : {});
+        let opt: any = {};
+        if (Array.isArray(optRaw) && optRaw.length > 0) {
+          const effectiveAthleteId = targetAthleteId || this.currentAthleteId();
+          const athleteMatch = effectiveAthleteId
+            ? optRaw.find((o: any) => o.athlete_id && String(o.athlete_id) === String(effectiveAthleteId))
+            : null;
+          const defaultMatch = optRaw.find((o: any) => !o.athlete_id);
+          opt = athleteMatch || defaultMatch || optRaw[0];
+        } else if (optRaw && typeof optRaw === 'object') {
+          opt = optRaw;
+        }
 
         const isOptimizerActive = Boolean(
           opt.is_optimizer_active ?? d.is_optimizer_active ?? dishObj.is_optimizer_active ?? d.isOptimizerActive
         );
         const optimizerTargets = opt.optimizer_targets ?? d.optimizer_targets ?? dishObj.optimizer_targets ?? d.optimizerTargets ?? null;
+        const optimizerAthleteId = opt.athlete_id ? String(opt.athlete_id) : null;
 
         return {
           id: String(d.id || d.dish_id || dishObj.id),
@@ -387,6 +420,7 @@ export class IntakeService {
           utensils: Array.isArray(dishObj.utensils) ? dishObj.utensils : [],
           isOptimizerActive,
           optimizerTargets,
+          optimizerAthleteId,
           ingredients
         };
       });
@@ -661,4 +695,63 @@ export class IntakeService {
     return publicData.publicUrl;
   }
 }
+  /**
+   * Guarda o actualiza los targets del optimizador para un plato de menú,
+   * asignados opcionalmente a un atleta específico (o globales/default si athleteId es null).
+   */
+  public saveDishOptimizerTargets(
+    menuDishId: string,
+    isOptimizerActive: boolean,
+    targets: any,
+    athleteId?: string | null
+  ): Observable<any> {
+    const payload = {
+      is_optimizer_active: isOptimizerActive,
+      optimizer_targets: targets,
+      athlete_id: athleteId || null
+    };
 
+    return this.http.put(`${this.baseUrl}/menu-dishes/${menuDishId}/optimizer`, payload).pipe(
+      catchError(async () => {
+        try {
+          let q = this.supabase
+            .from('intake_menu_dish_optimizers')
+            .select('id')
+            .eq('intake_menu_dish_id', menuDishId);
+          if (athleteId) {
+            q = q.eq('athlete_id', athleteId);
+          } else {
+            q = q.is('athlete_id', null);
+          }
+          const { data: existing } = await q;
+          const row: any = {
+            intake_menu_dish_id: menuDishId,
+            is_optimizer_active: isOptimizerActive,
+            optimizer_targets: targets
+          };
+          if (athleteId) row.athlete_id = athleteId;
+
+          if (existing && existing.length > 0) {
+            const { data } = await this.supabase
+              .from('intake_menu_dish_optimizers')
+              .update(row)
+              .eq('id', existing[0].id)
+              .select()
+              .single();
+            return data;
+          } else {
+            const { data } = await this.supabase
+              .from('intake_menu_dish_optimizers')
+              .insert(row)
+              .select()
+              .single();
+            return data;
+          }
+        } catch (e) {
+          console.error('Error guardando targets optimizador en Supabase:', e);
+          throw e;
+        }
+      })
+    );
+  }
+}
