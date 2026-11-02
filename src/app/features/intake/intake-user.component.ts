@@ -840,7 +840,7 @@ export class IntakeUserComponent implements OnInit {
       if (targetDish && targetDish.dishItem) {
         const dish = targetDish.dishItem;
         const activeDish = (dish.isOptimizerActive && dish.optimizerTargets)
-          ? applyOptimizationToDish(dish, this.currentAthleteId())
+          ? applyOptimizationToDish(dish)
           : dish;
 
         formattedIngredients = (activeDish.ingredients || []).map((di: any) => {
@@ -1049,7 +1049,7 @@ export class IntakeUserComponent implements OnInit {
     let formattedIngs: any[] | null = null;
     const dish = food.dishItem;
     if (dish && dish.ingredients && dish.ingredients.length > 0) {
-      const activeDish = dish.isOptimizerActive && dish.optimizerTargets ? applyOptimizationToDish(dish, this.currentAthleteId()) : dish;
+      const activeDish = dish.isOptimizerActive && dish.optimizerTargets ? applyOptimizationToDish(dish) : dish;
       formattedIngs = (activeDish.ingredients || []).map((di: any) => {
         const raw = di.rawIngredientObj || {};
         const ingObj = {

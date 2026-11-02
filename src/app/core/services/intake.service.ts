@@ -40,7 +40,7 @@ export class IntakeService {
   /**
    * Carga el catálogo de menús de intake_menus (obviando shared_plan_id y athlete_id).
    */
-  public loadAvailableMenus(athleteId?: string): Observable<MenuPlan[]> {
+  public loadAvailableMenus(athleteId?: string | null): Observable<MenuPlan[]> {
     const athId = athleteId || this.currentAthleteId();
     const url = athId ? `${this.baseUrl}/menus?athlete_id=${athId}` : `${this.baseUrl}/menus`;
 
@@ -694,7 +694,7 @@ export class IntakeService {
 
     return publicData.publicUrl;
   }
-}
+
   /**
    * Guarda o actualiza los targets del optimizador para un plato de menú,
    * asignados opcionalmente a un atleta específico (o globales/default si athleteId es null).
