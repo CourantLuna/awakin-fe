@@ -12,6 +12,7 @@ import {
   NutritionMealRecord,
   ProgressMetricRecord
 } from '../../core/services/athlete.service';
+import { ChartImageExportService } from './services/chart-image-export.service';
 
 export type ProfileFeedTab = 'posts' | 'meals' | 'workouts' | 'progress';
 
@@ -1102,35 +1103,163 @@ export class ProfileAvatarComponent implements OnInit {
     });
   }
 
-  // Compartir resumen de gráficos
-  shareProgressCharts() {
-    const latest = this.latestRecord();
-    const delta = this.weightDelta();
-    let text = '⚡ Mi Progreso Corporal en Awakin:\n';
-    if (latest && latest.peso) {
-      text += `• Peso Actual: ${latest.peso} ${latest.unidad_peso || 'lb'}\n`;
-    }
-    if (delta) {
-      text += `• Evolución Total: ${delta.diff > 0 ? '+' : ''}${delta.diff} ${delta.unit} (${delta.percent}%)\n`;
-    }
-    if (latest?.cintura) text += `• Cintura: ${latest.cintura} cm\n`;
-    if (latest?.cadera) text += `• Cadera: ${latest.cadera} cm\n`;
-    if (latest?.pecho) text += `• Pecho: ${latest.pecho} cm\n`;
-    text += `Construyendo disciplina un día a la vez. 🔥`;
+  // ==========================================
+  // MODAL DE COMPARTIR GRÁFICOS (NUEVO)
+  // ==========================================
 
-    if (navigator.share) {
-      navigator.share({
-        title: 'Mi Progreso Corporal - Awakin',
-        text
-      }).catch(() => { });
-    } else {
-      navigator.clipboard.writeText(text).then(() => {
-        alert('¡Resumen de métricas copiado al portapapeles!');
-      });
+  // Servicio de generación de imágenes para gráficos
+  private chartExportService = inject(ChartImageExportService);
+
+  // Estado del modal de compartir gráficos
+  isShareChartsModalOpen = signal<boolean>(false);
+  shareChartRecords = signal<ProgressMetricRecord[]>([]);
+  shareChartUserName = signal<string>('');
+  shareChartUserImageUrl = signal<string | null>(null);
+  shareChartKinLogoUrl = signal<string | null>(null);
+  shareChartWeightUnit = signal<'kg' | 'lb'>('lb');
+  shareChartSelectedDates = signal<string[]>([]);
+  shareChartIsGenerating = signal<boolean>(false);
+  shareChartGeneratedImageUrl = signal<string | null>(null);
+  shareChartErrorMessage = signal<string | null>(null);
+  shareChartShowPreview = signal<boolean>(false);
+
+  // Fechas disponibles para compartir
+  availableShareChartDates = computed(() => {
+    return this.shareChartRecords()
+      .map(r => r.timestamp.split('T')[0])
+      .filter((date, index, arr) => arr.indexOf(date) === index)
+      .sort((a, b) => new Date(a).getTime() - new Date(b).getTime());
+  });
+
+  // Registros seleccionados para el gráfico
+  shareChartSelectedRecords = computed(() => {
+    const dates = this.shareChartSelectedDates();
+    return this.shareChartRecords().filter(r => dates.includes(r.timestamp.split('T')[0]));
+  });
+
+  // Puede generar imagen (min 2, max 8 fechas)
+  canGenerateShareChart = computed(() => {
+    return this.shareChartSelectedDates().length >= 2 && this.shareChartSelectedDates().length <= 8 && !this.shareChartIsGenerating();
+  });
+
+  // Abrir modal de compartir gráficos con datos del progreso
+  shareProgressCharts() {
+    const ath = this.athlete();
+    if (!ath) return;
+
+    const records = this.progressRecords();
+    const kin = ath.kin;
+
+    this.shareChartRecords.set(records);
+    this.shareChartUserName.set(ath.username || 'atleta');
+    this.shareChartUserImageUrl.set(ath.profile_image_url || null);
+    this.shareChartKinLogoUrl.set(kin?.team_logo_url || null);
+    this.shareChartWeightUnit.set(this.preferredWeightUnit());
+    this.shareChartSelectedDates.set([]);
+    this.shareChartIsGenerating.set(false);
+    this.shareChartGeneratedImageUrl.set(null);
+    this.shareChartErrorMessage.set(null);
+    this.shareChartShowPreview.set(false);
+    this.isShareChartsModalOpen.set(true);
+  }
+
+  // Generar imagen 9:16 para compartir
+  async generateShareChartImage() {
+    if (!this.canGenerateShareChart()) return;
+
+    this.shareChartIsGenerating.set(true);
+    this.shareChartErrorMessage.set(null);
+    this.shareChartGeneratedImageUrl.set(null);
+    this.shareChartShowPreview.set(false);
+
+    try {
+      const data = {
+        records: this.shareChartSelectedRecords(),
+        userName: this.shareChartUserName(),
+        userImageUrl: this.shareChartUserImageUrl(),
+        kinLogoUrl: this.shareChartKinLogoUrl(),
+        weightUnit: this.shareChartWeightUnit()
+      };
+
+      const imageUrl = await this.chartExportService.generateShareImage(data);
+      this.shareChartGeneratedImageUrl.set(imageUrl);
+      this.shareChartShowPreview.set(true);
+    } catch (err: any) {
+      console.error('Error generando imagen:', err);
+      this.shareChartErrorMessage.set(err?.message || 'Error al generar la imagen. Intenta nuevamente.');
+    } finally {
+      this.shareChartIsGenerating.set(false);
     }
   }
 
-  // Compartir un registro fotográfico puntual
+  // Descargar imagen generada
+  downloadShareChartImage() {
+    if (!this.shareChartGeneratedImageUrl()) return;
+
+    const link = document.createElement('a');
+    link.href = this.shareChartGeneratedImageUrl()!;
+    link.download = `awakin-progreso-${this.shareChartUserName()}-${new Date().toISOString().split('T')[0]}.png`;
+    link.click();
+  }
+
+  // Compartir imagen generada
+  async shareShareChartImage() {
+    if (!this.shareChartGeneratedImageUrl()) return;
+
+    try {
+      const response = await fetch(this.shareChartGeneratedImageUrl()!);
+      const blob = await response.blob();
+      const file = new File([blob], `awakin-progreso-${this.shareChartUserName()}.png`, { type: 'image/png' });
+
+      if (navigator.share && navigator.canShare({ files: [file] })) {
+        await navigator.share({
+          title: `Mi Progreso Corporal - ${this.shareChartUserName()}`,
+          text: 'Mi evolución de peso y medidas en Awakin OS',
+          files: [file]
+        });
+      } else {
+        this.downloadShareChartImage();
+      }
+    } catch (err) {
+      console.error('Error compartiendo:', err);
+      this.downloadShareChartImage();
+    }
+  }
+
+  // Cerrar modal de compartir gráficos
+  closeShareChartsModal() {
+    this.isShareChartsModalOpen.set(false);
+    this.shareChartSelectedDates.set([]);
+    this.shareChartGeneratedImageUrl.set(null);
+    this.shareChartShowPreview.set(false);
+  }
+
+  // Alternar selección de fecha
+  toggleShareChartDate(date: string) {
+    const current = this.shareChartSelectedDates();
+    if (current.includes(date)) {
+      this.shareChartSelectedDates.set(current.filter(d => d !== date));
+    } else if (current.length < 8) {
+      this.shareChartSelectedDates.set([...current, date]);
+    }
+  }
+
+  // Verificar si una fecha está seleccionada
+  isShareChartDateSelected(date: string): boolean {
+    return this.shareChartSelectedDates().includes(date);
+  }
+
+  // Formatear fecha para mostrar
+  formatShareChartDate(dateStr: string): string {
+    try {
+      const d = new Date(dateStr);
+      return d.toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric' });
+    } catch {
+      return dateStr;
+    }
+  }
+
+  // Compartir un registro fotográfico puntual (mantenido para compatibilidad)
   shareProgressRecord(record: ProgressMetricRecord) {
     const dateFormatted = this.formatDateSpanish(record.timestamp);
     let text = `📸 Check-in de Progreso (${dateFormatted})\n`;
