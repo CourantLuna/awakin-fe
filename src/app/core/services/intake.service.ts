@@ -234,21 +234,34 @@ export class IntakeService {
   /**
    * Crea un nuevo plan semanal para el atleta.
    */
-  public createWeeklyPlan(athleteId: string, name: string): Observable<WeeklyTemplate | null> {
-    const payload = {
+  public createWeeklyPlan(
+    athleteId: string,
+    name: string,
+    startDate?: string,
+    endDate?: string,
+    isActive: boolean = true
+  ): Observable<WeeklyTemplate | null> {
+    const payload: any = {
       name,
       created_by: athleteId,
+      is_active: isActive,
       assignments: [1, 2, 3, 4, 5, 6, 7].map((d) => ({ day_of_week: d, menu_id: null }))
     };
+    if (startDate) payload.start_date = startDate;
+    if (endDate) payload.end_date = endDate;
 
     return this.http.post<any>(`${this.baseUrl}/athletes/${athleteId}/weekly-plans`, payload).pipe(
       map((p) => this.mapSingleBackendWeeklyPlan(p)),
       catchError((err) => {
         console.warn('Backend unavailable for creating weekly plan, falling back to Supabase client directly:', err);
+        const insertRow: any = { athlete_id: athleteId, name, created_by: athleteId, is_active: isActive };
+        if (startDate) insertRow.start_date = startDate;
+        if (endDate) insertRow.end_date = endDate;
+
         return from(
           this.supabase
             .from('intake_weekly_plans')
-            .insert({ athlete_id: athleteId, name, created_by: athleteId })
+            .insert(insertRow)
             .select()
             .single()
         ).pipe(
@@ -262,6 +275,9 @@ export class IntakeService {
               name: data.name,
               isFromCoach: false,
               createdBy: athleteId,
+              startDate: data.start_date || undefined,
+              endDate: data.end_date || undefined,
+              isActive: data.is_active !== undefined ? Boolean(data.is_active) : true,
               assignments: DAY_NAMES.map((dayName) => ({ dayName, menuId: null }))
             };
             return template;
@@ -286,10 +302,13 @@ export class IntakeService {
       menu_id: a.menuId
     }));
 
-    const payload = {
+    const payload: any = {
       name: plan.name,
       assignments: assignmentsPayload
     };
+    if (plan.startDate) payload.start_date = plan.startDate;
+    if (plan.endDate) payload.end_date = plan.endDate;
+    if (plan.isActive !== undefined) payload.is_active = plan.isActive;
 
     return this.http.put(`${this.baseUrl}/weekly-plans/${plan.id}`, payload).pipe(
       map(() => true),
@@ -526,6 +545,7 @@ export class IntakeService {
       createdBy: p.created_by || null,
       startDate: p.start_date || p.startDate || undefined,
       endDate: p.end_date || p.endDate || undefined,
+      isActive: p.is_active !== undefined ? Boolean(p.is_active) : (p.isActive !== undefined ? Boolean(p.isActive) : true),
       assignments
     };
   }
@@ -533,7 +553,7 @@ export class IntakeService {
   private async fetchWeeklyPlansFromSupabase(athleteId: string): Promise<WeeklyTemplate[]> {
     const { data: plans, error: ep } = await this.supabase
       .from('intake_weekly_plans')
-      .select('id, athlete_id, name, created_at, created_by, start_date, end_date')
+      .select('id, athlete_id, name, created_at, created_by, start_date, end_date, is_active')
       .eq('athlete_id', athleteId)
       .order('created_at');
 
@@ -572,16 +592,22 @@ export class IntakeService {
         createdBy: plan.created_by || null,
         startDate: plan.start_date || undefined,
         endDate: plan.end_date || undefined,
+        isActive: plan.is_active !== undefined ? Boolean(plan.is_active) : true,
         assignments
       };
     });
   }
 
   private async saveWeeklyPlanToSupabase(plan: WeeklyTemplate): Promise<void> {
-    // 1. Actualizar nombre si no es un plan nuevo
+    // 1. Actualizar campos maestros si no es un plan nuevo
+    const updateObj: any = { name: plan.name };
+    if (plan.startDate) updateObj.start_date = plan.startDate;
+    if (plan.endDate) updateObj.end_date = plan.endDate;
+    if (plan.isActive !== undefined) updateObj.is_active = plan.isActive;
+
     await this.supabase
       .from('intake_weekly_plans')
-      .update({ name: plan.name })
+      .update(updateObj)
       .eq('id', plan.id);
 
     // 2. Limpiar y re-insertar asignaciones

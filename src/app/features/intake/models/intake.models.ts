@@ -113,6 +113,7 @@ export interface WeeklyTemplate {
   createdBy?: string | null;
   startDate?: string;
   endDate?: string;
+  isActive?: boolean;
   assignments: DayAssignment[];
 }
 

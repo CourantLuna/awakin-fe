@@ -155,7 +155,7 @@ export class IntakeUserComponent implements OnInit {
     return this.athleteService.currentAthlete()?.kin || null;
   });
 
-  activeTemplateId = signal<string | null>(null);
+  activeTemplateId = computed(() => this.activeWeeklyPlan()?.id || null);
 
   streak = signal<number>(12);
   weekDays = signal<CalendarDay[]>([]); // Se llenará dinámicamente
@@ -258,11 +258,7 @@ export class IntakeUserComponent implements OnInit {
       const athleteId = ath?.id || this.currentAthleteId();
       if (athleteId) {
         this.intakeService.loadAvailableMenus(athleteId).subscribe();
-        this.intakeService.loadWeeklyPlansForAthlete(athleteId).subscribe((plans) => {
-          if (plans.length > 0 && (!this.activeTemplateId() || !plans.some((p) => p.id === this.activeTemplateId()))) {
-            this.activeTemplateId.set(plans[0].id);
-          }
-        });
+        this.intakeService.loadWeeklyPlansForAthlete(athleteId).subscribe();
       }
       this.loadDayRecords();
     });
@@ -275,22 +271,19 @@ export class IntakeUserComponent implements OnInit {
     const selDate = this.selectedDate();
     const dateStr = this.formatDateYMD(selDate);
 
-    // 1. Prioriza plan que contenga la fecha seleccionada en su rango [startDate, endDate]
-    const matchingPlan = plans.find((p) => {
+    // Se rige ÚNICAMENTE por fechas: busca el plan cuyo rango cubra la fecha seleccionada
+    const matchingPlans = plans.filter((p) => {
       if (!p.startDate || !p.endDate) return false;
       return dateStr >= p.startDate && dateStr <= p.endDate;
     });
 
-    if (matchingPlan) return matchingPlan;
-
-    // 2. Fallback a activeTemplateId si coincide
-    const activeId = this.activeTemplateId();
-    if (activeId) {
-      const byId = plans.find((p) => p.id === activeId);
-      if (byId) return byId;
+    if (matchingPlans.length > 0) {
+      // Si coinciden varios (ej. de coach y personal), priorizar el personal del atleta
+      const personal = matchingPlans.find((p) => !p.isFromCoach);
+      return personal || matchingPlans[0];
     }
 
-    // 3. Fallback al primer plan
+    // Fallback si la fecha no cae en ningún rango definido: tomar el primer plan disponible
     return plans[0];
   });
 
@@ -1312,11 +1305,7 @@ export class IntakeUserComponent implements OnInit {
       if (!this.athleteService.currentAthlete()) {
         this.athleteService.loadAthleteProfile(athleteId);
       }
-      this.intakeService.loadWeeklyPlansForAthlete(athleteId).subscribe((plans) => {
-        if (plans.length > 0 && !this.activeTemplateId()) {
-          this.activeTemplateId.set(plans[0].id);
-        }
-      });
+      this.intakeService.loadWeeklyPlansForAthlete(athleteId).subscribe();
     } else {
       this.athleteService.loadInitialAthletes();
     }

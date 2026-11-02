@@ -24,7 +24,7 @@
     </app-intake-scale-widget>
 
     <app-protocol-matrix-drawer [(isOpen)]="isMatrixOpen" [(weeklyTemplates)]="weeklyTemplates"
-      [(activeTemplateId)]="activeTemplateId" [athleteId]="currentAthleteId()" [availableMenus]="availableMenus()"
+      [activeTemplateId]="activeTemplateId()" [athleteId]="currentAthleteId()" [availableMenus]="availableMenus()"
       (onOpenShoppingList)="openShoppingListModal()">
     </app-protocol-matrix-drawer>
 

@@ -22,7 +22,7 @@ export class ProtocolMatrixDrawer {
   athleteId = input<string | null>(null);
 
   // Controla cuál es el plan que rige la semana actual
-  activeTemplateId = model<string | null>(null);
+  activeTemplateId = input<string | null>(null);
 
   maxTemplates = input<number>(5);
 
@@ -253,11 +253,6 @@ export class ProtocolMatrixDrawer {
     return active;
   }
 
-  // Método para cambiar el plan maestro
-  setActiveTemplate(templateId: string, event: Event) {
-    event.stopPropagation();
-    this.activeTemplateId.set(templateId);
-  }
 
   toggleDayMenu(templateId: string, dayIndex: number, event: Event) {
     event.stopPropagation();
@@ -291,14 +286,22 @@ export class ProtocolMatrixDrawer {
 
     const athlete = this.athleteId();
     const planName = `Mi Plan ${this.weeklyTemplates().length + 1}`;
+    
+    // Calcular fechas de la semana en curso por defecto
+    const now = new Date();
+    const day = now.getDay();
+    const diffToMonday = day === 0 ? -6 : 1 - day;
+    const monday = new Date(now);
+    monday.setDate(now.getDate() + diffToMonday);
+    const sunday = new Date(monday);
+    sunday.setDate(monday.getDate() + 6);
+    const fmt = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    const sDate = fmt(monday);
+    const eDate = fmt(sunday);
 
     if (athlete) {
-      this.intakeService.createWeeklyPlan(athlete, planName).subscribe({
-        next: (created) => {
-          if (created && !this.activeTemplateId()) {
-            this.activeTemplateId.set(created.id);
-          }
-        },
+      this.intakeService.createWeeklyPlan(athlete, planName, sDate, eDate, true).subscribe({
+        next: () => {},
         error: (err) => {
           console.warn('Error creating plan via service, adding locally:', err);
           this.addLocalTemplate(planName);
@@ -312,10 +315,22 @@ export class ProtocolMatrixDrawer {
   private addLocalTemplate(name: string) {
     this.weeklyTemplates.update((templates) => {
       const newId = `t-${Date.now()}`;
+      const now = new Date();
+      const day = now.getDay();
+      const diffToMonday = day === 0 ? -6 : 1 - day;
+      const monday = new Date(now);
+      monday.setDate(now.getDate() + diffToMonday);
+      const sunday = new Date(monday);
+      sunday.setDate(monday.getDate() + 6);
+      const fmt = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+
       const newTemplate: WeeklyTemplate = {
         id: newId,
         name,
         isFromCoach: false,
+        startDate: fmt(monday),
+        endDate: fmt(sunday),
+        isActive: true,
         assignments: [
           { dayName: 'Lun', menuId: null },
           { dayName: 'Mar', menuId: null },
@@ -326,9 +341,7 @@ export class ProtocolMatrixDrawer {
           { dayName: 'Dom', menuId: null },
         ],
       };
-      if (!this.activeTemplateId()) {
-        this.activeTemplateId.set(newId);
-      }
+
       return [...templates, newTemplate];
     });
   }
@@ -385,10 +398,7 @@ export class ProtocolMatrixDrawer {
     this.intakeService.deleteWeeklyPlan(templateId).subscribe({
       next: () => {
         this.weeklyTemplates.update((templates) => templates.filter((t) => t.id !== templateId));
-        if (this.activeTemplateId() === templateId) {
-          const remaining = this.weeklyTemplates().filter((t) => t.id !== templateId);
-          this.activeTemplateId.set(remaining[0]?.id || null);
-        }
+
       },
       error: (err) => {
         console.warn('Error deleting plan via service, removing locally:', err);
@@ -445,5 +455,67 @@ export class ProtocolMatrixDrawer {
   toFraction(val: number): string {
     return toFraction(val);
   }
-}
+  formatDateRange(startDate?: string, endDate?: string): string {
+    if (!startDate || !endDate) return 'Sin fechas asignadas';
+    try {
+      const [sy, sm, sd] = startDate.split('-').map(Number);
+      const [ey, em, ed] = endDate.split('-').map(Number);
+      const dStart = new Date(sy, sm - 1, sd);
+      const dEnd = new Date(ey, em - 1, ed);
 
+      const fStart = new Intl.DateTimeFormat('es-ES', { day: 'numeric', month: 'short' }).format(dStart);
+      const fEnd = new Intl.DateTimeFormat('es-ES', { day: 'numeric', month: 'short' }).format(dEnd);
+      return `${fStart} - ${fEnd}`;
+    } catch {
+      return `${startDate} - ${endDate}`;
+    }
+  }
+
+  isPlanRunningThisWeek(plan: WeeklyTemplate): boolean {
+    if (!plan.startDate || !plan.endDate) return false;
+    const today = new Date();
+    const y = today.getFullYear();
+    const m = String(today.getMonth() + 1).padStart(2, '0');
+    const d = String(today.getDate()).padStart(2, '0');
+    const curDateStr = `${y}-${m}-${d}`;
+    return curDateStr >= plan.startDate && curDateStr <= plan.endDate;
+  }
+
+
+  updatePlanStartDate(plan: WeeklyTemplate, newDate: string) {
+    if (!newDate) return;
+    let updatedPlanToSave: WeeklyTemplate | null = null;
+    this.weeklyTemplates.update((templates) =>
+      templates.map((t) => {
+        if (t.id === plan.id) {
+          const updated = { ...t, startDate: newDate };
+          updatedPlanToSave = updated;
+          return updated;
+        }
+        return t;
+      })
+    );
+    if (updatedPlanToSave) {
+      this.intakeService.saveWeeklyPlan(updatedPlanToSave).subscribe();
+    }
+  }
+
+  updatePlanEndDate(plan: WeeklyTemplate, newDate: string) {
+    if (!newDate) return;
+    let updatedPlanToSave: WeeklyTemplate | null = null;
+    this.weeklyTemplates.update((templates) =>
+      templates.map((t) => {
+        if (t.id === plan.id) {
+          const updated = { ...t, endDate: newDate };
+          updatedPlanToSave = updated;
+          return updated;
+        }
+        return t;
+      })
+    );
+    if (updatedPlanToSave) {
+      this.intakeService.saveWeeklyPlan(updatedPlanToSave).subscribe();
+    }
+  }
+
+}

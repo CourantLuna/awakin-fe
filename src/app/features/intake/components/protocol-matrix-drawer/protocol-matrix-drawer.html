@@ -65,22 +65,23 @@
           <div class="flex items-center justify-between gap-2 w-full min-w-0 pr-1 overflow-hidden">
             <div class="flex items-center gap-2 justify-start min-w-0 flex-1">
               <i class="pi pi-th-large text-stone-400 shrink-0"></i>
-              <span class="font-black text-xs uppercase tracking-wider text-stone-800 truncate" [title]="plan.name">{{
-                plan.name }}</span>
+              <div class="flex flex-col min-w-0">
+                <span class="font-black text-xs uppercase tracking-wider text-stone-800 truncate" [title]="plan.name">{{ plan.name }}</span>
+                <span class="text-[9px] font-medium text-stone-500 flex items-center gap-1 mt-0.5">
+                  <i class="pi pi-calendar text-[8px] text-awakin-sun"></i>
+                  {{ formatDateRange(plan.startDate, plan.endDate) }}
+                  @if (isPlanRunningThisWeek(plan)) {
+                  <span class="text-emerald-600 font-bold ml-0.5">● En curso</span>
+                  }
+                </span>
+              </div>
             </div>
 
             <div class="flex items-center gap-1.5 shrink-0">
-              @if (plan.id === activeTemplateId()) {
-              <span
-                class="bg-emerald-50 text-emerald-600 border border-emerald-200 text-[8px] px-1.5 py-0.5 rounded flex items-center gap-1 font-bold tracking-widest uppercase shadow-sm whitespace-nowrap">
-                <i class="pi pi-check-circle text-[5px]"></i> ACTUAL
-              </span>
-              }
-
               @if (plan.isFromCoach) {
               <span
                 class="bg-[#5057FE] text-white text-[9px] px-2.5 py-0.5 rounded-full flex items-center gap-1 font-bold tracking-wider uppercase shadow-xs whitespace-nowrap">
-                <i class="pi pi-verified text-[8px]"></i> De tu Coach
+                <i class="pi pi-verified text-[8px]"></i> Coach
               </span>
               } @else {
               <span
@@ -94,17 +95,34 @@
 
         <p-accordion-content class="w-full max-w-full overflow-x-hidden">
           <div class="pt-2 pb-4 px-0 w-full max-w-full overflow-x-hidden">
-            @if (plan.id !== activeTemplateId()) {
-            <button (click)="setActiveTemplate(plan.id, $event)"
-              class="w-full mb-4 py-3 border-2 border-dashed border-stone-200 rounded-xl text-[10px] font-bold tracking-widest uppercase text-stone-500 hover:border-emerald-500 hover:text-emerald-600 hover:bg-emerald-50 transition-colors flex items-center justify-center gap-2">
-              <i class="pi pi-check-circle"></i> Establecer como Plan Actual
-            </button>
-            } @else {
-            <div
-              class="w-full mb-4 py-3 bg-emerald-50/50 border border-emerald-100 rounded-xl text-[10px] font-bold tracking-widest uppercase text-emerald-600 flex items-center justify-center gap-2 shadow-sm pointer-events-none">
-              <i class="pi pi-check-circle"></i> Plan Semanal Activo
+            <!-- Barra de Vigencia del Plan (Rige por fechas) -->
+            <div class="mb-4 p-3 bg-stone-50 rounded-2xl border border-stone-200/80 flex items-center justify-between gap-3 flex-wrap">
+              <div class="flex items-center gap-2 flex-wrap">
+                <div class="flex items-center gap-1.5 text-stone-600 font-bold text-[10px] uppercase tracking-wider">
+                  <i class="pi pi-calendar text-awakin-sun text-xs"></i>
+                  <span>Vigencia:</span>
+                </div>
+                @if (!plan.isFromCoach) {
+                <div class="flex items-center gap-1.5">
+                  <input type="date" [value]="plan.startDate || ''" (change)="updatePlanStartDate(plan, $any($event.target).value)"
+                    class="bg-white border border-stone-200 rounded-lg px-2 py-1 text-[10px] font-bold text-stone-700 outline-none focus:border-awakin-sun transition-colors" />
+                  <span class="text-stone-400 text-xs">a</span>
+                  <input type="date" [value]="plan.endDate || ''" (change)="updatePlanEndDate(plan, $any($event.target).value)"
+                    class="bg-white border border-stone-200 rounded-lg px-2 py-1 text-[10px] font-bold text-stone-700 outline-none focus:border-awakin-sun transition-colors" />
+                </div>
+                } @else {
+                <span class="text-[10px] font-bold text-stone-800 bg-white border border-stone-200 px-2.5 py-1 rounded-lg">
+                  {{ formatDateRange(plan.startDate, plan.endDate) }}
+                </span>
+                }
+              </div>
+
+              @if (isPlanRunningThisWeek(plan)) {
+              <span class="bg-emerald-50 text-emerald-700 border border-emerald-200 text-[9px] px-2.5 py-1 rounded-lg font-bold tracking-wider uppercase flex items-center gap-1 shrink-0">
+                <i class="pi pi-check-circle text-[8px]"></i> En curso
+              </span>
+              }
             </div>
-            }
 
             @if (!plan.isFromCoach) {
             <div class="flex items-center gap-2 mb-4">
