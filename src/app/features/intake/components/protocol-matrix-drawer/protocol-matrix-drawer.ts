@@ -7,11 +7,12 @@ import { SelectModule } from 'primeng/select';
 import { PopoverModule } from 'primeng/popover';
 import { IntakeService } from '../../../../core/services/intake.service';
 import { formatQuantity, toFraction } from '../../../../core/helpers/nutrition-optimizer';
+import { RecipeDetailsModal } from '../recipe-details-modal/recipe-details-modal';
 
 @Component({
   selector: 'app-protocol-matrix-drawer',
   standalone: true,
-  imports: [CommonModule, FormsModule, PrimeNGModule, SelectModule, PopoverModule],
+  imports: [CommonModule, FormsModule, PrimeNGModule, SelectModule, PopoverModule, RecipeDetailsModal],
   templateUrl: './protocol-matrix-drawer.html',
   styleUrl: './protocol-matrix-drawer.css',
 })

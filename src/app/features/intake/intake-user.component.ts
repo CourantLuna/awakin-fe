@@ -26,6 +26,7 @@ import {
 import { IntakeScaleWidgetComponent } from './components/intake-scale-widget/intake-scale-widget';
 import { ProtocolMatrixDrawer } from './components/protocol-matrix-drawer/protocol-matrix-drawer';
 import { ShoppingListDrawer } from './components/shopping-list-drawer/shopping-list-drawer';
+import { RecipeDetailsModal } from './components/recipe-details-modal/recipe-details-modal';
 import { WeeklyTemplate, MenuPlan, DayAssignment, ManualMenuSelection, DishItem } from './models/intake.models';
 import { FormsModule } from '@angular/forms';
 import { IntakeService, determineCoverIcon } from '../../core/services/intake.service';
@@ -132,6 +133,7 @@ export interface FoodItem {
     DragDropModule,
     ProtocolMatrixDrawer,
     ShoppingListDrawer,
+    RecipeDetailsModal,
     FormsModule,
     IntakeTopBar,
   ],
@@ -198,6 +200,11 @@ export class IntakeUserComponent implements OnInit {
   });
 
   canLogForSelectedDate = computed(() => this.dateLogStatus().canLog);
+
+  // Modal de detalles de receta
+  selectedDishForDetails = signal<DishItem | null>(null);
+  isRecipeDetailsOpen = signal<boolean>(false);
+
   // Datos Gráfico
   macroData: any;
   macroOptions: any;
@@ -683,10 +690,23 @@ export class IntakeUserComponent implements OnInit {
     this.notesText.set(`${dish.name} (${this.formatQuantity(dish.portion, dish.unit)})`);
   }
 
+  openRecipeDetails(dish?: DishItem, event?: Event) {
+    if (event) {
+      event.preventDefault();
+      event.stopPropagation();
+    }
+    if (!dish) return;
+    this.selectedDishForDetails.set(dish);
+    this.isRecipeDetailsOpen.set(true);
+  }
+
   // Handler al presionar el check de alguna receta:
   // - Si no está registrado ese día: se presenta obligatoriamente el formulario de registrar comida.
   // - Si ya está registrado: al hacer uncheck se deshabilita (is_active = false) sin borrarlo; un segundo check lo vuelve a habilitar.
-  handleFoodCheckClick(food: FoodItem) {
+  handleFoodCheckClick(food: FoodItem, event?: Event) {
+    if (event) {
+      event.stopPropagation();
+    }
     if (!this.canLogForSelectedDate()) {
       return;
     }
