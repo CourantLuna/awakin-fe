@@ -588,6 +588,7 @@ export class IntakeUserComponent implements OnInit {
   isRegisterModalOpen = signal<boolean>(false);
   targetFoodItem = signal<FoodItem | null>(null);
   selectedDishFor100 = signal<FoodItem | null>(null);
+  selectedFoodItemsForLog = signal<FoodItem[]>([]);
   uploadedPhotoUrl = signal<string | null>(null);
   selectedFile = signal<File | null>(null);
   isSubmittingFood = signal<boolean>(false);
@@ -596,6 +597,67 @@ export class IntakeUserComponent implements OnInit {
   notesText = signal<string>('');
   registeredRecords = signal<Record<string, any>>({});
   registerError = signal<string | null>(null);
+
+  // Totales acumulados de los alimentos seleccionados para el registro actual
+  selectedFoodsTotals = computed(() => {
+    const items = this.selectedFoodItemsForLog();
+    return {
+      kcal: items.reduce((sum, f) => sum + f.kcal, 0),
+      protein: items.reduce((sum, f) => sum + f.protein, 0),
+      carbs: items.reduce((sum, f) => sum + f.carbs, 0),
+      fat: items.reduce((sum, f) => sum + f.fat, 0),
+      count: items.length,
+    };
+  });
+
+  // Conteo de alimentos no registrados para un tipo de comida
+  getUnloggedCountForMeal(type: MealType): number {
+    return this.getFoodsForMeal(type).filter((f) => !f.isLogged).length;
+  }
+
+  isFoodSelectedForLog(foodId: string): boolean {
+    return this.selectedFoodItemsForLog().some((f) => f.id === foodId);
+  }
+
+  toggleFoodSelectionForLog(food: FoodItem) {
+    this.selectedFoodItemsForLog.update((items) => {
+      const exists = items.some((f) => f.id === food.id);
+      if (exists) {
+        return items.filter((f) => f.id !== food.id);
+      } else {
+        return [...items, food];
+      }
+    });
+    this.syncNotesWithSelectedFoods();
+  }
+
+  selectAllFoodsForCurrentMeal() {
+    const foods = this.getFoodsForMeal(this.selectedMealType());
+    this.selectedFoodItemsForLog.set([...foods]);
+    this.syncNotesWithSelectedFoods();
+  }
+
+  deselectAllFoodsForCurrentMeal() {
+    this.selectedFoodItemsForLog.set([]);
+    this.notesText.set('');
+  }
+
+  selectMealTypeInModal(type: MealType) {
+    this.selectedMealType.set(type);
+    const unloggedFoods = this.getFoodsForMeal(type).filter((f) => !f.isLogged);
+    const foodsToSelect = unloggedFoods.length > 0 ? unloggedFoods : this.getFoodsForMeal(type);
+    this.selectedFoodItemsForLog.set(foodsToSelect);
+    this.syncNotesWithSelectedFoods();
+  }
+
+  private syncNotesWithSelectedFoods() {
+    const items = this.selectedFoodItemsForLog();
+    if (items.length > 0) {
+      this.notesText.set(items.map((f) => `${f.name} (${this.formatQuantity(f.portion, f.unit)})`).join(', '));
+    } else {
+      this.notesText.set('');
+    }
+  }
 
   // ==========================================
   // MODAL DE HISTORIA COMPARTIBLE (Awakin Food Story)
@@ -651,14 +713,14 @@ export class IntakeUserComponent implements OnInit {
   ];
 
   // Validación: foto obligatoria, tipo de comida obligatorio, evaluación de adherencia obligatoria.
-  // Si es 100% en el plan y hay platillos disponibles, debe seleccionarse el platillo correspondiente.
+  // Si es 100% en el plan y hay alimentos planificados para esa comida, debe haber al menos 1 seleccionado.
   isRegisterFormValid = computed(() => {
     if (!this.uploadedPhotoUrl() || !this.selectedMealType() || !this.selectedAdherence()) {
       return false;
     }
     if (this.selectedAdherence() === '100') {
-      const dishes = this.availableDishesForSelectedDay();
-      if (dishes.length > 0 && !this.selectedDishFor100() && !this.targetFoodItem()) {
+      const mealFoods = this.getFoodsForMeal(this.selectedMealType());
+      if (mealFoods.length > 0 && this.selectedFoodItemsForLog().length === 0) {
         return false;
       }
     }
@@ -667,21 +729,6 @@ export class IntakeUserComponent implements OnInit {
 
   onAdherenceChange(adh: '100' | 'ADAPTATION' | 'FREE' | null) {
     this.selectedAdherence.set(adh);
-    if (adh === '100') {
-      if (!this.selectedDishFor100()) {
-        if (this.targetFoodItem()) {
-          this.selectDishFor100(this.targetFoodItem()!);
-        } else {
-          const match =
-            this.availableDishesForSelectedDay().find((d) => d.mealType === this.selectedMealType()) ||
-            this.availableDishesForSelectedDay()[0] ||
-            null;
-          if (match) {
-            this.selectDishFor100(match);
-          }
-        }
-      }
-    }
   }
 
   selectDishFor100(dish: FoodItem) {
@@ -752,13 +799,34 @@ export class IntakeUserComponent implements OnInit {
       return;
     }
     this.registerError.set(null);
-    this.targetFoodItem.set(food || null);
-    this.selectedDishFor100.set(food || null);
-    this.selectedMealType.set(food ? food.mealType : (mealType || 'LUNCH'));
+    const chosenType = food ? food.mealType : (mealType || 'LUNCH');
+    this.selectedMealType.set(chosenType);
+
+    if (food) {
+      // Si se hizo click en un alimento específico, seleccionarlo inicialmente
+      this.selectedFoodItemsForLog.set([food]);
+      this.targetFoodItem.set(food);
+      this.selectedDishFor100.set(food);
+      this.notesText.set(`${food.name} (${this.formatQuantity(food.portion, food.unit)})`);
+    } else {
+      // Si se abrió desde la comida en general, preseleccionar los alimentos no registrados de esa comida
+      const unloggedFoods = this.getFoodsForMeal(chosenType).filter((f) => !f.isLogged);
+      const foodsToSelect = unloggedFoods.length > 0 ? unloggedFoods : this.getFoodsForMeal(chosenType);
+      this.selectedFoodItemsForLog.set(foodsToSelect);
+      this.targetFoodItem.set(foodsToSelect[0] || null);
+      this.selectedDishFor100.set(foodsToSelect[0] || null);
+      if (foodsToSelect.length > 0) {
+        this.notesText.set(
+          foodsToSelect.map((f) => `${f.name} (${this.formatQuantity(f.portion, f.unit)})`).join(', ')
+        );
+      } else {
+        this.notesText.set('');
+      }
+    }
+
     this.uploadedPhotoUrl.set(null);
     this.selectedFile.set(null);
-    this.selectedAdherence.set(food ? '100' : null);
-    this.notesText.set(food ? `${food.name} (${this.formatQuantity(food.portion, food.unit)})` : '');
+    this.selectedAdherence.set('100');
     this.isRegisterModalOpen.set(true);
   }
 
@@ -830,87 +898,184 @@ export class IntakeUserComponent implements OnInit {
         return;
       }
 
-      // 2. Determinar platillo vinculado
-      const targetDish =
-        this.selectedAdherence() === '100'
-          ? (this.selectedDishFor100() || this.targetFoodItem())
-          : (this.targetFoodItem() || null);
+      // 2. Determinar alimentos vinculados a registrar
+      const selectedItems = this.selectedFoodItemsForLog();
+      const chosenMealType = this.selectedMealType();
 
-      const chosenMealType = targetDish ? targetDish.mealType : this.selectedMealType();
-      const foodId = targetDish ? targetDish.id : `custom_${Date.now()}`;
-      const idOriginal = `${curDateStr}_${foodId}`;
+      if (selectedItems.length > 0) {
+        // Enfoque A: Registrar cada alimento seleccionado con la misma foto_url
+        const savePromises = selectedItems.map(async (food) => {
+          const foodId = food.id;
+          const idOriginal = `${curDateStr}_${foodId}`;
+          const calories = food.kcal;
+          const protein = food.protein;
+          const carbs = food.carbs;
+          const fat = food.fat;
+          const dishTitle = food.name;
 
-      const calories = targetDish ? targetDish.kcal : 450;
-      const protein = targetDish ? targetDish.protein : 35;
-      const carbs = targetDish ? targetDish.carbs : 45;
-      const fat = targetDish ? targetDish.fat : 14;
-      const dishTitle = targetDish
-        ? targetDish.name
-        : (this.notesText()?.trim() || `Registro de ${chosenMealType}`);
+          let formattedIngredients: any[] | null = null;
+          if (food.dishItem) {
+            const dish = food.dishItem;
+            const activeDish =
+              dish.isOptimizerActive && dish.optimizerTargets
+                ? applyOptimizationToDish(dish)
+                : dish;
 
-      // 3. Obtener lista de ingredientes del platillo (con cantidades optimizadas si el optimizador está activo)
-      let formattedIngredients: any[] | null = null;
-      if (targetDish && targetDish.dishItem) {
-        const dish = targetDish.dishItem;
-        const activeDish = (dish.isOptimizerActive && dish.optimizerTargets)
-          ? applyOptimizationToDish(dish)
-          : dish;
+            formattedIngredients = (activeDish.ingredients || []).map((di: any) => {
+              const raw = di.rawIngredientObj || {};
+              const ingObj = {
+                id: di.ingredient_id || raw.id || di.id,
+                name: di.name || raw.name || 'Ingrediente',
+                unit: di.unit || raw.unit || 'g',
+                calories: Number(di.calories ?? raw.calories ?? 0),
+                protein: Number(di.protein ?? raw.protein ?? 0),
+                carbs: Number(di.carbs ?? raw.carbs ?? 0),
+                fats: Number(di.fats ?? raw.fats ?? 0),
+                serving_size: Number(di.serving_size ?? raw.serving_size ?? 100),
+                unit_weight_grams: Number(
+                  di.unit_weight_grams ?? raw.unit_weight_grams ?? (di.serving_size ?? 100)
+                ),
+              };
 
-        formattedIngredients = (activeDish.ingredients || []).map((di: any) => {
-          const raw = di.rawIngredientObj || {};
-          const ingObj = {
-            id: di.ingredient_id || raw.id || di.id,
-            name: di.name || raw.name || 'Ingrediente',
-            unit: di.unit || raw.unit || 'g',
-            calories: Number(di.calories ?? raw.calories ?? 0),
-            protein: Number(di.protein ?? raw.protein ?? 0),
-            carbs: Number(di.carbs ?? raw.carbs ?? 0),
-            fats: Number(di.fats ?? raw.fats ?? 0),
-            serving_size: Number(di.serving_size ?? raw.serving_size ?? 100),
-            unit_weight_grams: Number(di.unit_weight_grams ?? raw.unit_weight_grams ?? (di.serving_size ?? 100)),
+              const grams = getGramsForQuantity(ingObj, Number(di.quantity || 0), di.mode);
+              const macros = calculateIngredientMacros(ingObj, Number(di.quantity || 0), di.mode);
+              const displayQty = formatQuantity(
+                Number(di.quantity || 0),
+                di.unit || ingObj.unit,
+                di.mode
+              );
+
+              return {
+                nombre: ingObj.name,
+                cantidad_display: displayQty,
+                cantidad_original: Number(di.quantity || 0),
+                unidad_original: di.unit || ingObj.unit || 'g',
+                modo: di.mode || 'g',
+                cantidad_g: Math.round(grams * 10) / 10,
+                kcals: Math.round(macros.calories),
+                proteinas_g: Math.round(macros.protein * 10) / 10,
+                grasas_g: Math.round(macros.fat * 10) / 10,
+                carbohidratos_g: Math.round(macros.carbs * 10) / 10,
+              };
+            });
+          } else {
+            // Ingrediente suelto del plan o alimento sin receta desglosada
+            formattedIngredients = [
+              {
+                nombre: food.name,
+                cantidad_display: this.formatQuantity(food.portion, food.unit),
+                cantidad_original: Number(food.portion || 0),
+                unidad_original: food.unit || 'g',
+                modo: food.unit === 'g' || food.unit === 'ml' ? 'g' : 'portions',
+                cantidad_g: food.unit === 'g' ? Number(food.portion || 0) : Number(food.portion || 0),
+                kcals: Number(food.kcal || 0),
+                proteinas_g: Number(food.protein || 0),
+                grasas_g: Number(food.fat || 0),
+                carbohidratos_g: Number(food.carbs || 0),
+              },
+            ];
+          }
+
+          const recordPayload = {
+            id_original: idOriginal,
+            email: email,
+            nombre: athleteName,
+            tipo_comida: chosenMealType,
+            adherencia: this.selectedAdherence(),
+            foto_url: photoUrl,
+            notas: this.notesText()?.trim() || null,
+            is_active: true,
+            calorias: calories,
+            proteinas: protein,
+            carbohidratos: carbs,
+            grasas: fat,
+            plato_estimado: dishTitle,
+            ingredientes: formattedIngredients,
           };
 
-          const grams = getGramsForQuantity(ingObj, Number(di.quantity || 0), di.mode);
-          const macros = calculateIngredientMacros(ingObj, Number(di.quantity || 0), di.mode);
-          const displayQty = formatQuantity(Number(di.quantity || 0), di.unit || ingObj.unit, di.mode);
+          await this.intakeService.createFoodRecord(recordPayload).toPromise();
 
-          return {
-            nombre: ingObj.name,
-            cantidad_display: displayQty,
-            cantidad_original: Number(di.quantity || 0),
-            unidad_original: di.unit || ingObj.unit || 'g',
-            modo: di.mode || 'g',
-            cantidad_g: Math.round(grams * 10) / 10,
-            kcals: Math.round(macros.calories),
-            proteinas_g: Math.round(macros.protein * 10) / 10,
-            grasas_g: Math.round(macros.fat * 10) / 10,
-            carbohidratos_g: Math.round(macros.carbs * 10) / 10,
-          };
+          return { foodId, recordPayload, formattedIngredients };
         });
-      }
 
-      // 4. Crear registro en tabla public.registros_nutricionales_pruebas
-      const recordPayload = {
-        id_original: idOriginal,
-        email: email,
-        nombre: athleteName,
-        tipo_comida: chosenMealType,
-        adherencia: this.selectedAdherence(),
-        foto_url: photoUrl,
-        notas: this.notesText()?.trim() || null,
-        is_active: true,
-        calorias: calories,
-        proteinas: protein,
-        carbohidratos: carbs,
-        grasas: fat,
-        plato_estimado: dishTitle,
-        ingredientes: formattedIngredients,
-      };
+        const results = await Promise.all(savePromises);
 
-      await this.intakeService.createFoodRecord(recordPayload).toPromise();
+        // Actualizar estados reactivos locales
+        const regUpdates: Record<string, any> = {};
+        const logMapUpdates: Record<string, boolean> = {};
+        for (const res of results) {
+          regUpdates[res.foodId] = res.recordPayload;
+          logMapUpdates[this.getLogKey(res.foodId)] = true;
+        }
+        this.registeredRecords.update((curr) => ({ ...curr, ...regUpdates }));
+        this.loggedFoodMap.update((map) => ({ ...map, ...logMapUpdates }));
 
-      // 4. Si era custom (fuera de menú), añadirlo a additionalMockFoods
-      if (!targetDish) {
+        const combinedTitle = selectedItems.map((f) => f.name).join(' + ');
+        const totalKcals = selectedItems.reduce((acc, f) => acc + f.kcal, 0);
+        const totalP = selectedItems.reduce((acc, f) => acc + f.protein, 0);
+        const totalC = selectedItems.reduce((acc, f) => acc + f.carbs, 0);
+        const totalG = selectedItems.reduce((acc, f) => acc + f.fat, 0);
+        const allIngredients = results.flatMap((r) => r.formattedIngredients || []);
+
+        const localPhotoData = this.uploadedPhotoUrl() || photoUrl || '';
+
+        // Cerrar modal
+        this.isRegisterModalOpen.set(false);
+        this.targetFoodItem.set(null);
+        this.selectedDishFor100.set(null);
+        this.selectedFoodItemsForLog.set([]);
+        this.selectedFile.set(null);
+        this.uploadedPhotoUrl.set(null);
+        this.selectedAdherence.set(null);
+        this.notesText.set('');
+
+        // 6. Abrir automáticamente la vista de Historia para compartir
+        this.openStoryShareModal({
+          photoUrl: localPhotoData,
+          dateFormatted: this.getStoryDateFormatted(this.selectedDate()),
+          mealTitle: this.mealDefinitions[chosenMealType]?.title || chosenMealType,
+          dishName: combinedTitle,
+          emoji: selectedItems[0]?.emoji || '🍲',
+          portionText:
+            selectedItems.length > 1
+              ? `${selectedItems.length} alimentos`
+              : `${selectedItems[0].portion} ${selectedItems[0].unit}`,
+          kcal: totalKcals,
+          protein: totalP,
+          carbs: totalC,
+          fat: totalG,
+          ingredients: allIngredients.length > 0 ? allIngredients : null,
+          dishId: selectedItems[0]?.id,
+        });
+      } else {
+        // Registro custom fuera de menú (sin platillos planificados seleccionados)
+        const foodId = `custom_${Date.now()}`;
+        const idOriginal = `${curDateStr}_${foodId}`;
+        const calories = 450;
+        const protein = 35;
+        const carbs = 45;
+        const fat = 14;
+        const dishTitle = this.notesText()?.trim() || `Registro de ${chosenMealType}`;
+
+        const recordPayload = {
+          id_original: idOriginal,
+          email: email,
+          nombre: athleteName,
+          tipo_comida: chosenMealType,
+          adherencia: this.selectedAdherence(),
+          foto_url: photoUrl,
+          notas: this.notesText()?.trim() || null,
+          is_active: true,
+          calorias: calories,
+          proteinas: protein,
+          carbohidratos: carbs,
+          grasas: fat,
+          plato_estimado: dishTitle,
+          ingredientes: null,
+        };
+
+        await this.intakeService.createFoodRecord(recordPayload).toPromise();
+
         const newFood: FoodItem & { targetDate: string } = {
           id: foodId,
           targetDate: curDateStr,
@@ -935,44 +1100,42 @@ export class IntakeUserComponent implements OnInit {
           isLogged: true,
         };
         this.additionalMockFoods.update((items) => [...items, newFood]);
+
+        const logKey = this.getLogKey(foodId);
+        this.registeredRecords.update((curr) => ({
+          ...curr,
+          [foodId]: recordPayload,
+        }));
+        this.loggedFoodMap.update((map) => ({ ...map, [logKey]: true }));
+
+        const localPhotoData = this.uploadedPhotoUrl() || photoUrl || '';
+
+        // Cerrar modal
+        this.isRegisterModalOpen.set(false);
+        this.targetFoodItem.set(null);
+        this.selectedDishFor100.set(null);
+        this.selectedFoodItemsForLog.set([]);
+        this.selectedFile.set(null);
+        this.uploadedPhotoUrl.set(null);
+        this.selectedAdherence.set(null);
+        this.notesText.set('');
+
+        this.openStoryShareModal({
+          photoUrl: localPhotoData,
+          dateFormatted: this.getStoryDateFormatted(this.selectedDate()),
+          mealTitle: this.mealDefinitions[chosenMealType]?.title || chosenMealType,
+          dishName: dishTitle,
+          emoji:
+            chosenMealType === 'BREAKFAST' ? '🍳' : chosenMealType === 'LUNCH' ? '🍲' : '🥗',
+          portionText: `1 porción`,
+          kcal: calories,
+          protein: protein,
+          carbs: carbs,
+          fat: fat,
+          ingredients: null,
+          dishId: foodId,
+        });
       }
-
-      // 5. Actualizar mapas reactivos locales
-      const logKey = this.getLogKey(foodId);
-      this.registeredRecords.update((curr) => ({
-        ...curr,
-        [foodId]: recordPayload,
-      }));
-      this.loggedFoodMap.update((map) => ({ ...map, [logKey]: true }));
-
-      const localPhotoData = this.uploadedPhotoUrl() || photoUrl || '';
-
-      // Cerrar modal
-      this.isRegisterModalOpen.set(false);
-      this.targetFoodItem.set(null);
-      this.selectedDishFor100.set(null);
-      this.selectedFile.set(null);
-      this.uploadedPhotoUrl.set(null);
-      this.selectedAdherence.set(null);
-      this.notesText.set('');
-
-      // 6. Abrir automáticamente la vista de Historia para compartir
-      this.openStoryShareModal({
-        photoUrl: localPhotoData,
-        dateFormatted: this.getStoryDateFormatted(this.selectedDate()),
-        mealTitle: this.mealDefinitions[chosenMealType]?.title || chosenMealType,
-        dishName: dishTitle,
-        emoji:
-          targetDish?.emoji ||
-          (chosenMealType === 'BREAKFAST' ? '🍳' : chosenMealType === 'LUNCH' ? '🍲' : '🥗'),
-        portionText: `${targetDish ? targetDish.portion : 1} ${targetDish ? targetDish.unit : 'porción'}`,
-        kcal: calories,
-        protein: protein,
-        carbs: carbs,
-        fat: fat,
-        ingredients: formattedIngredients,
-        dishId: targetDish?.id,
-      });
     } catch (err: any) {
       console.error('Error guardando en registros_nutricionales_pruebas:', err);
       const detail = err?.error?.detail || err?.message || 'Error guardando en la base de datos.';
@@ -1029,7 +1192,25 @@ export class IntakeUserComponent implements OnInit {
   }
 
   async openStoryShareModal(data: StoryShareData) {
-    this.storyData.set(data);
+    let ingredients = data.ingredients;
+    if (!ingredients || ingredients.length === 0) {
+      ingredients = [
+        {
+          nombre: data.dishName,
+          cantidad_display: data.portionText || '1 porción',
+          cantidad_original: 1,
+          unidad_original: 'porción',
+          modo: 'portions',
+          cantidad_g: 100,
+          kcals: data.kcal,
+          proteinas_g: data.protein,
+          grasas_g: data.fat,
+          carbohidratos_g: data.carbs,
+        },
+      ];
+    }
+
+    this.storyData.set({ ...data, ingredients });
     this.showIngredientsInCard.set(false);
     this.cardScale.set(1);
     this.storyShareSuccess.set(null);
@@ -1059,56 +1240,172 @@ export class IntakeUserComponent implements OnInit {
       food.coverImageUrl ||
       'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=800&q=80';
 
+    // Buscar si otros alimentos de la misma comida se registraron con la misma foto (lote) o están logueados
+    const curMealFoods = this.getFoodsForMeal(food.mealType);
+    const siblingLogged = curMealFoods.filter((f) => {
+      if (!f.isLogged) return false;
+      const sRec = this.registeredRecords()[f.id];
+      if (rec?.foto_url && sRec?.foto_url) {
+        return sRec.foto_url === rec.foto_url;
+      }
+      return true;
+    });
+
+    const isMultiSibling = siblingLogged.length > 1;
     let formattedIngs: any[] | null = null;
-    const dish = food.dishItem;
-    if (dish && dish.ingredients && dish.ingredients.length > 0) {
-      const activeDish = dish.isOptimizerActive && dish.optimizerTargets ? applyOptimizationToDish(dish) : dish;
-      formattedIngs = (activeDish.ingredients || []).map((di: any) => {
-        const raw = di.rawIngredientObj || {};
-        const ingObj = {
-          id: di.ingredient_id || raw.id || di.id,
-          name: di.name || raw.name || 'Ingrediente',
-          unit: di.unit || raw.unit || 'g',
-          calories: Number(di.calories ?? raw.calories ?? 0),
-          protein: Number(di.protein ?? raw.protein ?? 0),
-          carbs: Number(di.carbs ?? raw.carbs ?? 0),
-          fats: Number(di.fats ?? raw.fats ?? 0),
-          serving_size: Number(di.serving_size ?? raw.serving_size ?? 100),
-          unit_weight_grams: Number(di.unit_weight_grams ?? raw.unit_weight_grams ?? (di.serving_size ?? 100)),
-        };
 
-        const grams = getGramsForQuantity(ingObj, Number(di.quantity || 0), di.mode);
-        const macros = calculateIngredientMacros(ingObj, Number(di.quantity || 0), di.mode);
-        const displayQty = formatQuantity(Number(di.quantity || 0), di.unit || ingObj.unit, di.mode);
+    if (isMultiSibling) {
+      formattedIngs = siblingLogged.flatMap((f) => {
+        const sRec = this.registeredRecords()[f.id];
+        let storedIngs = sRec?.ingredientes;
+        if (typeof storedIngs === 'string') {
+          try {
+            storedIngs = JSON.parse(storedIngs);
+          } catch {
+            storedIngs = null;
+          }
+        }
 
-        return {
-          nombre: ingObj.name,
-          cantidad_display: displayQty,
-          cantidad_original: Number(di.quantity || 0),
-          unidad_original: di.unit || ingObj.unit || 'g',
-          modo: di.mode || 'g',
-          cantidad_g: Math.round(grams * 10) / 10,
-          kcals: Math.round(macros.calories),
-          proteinas_g: Math.round(macros.protein * 10) / 10,
-          grasas_g: Math.round(macros.fat * 10) / 10,
-          carbohidratos_g: Math.round(macros.carbs * 10) / 10,
-        };
+        if (f.dishItem && f.dishItem.ingredients && f.dishItem.ingredients.length > 0) {
+          const activeDish =
+            f.dishItem.isOptimizerActive && f.dishItem.optimizerTargets
+              ? applyOptimizationToDish(f.dishItem)
+              : f.dishItem;
+          return (activeDish.ingredients || []).map((di: any) => {
+            const raw = di.rawIngredientObj || {};
+            const ingObj = {
+              id: di.ingredient_id || raw.id || di.id,
+              name: di.name || raw.name || 'Ingrediente',
+              unit: di.unit || raw.unit || 'g',
+              calories: Number(di.calories ?? raw.calories ?? 0),
+              protein: Number(di.protein ?? raw.protein ?? 0),
+              carbs: Number(di.carbs ?? raw.carbs ?? 0),
+              fats: Number(di.fats ?? raw.fats ?? 0),
+              serving_size: Number(di.serving_size ?? raw.serving_size ?? 100),
+              unit_weight_grams: Number(
+                di.unit_weight_grams ?? raw.unit_weight_grams ?? (di.serving_size ?? 100)
+              ),
+            };
+            const grams = getGramsForQuantity(ingObj, Number(di.quantity || 0), di.mode);
+            const macros = calculateIngredientMacros(ingObj, Number(di.quantity || 0), di.mode);
+            const displayQty = formatQuantity(Number(di.quantity || 0), di.unit || ingObj.unit, di.mode);
+            return {
+              nombre: ingObj.name,
+              cantidad_display: displayQty,
+              cantidad_original: Number(di.quantity || 0),
+              unidad_original: di.unit || ingObj.unit || 'g',
+              modo: di.mode || 'g',
+              cantidad_g: Math.round(grams * 10) / 10,
+              kcals: Math.round(macros.calories),
+              proteinas_g: Math.round(macros.protein * 10) / 10,
+              grasas_g: Math.round(macros.fat * 10) / 10,
+              carbohidratos_g: Math.round(macros.carbs * 10) / 10,
+            };
+          });
+        } else if (storedIngs && Array.isArray(storedIngs) && storedIngs.length > 0) {
+          return storedIngs;
+        } else {
+          return [
+            {
+              nombre: f.name,
+              cantidad_display: this.formatQuantity(f.portion, f.unit),
+              cantidad_original: Number(f.portion || 0),
+              unidad_original: f.unit || 'g',
+              modo: f.unit === 'g' || f.unit === 'ml' ? 'g' : 'portions',
+              cantidad_g: f.unit === 'g' ? Number(f.portion || 0) : Number(f.portion || 0),
+              kcals: Number(f.kcal || 0),
+              proteinas_g: Number(f.protein || 0),
+              grasas_g: Number(f.fat || 0),
+              carbohidratos_g: Number(f.carbs || 0),
+            },
+          ];
+        }
       });
-    } else if (rec && rec.ingredientes && Array.isArray(rec.ingredientes)) {
-      formattedIngs = rec.ingredientes;
+    } else {
+      const dish = food.dishItem;
+      let storedIngs = rec?.ingredientes;
+      if (typeof storedIngs === 'string') {
+        try {
+          storedIngs = JSON.parse(storedIngs);
+        } catch {
+          storedIngs = null;
+        }
+      }
+
+      if (dish && dish.ingredients && dish.ingredients.length > 0) {
+        const activeDish =
+          dish.isOptimizerActive && dish.optimizerTargets ? applyOptimizationToDish(dish) : dish;
+        formattedIngs = (activeDish.ingredients || []).map((di: any) => {
+          const raw = di.rawIngredientObj || {};
+          const ingObj = {
+            id: di.ingredient_id || raw.id || di.id,
+            name: di.name || raw.name || 'Ingrediente',
+            unit: di.unit || raw.unit || 'g',
+            calories: Number(di.calories ?? raw.calories ?? 0),
+            protein: Number(di.protein ?? raw.protein ?? 0),
+            carbs: Number(di.carbs ?? raw.carbs ?? 0),
+            fats: Number(di.fats ?? raw.fats ?? 0),
+            serving_size: Number(di.serving_size ?? raw.serving_size ?? 100),
+            unit_weight_grams: Number(
+              di.unit_weight_grams ?? raw.unit_weight_grams ?? (di.serving_size ?? 100)
+            ),
+          };
+
+          const grams = getGramsForQuantity(ingObj, Number(di.quantity || 0), di.mode);
+          const macros = calculateIngredientMacros(ingObj, Number(di.quantity || 0), di.mode);
+          const displayQty = formatQuantity(Number(di.quantity || 0), di.unit || ingObj.unit, di.mode);
+
+          return {
+            nombre: ingObj.name,
+            cantidad_display: displayQty,
+            cantidad_original: Number(di.quantity || 0),
+            unidad_original: di.unit || ingObj.unit || 'g',
+            modo: di.mode || 'g',
+            cantidad_g: Math.round(grams * 10) / 10,
+            kcals: Math.round(macros.calories),
+            proteinas_g: Math.round(macros.protein * 10) / 10,
+            grasas_g: Math.round(macros.fat * 10) / 10,
+            carbohidratos_g: Math.round(macros.carbs * 10) / 10,
+          };
+        });
+      } else if (storedIngs && Array.isArray(storedIngs) && storedIngs.length > 0) {
+        formattedIngs = storedIngs;
+      } else {
+        formattedIngs = [
+          {
+            nombre: food.name,
+            cantidad_display: this.formatQuantity(food.portion, food.unit),
+            cantidad_original: Number(food.portion || 0),
+            unidad_original: food.unit || 'g',
+            modo: food.unit === 'g' || food.unit === 'ml' ? 'g' : 'portions',
+            cantidad_g: food.unit === 'g' ? Number(food.portion || 0) : Number(food.portion || 0),
+            kcals: Number(food.kcal || 0),
+            proteinas_g: Number(food.protein || 0),
+            grasas_g: Number(food.fat || 0),
+            carbohidratos_g: Number(food.carbs || 0),
+          },
+        ];
+      }
     }
+
+    const dishName = isMultiSibling ? siblingLogged.map((f) => f.name).join(' + ') : food.name;
+    const portionText = isMultiSibling ? `${siblingLogged.length} alimentos` : `${food.portion} ${food.unit}`;
+    const totalKcal = isMultiSibling ? siblingLogged.reduce((sum, f) => sum + f.kcal, 0) : food.kcal;
+    const totalP = isMultiSibling ? siblingLogged.reduce((sum, f) => sum + f.protein, 0) : food.protein;
+    const totalC = isMultiSibling ? siblingLogged.reduce((sum, f) => sum + f.carbs, 0) : food.carbs;
+    const totalG = isMultiSibling ? siblingLogged.reduce((sum, f) => sum + f.fat, 0) : food.fat;
 
     this.openStoryShareModal({
       photoUrl: photoUrl,
       dateFormatted: this.getStoryDateFormatted(this.selectedDate()),
       mealTitle: this.mealDefinitions[food.mealType]?.title || food.mealType,
-      dishName: food.name,
+      dishName: dishName,
       emoji: food.emoji,
-      portionText: `${food.portion} ${food.unit}`,
-      kcal: food.kcal,
-      protein: food.protein,
-      carbs: food.carbs,
-      fat: food.fat,
+      portionText: portionText,
+      kcal: totalKcal,
+      protein: totalP,
+      carbs: totalC,
+      fat: totalG,
       ingredients: formattedIngs,
       dishId: food.dishItem?.id || food.id,
     });
