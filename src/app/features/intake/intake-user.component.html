@@ -134,19 +134,9 @@
           <!-- Header de la Comida: Título + Macros + Icono representativo -->
           <div class="flex items-center justify-between mb-4">
             <div>
-              <div class="flex items-center gap-2">
-                <h3 class="text-base font-black text-stone-900 tracking-tight leading-tight">
-                  {{ def.title }}
-                </h3>
-                @let unloggedCount = getUnloggedCountForMeal(mealType);
-                @if (unloggedCount > 1 && canLogForSelectedDate()) {
-                <button type="button" (click)="openRegisterModal(mealType)"
-                  class="text-[9px] font-black uppercase tracking-wider text-awakin-sun bg-awakin-sun/10 hover:bg-awakin-sun/20 px-2 py-0.5 rounded-full transition-colors cursor-pointer border border-awakin-sun/20"
-                  title="Registrar los {{ unloggedCount }} alimentos pendientes con una sola foto">
-                  Registrar todo
-                </button>
-                }
-              </div>
+              <h3 class="text-base font-black text-stone-900 tracking-tight leading-tight">
+                {{ def.title }}
+              </h3>
               <div class="flex items-center gap-1.5 text-[11px] font-bold text-stone-400 mt-1">
                 <span class="text-stone-700 font-extrabold flex items-center gap-1">
                   <i class="pi pi-bolt text-awakin-sun text-[10px]"></i>
@@ -161,11 +151,48 @@
               </div>
             </div>
 
-            <!-- Icono según tipo de comida (sin marcas comerciales) -->
-            <div class="w-10 h-10 rounded-2xl flex items-center justify-center border shadow-xs transition-transform"
-              [ngClass]="def.badgeBg" [title]="def.title">
-              <i [class]="def.icon" class="text-base"></i>
+            <!-- Botones de Acción según estado: Registrar todo / Registrar restantes / Compartir todo -->
+            @let unloggedCount = getUnloggedCountForMeal(mealType);
+            @let loggedCount = getLoggedCountForMeal(mealType);
+
+            @if (canLogForSelectedDate() && foods.length > 0) {
+            <div class="flex items-center gap-1.5 shrink-0">
+              <!-- Caso 1: Todos pendientes -> Registrar todo -->
+              @if (unloggedCount > 0 && loggedCount === 0) {
+              <button type="button" (click)="openRegisterModal(mealType)"
+                class="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-black bg-awakin-sun hover:bg-amber-400 text-stone-950 shadow-xs transition-all active:scale-95 cursor-pointer"
+                [title]="foods.length > 1 ? 'Registrar los ' + foods.length + ' alimentos juntos' : 'Registrar comida'">
+                <i class="pi pi-camera text-xs"></i>
+                <span>{{ foods.length > 1 ? 'Registrar todo' : 'Registrar' }}</span>
+              </button>
+              }
+
+              <!-- Caso 2: Algunos registrados y algunos pendientes -> Registrar restantes + Compartir los listos -->
+              @if (unloggedCount > 0 && loggedCount > 0) {
+              <button type="button" (click)="openRegisterModal(mealType)"
+                class="flex items-center gap-1 px-2.5 py-1.5 rounded-full text-[11px] font-black bg-awakin-sun/15 hover:bg-awakin-sun text-stone-900 border border-awakin-sun/30 transition-all active:scale-95 cursor-pointer"
+                title="Registrar los {{ unloggedCount }} alimentos restantes de esta comida">
+                <i class="pi pi-camera text-[10px]"></i>
+                <span>Registrar ({{ unloggedCount }})</span>
+              </button>
+              <button type="button" (click)="openStoryForMeal(mealType, $event)"
+                class="w-7 h-7 rounded-full bg-stone-100 hover:bg-stone-200 text-stone-600 hover:text-awakin-sun flex items-center justify-center transition-all cursor-pointer shadow-2xs"
+                title="Compartir historia de los alimentos registrados de {{ def.title }}">
+                <i class="pi pi-share-alt text-[10px]"></i>
+              </button>
+              }
+
+              <!-- Caso 3: Todos registrados -> Compartir todo -->
+              @if (unloggedCount === 0 && loggedCount > 0) {
+              <button type="button" (click)="openStoryForMeal(mealType, $event)"
+                class="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-black bg-stone-900 hover:bg-stone-800 text-white shadow-xs transition-all active:scale-95 cursor-pointer"
+                title="Compartir historia completa de {{ def.title }}">
+                <i class="pi pi-share-alt text-xs text-awakin-sun"></i>
+                <span>Compartir todo</span>
+              </button>
+              }
             </div>
+            }
           </div>
 
           <!-- Lista de Alimentos de esta comida -->
@@ -399,6 +426,25 @@
           }
         </div>
 
+        <!-- Banner de Reutilización de Foto previa de la misma comida -->
+        @if (existingMealPhotoUrl()) {
+        <div class="mb-2.5 p-2.5 rounded-2xl bg-amber-500/10 border border-amber-500/25 flex items-center justify-between gap-3">
+          <div class="flex items-center gap-2.5 min-w-0">
+            <img [src]="existingMealPhotoUrl()" alt="Foto previa" class="w-10 h-10 rounded-xl object-cover border border-amber-500/30 shrink-0 shadow-2xs" />
+            <div class="min-w-0">
+              <p class="text-xs font-black text-stone-800 truncate">Foto previa en {{ mealDefinitions[selectedMealType()].title }}</p>
+              <p class="text-[10px] text-stone-500 truncate">Reutilizar para estos alimentos</p>
+            </div>
+          </div>
+          <button type="button" (click)="useExistingMealPhoto()"
+            class="px-2.5 py-1.5 rounded-xl text-xs font-black transition-all shrink-0 cursor-pointer flex items-center gap-1 shadow-2xs"
+            [ngClass]="uploadedPhotoUrl() === existingMealPhotoUrl() ? 'bg-awakin-sun text-stone-950 font-black' : 'bg-white hover:bg-stone-50 text-stone-700 border border-stone-200'">
+            <i class="pi" [ngClass]="uploadedPhotoUrl() === existingMealPhotoUrl() ? 'pi-check' : 'pi-clone'"></i>
+            <span>{{ uploadedPhotoUrl() === existingMealPhotoUrl() ? 'Foto aplicada' : 'Usar esta foto' }}</span>
+          </button>
+        </div>
+        }
+
         <input #fileInput type="file" accept="image/*" capture="environment" (change)="onPhotoSelected($event)"
           class="hidden" />
 
@@ -559,8 +605,42 @@
         <div id="storyCanvas"
           class="relative w-full max-w-[320px] aspect-[9/16]  overflow-hidden  flex flex-col justify-center items-center">
 
-          <!-- Imagen de fondo del plato registrado -->
-          @if (storyData()?.photoUrl) {
+          <!-- Imagen de fondo del plato registrado o Collage de fotos múltiples -->
+          @if (storyData()?.photoUrls && storyData()!.photoUrls!.length > 1) {
+          <div class="absolute inset-0 w-full h-full overflow-hidden select-none pointer-events-none">
+            @let pList = storyData()!.photoUrls!;
+            @if (pList.length === 2) {
+            <div class="grid grid-rows-2 h-full w-full gap-0.5">
+              <img [src]="pList[0]" alt="Foto 1" crossOrigin="anonymous" class="w-full h-full object-cover" />
+              <img [src]="pList[1]" alt="Foto 2" crossOrigin="anonymous" class="w-full h-full object-cover" />
+            </div>
+            } @else if (pList.length === 3) {
+            <div class="grid grid-rows-2 h-full w-full gap-0.5">
+              <div class="w-full h-full overflow-hidden">
+                <img [src]="pList[0]" alt="Foto 1" crossOrigin="anonymous" class="w-full h-full object-cover" />
+              </div>
+              <div class="grid grid-cols-2 h-full w-full gap-0.5">
+                <img [src]="pList[1]" alt="Foto 2" crossOrigin="anonymous" class="w-full h-full object-cover" />
+                <img [src]="pList[2]" alt="Foto 3" crossOrigin="anonymous" class="w-full h-full object-cover" />
+              </div>
+            </div>
+            } @else {
+            <div class="grid grid-cols-2 grid-rows-2 h-full w-full gap-0.5">
+              <img [src]="pList[0]" alt="Foto 1" crossOrigin="anonymous" class="w-full h-full object-cover" />
+              <img [src]="pList[1]" alt="Foto 2" crossOrigin="anonymous" class="w-full h-full object-cover" />
+              <img [src]="pList[2]" alt="Foto 3" crossOrigin="anonymous" class="w-full h-full object-cover" />
+              <div class="relative w-full h-full overflow-hidden">
+                <img [src]="pList[3]" alt="Foto 4" crossOrigin="anonymous" class="w-full h-full object-cover" />
+                @if (pList.length > 4) {
+                <div class="absolute inset-0 bg-black/60 flex items-center justify-center text-white font-black text-base">
+                  +{{ pList.length - 3 }}
+                </div>
+                }
+              </div>
+            </div>
+            }
+          </div>
+          } @else if (storyData()?.photoUrl) {
           <img [src]="storyData()?.photoUrl" alt="Foto plato" crossOrigin="anonymous"
             class="absolute inset-0 w-full h-full object-cover select-none pointer-events-none" />
           } @else {

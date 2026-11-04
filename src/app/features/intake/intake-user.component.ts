@@ -7,6 +7,7 @@ import * as htmlToImage from 'html-to-image';
 
 export interface StoryShareData {
   photoUrl: string;
+  photoUrls?: string[];
   dateFormatted: string;
   mealTitle: string;
   dishName: string;
@@ -615,6 +616,35 @@ export class IntakeUserComponent implements OnInit {
     return this.getFoodsForMeal(type).filter((f) => !f.isLogged).length;
   }
 
+  getLoggedCountForMeal(type: MealType): number {
+    return this.getFoodsForMeal(type).filter((f) => f.isLogged).length;
+  }
+
+  getLoggedFoodsForMeal(type: MealType): FoodItem[] {
+    return this.getFoodsForMeal(type).filter((f) => f.isLogged);
+  }
+
+  getExistingPhotoForMeal(mealType: MealType): string | null {
+    const mealFoods = this.getFoodsForMeal(mealType);
+    for (const f of mealFoods) {
+      const rec = this.registeredRecords()[f.id];
+      if (rec?.foto_url && typeof rec.foto_url === 'string' && rec.foto_url.trim().length > 0) {
+        return rec.foto_url.trim();
+      }
+    }
+    return null;
+  }
+
+  existingMealPhotoUrl = signal<string | null>(null);
+
+  useExistingMealPhoto() {
+    const photo = this.existingMealPhotoUrl();
+    if (photo) {
+      this.uploadedPhotoUrl.set(photo);
+      this.selectedFile.set(null);
+    }
+  }
+
   isFoodSelectedForLog(foodId: string): boolean {
     return this.selectedFoodItemsForLog().some((f) => f.id === foodId);
   }
@@ -824,7 +854,13 @@ export class IntakeUserComponent implements OnInit {
       }
     }
 
-    this.uploadedPhotoUrl.set(null);
+    const existingPhoto = this.getExistingPhotoForMeal(chosenType);
+    this.existingMealPhotoUrl.set(existingPhoto);
+    if (existingPhoto && !food) {
+      this.uploadedPhotoUrl.set(existingPhoto);
+    } else {
+      this.uploadedPhotoUrl.set(null);
+    }
     this.selectedFile.set(null);
     this.selectedAdherence.set('100');
     this.isRegisterModalOpen.set(true);
@@ -1216,7 +1252,11 @@ export class IntakeUserComponent implements OnInit {
     this.storyShareSuccess.set(null);
     this.isStoryModalOpen.set(true);
 
-    if (data.photoUrl && !data.photoUrl.startsWith('data:')) {
+    if (data.photoUrls && data.photoUrls.length > 1) {
+      Promise.all(data.photoUrls.map((u) => this.toDataUrl(u))).then((safeUrls) => {
+        this.storyData.update((curr) => (curr ? { ...curr, photoUrls: safeUrls, photoUrl: safeUrls[0] } : null));
+      });
+    } else if (data.photoUrl && !data.photoUrl.startsWith('data:')) {
       const safeUrl = await this.toDataUrl(data.photoUrl);
       if (this.storyData()?.photoUrl === data.photoUrl) {
         this.storyData.update((curr) => (curr ? { ...curr, photoUrl: safeUrl } : null));
@@ -1395,8 +1435,20 @@ export class IntakeUserComponent implements OnInit {
     const totalC = isMultiSibling ? siblingLogged.reduce((sum, f) => sum + f.carbs, 0) : food.carbs;
     const totalG = isMultiSibling ? siblingLogged.reduce((sum, f) => sum + f.fat, 0) : food.fat;
 
+    const siblingPhotos = Array.from(
+      new Set(
+        (isMultiSibling ? siblingLogged : [food])
+          .map((f) => {
+            const r = this.registeredRecords()[f.id];
+            return r?.foto_url || f.coverImageUrl;
+          })
+          .filter((p): p is string => !!p && p.trim().length > 0)
+      )
+    );
+
     this.openStoryShareModal({
-      photoUrl: photoUrl,
+      photoUrl: photoUrl || siblingPhotos[0] || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=800&q=80',
+      photoUrls: siblingPhotos.length > 1 ? siblingPhotos : undefined,
       dateFormatted: this.getStoryDateFormatted(this.selectedDate()),
       mealTitle: this.mealDefinitions[food.mealType]?.title || food.mealType,
       dishName: dishName,
@@ -1408,6 +1460,123 @@ export class IntakeUserComponent implements OnInit {
       fat: totalG,
       ingredients: formattedIngs,
       dishId: food.dishItem?.id || food.id,
+    });
+  }
+
+  // Compartir historia de toda la comida (con collage si hay múltiples fotos registradas)
+  openStoryForMeal(mealType: MealType, event?: Event) {
+    if (event) {
+      event.stopPropagation();
+    }
+    const loggedFoods = this.getLoggedFoodsForMeal(mealType);
+    if (loggedFoods.length === 0) return;
+
+    // Recolectar fotos únicas registradas
+    const photoUrls = Array.from(
+      new Set(
+        loggedFoods
+          .map((f) => {
+            const rec = this.registeredRecords()[f.id];
+            return rec?.foto_url || f.coverImageUrl;
+          })
+          .filter((p): p is string => !!p && p.trim().length > 0)
+      )
+    );
+
+    const totalKcal = loggedFoods.reduce((sum, f) => sum + f.kcal, 0);
+    const totalP = loggedFoods.reduce((sum, f) => sum + f.protein, 0);
+    const totalC = loggedFoods.reduce((sum, f) => sum + f.carbs, 0);
+    const totalG = loggedFoods.reduce((sum, f) => sum + f.fat, 0);
+    const dishName = loggedFoods.map((f) => f.name).join(' + ');
+    const portionText =
+      loggedFoods.length > 1
+        ? `${loggedFoods.length} alimentos`
+        : `${loggedFoods[0].portion} ${loggedFoods[0].unit}`;
+
+    const allIngredients = loggedFoods.flatMap((f) => {
+      const sRec = this.registeredRecords()[f.id];
+      let storedIngs = sRec?.ingredientes;
+      if (typeof storedIngs === 'string') {
+        try {
+          storedIngs = JSON.parse(storedIngs);
+        } catch {
+          storedIngs = null;
+        }
+      }
+
+      if (f.dishItem && f.dishItem.ingredients && f.dishItem.ingredients.length > 0) {
+        const activeDish =
+          f.dishItem.isOptimizerActive && f.dishItem.optimizerTargets
+            ? applyOptimizationToDish(f.dishItem)
+            : f.dishItem;
+        return (activeDish.ingredients || []).map((di: any) => {
+          const raw = di.rawIngredientObj || {};
+          const ingObj = {
+            id: di.ingredient_id || raw.id || di.id,
+            name: di.name || raw.name || 'Ingrediente',
+            unit: di.unit || raw.unit || 'g',
+            calories: Number(di.calories ?? raw.calories ?? 0),
+            protein: Number(di.protein ?? raw.protein ?? 0),
+            carbs: Number(di.carbs ?? raw.carbs ?? 0),
+            fats: Number(di.fats ?? raw.fats ?? 0),
+            serving_size: Number(di.serving_size ?? raw.serving_size ?? 100),
+            unit_weight_grams: Number(
+              di.unit_weight_grams ?? raw.unit_weight_grams ?? (di.serving_size ?? 100)
+            ),
+          };
+          const grams = getGramsForQuantity(ingObj, Number(di.quantity || 0), di.mode);
+          const macros = calculateIngredientMacros(ingObj, Number(di.quantity || 0), di.mode);
+          const displayQty = formatQuantity(Number(di.quantity || 0), di.unit || ingObj.unit, di.mode);
+          return {
+            nombre: ingObj.name,
+            cantidad_display: displayQty,
+            cantidad_original: Number(di.quantity || 0),
+            unidad_original: di.unit || ingObj.unit || 'g',
+            modo: di.mode || 'g',
+            cantidad_g: Math.round(grams * 10) / 10,
+            kcals: Math.round(macros.calories),
+            proteinas_g: Math.round(macros.protein * 10) / 10,
+            grasas_g: Math.round(macros.fat * 10) / 10,
+            carbohidratos_g: Math.round(macros.carbs * 10) / 10,
+          };
+        });
+      } else if (storedIngs && Array.isArray(storedIngs) && storedIngs.length > 0) {
+        return storedIngs;
+      } else {
+        return [
+          {
+            nombre: f.name,
+            cantidad_display: this.formatQuantity(f.portion, f.unit),
+            cantidad_original: Number(f.portion || 0),
+            unidad_original: f.unit || 'g',
+            modo: f.unit === 'g' || f.unit === 'ml' ? 'g' : 'portions',
+            cantidad_g: f.unit === 'g' ? Number(f.portion || 0) : Number(f.portion || 0),
+            kcals: Number(f.kcal || 0),
+            proteinas_g: Number(f.protein || 0),
+            grasas_g: Number(f.fat || 0),
+            carbohidratos_g: Number(f.carbs || 0),
+          },
+        ];
+      }
+    });
+
+    const fallbackPhoto =
+      'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=800&q=80';
+
+    this.openStoryShareModal({
+      photoUrl: photoUrls[0] || fallbackPhoto,
+      photoUrls: photoUrls.length > 1 ? photoUrls : undefined,
+      dateFormatted: this.getStoryDateFormatted(this.selectedDate()),
+      mealTitle: this.mealDefinitions[mealType]?.title || mealType,
+      dishName: dishName,
+      emoji: loggedFoods[0]?.emoji || '🍲',
+      portionText: portionText,
+      kcal: totalKcal,
+      protein: totalP,
+      carbs: totalC,
+      fat: totalG,
+      ingredients: allIngredients,
+      dishId: loggedFoods[0]?.dishItem?.id || loggedFoods[0]?.id,
     });
   }
 
