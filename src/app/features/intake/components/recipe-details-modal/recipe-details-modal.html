@@ -73,6 +73,11 @@
       <h4 class="text-xs font-bold text-stone-800 uppercase tracking-widest mb-2 flex items-center gap-1.5">
         <i class="pi pi-list text-awakin-sun text-xs"></i>
         Ingredientes ({{ dish.ingredients.length }})
+        @if (dish.isOptimizerActive) {
+        <span class="px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 text-[9px] font-black uppercase tracking-wider">
+          Optimizados
+        </span>
+        }
       </h4>
       <div class="bg-stone-50 rounded-2xl p-3 border border-stone-100 space-y-2">
         @for (ing of dish.ingredients; track $index) {
@@ -131,6 +136,15 @@
       </div>
     </div>
     }
+
+    <!-- Botón Generar Lista de Compras -->
+    <div class="pt-2">
+      <button type="button" (click)="openShoppingList()"
+        class="w-full py-3 px-4 bg-stone-900 hover:bg-stone-800 text-white rounded-2xl font-bold text-xs flex items-center justify-center gap-2 shadow-md transition-all active:scale-[0.99] cursor-pointer">
+        <i class="pi pi-shopping-cart text-awakin-sun text-sm"></i>
+        <span>Calcular Lista de Compras para este plato</span>
+      </button>
+    </div>
   </div>
   }
 </p-dialog>

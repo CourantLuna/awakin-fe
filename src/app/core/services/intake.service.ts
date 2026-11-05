@@ -1,6 +1,6 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, from, of, catchError, map, switchMap } from 'rxjs';
+import { Observable, from, of, catchError, map, switchMap, timeout } from 'rxjs';
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import { environment } from '../../../environments/environment';
 import { MenuPlan, WeeklyTemplate, DayAssignment, DishItem, DishIngredient, LooseIngredientItem } from '../../features/intake/models/intake.models';
@@ -36,6 +36,34 @@ export class IntakeService {
 
   constructor() {
     this.supabase = createClient(environment.SUPABASE_URL, environment.SUPABASE_KEY);
+    this.hydrateFromCache();
+  }
+
+  /**
+   * Hidrata catálogo de menús y planes semanales instantáneamente (0ms) desde LocalStorage
+   */
+  private hydrateFromCache(): void {
+    try {
+      const cachedMenus = localStorage.getItem('awakin_cached_menus');
+      if (cachedMenus) {
+        const parsed = JSON.parse(cachedMenus);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          this.availableMenus.set(parsed);
+        }
+      }
+      const athId = localStorage.getItem('awakin_active_athlete_id');
+      if (athId) {
+        const cachedPlans = localStorage.getItem('awakin_cached_weekly_plans_' + athId);
+        if (cachedPlans) {
+          const parsed = JSON.parse(cachedPlans);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            this.weeklyPlans.set(parsed);
+          }
+        }
+      }
+    } catch (e) {
+      console.warn('Error hidratando caché de intake:', e);
+    }
   }
 
   /**
@@ -46,6 +74,7 @@ export class IntakeService {
     const url = athId ? `${this.baseUrl}/menus?athlete_id=${athId}` : `${this.baseUrl}/menus`;
 
     return this.http.get<any[]>(url).pipe(
+      timeout(3500),
       map((menus) => this.mapMenusToPlan(menus, athId)),
       catchError((err) => {
         console.warn('Backend unavailable for menus, falling back to Supabase client directly:', err);
@@ -91,6 +120,9 @@ export class IntakeService {
       }),
       map((menus) => {
         this.availableMenus.set(menus);
+        try {
+          localStorage.setItem('awakin_cached_menus', JSON.stringify(menus));
+        } catch {}
         return menus;
       })
     );
@@ -218,7 +250,18 @@ export class IntakeService {
     this.isLoading.set(true);
     this.currentAthleteId.set(athleteId);
 
+    try {
+      const cached = localStorage.getItem('awakin_cached_weekly_plans_' + athleteId);
+      if (cached && this.weeklyPlans().length === 0) {
+        const parsed = JSON.parse(cached);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          this.weeklyPlans.set(parsed);
+        }
+      }
+    } catch {}
+
     return this.http.get<any[]>(`${this.baseUrl}/athletes/${athleteId}/weekly-plans`).pipe(
+      timeout(3500),
       map((plans) => this.mapBackendWeeklyPlans(plans)),
       catchError((err) => {
         console.warn('Backend unavailable for weekly plans, falling back to Supabase client directly:', err);
@@ -226,6 +269,9 @@ export class IntakeService {
       }),
       map((templates) => {
         this.weeklyPlans.set(templates);
+        try {
+          localStorage.setItem('awakin_cached_weekly_plans_' + athleteId, JSON.stringify(templates));
+        } catch {}
         this.isLoading.set(false);
         return templates;
       })
@@ -525,14 +571,35 @@ export class IntakeService {
   private mapSingleBackendWeeklyPlan(p: any): WeeklyTemplate {
     const rawAssignments = p.assignments || [];
     const assignmentsMap = new Map<number, string | null>();
+    const menusMap = new Map<number, any>();
     for (const a of rawAssignments) {
       assignmentsMap.set(Number(a.day_of_week), a.menu_id || null);
+      if (a.menu) {
+        menusMap.set(Number(a.day_of_week), a.menu);
+      }
     }
 
-    const assignments: DayAssignment[] = [1, 2, 3, 4, 5, 6, 7].map((dayNum, idx) => ({
-      dayName: DAY_NAMES[idx],
-      menuId: assignmentsMap.get(dayNum) || null
-    }));
+    const assignments: DayAssignment[] = [1, 2, 3, 4, 5, 6, 7].map((dayNum, idx) => {
+      const rawMenu = menusMap.get(dayNum);
+      const mappedMenu = rawMenu ? this.mapMenusToPlan([rawMenu], this.currentAthleteId())[0] : null;
+      return {
+        dayName: DAY_NAMES[idx],
+        menuId: assignmentsMap.get(dayNum) || null,
+        menu: mappedMenu
+      };
+    });
+
+    const embeddedMenus: MenuPlan[] = [];
+    assignments.forEach((asg) => {
+      if (asg.menu) embeddedMenus.push(asg.menu);
+    });
+    if (embeddedMenus.length > 0) {
+      this.availableMenus.update((curr) => {
+        const existingIds = new Set(curr.map((m) => m.id));
+        const newOnes = embeddedMenus.filter((m) => !existingIds.has(m.id));
+        return newOnes.length > 0 ? [...curr, ...newOnes] : curr;
+      });
+    }
 
     const athleteId = this.currentAthleteId();
     const isFromCoach = p.is_from_coach !== undefined

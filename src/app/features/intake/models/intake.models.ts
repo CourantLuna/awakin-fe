@@ -97,6 +97,7 @@ export interface MenuPlan {
 export interface DayAssignment {
   dayName: string;
   menuId: string | null;
+  menu?: MenuPlan | null;
 }
 
 export interface ManualMenuSelection {

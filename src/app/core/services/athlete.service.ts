@@ -1,6 +1,7 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, tap, from, switchMap } from 'rxjs';
+import { Observable, tap, from, switchMap, timeout } from 'rxjs';
+import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import { compressImage } from '../helpers/image-compressor.helper';
 import { environment } from '../../../environments/environment';
 
@@ -97,6 +98,7 @@ export interface AthleteProfileUpdate {
 export class AthleteService {
   private http = inject(HttpClient);
   private readonly baseUrl = `${environment.apiUrl}/athletes`;
+  private supabase: SupabaseClient = createClient(environment.SUPABASE_URL, environment.SUPABASE_KEY);
 
   // Reactive State
   public currentAthlete = signal<AthleteProfile | null>(null);
@@ -137,14 +139,28 @@ export class AthleteService {
    */
   public loadAthleteProfile(identifier: string): void {
     this.isLoading.set(true);
-    this.http.get<AthleteProfile>(`${this.baseUrl}/${identifier}`).subscribe({
+    this.http.get<AthleteProfile>(`${this.baseUrl}/${identifier}`).pipe(timeout(3500)).subscribe({
       next: (athlete) => {
         this.setActiveAthlete(athlete);
         this.isLoading.set(false);
       },
-      error: (err) => {
-        console.warn(`Aviso al cargar perfil de atleta '${identifier}':`, err);
-        this.isLoading.set(false);
+      error: async (err) => {
+        console.warn(`Backend timeout/error al cargar perfil '${identifier}', recurriendo a Supabase:`, err);
+        try {
+          const { data } = await this.supabase
+            .from('athletes')
+            .select('*')
+            .or(`id.eq.${identifier},username.eq.${identifier},email.eq.${identifier}`)
+            .limit(1)
+            .maybeSingle();
+          if (data) {
+            this.setActiveAthlete(data as AthleteProfile);
+          }
+        } catch (e) {
+          console.error('Error en fallback Supabase de atleta:', e);
+        } finally {
+          this.isLoading.set(false);
+        }
       }
     });
   }
@@ -154,49 +170,64 @@ export class AthleteService {
    */
   public loadInitialAthletes(preferredIdentifier?: string): void {
     this.isLoading.set(true);
-    this.http.get<AthleteProfile[]>(this.baseUrl).subscribe({
+    this.http.get<AthleteProfile[]>(this.baseUrl).pipe(timeout(3500)).subscribe({
       next: (athletes) => {
-        this.availableAthletes.set(athletes);
-        if (athletes.length > 0) {
-          let selected: AthleteProfile | undefined;
-
-          // 1. Identificador preferido explícito
-          if (preferredIdentifier) {
-            selected = athletes.find(
-              (a) =>
-                a.id === preferredIdentifier ||
-                a.email === preferredIdentifier ||
-                a.username === preferredIdentifier
-            );
-          }
-
-          // 2. Prioridad absoluta: Usuario autenticado en sesión actual (awakin_session)
-          if (!selected) {
-            const sessionRaw = localStorage.getItem('awakin_session');
-            if (sessionRaw) {
-              try {
-                const parsed = JSON.parse(sessionRaw);
-                const authId = parsed?.avatar?.id;
-                const authEmail = parsed?.avatar?.email;
-                if (authId || authEmail) {
-                  selected = athletes.find(
-                    (a) => a.id === authId || (authEmail && a.email?.toLowerCase() === authEmail.toLowerCase())
-                  );
-                }
-              } catch (e) {}
-            }
-          }
-
-          // 3. Fallback al primer atleta
-          this.setActiveAthlete(selected || athletes[0]);
-        }
-        this.isLoading.set(false);
+        this.processAthletesList(athletes, preferredIdentifier);
       },
-      error: (err) => {
-        console.error('Error cargando atletas:', err);
-        this.isLoading.set(false);
+      error: async (err) => {
+        console.warn('Backend timeout/error cargando atletas, recurriendo a Supabase:', err);
+        try {
+          const { data } = await this.supabase
+            .from('athletes')
+            .select('*')
+            .order('first_name');
+          this.processAthletesList((data as AthleteProfile[]) || [], preferredIdentifier);
+        } catch (e) {
+          console.error('Error en fallback Supabase de atletas:', e);
+          this.isLoading.set(false);
+        }
       }
     });
+  }
+
+  private processAthletesList(athletes: AthleteProfile[], preferredIdentifier?: string): void {
+    this.availableAthletes.set(athletes);
+    if (athletes.length > 0) {
+      let selected: AthleteProfile | undefined;
+
+      if (preferredIdentifier) {
+        selected = athletes.find(
+          (a) =>
+            a.id === preferredIdentifier ||
+            a.email === preferredIdentifier ||
+            a.username === preferredIdentifier
+        );
+      }
+
+      if (!selected) {
+        const sessionRaw = localStorage.getItem('awakin_session');
+        if (sessionRaw) {
+          try {
+            const parsed = JSON.parse(sessionRaw);
+            const authId = parsed?.avatar?.id;
+            const authEmail = parsed?.avatar?.email;
+            if (authId || authEmail) {
+              selected = athletes.find(
+                (a) => a.id === authId || (authEmail && a.email?.toLowerCase() === authEmail.toLowerCase())
+              );
+            }
+          } catch (e) {}
+        }
+      }
+
+      const cachedId = localStorage.getItem('awakin_active_athlete_id');
+      if (!selected && cachedId) {
+        selected = athletes.find((a) => a.id === cachedId);
+      }
+
+      this.setActiveAthlete(selected || athletes[0]);
+    }
+    this.isLoading.set(false);
   }
 
   /**

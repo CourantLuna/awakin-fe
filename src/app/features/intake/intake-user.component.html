@@ -29,10 +29,11 @@
     </app-protocol-matrix-drawer>
 
     <app-shopping-list-drawer [(isOpen)]="isShoppingListModalOpen" [weekAssignments]="weeklyTemplates()"
-      [availableMenus]="availableMenus()">
+      [availableMenus]="availableMenus()" [athleteId]="currentAthleteId()" [initialDish]="selectedDishForShoppingList()">
     </app-shopping-list-drawer>
 
-    <app-recipe-details-modal [(isOpen)]="isRecipeDetailsOpen" [dish]="selectedDishForDetails()">
+    <app-recipe-details-modal [(isOpen)]="isRecipeDetailsOpen" [dish]="selectedDishForDetails()"
+      (onOpenShoppingList)="openShoppingListModal($event)">
     </app-recipe-details-modal>
 
     <div class="px-4 mt-2 relative z-10">

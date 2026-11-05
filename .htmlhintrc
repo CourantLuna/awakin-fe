@@ -1,0 +1,9 @@
+{
+  "doctype-first": false,
+  "tag-pair": false,
+  "spec-char-escape": false,
+  "attr-lowercase": false,
+  "tagname-lowercase": false,
+  "id-class-value": false
+}
+

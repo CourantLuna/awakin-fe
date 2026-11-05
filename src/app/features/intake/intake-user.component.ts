@@ -266,7 +266,9 @@ export class IntakeUserComponent implements OnInit {
     effect(() => {
       const ath = this.athleteService.currentAthlete();
       const athleteId = ath?.id || this.currentAthleteId();
-      if (athleteId && athleteId !== this.lastLoadedAthleteId) {
+      const needsMenus = this.intakeService.availableMenus().length === 0;
+      const needsPlans = this.intakeService.weeklyPlans().length === 0;
+      if (athleteId && (athleteId !== this.lastLoadedAthleteId || needsMenus || needsPlans)) {
         this.lastLoadedAthleteId = athleteId;
         this.intakeService.loadAvailableMenus(athleteId).subscribe();
         this.intakeService.loadWeeklyPlansForAthlete(athleteId).subscribe();
@@ -294,8 +296,8 @@ export class IntakeUserComponent implements OnInit {
       return personal || matchingPlans[0];
     }
 
-    // Fallback si la fecha no cae en ningún rango definido: tomar el primer plan disponible
-    return plans[0];
+    // Fallback si la fecha no cae en ningún rango definido: tomar el plan activo o el primer disponible
+    return plans.find((p) => p.isActive) || plans[0];
   });
 
   currentDayIndex = computed<number>(() => {
@@ -309,9 +311,11 @@ export class IntakeUserComponent implements OnInit {
 
     const dayIdx = this.currentDayIndex();
     const assignment = plan.assignments[dayIdx];
-    if (!assignment || !assignment.menuId) return null;
+    if (!assignment) return null;
+    if (assignment.menu) return assignment.menu;
+    if (!assignment.menuId) return null;
 
-    return this.availableMenus().find((m) => m.id === assignment.menuId) || null;
+    return this.availableMenus().find((m) => String(m.id) === String(assignment.menuId)) || null;
   });
 
   // Metas nutricionales independientes del perfil / protocolo (Hardcodeadas por ahora, desacopladas del menú)
@@ -388,10 +392,16 @@ export class IntakeUserComponent implements OnInit {
   // ==========================================
 
   manualSelections = signal<ManualMenuSelection[]>([]);
+  selectedDishForShoppingList = signal<DishItem | null>(null);
 
-  // Este método reemplaza al anterior generateShoppingList()
-  openShoppingListModal() {
-    // 1. Inicializamos la vista manual con los menús en cantidad 1 y deseleccionados
+  // Este método abre el Drawer de Compras Inteligente (para semana, menús o receta específica)
+  openShoppingListModal(dish?: DishItem) {
+    if (dish) {
+      this.selectedDishForShoppingList.set(dish);
+    } else {
+      this.selectedDishForShoppingList.set(null);
+    }
+
     const initial = this.availableMenus().map((m) => ({
       menuId: m.id,
       selected: false,
@@ -399,7 +409,6 @@ export class IntakeUserComponent implements OnInit {
     }));
     this.manualSelections.set(initial);
 
-    // 2. Abrimos el Drawer de Compras
     this.isShoppingListModalOpen.set(true);
   }
 
@@ -1841,6 +1850,12 @@ export class IntakeUserComponent implements OnInit {
     if (athleteId) {
       // Revalidación silenciosa en background sin bloquear la interfaz
       this.athleteService.loadAthleteProfile(athleteId);
+      if (this.intakeService.availableMenus().length === 0) {
+        this.intakeService.loadAvailableMenus(athleteId).subscribe();
+      }
+      if (this.intakeService.weeklyPlans().length === 0) {
+        this.intakeService.loadWeeklyPlansForAthlete(athleteId).subscribe();
+      }
     } else {
       this.athleteService.loadInitialAthletes();
     }

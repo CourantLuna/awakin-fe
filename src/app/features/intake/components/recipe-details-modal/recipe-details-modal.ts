@@ -1,4 +1,4 @@
-import { Component, input, model, computed } from '@angular/core';
+import { Component, input, model, computed, output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { PrimeNGModule } from '../../../../shared/prime-ng.module';
 import { DishItem } from '../../models/intake.models';
@@ -14,6 +14,7 @@ import { formatQuantity, toFraction, applyOptimizationToDish } from '../../../..
 export class RecipeDetailsModal {
   isOpen = model<boolean>(false);
   dish = input<DishItem | null>(null);
+  onOpenShoppingList = output<DishItem>();
 
   mealTitles: Record<string, string> = {
     BREAKFAST: 'DESAYUNO',
@@ -37,6 +38,14 @@ export class RecipeDetailsModal {
 
   toFraction(val: number): string {
     return toFraction(val);
+  }
+
+  openShoppingList() {
+    const d = this.activeDish() || this.dish();
+    if (d) {
+      this.isOpen.set(false);
+      this.onOpenShoppingList.emit(d);
+    }
   }
 
   close() {
