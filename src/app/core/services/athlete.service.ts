@@ -1,6 +1,7 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, tap } from 'rxjs';
+import { Observable, tap, from, switchMap } from 'rxjs';
+import { compressImage } from '../helpers/image-compressor.helper';
 import { environment } from '../../../environments/environment';
 
 export interface KinInfo {
@@ -105,7 +106,30 @@ export class AthleteService {
   public isLoading = signal<boolean>(false);
 
   constructor() {
-    // Constructor limpio sin llamadas HTTP automáticas (Carga On-Demand tras Login)
+    this.hydrateAthleteProfile();
+  }
+
+  /**
+   * Hidratación instantánea del perfil (0ms) desde LocalStorage para PWA móvil
+   */
+  private hydrateAthleteProfile(): void {
+    const cached = localStorage.getItem('awakin_athlete_profile');
+    if (cached) {
+      try {
+        const parsed = JSON.parse(cached) as AthleteProfile;
+        if (parsed && parsed.id) {
+          this.currentAthlete.set(parsed);
+        }
+      } catch (e) {
+        console.warn('Error hidratando perfil de atleta:', e);
+      }
+    }
+  }
+
+  public clearActiveAthlete(): void {
+    this.currentAthlete.set(null);
+    localStorage.removeItem('awakin_active_athlete_id');
+    localStorage.removeItem('awakin_athlete_profile');
   }
 
   /**
@@ -181,6 +205,11 @@ export class AthleteService {
   public setActiveAthlete(athlete: AthleteProfile): void {
     this.currentAthlete.set(athlete);
     localStorage.setItem('awakin_active_athlete_id', athlete.id);
+    try {
+      localStorage.setItem('awakin_athlete_profile', JSON.stringify(athlete));
+    } catch (e) {
+      console.warn('Error guardando perfil en localStorage:', e);
+    }
     this.loadAthleteRecords(athlete.id);
     this.loadAthletePosts(athlete.id);
   }
@@ -192,6 +221,10 @@ export class AthleteService {
     return this.http.get<AthleteProfile>(`${this.baseUrl}/${identifier}`).pipe(
       tap((athlete) => {
         this.currentAthlete.set(athlete);
+        try {
+          localStorage.setItem('awakin_athlete_profile', JSON.stringify(athlete));
+          localStorage.setItem('awakin_active_athlete_id', athlete.id);
+        } catch (e) {}
       })
     );
   }
@@ -203,6 +236,9 @@ export class AthleteService {
     return this.http.patch<AthleteProfile>(`${this.baseUrl}/${athleteId}`, updates).pipe(
       tap((updated) => {
         this.currentAthlete.set(updated);
+        try {
+          localStorage.setItem('awakin_athlete_profile', JSON.stringify(updated));
+        } catch (e) {}
         // Actualizar también en la lista local de disponibles
         this.availableAthletes.update((list) =>
           list.map((a) => (a.id === updated.id ? updated : a))
@@ -264,11 +300,15 @@ export class AthleteService {
     bucket: 'avatars' | 'feed_posts' | 'progress_photos' | 'fotos_comidas' = 'feed_posts',
     filename: string = 'media.jpg'
   ): Observable<{ status: string; bucket: string; filename: string; public_url: string }> {
-    const formData = new FormData();
-    formData.append('file', file, filename);
-    return this.http.post<{ status: string; bucket: string; filename: string; public_url: string }>(
-      `${this.baseUrl}/upload-media?bucket=${bucket}`,
-      formData
+    return from(compressImage(file, 1200, 0.82)).pipe(
+      switchMap((compressedBlob) => {
+        const formData = new FormData();
+        formData.append('file', compressedBlob, filename);
+        return this.http.post<{ status: string; bucket: string; filename: string; public_url: string }>(
+          `${this.baseUrl}/upload-media?bucket=${bucket}`,
+          formData
+        );
+      })
     );
   }
 

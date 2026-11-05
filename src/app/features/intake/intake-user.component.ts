@@ -260,11 +260,14 @@ export class IntakeUserComponent implements OnInit {
     });
   }
 
+  private lastLoadedAthleteId: string | null = null;
+
   constructor() {
     effect(() => {
       const ath = this.athleteService.currentAthlete();
       const athleteId = ath?.id || this.currentAthleteId();
-      if (athleteId) {
+      if (athleteId && athleteId !== this.lastLoadedAthleteId) {
+        this.lastLoadedAthleteId = athleteId;
         this.intakeService.loadAvailableMenus(athleteId).subscribe();
         this.intakeService.loadWeeklyPlansForAthlete(athleteId).subscribe();
       }
@@ -1197,7 +1200,11 @@ export class IntakeUserComponent implements OnInit {
   async toDataUrl(url: string): Promise<string> {
     if (!url || url.startsWith('data:')) return url;
     try {
-      const res = await fetch(url, { mode: 'cors' });
+      // Agregar parámetro único para evitar el bug de caché de CORS en navegadores móviles
+      const sep = url.includes('?') ? '&' : '?';
+      const corsUrl = `${url}${sep}_cors=${Date.now()}`;
+      const res = await fetch(corsUrl, { mode: 'cors' });
+      if (!res.ok) throw new Error('Fetch failed with status ' + res.status);
       const blob = await res.blob();
       return new Promise((resolve) => {
         const reader = new FileReader();
@@ -1209,6 +1216,7 @@ export class IntakeUserComponent implements OnInit {
       return new Promise((resolve) => {
         const img = new Image();
         img.crossOrigin = 'anonymous';
+        const sep = url.includes('?') ? '&' : '?';
         img.onload = () => {
           try {
             const canvas = document.createElement('canvas');
@@ -1216,13 +1224,13 @@ export class IntakeUserComponent implements OnInit {
             canvas.height = img.naturalHeight || img.height;
             const ctx = canvas.getContext('2d');
             ctx?.drawImage(img, 0, 0);
-            resolve(canvas.toDataURL('image/png'));
+            resolve(canvas.toDataURL('image/jpeg', 0.95));
           } catch {
             resolve(url);
           }
         };
         img.onerror = () => resolve(url);
-        img.src = url;
+        img.src = `${url}${sep}_cors=${Date.now()}`;
       });
     }
   }
@@ -1597,18 +1605,62 @@ export class IntakeUserComponent implements OnInit {
 
     this.isGeneratingStory.set(true);
     try {
-      const blob = await htmlToImage.toBlob(element, {
-        pixelRatio: 2,
-        backgroundColor: '#000000',
-        cacheBust: false,
-      });
-      if (blob) return blob;
+      // 1. Garantizar que todas las imágenes de fondo estén convertidas a data: URL en base64
+      const curr = this.storyData();
+      if (curr) {
+        if (curr.photoUrls && curr.photoUrls.length > 1) {
+          const needsConvert = curr.photoUrls.some((u) => !u.startsWith('data:'));
+          if (needsConvert) {
+            const safeUrls = await Promise.all(curr.photoUrls.map((u) => this.toDataUrl(u)));
+            this.storyData.update((s) => (s ? { ...s, photoUrls: safeUrls, photoUrl: safeUrls[0] } : null));
+          }
+        } else if (curr.photoUrl && !curr.photoUrl.startsWith('data:')) {
+          const safeUrl = await this.toDataUrl(curr.photoUrl);
+          this.storyData.update((s) => (s ? { ...s, photoUrl: safeUrl } : null));
+        }
+      }
 
-      const dataUrl = await htmlToImage.toPng(element, {
+      if (this.athleteKin()?.team_logo_url && !this.kinLogoDataUrl()) {
+        const safeKin = await this.toDataUrl(this.athleteKin()!.team_logo_url!);
+        this.kinLogoDataUrl.set(safeKin);
+      }
+
+      // 2. Dar margen al ciclo de render de Angular para reflejar los base64 en el DOM
+      await new Promise((r) => setTimeout(r, 100));
+
+      // 3. Forzar decodificación en memoria de GPU de todas las imágenes presentes en el Canvas
+      const imgs = Array.from(element.querySelectorAll('img'));
+      await Promise.all(
+        imgs.map(async (img) => {
+          try {
+            if (img.complete && img.naturalWidth > 0) {
+              await img.decode();
+            } else {
+              await new Promise<void>((res) => {
+                img.onload = () => img.decode().then(() => res()).catch(() => res());
+                img.onerror = () => res();
+                setTimeout(() => res(), 1200);
+              });
+            }
+          } catch {}
+        })
+      );
+
+      const renderOptions = {
         pixelRatio: 2,
         backgroundColor: '#000000',
-        cacheBust: false,
-      });
+        cacheBust: true,
+      };
+
+      // 4. Fix específico para Safari / WebKit en iOS: el primer render calienta el foreignObject
+      const isWebKit = /Safari|iPhone|iPad|iPod/i.test(navigator.userAgent) && !/Chrome|CriOS/i.test(navigator.userAgent);
+      if (isWebKit) {
+        try {
+          await htmlToImage.toPng(element, renderOptions);
+        } catch {}
+      }
+
+      const dataUrl = await htmlToImage.toPng(element, renderOptions);
       const res = await fetch(dataUrl);
       return await res.blob();
     } catch (err) {
@@ -1784,14 +1836,11 @@ export class IntakeUserComponent implements OnInit {
   ngOnInit() {
     this.generateCurrentWeek(); // <--- Generar fechas reales al iniciar
     this.initChart();
-    this.intakeService.loadAvailableMenus(this.currentAthleteId()).subscribe();
 
     const athleteId = this.currentAthleteId();
     if (athleteId) {
-      if (!this.athleteService.currentAthlete()) {
-        this.athleteService.loadAthleteProfile(athleteId);
-      }
-      this.intakeService.loadWeeklyPlansForAthlete(athleteId).subscribe();
+      // Revalidación silenciosa en background sin bloquear la interfaz
+      this.athleteService.loadAthleteProfile(athleteId);
     } else {
       this.athleteService.loadInitialAthletes();
     }

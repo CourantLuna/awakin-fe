@@ -26,5 +26,19 @@
         ]
       }
     }
+  ],
+  "dataGroups": [
+    {
+      "name": "supabase-storage-images",
+      "urls": [
+        "https://*.supabase.co/storage/v1/object/public/**"
+      ],
+      "cacheConfig": {
+        "maxSize": 60,
+        "maxAge": "7d",
+        "timeout": "4s",
+        "strategy": "performance"
+      }
+    }
   ]
 }

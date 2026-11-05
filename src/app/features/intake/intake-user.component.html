@@ -211,7 +211,7 @@
                 <div
                   class="w-11 h-11 rounded-xl bg-stone-100 border border-stone-200 overflow-hidden flex items-center justify-center text-xl shrink-0 shadow-xs">
                   @if (food.coverImageUrl) {
-                  <img [src]="food.coverImageUrl" [alt]="food.name" class="w-full h-full object-cover" />
+                  <img loading="lazy" decoding="async" [src]="food.coverImageUrl" [alt]="food.name" class="w-full h-full object-cover" />
                   } @else {
                   <span>{{ food.emoji }}</span>
                   }
@@ -344,7 +344,7 @@
               <!-- Miniatura / Emoji -->
               <div class="w-10 h-10 rounded-xl bg-stone-100 border border-stone-200 overflow-hidden flex items-center justify-center shrink-0">
                 @if (food.coverImageUrl) {
-                <img [src]="food.coverImageUrl" [alt]="food.name" class="w-full h-full object-cover" />
+                <img loading="lazy" decoding="async" [src]="food.coverImageUrl" [alt]="food.name" class="w-full h-full object-cover" />
                 } @else {
                 <span>{{ food.emoji }}</span>
                 }
@@ -430,7 +430,7 @@
         @if (existingMealPhotoUrl()) {
         <div class="mb-2.5 p-2.5 rounded-2xl bg-amber-500/10 border border-amber-500/25 flex items-center justify-between gap-3">
           <div class="flex items-center gap-2.5 min-w-0">
-            <img [src]="existingMealPhotoUrl()" alt="Foto previa" class="w-10 h-10 rounded-xl object-cover border border-amber-500/30 shrink-0 shadow-2xs" />
+            <img loading="lazy" decoding="async" [src]="existingMealPhotoUrl()" alt="Foto previa" class="w-10 h-10 rounded-xl object-cover border border-amber-500/30 shrink-0 shadow-2xs" />
             <div class="min-w-0">
               <p class="text-xs font-black text-stone-800 truncate">Foto previa en {{ mealDefinitions[selectedMealType()].title }}</p>
               <p class="text-[10px] text-stone-500 truncate">Reutilizar para estos alimentos</p>
@@ -463,7 +463,7 @@
         </div>
         } @else {
         <div class="relative rounded-2xl overflow-hidden border border-stone-200 bg-stone-100 shadow-sm group">
-          <img [src]="uploadedPhotoUrl()" alt="Foto del plato" class="w-full h-44 object-cover object-center" />
+          <img loading="lazy" decoding="async" [src]="uploadedPhotoUrl()" alt="Foto del plato" class="w-full h-44 object-cover object-center" />
           <div
             class="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent flex items-end justify-between p-3">
             <button type="button" (click)="fileInput.click()"
@@ -611,26 +611,26 @@
             @let pList = storyData()!.photoUrls!;
             @if (pList.length === 2) {
             <div class="grid grid-rows-2 h-full w-full gap-0.5">
-              <img [src]="pList[0]" alt="Foto 1" crossOrigin="anonymous" class="w-full h-full object-cover" />
-              <img [src]="pList[1]" alt="Foto 2" crossOrigin="anonymous" class="w-full h-full object-cover" />
+              <img loading="eager" decoding="sync" [src]="pList[0]" alt="Foto 1" crossOrigin="anonymous" class="w-full h-full object-cover" />
+              <img loading="eager" decoding="sync" [src]="pList[1]" alt="Foto 2" crossOrigin="anonymous" class="w-full h-full object-cover" />
             </div>
             } @else if (pList.length === 3) {
             <div class="grid grid-rows-2 h-full w-full gap-0.5">
               <div class="w-full h-full overflow-hidden">
-                <img [src]="pList[0]" alt="Foto 1" crossOrigin="anonymous" class="w-full h-full object-cover" />
+                <img loading="eager" decoding="sync" [src]="pList[0]" alt="Foto 1" crossOrigin="anonymous" class="w-full h-full object-cover" />
               </div>
               <div class="grid grid-cols-2 h-full w-full gap-0.5">
-                <img [src]="pList[1]" alt="Foto 2" crossOrigin="anonymous" class="w-full h-full object-cover" />
-                <img [src]="pList[2]" alt="Foto 3" crossOrigin="anonymous" class="w-full h-full object-cover" />
+                <img loading="eager" decoding="sync" [src]="pList[1]" alt="Foto 2" crossOrigin="anonymous" class="w-full h-full object-cover" />
+                <img loading="eager" decoding="sync" [src]="pList[2]" alt="Foto 3" crossOrigin="anonymous" class="w-full h-full object-cover" />
               </div>
             </div>
             } @else {
             <div class="grid grid-cols-2 grid-rows-2 h-full w-full gap-0.5">
-              <img [src]="pList[0]" alt="Foto 1" crossOrigin="anonymous" class="w-full h-full object-cover" />
-              <img [src]="pList[1]" alt="Foto 2" crossOrigin="anonymous" class="w-full h-full object-cover" />
-              <img [src]="pList[2]" alt="Foto 3" crossOrigin="anonymous" class="w-full h-full object-cover" />
+              <img loading="eager" decoding="sync" [src]="pList[0]" alt="Foto 1" crossOrigin="anonymous" class="w-full h-full object-cover" />
+              <img loading="eager" decoding="sync" [src]="pList[1]" alt="Foto 2" crossOrigin="anonymous" class="w-full h-full object-cover" />
+              <img loading="eager" decoding="sync" [src]="pList[2]" alt="Foto 3" crossOrigin="anonymous" class="w-full h-full object-cover" />
               <div class="relative w-full h-full overflow-hidden">
-                <img [src]="pList[3]" alt="Foto 4" crossOrigin="anonymous" class="w-full h-full object-cover" />
+                <img loading="eager" decoding="sync" [src]="pList[3]" alt="Foto 4" crossOrigin="anonymous" class="w-full h-full object-cover" />
                 @if (pList.length > 4) {
                 <div class="absolute inset-0 bg-black/60 flex items-center justify-center text-white font-black text-base">
                   +{{ pList.length - 3 }}
@@ -641,7 +641,7 @@
             }
           </div>
           } @else if (storyData()?.photoUrl) {
-          <img [src]="storyData()?.photoUrl" alt="Foto plato" crossOrigin="anonymous"
+          <img loading="eager" decoding="sync" [src]="storyData()?.photoUrl" alt="Foto plato" crossOrigin="anonymous"
             class="absolute inset-0 w-full h-full object-cover select-none pointer-events-none" />
           } @else {
           <div class="absolute inset-0 bg-gradient-to-b from-stone-900 via-stone-800 to-black"></div>
@@ -672,9 +672,9 @@
 
                   <!-- Logo y branding de Awakin -->
                   <div class="flex items-center gap-1.5  px-2 py-1 shrink-0">
-                    <img src="/icons/intake-active.png" alt="Awakin Intake" class="w-6 h-6 object-contain shrink-0 " />
+                    <img loading="eager" decoding="sync" src="/icons/intake-active.png" alt="Awakin Intake" class="w-6 h-6 object-contain shrink-0 " />
                     @if (athleteKin()?.team_logo_url) {
-                    <img [src]="kinLogoDataUrl() || athleteKin()?.team_logo_url"
+                    <img loading="eager" decoding="sync" [src]="kinLogoDataUrl() || athleteKin()?.team_logo_url"
                       [alt]="athleteKin()?.team_name || 'Tribu'" crossOrigin="anonymous"
                       class="w-6 h-6  object-cover  shadow-2xs shrink-0" />
                     } @else {
@@ -853,7 +853,7 @@
       @if (feedPostPreviewUrl()) {
       <div
         class="relative w-full aspect-[9/16] max-h-64 rounded-2xl overflow-hidden border border-stone-200 bg-stone-900 mx-auto flex items-center justify-center shadow-inner">
-        <img [src]="feedPostPreviewUrl()" alt="Preview del post" class="h-full w-auto object-contain" />
+        <img loading="lazy" decoding="async" [src]="feedPostPreviewUrl()" alt="Preview del post" class="h-full w-auto object-contain" />
       </div>
       }
 

@@ -5,6 +5,7 @@ import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import { environment } from '../../../environments/environment';
 import { MenuPlan, WeeklyTemplate, DayAssignment, DishItem, DishIngredient, LooseIngredientItem } from '../../features/intake/models/intake.models';
 import { applyOptimizationToMenu } from '../helpers/nutrition-optimizer';
+import { compressImage } from '../helpers/image-compressor.helper';
 
 const DAY_NAMES = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
 
@@ -683,14 +684,15 @@ export class IntakeService {
   }
 
   public async uploadFoodReportImage(file: File, athleteId?: string): Promise<string> {
-    const ext = file.name.split('.').pop() || 'jpg';
-    const filename = `food_${athleteId || 'ath'}_${Date.now()}_${Math.random().toString(36).substring(2, 7)}.${ext}`;
+    // Compresión y redimensionamiento en el cliente para ahorro de datos y subida ultrarrápida
+    const compressedBlob = await compressImage(file, 1200, 0.82);
+    const filename = `food_${athleteId || 'ath'}_${Date.now()}_${Math.random().toString(36).substring(2, 7)}.jpg`;
     
     let backendDetail: string | null = null;
     // 1. Intentar subir mediante endpoint de backend
     try {
       const formData = new FormData();
-      formData.append('file', file);
+      formData.append('file', compressedBlob, filename);
       const res: any = await this.http.post(
         `${environment.apiUrl}/athletes/upload-media?bucket=Intake_Food_Report`,
         formData
@@ -703,10 +705,14 @@ export class IntakeService {
       backendDetail = e?.error?.detail || e?.message || null;
     }
 
-    // 2. Fallback a Supabase Storage directo
+    // 2. Fallback a Supabase Storage directo con caché de 1 año (31536000s)
     const { error } = await this.supabase.storage
       .from('Intake_Food_Report')
-      .upload(filename, file, { contentType: file.type || 'image/jpeg', upsert: true });
+      .upload(filename, compressedBlob, {
+        contentType: 'image/jpeg',
+        upsert: true,
+        cacheControl: '31536000'
+      });
 
     if (error) {
       console.error('Error uploading image to Intake_Food_Report bucket:', error);

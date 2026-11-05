@@ -272,7 +272,7 @@
                           <span class="text-xs font-bold flex items-center gap-2"
                             [ngClass]="currentDay && currentDay.menuId === menu.id ? 'text-awakin-sun' : 'text-stone-800'">
                             @if (menu.coverImageUrl) {
-                            <img [src]="menu.coverImageUrl" [alt]="menu.name"
+                            <img loading="lazy" decoding="async" [src]="menu.coverImageUrl" [alt]="menu.name"
                               class="w-6 h-6 rounded-lg object-cover shrink-0" />
                             } @else {
                             <span class="text-base shrink-0">{{ menu.coverIcon }}</span>
@@ -326,7 +326,7 @@
                       class="bg-white border border-stone-200/70 rounded-2xl p-3 mb-2.5 shadow-2xs hover:border-stone-300 transition-all">
                       <div class="flex items-start gap-3">
                         <!-- Foto cuadrada del platillo -->
-                        <img
+                        <img loading="lazy" decoding="async"
                           [src]="dish.coverImageUrl || 'https://images.unsplash.com/photo-1490645935967-10de6ba17061?auto=format&fit=crop&q=80'"
                           [alt]="dish.name"
                           class="w-14 h-14 sm:w-16 sm:h-16 rounded-xl object-cover shrink-0 border border-stone-100 shadow-2xs" />
@@ -494,45 +494,45 @@
           <!-- SECCIÓN COLLAGE AUTOMÁTICO DE RECETAS -->
           <div class="h-44 w-full relative overflow-hidden bg-stone-100 select-none shrink-0">
             @if (images.length === 1) {
-            <img [src]="images[0]" [alt]="menu.name"
+            <img loading="lazy" decoding="async" [src]="images[0]" [alt]="menu.name"
               class="w-full h-full object-cover group-hover:scale-102 transition-transform duration-500" />
             } @else if (images.length === 2) {
             <div class="grid grid-cols-2 h-full gap-[1.5px] bg-white">
-              <img [src]="images[0]" [alt]="menu.name" class="w-full h-full object-cover" />
-              <img [src]="images[1]" [alt]="menu.name" class="w-full h-full object-cover" />
+              <img loading="lazy" decoding="async" [src]="images[0]" [alt]="menu.name" class="w-full h-full object-cover" />
+              <img loading="lazy" decoding="async" [src]="images[1]" [alt]="menu.name" class="w-full h-full object-cover" />
             </div>
             } @else if (images.length === 3) {
             <div class="grid grid-cols-3 h-full gap-[1.5px] bg-white">
-              <img [src]="images[0]" [alt]="menu.name" class="w-full h-full object-cover" />
-              <img [src]="images[1]" [alt]="menu.name" class="w-full h-full object-cover" />
-              <img [src]="images[2]" [alt]="menu.name" class="w-full h-full object-cover" />
+              <img loading="lazy" decoding="async" [src]="images[0]" [alt]="menu.name" class="w-full h-full object-cover" />
+              <img loading="lazy" decoding="async" [src]="images[1]" [alt]="menu.name" class="w-full h-full object-cover" />
+              <img loading="lazy" decoding="async" [src]="images[2]" [alt]="menu.name" class="w-full h-full object-cover" />
             </div>
             } @else if (images.length === 4) {
             <!-- 4 platillos: Grilla 2x2 (Referencia Imágenes 1 y 3) -->
             <div class="grid grid-cols-2 grid-rows-2 h-full gap-[1.5px] bg-white">
-              <img [src]="images[0]" [alt]="menu.name" class="w-full h-full object-cover" />
-              <img [src]="images[1]" [alt]="menu.name" class="w-full h-full object-cover" />
-              <img [src]="images[2]" [alt]="menu.name" class="w-full h-full object-cover" />
-              <img [src]="images[3]" [alt]="menu.name" class="w-full h-full object-cover" />
+              <img loading="lazy" decoding="async" [src]="images[0]" [alt]="menu.name" class="w-full h-full object-cover" />
+              <img loading="lazy" decoding="async" [src]="images[1]" [alt]="menu.name" class="w-full h-full object-cover" />
+              <img loading="lazy" decoding="async" [src]="images[2]" [alt]="menu.name" class="w-full h-full object-cover" />
+              <img loading="lazy" decoding="async" [src]="images[3]" [alt]="menu.name" class="w-full h-full object-cover" />
             </div>
             } @else if (images.length === 5) {
             <!-- 5 platillos: 2 arriba, 3 abajo (Referencia Imagen 2) -->
             <div class="flex flex-col h-full gap-[1.5px] bg-white">
               <div class="grid grid-cols-2 h-1/2 gap-[1.5px]">
-                <img [src]="images[0]" [alt]="menu.name" class="w-full h-full object-cover" />
-                <img [src]="images[1]" [alt]="menu.name" class="w-full h-full object-cover" />
+                <img loading="lazy" decoding="async" [src]="images[0]" [alt]="menu.name" class="w-full h-full object-cover" />
+                <img loading="lazy" decoding="async" [src]="images[1]" [alt]="menu.name" class="w-full h-full object-cover" />
               </div>
               <div class="grid grid-cols-3 h-1/2 gap-[1.5px]">
-                <img [src]="images[2]" [alt]="menu.name" class="w-full h-full object-cover" />
-                <img [src]="images[3]" [alt]="menu.name" class="w-full h-full object-cover" />
-                <img [src]="images[4]" [alt]="menu.name" class="w-full h-full object-cover" />
+                <img loading="lazy" decoding="async" [src]="images[2]" [alt]="menu.name" class="w-full h-full object-cover" />
+                <img loading="lazy" decoding="async" [src]="images[3]" [alt]="menu.name" class="w-full h-full object-cover" />
+                <img loading="lazy" decoding="async" [src]="images[4]" [alt]="menu.name" class="w-full h-full object-cover" />
               </div>
             </div>
             } @else {
             <!-- 6 o más platillos: Grilla 3x2 -->
             <div class="grid grid-cols-3 grid-rows-2 h-full gap-[1.5px] bg-white">
               @for (img of images.slice(0, 6); track $index) {
-              <img [src]="img" [alt]="menu.name" class="w-full h-full object-cover" />
+              <img loading="lazy" decoding="async" [src]="img" [alt]="menu.name" class="w-full h-full object-cover" />
               }
             </div>
             }

@@ -136,6 +136,8 @@ export class AuthService {
 
   private clearProtocolState(): void {
     localStorage.removeItem('awakin_session');
+    localStorage.removeItem('awakin_active_athlete_id');
+    localStorage.removeItem('awakin_athlete_profile');
     this.#sessionState.set(null);
     this.router.navigate(['/login']);
   }
