@@ -1,7 +1,8 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, tap, from, switchMap, timeout } from 'rxjs';
-import { createClient, SupabaseClient } from '@supabase/supabase-js';
+import { SupabaseClient } from '@supabase/supabase-js';
+import { supabaseClient } from './supabase.service';
 import { compressImage } from '../helpers/image-compressor.helper';
 import { environment } from '../../../environments/environment';
 
@@ -98,7 +99,7 @@ export interface AthleteProfileUpdate {
 export class AthleteService {
   private http = inject(HttpClient);
   private readonly baseUrl = `${environment.apiUrl}/athletes`;
-  private supabase: SupabaseClient = createClient(environment.SUPABASE_URL, environment.SUPABASE_KEY);
+  private supabase: SupabaseClient = supabaseClient;
 
   // Reactive State
   public currentAthlete = signal<AthleteProfile | null>(null);

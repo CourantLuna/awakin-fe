@@ -1,4 +1,4 @@
-import { Component, input, model, signal, effect, computed } from '@angular/core';
+import { Component, input, model, signal, effect, computed, untracked } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { PrimeNGModule } from '../../../../shared/prime-ng.module';
@@ -108,11 +108,24 @@ export class ShoppingListDrawer {
     return isMobile && hasTouch && typeof navigator.share === 'function';
   });
 
+  hasValidSelection = computed(() => {
+    if (this.selectedMode() === 'semanal') {
+      return this.weeklyPlanSelections().some((s) => s.templateId !== null && s.quantity > 0);
+    }
+    if (this.selectedMode() === 'manual') {
+      return this.manualSelections().some((s) => s.selected && s.quantity > 0);
+    }
+    if (this.selectedMode() === 'receta') {
+      return !!this.selectedDish() && this.dishPortions() > 0;
+    }
+    return false;
+  });
+
   constructor() {
     // Sincronizar menús disponibles en selección manual usando filteredMenus
     effect(() => {
       const menus = this.filteredMenus();
-      const currentMap = new Map(this.manualSelections().map((s) => [s.menuId, s]));
+      const currentMap = new Map(untracked(() => this.manualSelections()).map((s) => [s.menuId, s]));
       const synced = menus.map((m) => {
         const existing = currentMap.get(m.id);
         return {
@@ -127,7 +140,7 @@ export class ShoppingListDrawer {
     // Preseleccionar el plan semanal activo o primero si existe
     effect(() => {
       const plans = this.weekAssignments();
-      const currentSelections = this.weeklyPlanSelections();
+      const currentSelections = untracked(() => this.weeklyPlanSelections());
       if (plans.length > 0 && currentSelections.length === 1 && currentSelections[0].templateId === null) {
         const activePlan = plans.find((p) => p.isActive) || plans[0];
         this.weeklyPlanSelections.set([
@@ -143,6 +156,12 @@ export class ShoppingListDrawer {
         this.selectedDish.set(d);
         this.selectedMode.set('receta');
         this.generateFromSingleDish(d, this.dishPortions());
+      } else {
+        this.selectedDish.set(null);
+        if (this.selectedMode() === 'receta') {
+          this.selectedMode.set('semanal');
+          this.currentStep.set('configure');
+        }
       }
     });
   }

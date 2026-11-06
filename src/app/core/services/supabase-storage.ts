@@ -1,20 +1,15 @@
 import { Injectable } from '@angular/core';
-import { createClient, SupabaseClient } from '@supabase/supabase-js';
+import { SupabaseClient } from '@supabase/supabase-js';
+import { supabaseClient } from './supabase.service';
 
 @Injectable({
   providedIn: 'root'
 })
 export class SupabaseStorageService {
-  private supabase: SupabaseClient;
-  
-  // Reemplaza esto con tus credenciales reales o léelas de tus environments de Angular
-  private supabaseUrl = 'https://TU_PROJECT_ID.supabase.co';
-  private supabaseAnonKey = 'TU_ANON_PUBLIC_KEY';
-  private bucketName = 'imagenes-awakin'; // El nombre que le pusiste a tu Bucket público
+  private supabase: SupabaseClient = supabaseClient;
+  private bucketName = 'imagenes-awakin';
 
-  constructor() {
-    this.supabase = createClient(this.supabaseUrl, this.supabaseAnonKey);
-  }
+  constructor() {}
 
   /**
    * Sube un archivo al bucket de Supabase y retorna la URL pública

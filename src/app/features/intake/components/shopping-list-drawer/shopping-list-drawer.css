@@ -1,0 +1,24 @@
+:host ::ng-deep .weekly-plan-select.p-select {
+  min-width: 0;
+  max-width: 100%;
+}
+
+:host ::ng-deep .weekly-plan-select .p-select-label {
+  white-space: normal !important;
+  word-break: break-word !important;
+  overflow-wrap: anywhere !important;
+  min-width: 0 !important;
+  max-width: 210px !important;
+  height: auto !important;
+  padding: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  line-height: 1.25 !important;
+}
+
+@media (min-width: 640px) {
+  :host ::ng-deep .weekly-plan-select .p-select-label {
+    max-width: none !important;
+  }
+}
+

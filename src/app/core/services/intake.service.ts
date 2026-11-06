@@ -1,7 +1,8 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, from, of, catchError, map, switchMap, timeout } from 'rxjs';
-import { createClient, SupabaseClient } from '@supabase/supabase-js';
+import { SupabaseClient } from '@supabase/supabase-js';
+import { supabaseClient } from './supabase.service';
 import { environment } from '../../../environments/environment';
 import { MenuPlan, WeeklyTemplate, DayAssignment, DishItem, DishIngredient, LooseIngredientItem } from '../../features/intake/models/intake.models';
 import { applyOptimizationToMenu } from '../helpers/nutrition-optimizer';
@@ -26,7 +27,7 @@ export function determineCoverIcon(name: string, tags: string[] = []): string {
 @Injectable({ providedIn: 'root' })
 export class IntakeService {
   private http = inject(HttpClient);
-  private supabase: SupabaseClient;
+  private supabase: SupabaseClient = supabaseClient;
   private readonly baseUrl = `${environment.apiUrl}/intake`;
 
   public availableMenus = signal<MenuPlan[]>([]);
@@ -35,7 +36,6 @@ export class IntakeService {
   public currentAthleteId = signal<string | null>(null);
 
   constructor() {
-    this.supabase = createClient(environment.SUPABASE_URL, environment.SUPABASE_KEY);
     this.hydrateFromCache();
   }
 

@@ -1,4 +1,4 @@
-import { Component, computed, OnInit, signal, ViewChild, inject, effect } from '@angular/core';
+import { Component, computed, OnInit, signal, ViewChild, inject, effect, untracked } from '@angular/core';
 import { DragDropModule } from '@angular/cdk/drag-drop';
 import { CommonModule } from '@angular/common';
 import { ChartModule } from 'primeng/chart';
@@ -266,14 +266,16 @@ export class IntakeUserComponent implements OnInit {
     effect(() => {
       const ath = this.athleteService.currentAthlete();
       const athleteId = ath?.id || this.currentAthleteId();
-      const needsMenus = this.intakeService.availableMenus().length === 0;
-      const needsPlans = this.intakeService.weeklyPlans().length === 0;
-      if (athleteId && (athleteId !== this.lastLoadedAthleteId || needsMenus || needsPlans)) {
+      if (!athleteId) return;
+
+      if (athleteId !== this.lastLoadedAthleteId) {
         this.lastLoadedAthleteId = athleteId;
-        this.intakeService.loadAvailableMenus(athleteId).subscribe();
-        this.intakeService.loadWeeklyPlansForAthlete(athleteId).subscribe();
+        untracked(() => {
+          this.intakeService.loadAvailableMenus(athleteId).subscribe();
+          this.intakeService.loadWeeklyPlansForAthlete(athleteId).subscribe();
+          this.loadDayRecords();
+        });
       }
-      this.loadDayRecords();
     });
   }
 

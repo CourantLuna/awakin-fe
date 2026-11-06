@@ -3,7 +3,8 @@ import { Injectable, inject, signal, computed } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { Observable, tap, catchError, throwError } from 'rxjs';
-import { createClient, SupabaseClient, Session } from '@supabase/supabase-js'; 
+import { SupabaseClient, Session } from '@supabase/supabase-js'; 
+import { supabaseClient } from './supabase.service'; 
 import { environment } from '../../../environments/environment';
 
 // Interfaz para el control del Avatar en el ecosistema
@@ -23,7 +24,7 @@ export interface AthleteSession {
 export class AuthService {
   private http = inject(HttpClient);
   private router = inject(Router);
-  private supabase: SupabaseClient; 
+  private supabase: SupabaseClient = supabaseClient; 
   private readonly AUTH_URL = `${environment.apiUrl}/auth`;
 
   #sessionState = signal<AthleteSession | null>(null);
@@ -31,7 +32,6 @@ export class AuthService {
   public isAuthenticated = computed(() => !!this.#sessionState());
 
   constructor() {
-    this.supabase = createClient(environment.SUPABASE_URL, environment.SUPABASE_KEY);
     this.hydrateProtocol();
     
     // Escuchar cambios de sesión de Supabase
