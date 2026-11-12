@@ -1,0 +1,9 @@
+@if (gender === 'male' && anatomyMode === 'advanced') {
+  <app-male-advanced-svg [view]="view" />
+} @else if (gender === 'female' && anatomyMode === 'advanced') {
+  <app-female-advanced-svg [view]="view" />
+} @else if (gender === 'male') {
+  <app-male-standard-svg [view]="view" [isJointsMode]="isJointsMode" />
+} @else {
+  <app-female-standard-svg [view]="view" [isJointsMode]="isJointsMode" />
+}
