@@ -1,129 +1,252 @@
-<div class="grid grid-cols-1 lg:grid-cols-12 min-h-screen bg-[#0B0F17] text-white selection:bg-[#FE970A] selection:text-black">
+<div class="min-h-screen w-full bg-[#FAFAF9] flex flex-col justify-between relative overflow-x-hidden selection:bg-amber-400 selection:text-stone-900">
   
-  <!-- PANEL DE MARCA RADICAL: Solución Inmersiva (Oculto en Mobile/Tablet) -->
-  <div class="hidden lg:flex lg:col-span-7 p-16 flex-col justify-between relative overflow-hidden bg-gradient-to-br from-[#0D1527] via-[#0B0F17] to-[#161224] border-r border-slate-800/40">
-    <!-- Grid Cinético Decorativo de Fondo -->
-    <div class="absolute inset-0 opacity-[0.02] bg-[linear-gradient(to_right,#808080_1px,transparent_1px),linear-gradient(to_bottom,#808080_1px,transparent_1px)] bg-[size:30px_34px]"></div>
-    
-    <!-- Branding Header -->
-    <div class="flex items-center gap-3 z-10">
-      <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-[#FE970A] to-amber-400 flex items-center justify-center font-black text-black text-sm shadow-lg shadow-orange-500/20">
+  <!-- Fondo ambiental sutil estilo Sunrise Tech (sin discrepancia con el body) -->
+  <div class="fixed inset-0 pointer-events-none overflow-hidden">
+    <!-- Gradiente radial de luz solar superior -->
+    <div class="absolute -top-[25%] left-1/2 -translate-x-1/2 w-[850px] h-[520px] bg-gradient-to-b from-amber-400/12 via-orange-400/5 to-transparent blur-3xl rounded-full"></div>
+    <!-- Patrón geométrico sutil y limpio -->
+    <div class="absolute inset-0 opacity-[0.03] bg-[linear-gradient(to_right,#1c1917_1px,transparent_1px),linear-gradient(to_bottom,#1c1917_1px,transparent_1px)] bg-[size:28px_28px]"></div>
+  </div>
+
+  <!-- Header Superior Minimalista -->
+  <header class="w-full max-w-5xl mx-auto px-4 sm:px-6 pt-6 sm:pt-8 flex items-center justify-between z-10">
+    <div class="flex items-center gap-3">
+      <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-awakin-sun to-amber-400 flex items-center justify-center font-black text-black text-xs shadow-md shadow-orange-500/20">
         𝚫𝛀
       </div>
-      <span class="text-xs tracking-[0.4em] font-black text-slate-200">AWAKIN OS</span>
-    </div>
-
-    <!-- Core Brand Statement -->
-    <div class="max-w-xl z-10 space-y-6 my-auto">
-      <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-orange-500/20 bg-[#FE970A]/10 text-[#FE970A] text-[10px] uppercase font-mono tracking-widest">
-        ✦ INIT STATE: THE SLEEP IS OVER.
+      <div class="flex flex-col">
+        <span class="text-xs font-black tracking-[0.25em] text-stone-900 uppercase">AWAKIN</span>
+        <span class="text-[9px] font-mono tracking-widest text-stone-600">THE SLEEP IS OVER</span>
       </div>
-      <h1 class="text-5xl font-black tracking-tight leading-[1.15] uppercase">
-        El sistema operativo <br>
-        <span class="bg-clip-text text-transparent bg-gradient-to-r from-[#FE970A] via-amber-400 to-yellow-500">
-          para tu vida.
-        </span>
-      </h1>
-      <p class="text-slate-400 leading-relaxed text-sm max-w-lg">
-        Sincroniza tu biología a través del módulo <span class="text-white font-semibold">Intake</span>, gestiona tus sistemas adaptativos en <span class="text-white font-semibold">Workout</span> y domina la matriz del Avatar Real junto a tu <span class="text-white font-semibold">Kin</span>.
-      </p>
     </div>
 
-    <!-- Footer Meta-Data -->
-    <div class="z-10 flex gap-12 text-[10px] font-mono tracking-widest text-slate-500 uppercase">
-      <div>PROTOCOL: ACTIVE</div>
-      <div>BIOMETRICS: ENCRYPTED</div>
+    <div class="hidden sm:inline-flex items-center gap-2 px-3 py-1 rounded-full bg-stone-100 border border-stone-200/80 text-[10px] font-mono text-stone-600 tracking-wider">
+      <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+      <span>SISTEMA ACTIVO</span>
     </div>
-  </div>
+  </header>
 
-  <!-- PANEL DE ACCESO: Controles de Input PrimeNG -->
-  <div class="col-span-1 lg:col-span-5 flex flex-col justify-center p-6 sm:p-16 lg:p-12 xl:p-16 bg-[#0E131F]">
-    <div class="w-full max-w-md mx-auto space-y-8">
+  <!-- Tarjeta Central de Acceso -->
+  <main class="w-full max-w-5xl mx-auto px-4 sm:px-6 py-6 sm:py-8 my-auto z-10">
+    <div class="bg-white border border-stone-200/90 rounded-3xl shadow-xl shadow-stone-200/60 overflow-hidden grid grid-cols-1 lg:grid-cols-12">
       
-      <!-- Titulares -->
-      <div class="space-y-2">
-        <h2 class="text-2xl font-black tracking-tight uppercase">Inicializar Vínculo</h2>
-        <p class="text-slate-400 text-xs font-medium">Introduce tus credenciales para sincronizar tu progreso diario.</p>
-      </div>
+      <!-- PANEL LATERAL DE MARCA (Visible en Pantallas Grandes) -->
+      <div class="hidden lg:flex lg:col-span-5 p-10 flex-col justify-between bg-gradient-to-br from-amber-500/[0.04] via-stone-50 to-orange-500/[0.07] border-r border-stone-200/80 relative">
+        <div class="space-y-6">
+          <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-amber-500/30 bg-amber-500/10 text-amber-800 text-[10px] uppercase font-mono tracking-wider font-semibold">
+            ✦ SISTEMA OPERATIVO
+          </div>
 
-      <!-- BOTÓN GOOGLE WORKSPACE OAUTH -->
-      <p-button 
-        label="Sincronizar con Google" 
-        icon="pi pi-google" 
-        styleClass="w-full bg-slate-800/40 hover:bg-white text-slate-200 hover:text-black border-slate-700/80 font-bold text-xs tracking-wider uppercase p-3 rounded-xl transition-all duration-300"
-        (onClick)="initiateGoogleHandshake()">
-      </p-button>
+          <h1 class="text-3xl font-black text-stone-900 tracking-tight leading-tight uppercase">
+            El sistema operativo <br>
+            <span class="bg-clip-text text-transparent bg-gradient-to-r from-awakin-sun via-amber-500 to-orange-600">
+              para tu vida.
+            </span>
+          </h1>
 
-      <!-- Divisor Estético Minimalista -->
-      <div class="relative flex py-2 items-center">
-        <div class="flex-grow border-t border-slate-800/80"></div>
-        <span class="flex-shrink mx-4 text-[9px] text-slate-500 uppercase tracking-widest font-mono">O PROTOCOLO INTERNO</span>
-        <div class="flex-grow border-t border-slate-800/80"></div>
-      </div>
+          <p class="text-stone-600 text-xs leading-relaxed">
+            Sincroniza nutrición, entrenamientos y hábitos bajo un único ecosistema inteligente diseñado para atletas e instructores.
+          </p>
 
-      <!-- FEEDBACK DE ERRORES CRÍTICOS -->
-      @if (errorMessage()) {
-        <p-message 
-          severity="error" 
-          [text]="errorMessage()" 
-          styleClass="w-full text-xs font-semibold rounded-xl bg-red-950/20 border-red-900/50 text-red-400">
-        </p-message>
-      }
+          <!-- Badges de los Módulos Core -->
+          <div class="space-y-2.5 pt-2">
+            <div class="p-3 rounded-2xl bg-white/80 border border-stone-200/70 shadow-2xs flex items-center gap-3">
+              <div class="w-8 h-8 rounded-xl bg-emerald-500/10 text-emerald-600 flex items-center justify-center shrink-0">
+                <i class="pi pi-apple text-sm"></i>
+              </div>
+              <div class="min-w-0">
+                <p class="text-xs font-bold text-stone-900">Intake</p>
+                <p class="text-[11px] text-stone-600 truncate">Nutrición y listas de compra inteligentes</p>
+              </div>
+            </div>
 
-      <!-- FORMULARIO ESTRUCTURADO -->
-      <form (ngSubmit)="onSecureSubmit()" class="space-y-6">
-        
-        <!-- Input ID de Correo -->
-        <div class="flex flex-col gap-2">
-          <label class="text-[10px] uppercase font-bold tracking-widest text-slate-400 font-mono">IDENTIFICADOR (EMAIL)</label>
-          <input 
-            type="email" 
-            pInputText 
-            [ngModel]="email()" 
-            (ngModelChange)="email.set($event)"
-            name="email"
-            placeholder="atleta@awakin.com" 
-            class="w-full bg-[#131926] border-slate-700/60 focus:border-[#FE970A] rounded-xl text-sm p-3.5 text-white" />
+            <div class="p-3 rounded-2xl bg-white/80 border border-stone-200/70 shadow-2xs flex items-center gap-3">
+              <div class="w-8 h-8 rounded-xl bg-blue-500/10 text-blue-600 flex items-center justify-center shrink-0">
+                <i class="pi pi-chart-line text-sm"></i>
+              </div>
+              <div class="min-w-0">
+                <p class="text-xs font-bold text-stone-900">Workout</p>
+                <p class="text-[11px] text-stone-600 truncate">Sobrecarga y progresiones adaptativas</p>
+              </div>
+            </div>
+
+            <div class="p-3 rounded-2xl bg-white/80 border border-stone-200/70 shadow-2xs flex items-center gap-3">
+              <div class="w-8 h-8 rounded-xl bg-purple-500/10 text-purple-600 flex items-center justify-center shrink-0">
+                <i class="pi pi-users text-sm"></i>
+              </div>
+              <div class="min-w-0">
+                <p class="text-xs font-bold text-stone-900">Kin & Coach</p>
+                <p class="text-[11px] text-stone-600 truncate">Vínculo directo entre atleta e instructor</p>
+              </div>
+            </div>
+          </div>
         </div>
 
-        <!-- Input Clave Operativa -->
-        <div class="flex flex-col gap-2">
-          <label class="text-[10px] uppercase font-bold tracking-widest text-slate-400 font-mono">CLAVE DE ACCESO</label>
-          <p-password 
-            [ngModel]="password()" 
-            (ngModelChange)="password.set($event)"
-            name="password"
-            [feedback]="false" 
-            [toggleMask]="true"
-            styleClass="w-full"
-            placeholder="••••••••••••"
-            inputStyleClass="w-full bg-[#131926] border-slate-700/60 focus:border-[#FE970A] rounded-xl text-sm p-3.5 text-white">
-          </p-password>
+        <div class="pt-6 border-t border-stone-200/60 flex items-center justify-between text-[10px] font-mono text-stone-600 tracking-wider">
+          <span>PROTOCOL: ACTIVE</span>
+          <span>BIOMETRICS: ENCRYPTED</span>
         </div>
+      </div>
 
-        <!-- Botón de Ejecución del Sistema -->
-        <p-button 
-          type="submit"
-          [disabled]="loading()"
-          [label]="loading() ? 'PROCESANDO BIOLOGÍA...' : 'ACCEDER AL SISTEMA'"
-          styleClass="w-full bg-gradient-to-r from-[#FE970A] to-amber-500 hover:from-amber-400 hover:to-orange-500 text-black font-black text-xs tracking-widest uppercase p-4 rounded-xl border-none transition-all duration-200">
-        </p-button>
+      <!-- PANEL DE FORMULARIO Y CONTROL DE ACCESO -->
+      <div class="col-span-1 lg:col-span-7 p-6 sm:p-10 flex flex-col justify-center bg-white">
+        <div class="w-full max-w-md mx-auto space-y-6">
+          
+          <!-- Encabezado del Formulario -->
+          <div class="space-y-1.5 text-center sm:text-left">
+            <div class="lg:hidden flex items-center justify-center sm:justify-start gap-2.5 mb-2">
+              <div class="w-8 h-8 rounded-xl bg-gradient-to-tr from-awakin-sun to-amber-400 flex items-center justify-center font-black text-black text-xs shadow-md shadow-orange-500/20">
+                𝚫𝛀
+              </div>
+              <span class="text-xs font-black tracking-widest text-stone-900 uppercase">AWAKIN OS</span>
+            </div>
+            <h2 class="text-2xl font-black text-stone-900 tracking-tight">Inicializar Vínculo</h2>
+            <p class="text-xs text-stone-600">Selecciona tu perfil de usuario e ingresa tus credenciales.</p>
+          </div>
 
-        <!-- Acceso Rápido / Conectar como Atleta Activo -->
-        <div class="pt-2">
+          <!-- SELECTOR DE ROL: ATLETA VS INSTRUCTOR (DEFAULT ATLETA) -->
+          <div class="space-y-2">
+            <div class="p-1 bg-stone-100 rounded-2xl flex items-center border border-stone-200/80 gap-1">
+              <button
+                type="button"
+                (click)="setRole('ATHLETE')"
+                [class]="selectedRole() === 'ATHLETE'
+                  ? 'flex-1 flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl bg-white text-stone-950 font-black text-xs shadow-xs border border-stone-200/80 transition-all cursor-pointer'
+                  : 'flex-1 flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl text-stone-600 hover:text-stone-900 font-bold text-xs transition-all cursor-pointer'"
+              >
+                <i class="pi pi-bolt text-xs" [class]="selectedRole() === 'ATHLETE' ? 'text-awakin-sun' : 'text-stone-400'"></i>
+                <span>Acceder como Atleta</span>
+              </button>
+
+              <button
+                type="button"
+                (click)="setRole('INSTRUCTOR')"
+                [class]="selectedRole() === 'INSTRUCTOR'
+                  ? 'flex-1 flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl bg-white text-stone-950 font-black text-xs shadow-xs border border-stone-200/80 transition-all cursor-pointer'
+                  : 'flex-1 flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl text-stone-600 hover:text-stone-900 font-bold text-xs transition-all cursor-pointer'"
+              >
+                <i class="pi pi-shield text-xs" [class]="selectedRole() === 'INSTRUCTOR' ? 'text-awakin-sun' : 'text-stone-400'"></i>
+                <span>Acceder como Instructor</span>
+              </button>
+            </div>
+
+            <!-- Banner Informativo del Rol Seleccionado -->
+            <div class="px-3.5 py-2 rounded-xl bg-stone-50 border border-stone-200/70 flex items-center gap-2.5 text-[11px] text-stone-600">
+              <i [class]="roleConfig().icon + ' text-awakin-sun text-xs shrink-0'"></i>
+              <span class="leading-tight">{{ roleConfig().subtitle }}</span>
+            </div>
+          </div>
+
+          <!-- BOTÓN GOOGLE WORKSPACE OAUTH -->
           <button
             type="button"
-            (click)="quickAccessAthlete()"
-            class="w-full bg-slate-800/80 hover:bg-slate-700 text-amber-400 hover:text-amber-300 font-bold text-xs tracking-widest uppercase p-3.5 rounded-xl border border-amber-500/30 transition-all duration-200 cursor-pointer flex items-center justify-center gap-2"
+            (click)="initiateGoogleHandshake()"
+            class="w-full bg-white hover:bg-stone-50 text-stone-800 font-bold text-xs tracking-wider uppercase p-3 rounded-xl border border-stone-200/90 shadow-2xs hover:shadow-xs transition-all flex items-center justify-center gap-2.5 cursor-pointer active:scale-[0.99]"
           >
-            <i class="pi pi-bolt"></i>
-            <span>Acceso Inmediato como Atleta</span>
+            <svg class="w-4 h-4 shrink-0" viewBox="0 0 24 24">
+              <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+              <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+              <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
+              <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
+            </svg>
+            <span>Continuar con Google</span>
           </button>
-        </div>
 
-      </form>
+          <!-- Divisor Estético -->
+          <div class="relative flex items-center py-0.5">
+            <div class="flex-grow border-t border-stone-200"></div>
+            <span class="flex-shrink mx-3 text-[10px] text-stone-600 uppercase tracking-widest font-mono">O CON CORREO</span>
+            <div class="flex-grow border-t border-stone-200"></div>
+          </div>
+
+          <!-- FEEDBACK DE ERROR -->
+          @if (errorMessage()) {
+            <div class="p-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs font-semibold flex items-center gap-2">
+              <i class="pi pi-exclamation-circle text-red-500 shrink-0"></i>
+              <span>{{ errorMessage() }}</span>
+            </div>
+          }
+
+          <!-- FORMULARIO DE ACCESO -->
+          <form (ngSubmit)="onSecureSubmit()" class="space-y-4">
+            <!-- Input Email -->
+            <div class="space-y-1.5">
+              <label class="text-[10px] uppercase font-bold tracking-widest text-stone-600 font-mono flex items-center justify-between">
+                <span>CORREO ELECTRÓNICO</span>
+                <span class="text-[9px] text-stone-500 font-normal">{{ roleConfig().badge }}</span>
+              </label>
+              <div class="relative">
+                <input
+                  type="email"
+                  [ngModel]="email()"
+                  (ngModelChange)="email.set($event)"
+                  name="email"
+                  autocomplete="email"
+                  [placeholder]="roleConfig().emailPlaceholder"
+                  class="w-full bg-stone-50 border border-stone-200/90 focus:bg-white focus:border-awakin-sun focus:ring-3 focus:ring-awakin-sun/15 rounded-xl text-sm p-3.5 pr-10 text-stone-900 placeholder:text-stone-400 transition-all outline-none"
+                />
+                <i class="pi pi-envelope absolute right-3.5 top-1/2 -translate-y-1/2 text-stone-400 text-sm pointer-events-none"></i>
+              </div>
+            </div>
+
+            <!-- Input Contraseña -->
+            <div class="space-y-1.5">
+              <label class="text-[10px] uppercase font-bold tracking-widest text-stone-600 font-mono">
+                CLAVE DE ACCESO
+              </label>
+              <div class="relative">
+                <input
+                  [type]="showPassword() ? 'text' : 'password'"
+                  [ngModel]="password()"
+                  (ngModelChange)="password.set($event)"
+                  name="password"
+                  autocomplete="current-password"
+                  placeholder="••••••••••••"
+                  class="w-full bg-stone-50 border border-stone-200/90 focus:bg-white focus:border-awakin-sun focus:ring-3 focus:ring-awakin-sun/15 rounded-xl text-sm p-3.5 pr-10 text-stone-900 placeholder:text-stone-400 transition-all outline-none"
+                />
+                <button
+                  type="button"
+                  (click)="togglePasswordVisibility()"
+                  class="absolute right-3.5 top-1/2 -translate-y-1/2 text-stone-400 hover:text-stone-700 transition-colors cursor-pointer p-0.5"
+                  [title]="showPassword() ? 'Ocultar contraseña' : 'Ver contraseña'"
+                >
+                  <i [class]="showPassword() ? 'pi pi-eye-slash text-sm' : 'pi pi-eye text-sm'"></i>
+                </button>
+              </div>
+            </div>
+
+            <!-- Botón Principal de Acceso -->
+            <button
+              type="submit"
+              [disabled]="loading()"
+              class="w-full bg-gradient-to-r from-awakin-sun to-amber-500 hover:from-amber-400 hover:to-orange-500 text-stone-950 font-black text-xs tracking-widest uppercase p-3.5 rounded-xl shadow-md shadow-orange-500/20 active:scale-[0.98] transition-all cursor-pointer flex items-center justify-center gap-2 disabled:opacity-60"
+            >
+              @if (loading()) {
+                <i class="pi pi-spin pi-spinner text-xs"></i>
+                <span>VERIFICANDO ACCESO...</span>
+              } @else {
+                <i class="pi pi-arrow-right text-xs"></i>
+                <span>ACCEDER AL SISTEMA</span>
+              }
+            </button>
+          </form>
+
+        </div>
+      </div>
 
     </div>
-  </div>
+  </main>
+
+  <!-- Footer Mínimo -->
+  <footer class="w-full max-w-5xl mx-auto px-4 sm:px-6 py-4 flex flex-col sm:flex-row items-center justify-between text-[11px] text-stone-600 gap-2 z-10">
+    <p>© {{ currentYear }} AWAKIN OS. Todos los derechos reservados.</p>
+    <div class="flex items-center gap-4">
+      <span class="hover:text-stone-700 cursor-pointer">Privacidad</span>
+      <span>•</span>
+      <span class="hover:text-stone-700 cursor-pointer">Términos</span>
+      <span>•</span>
+      <span class="hover:text-stone-700 cursor-pointer">Soporte</span>
+    </div>
+  </footer>
 
 </div>

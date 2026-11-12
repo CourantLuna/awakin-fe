@@ -5,6 +5,7 @@ import { Router } from '@angular/router';
 import { Observable, tap, catchError, throwError } from 'rxjs';
 import { SupabaseClient, Session } from '@supabase/supabase-js'; 
 import { supabaseClient } from './supabase.service'; 
+import { AthleteService } from './athlete.service';
 import { environment } from '../../../environments/environment';
 
 // Interfaz para el control del Avatar en el ecosistema
@@ -24,6 +25,7 @@ export interface AthleteSession {
 export class AuthService {
   private http = inject(HttpClient);
   private router = inject(Router);
+  private athleteService = inject(AthleteService);
   private supabase: SupabaseClient = supabaseClient; 
   private readonly AUTH_URL = `${environment.apiUrl}/auth`;
 
@@ -31,12 +33,22 @@ export class AuthService {
   public currentSession = computed(() => this.#sessionState());
   public isAuthenticated = computed(() => !!this.#sessionState());
 
+  private isLoggingOut = false;
+
   constructor() {
     this.hydrateProtocol();
     
     // Escuchar cambios de sesión de Supabase
     this.supabase.auth.onAuthStateChange((event, session) => {
-      if (session) {
+      console.log(`⚡ Supabase auth event: [${event}], hasSession: ${!!session}`);
+      if (this.isLoggingOut) {
+        return;
+      }
+      if (event === 'SIGNED_OUT' || !session) {
+        if (this.#sessionState()) {
+          this.clearProtocolState();
+        }
+      } else if (session) {
         this.syncSessionFromSupabase(session);
       }
     });
@@ -49,11 +61,16 @@ export class AuthService {
     const savedSession = localStorage.getItem('awakin_session');
     if (savedSession) {
       try {
-        this.#sessionState.set(JSON.parse(savedSession));
+        const parsed = JSON.parse(savedSession);
+        if (parsed && parsed.token && parsed.avatar) {
+          this.#sessionState.set(parsed);
+          return;
+        }
       } catch {
-        this.clearProtocolState();
+        // Formato corrupto
       }
     }
+    this.#sessionState.set(null);
   }
 
   /**
@@ -83,6 +100,7 @@ export class AuthService {
    * Sincroniza el usuario de Supabase con nuestro modelo interno
    */
   private syncSessionFromSupabase(session: Session): void {
+    if (this.isLoggingOut) return;
     console.log('⚡ Sesión de Supabase detectada:', session);
     const sessionData: AthleteSession = {
       token: session.access_token,
@@ -102,13 +120,27 @@ export class AuthService {
   }
 
   /**
-   * Logout y limpieza de estado
+   * Logout y limpieza completa de estado (Backend, Supabase y LocalStorage)
    */
-  public logout(): void {
-    this.http.post(`${this.AUTH_URL}/logout`, {}).subscribe({
-      next: () => this.clearProtocolState(),
-      error: () => this.clearProtocolState()
-    });
+  public async logout(): Promise<void> {
+    this.isLoggingOut = true;
+    try {
+      // 1. Notificar al backend si está disponible (no bloqueante)
+      this.http.post(`${this.AUTH_URL}/logout`, {}).subscribe({
+        error: () => {}
+      });
+    } catch {}
+
+    try {
+      // 2. Cerrar sesión en el SDK de Supabase (elimina token interno de GoTrue en LocalStorage)
+      await this.supabase.auth.signOut({ scope: 'local' });
+    } catch (e) {
+      console.warn('Advertencia en signOut de Supabase:', e);
+    } finally {
+      // 3. Limpiar estado de protocolo, perfil y caché local
+      this.clearProtocolState();
+      this.isLoggingOut = false;
+    }
   }
 
   private initializeProtocol(session: AthleteSession): void {
@@ -135,10 +167,33 @@ export class AuthService {
   }
 
   private clearProtocolState(): void {
+    // 1. Eliminar datos de sesión propios
     localStorage.removeItem('awakin_session');
     localStorage.removeItem('awakin_active_athlete_id');
     localStorage.removeItem('awakin_athlete_profile');
+    localStorage.removeItem('awakin_selected_role');
+
+    // 2. Limpiar claves residuales de Supabase Auth en LocalStorage
+    try {
+      for (let i = localStorage.length - 1; i >= 0; i--) {
+        const key = localStorage.key(i);
+        if (key && (key.startsWith('sb-') || key.includes('supabase.auth'))) {
+          localStorage.removeItem(key);
+        }
+      }
+    } catch (e) {}
+
+    // 3. Limpiar estado reactivo del atleta en memoria
+    try {
+      this.athleteService.clearActiveAthlete();
+    } catch (e) {}
+
+    // 4. Limpiar estado de sesión
     this.#sessionState.set(null);
-    this.router.navigate(['/login']);
+
+    // 5. Redirigir a login
+    if (!this.router.url.includes('/login')) {
+      this.router.navigate(['/login']);
+    }
   }
 }

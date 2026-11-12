@@ -149,14 +149,15 @@ export class ShoppingListDrawer {
       }
     });
 
-    // Reaccionar si se pasa initialDish
+    // Reaccionar si se pasa initialDish o se abre el drawer
     effect(() => {
+      const open = this.isOpen();
       const d = this.initialDish();
-      if (d) {
+      if (open && d) {
         this.selectedDish.set(d);
         this.selectedMode.set('receta');
         this.generateFromSingleDish(d, this.dishPortions());
-      } else {
+      } else if (!d) {
         this.selectedDish.set(null);
         if (this.selectedMode() === 'receta') {
           this.selectedMode.set('semanal');
@@ -169,6 +170,11 @@ export class ShoppingListDrawer {
   // Métodos de navegación
   close() {
     this.isOpen.set(false);
+    if (this.selectedMode() === 'receta') {
+      this.selectedDish.set(null);
+      this.selectedMode.set('semanal');
+      this.currentStep.set('configure');
+    }
   }
 
   backToConfigure() {

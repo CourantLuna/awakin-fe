@@ -30,7 +30,7 @@ export class ProtocolMatrixDrawer {
   weeklyTemplates = model<WeeklyTemplate[]>([]);
 
   availableMenus = input<MenuPlan[]>([]);
-  onOpenShoppingList = output<void>();
+  onOpenShoppingList = output<DishItem | void>();
   onSavePlan = output<WeeklyTemplate[]>();
 
   isSaving = signal<boolean>(false);
@@ -225,6 +225,11 @@ export class ProtocolMatrixDrawer {
   closeRecipePreview() {
     this.isRecipePreviewOpen.set(false);
     this.selectedDishForPreview.set(null);
+  }
+
+  handleOpenShoppingListForDish(dish: DishItem) {
+    this.closeRecipePreview();
+    this.onOpenShoppingList.emit(dish);
   }
 
   getDishesForMeal(menu: MenuPlan | null, mealType: string): DishItem[] {

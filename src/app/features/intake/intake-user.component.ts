@@ -19,6 +19,7 @@ export interface StoryShareData {
   fat: number;
   ingredients?: any[] | null;
   dishId?: string;
+  dishes?: { name: string; portionText: string; kcal: number }[];
 }
 import {
   CalendarDay,
@@ -397,9 +398,9 @@ export class IntakeUserComponent implements OnInit {
   selectedDishForShoppingList = signal<DishItem | null>(null);
 
   // Este método abre el Drawer de Compras Inteligente (para semana, menús o receta específica)
-  openShoppingListModal(dish?: DishItem) {
-    if (dish) {
-      this.selectedDishForShoppingList.set(dish);
+  openShoppingListModal(dish?: DishItem | void) {
+    if (dish && typeof dish === 'object' && 'id' in dish) {
+      this.selectedDishForShoppingList.set({ ...dish });
     } else {
       this.selectedDishForShoppingList.set(null);
     }
@@ -1079,6 +1080,15 @@ export class IntakeUserComponent implements OnInit {
         this.selectedAdherence.set(null);
         this.notesText.set('');
 
+        const dishes =
+          selectedItems.length > 1
+            ? selectedItems.map((f) => ({
+                name: f.name,
+                portionText: `${f.portion} ${f.unit}`,
+                kcal: f.kcal,
+              }))
+            : undefined;
+
         // 6. Abrir automáticamente la vista de Historia para compartir
         this.openStoryShareModal({
           photoUrl: localPhotoData,
@@ -1096,6 +1106,7 @@ export class IntakeUserComponent implements OnInit {
           fat: totalG,
           ingredients: allIngredients.length > 0 ? allIngredients : null,
           dishId: selectedItems[0]?.id,
+          dishes: dishes,
         });
       } else {
         // Registro custom fuera de menú (sin platillos planificados seleccionados)
@@ -1465,6 +1476,15 @@ export class IntakeUserComponent implements OnInit {
       )
     );
 
+    const dishes =
+      isMultiSibling && siblingLogged.length > 1
+        ? siblingLogged.map((f) => ({
+            name: f.name,
+            portionText: `${f.portion} ${f.unit}`,
+            kcal: f.kcal,
+          }))
+        : undefined;
+
     this.openStoryShareModal({
       photoUrl: photoUrl || siblingPhotos[0] || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=800&q=80',
       photoUrls: siblingPhotos.length > 1 ? siblingPhotos : undefined,
@@ -1479,6 +1499,7 @@ export class IntakeUserComponent implements OnInit {
       fat: totalG,
       ingredients: formattedIngs,
       dishId: food.dishItem?.id || food.id,
+      dishes: dishes,
     });
   }
 
@@ -1582,6 +1603,12 @@ export class IntakeUserComponent implements OnInit {
     const fallbackPhoto =
       'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=800&q=80';
 
+    const dishes = loggedFoods.map((f) => ({
+      name: f.name,
+      portionText: `${f.portion} ${f.unit}`,
+      kcal: f.kcal,
+    }));
+
     this.openStoryShareModal({
       photoUrl: photoUrls[0] || fallbackPhoto,
       photoUrls: photoUrls.length > 1 ? photoUrls : undefined,
@@ -1596,6 +1623,7 @@ export class IntakeUserComponent implements OnInit {
       fat: totalG,
       ingredients: allIngredients,
       dishId: loggedFoods[0]?.dishItem?.id || loggedFoods[0]?.id,
+      dishes: dishes.length > 1 ? dishes : undefined,
     });
   }
 

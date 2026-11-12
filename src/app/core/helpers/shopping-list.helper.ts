@@ -696,10 +696,14 @@ export function generateShoppingListPdf(result: ShoppingListResult): jsPDF {
     y += 6;
 
     doc.setFont('helvetica', 'bold');
-    doc.setFontSize(13);
+    doc.setFontSize(12);
     doc.setTextColor(245, 158, 11);
-    doc.text(result.title.toUpperCase(), margin, y);
-    y += 5;
+    const titleText = isFirstPage
+      ? result.title.toUpperCase()
+      : `${result.title.toUpperCase()} (CONTINUACIÓN)`;
+    const splitTitle = doc.splitTextToSize(titleText, usableWidth);
+    doc.text(splitTitle, margin, y);
+    y += splitTitle.length * 4.8 + 2;
 
     if (isFirstPage && result.subtitle) {
       doc.setFont('helvetica', 'italic');
@@ -726,99 +730,85 @@ export function generateShoppingListPdf(result: ShoppingListResult): jsPDF {
     grouped.get(it.category)!.push(it);
   }
 
-  const colWidth = (usableWidth - 8) / 2;
-  const col1X = margin;
-  const col2X = margin + colWidth + 8;
+  const cats: ShoppingCategory[] = [
+    'Proteínas',
+    'Carbohidratos',
+    'Grasas',
+    'Frutas y Verduras',
+    'Otros',
+  ];
 
-  let currentColumn: 1 | 2 = 1;
-  let col1Y = y;
-  let col2Y = y;
-
-  const cats: ShoppingCategory[] = ['Proteínas', 'Carbohidratos', 'Grasas', 'Frutas y Verduras', 'Otros'];
+  // Ancho completo disponible para los nombres de ingredientes sin truncar
+  const maxTextWidth = usableWidth - 10 - 28;
 
   for (const cat of cats) {
     const list = grouped.get(cat);
     if (!list || list.length === 0) continue;
 
-    // Calcular altura estimada de esta sección
-    const sectionHeight = 7 + list.length * 6.5;
-    const targetY = currentColumn === 1 ? col1Y : col2Y;
+    // Verificar si cabe el encabezado de categoría + al menos 1 ítem
+    if (y + 16 > pageHeight - 16) {
+      doc.addPage();
+      currentPage++;
+      y = margin;
+      drawHeader(false);
+    }
 
-    if (targetY + sectionHeight > pageHeight - 16) {
-      if (currentColumn === 1) {
-        currentColumn = 2;
-      } else {
-        // Nueva página
+    // Título de categoría con fondo suave de ancho completo
+    doc.setFillColor(243, 244, 246);
+    doc.roundedRect(margin, y - 3.8, usableWidth, 6, 1.2, 1.2, 'F');
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(8.5);
+    doc.setTextColor(31, 41, 55);
+    doc.text(`${cat.toUpperCase()} (${list.length})`, margin + 3.5, y);
+    y += 5.5;
+
+    // Ítems de la categoría a ancho completo
+    for (const it of list) {
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(8.5);
+      const nameLines = doc.splitTextToSize(it.name, maxTextWidth);
+      const rowHeight = Math.max(5.8, nameLines.length * 4.2 + 1.5);
+
+      if (y + rowHeight > pageHeight - 14) {
         doc.addPage();
         currentPage++;
         y = margin;
         drawHeader(false);
-        col1Y = y;
-        col2Y = y;
-        currentColumn = 1;
       }
-    }
-
-    const curX = currentColumn === 1 ? col1X : col2X;
-    let curY = currentColumn === 1 ? col1Y : col2Y;
-
-    // Título de categoría con fondo suave
-    doc.setFillColor(243, 244, 246);
-    doc.roundedRect(curX, curY - 3.5, colWidth, 5.5, 1, 1, 'F');
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(8.5);
-    doc.setTextColor(31, 41, 55);
-    doc.text(`${cat.toUpperCase()} (${list.length})`, curX + 2.5, curY);
-    curY += 5;
-
-    // Ítems de la categoría
-    for (const it of list) {
-      if (curY > pageHeight - 14) {
-        if (currentColumn === 1) {
-          col1Y = curY;
-          currentColumn = 2;
-          curY = col2Y;
-        } else {
-          doc.addPage();
-          currentPage++;
-          y = margin;
-          drawHeader(false);
-          col1Y = y;
-          col2Y = y;
-          currentColumn = 1;
-          curY = y;
-        }
-      }
-
-      const rowX = currentColumn === 1 ? col1X : col2X;
 
       // Casilla de verificación cuadrada [ ]
       doc.setDrawColor(156, 163, 175);
       doc.setLineWidth(0.35);
-      doc.rect(rowX + 1, curY - 2.8, 3.2, 3.2);
+      doc.rect(margin + 1.5, y - 2.8, 3.4, 3.4);
 
-      // Nombre del producto
+      if (it.checked) {
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(7.5);
+        doc.setTextColor(245, 158, 11);
+        doc.text('✓', margin + 2.2, y);
+      }
+
+      // Nombre del producto sin truncar (con salto de línea si es largo)
       doc.setFont('helvetica', 'bold');
-      doc.setFontSize(8);
+      doc.setFontSize(8.5);
       doc.setTextColor(17, 24, 39);
-      const truncatedName = it.name.length > 25 ? `${it.name.substring(0, 24)}…` : it.name;
-      doc.text(truncatedName, rowX + 6, curY);
+      doc.text(nameLines, margin + 7.5, y);
 
-      // Cantidad a la derecha
+      // Cantidad a la derecha alineada en el extremo de la tabla
       doc.setFont('helvetica', 'normal');
-      doc.setFontSize(7.5);
+      doc.setFontSize(8);
       doc.setTextColor(75, 85, 99);
-      doc.text(it.displayQuantity, rowX + colWidth - 1, curY, { align: 'right' });
+      doc.text(it.displayQuantity, margin + usableWidth - 2, y, { align: 'right' });
 
-      curY += 5.2;
+      // Línea divisoria muy sutil entre filas
+      doc.setDrawColor(243, 244, 246);
+      doc.setLineWidth(0.2);
+      doc.line(margin + 7.5, y + rowHeight - 2.5, margin + usableWidth, y + rowHeight - 2.5);
+
+      y += rowHeight;
     }
 
-    curY += 3;
-    if (currentColumn === 1) {
-      col1Y = curY;
-    } else {
-      col2Y = curY;
-    }
+    y += 3.5;
   }
 
   // Numeración de páginas en el pie

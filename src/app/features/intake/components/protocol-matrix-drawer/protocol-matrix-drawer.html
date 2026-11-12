@@ -1,4 +1,4 @@
-<p-drawer [(visible)]="isOpen" position="bottom" [style]="{
+<p-drawer [(visible)]="isOpen" position="bottom" appendTo="body" [style]="{
     height: '100dvh',
     maxHeight: '100dvh',
     width: '100%',
@@ -650,5 +650,6 @@
 </p-drawer>
 
 <!-- MODAL DE RECETA PREVIEW -->
-<app-recipe-details-modal [(isOpen)]="isRecipePreviewOpen" [dish]="selectedDishForPreview()">
+<app-recipe-details-modal [(isOpen)]="isRecipePreviewOpen" [dish]="selectedDishForPreview()"
+  (onOpenShoppingList)="handleOpenShoppingListForDish($event)">
 </app-recipe-details-modal>

@@ -1,30 +1,17 @@
-import { Component, inject, signal, OnInit } from '@angular/core';
+import { Component, inject, signal, OnInit, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
-import { AthleteService } from '../../../core/services/athlete.service';
-import { firstValueFrom } from 'rxjs'; // Protocolo de conversión RxJS a Promesa
+import { supabaseClient } from '../../../core/services/supabase.service';
+import { firstValueFrom } from 'rxjs';
 
-// UI Kit: Componentes Premium de PrimeNG
-import { ButtonModule } from 'primeng/button';
-import { CardModule } from 'primeng/card';
-import { InputTextModule } from 'primeng/inputtext';
-import { PasswordModule } from 'primeng/password';
-import { MessageModule } from 'primeng/message';
+export type UserRole = 'ATHLETE' | 'INSTRUCTOR';
 
 @Component({
   selector: 'app-login',
   standalone: true,
-  imports: [
-    CommonModule,
-    FormsModule,
-    ButtonModule,
-    CardModule,
-    InputTextModule,
-    PasswordModule,
-    MessageModule
-  ],
+  imports: [CommonModule, FormsModule],
   templateUrl: './login.component.html'
 })
 export class LoginComponent implements OnInit {
@@ -32,10 +19,33 @@ export class LoginComponent implements OnInit {
   private router = inject(Router);
 
   // Arquitectura del Estado con Angular Signals
+  selectedRole = signal<UserRole>('ATHLETE');
   email = signal<string>('');
   password = signal<string>('');
+  showPassword = signal<boolean>(false);
   loading = signal<boolean>(false);
   errorMessage = signal<string>('');
+  currentYear = new Date().getFullYear();
+
+  // Configuración dinámica contextual según el rol seleccionado
+  roleConfig = computed(() => {
+    if (this.selectedRole() === 'INSTRUCTOR') {
+      return {
+        title: 'Acceso Instructor',
+        badge: 'Coach / Staff',
+        subtitle: 'Gestiona atletas, asigna protocolos nutricionales y supervisa progresos.',
+        emailPlaceholder: 'instructor@awakin.com',
+        icon: 'pi pi-shield'
+      };
+    }
+    return {
+      title: 'Acceso Atleta',
+      badge: 'Atleta Activo',
+      subtitle: 'Registra tus comidas diarias, planifica listas y da seguimiento a tu entrenamiento.',
+      emailPlaceholder: 'atleta@awakin.com',
+      icon: 'pi pi-bolt'
+    };
+  });
 
   ngOnInit(): void {
     // Si ya existe sesión activa, redirigir de inmediato a /home
@@ -44,13 +54,24 @@ export class LoginComponent implements OnInit {
     }
   }
 
+  setRole(role: UserRole): void {
+    this.selectedRole.set(role);
+    this.errorMessage.set('');
+  }
+
+  togglePasswordVisibility(): void {
+    this.showPassword.update((v) => !v);
+  }
+
   /**
-   * Ejecuta el protocolo de autenticación tradicional por correo
-   * Procesando la respuesta reactiva de nuestra API Gateway
+   * Ejecuta el protocolo de autenticación por correo y clave
    */
-  async onSecureSubmit() {
-    if (!this.email() || !this.password()) {
-      this.errorMessage.set('Vectores incompletos. Se requiere ID y Clave de acceso.');
+  async onSecureSubmit(): Promise<void> {
+    const userEmail = this.email().trim();
+    const userPass = this.password().trim();
+
+    if (!userEmail || !userPass) {
+      this.errorMessage.set('Por favor ingresa tu correo y clave de acceso.');
       return;
     }
 
@@ -58,55 +79,43 @@ export class LoginComponent implements OnInit {
     this.errorMessage.set('');
 
     try {
-      // Forzamos la resolución del flujo HTTP antes de dar el pase de navegación
-      await firstValueFrom(this.authService.signInWithEmail(this.email(), this.password()));
-      
-      // Si la API responde con éxito, redirigir a /home
+      // 1. Intentar inicio de sesión mediante la API Gateway del backend
+      await firstValueFrom(this.authService.signInWithEmail(userEmail, userPass));
+      localStorage.setItem('awakin_selected_role', this.selectedRole());
       this.router.navigate(['/home']);
-    } catch (error: any) {
-      // Captura el error arrojado por el bloque catchError de nuestro servicio central
-      this.errorMessage.set(error.message || 'Fallo de autenticación en la matriz.');
+    } catch (backendError: any) {
+      // 2. Si el backend falla o no reconoce las credenciales, intentar Supabase Auth directo
+      try {
+        const { data, error } = await supabaseClient.auth.signInWithPassword({
+          email: userEmail,
+          password: userPass
+        });
+
+        if (error) throw error;
+
+        if (data?.session) {
+          localStorage.setItem('awakin_selected_role', this.selectedRole());
+          this.router.navigate(['/home']);
+          return;
+        }
+      } catch (sbError: any) {
+        console.warn('Fallo en autenticación Supabase:', sbError);
+      }
+
+      this.errorMessage.set(
+        backendError.message || 'Credenciales inválidas. Verifica tu correo y contraseña.'
+      );
     } finally {
       this.loading.set(false);
     }
   }
 
-  public athleteService = inject(AthleteService);
-
   /**
-   * Dispara el flujo OAuth Prestige con Google Workspace
-   * Redirige el hilo de ejecución directamente al origen de autenticación externa
+   * Dispara el flujo OAuth con Google
    */
   initiateGoogleHandshake(): void {
     this.errorMessage.set('');
-    // Al ser un redireccionamiento nativo de ventana, no requiere await ni verificación local
+    localStorage.setItem('awakin_selected_role', this.selectedRole());
     this.authService.loginWithGoogle();
-  }
-
-  /**
-   * Acceso directo con un atleta registrado de la base de datos
-   */
-  quickAccessAthlete(): void {
-    const list = this.athleteService.availableAthletes();
-    const athlete = list.length > 0 ? list[0] : null;
-    if (athlete) {
-      this.athleteService.setActiveAthlete(athlete);
-      this.authService.devLoginAthlete(
-        athlete.id,
-        athlete.email || `${athlete.username}@awakin.com`,
-        `${athlete.first_name || ''} ${athlete.last_name || ''}`.trim() || athlete.username,
-        athlete.profile_image_url || undefined
-      );
-      this.router.navigate(['/home']);
-    } else {
-      // Fallback a Courant Luna por defecto si la lista aún no ha respondido
-      this.authService.devLoginAthlete(
-        'bde94017-1771-4c83-8901-f0e400e0fb43',
-        'courantluna@gmail.com',
-        'Courant Luna',
-        'https://lh3.googleusercontent.com/a/ACg8ocJfnggD49HZR51l7GkBR70-I-WPkaOxybRqHRE12OjL7NUMtw=s96-c'
-      );
-      this.router.navigate(['/home']);
-    }
   }
 }

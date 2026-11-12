@@ -6,6 +6,7 @@ import { WeekCalendarHeaderComponent } from '../../components/week-calendar/week
 // 👇 NUEVAS IMPORTACIONES
 import { SelectModule } from 'primeng/select';
 import { FormsModule } from '@angular/forms';
+import { BodyMapComponent } from './components/body-map/body-map.component';
 
 interface WorkoutPlan {
   id: string;
@@ -28,6 +29,7 @@ interface WorkoutPlan {
     WeekCalendarHeaderComponent,
     SelectModule,
     FormsModule,
+    BodyMapComponent
   ],
   templateUrl: './workout-user.component.html',
 })

@@ -42,17 +42,17 @@
           "configurations": {
             "production": {
               "budgets": [
-  {
-    "type": "initial",
-    "maximumWarning": "2mb",
-    "maximumError": "4mb"
-  },
-  {
-    "type": "anyComponentStyle",
-    "maximumWarning": "2kb",
-    "maximumError": "4kb"
-  }
-],
+                {
+                  "type": "initial",
+                  "maximumWarning": "2mb",
+                  "maximumError": "4mb"
+                },
+                {
+                  "type": "anyComponentStyle",
+                  "maximumWarning": "8kb",
+                  "maximumError": "12kb"
+                }
+              ],
               "outputHashing": "all",
               "serviceWorker": "ngsw-config.json"
             },

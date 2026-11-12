@@ -25,7 +25,7 @@
 
     <app-protocol-matrix-drawer [(isOpen)]="isMatrixOpen" [(weeklyTemplates)]="weeklyTemplates"
       [activeTemplateId]="activeTemplateId()" [athleteId]="currentAthleteId()" [availableMenus]="availableMenus()"
-      (onOpenShoppingList)="openShoppingListModal()">
+      (onOpenShoppingList)="openShoppingListModal($event)">
     </app-protocol-matrix-drawer>
 
     <app-shopping-list-drawer [(isOpen)]="isShoppingListModalOpen" [weekAssignments]="weeklyTemplates()"
@@ -156,41 +156,57 @@
             @let unloggedCount = getUnloggedCountForMeal(mealType);
             @let loggedCount = getLoggedCountForMeal(mealType);
 
-            @if (canLogForSelectedDate() && foods.length > 0) {
+            @if (foods.length > 0 && (canLogForSelectedDate() || loggedCount > 0)) {
             <div class="flex items-center gap-1.5 shrink-0">
-              <!-- Caso 1: Todos pendientes -> Registrar todo -->
-              @if (unloggedCount > 0 && loggedCount === 0) {
-              <button type="button" (click)="openRegisterModal(mealType)"
-                class="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-black bg-awakin-sun hover:bg-amber-400 text-stone-950 shadow-xs transition-all active:scale-95 cursor-pointer"
-                [title]="foods.length > 1 ? 'Registrar los ' + foods.length + ' alimentos juntos' : 'Registrar comida'">
-                <i class="pi pi-camera text-xs"></i>
-                <span>{{ foods.length > 1 ? 'Registrar todo' : 'Registrar' }}</span>
-              </button>
+              <!-- Botones de Registro (solo disponibles dentro de plazo) -->
+              @if (canLogForSelectedDate()) {
+                <!-- Caso 1: Todos pendientes -> Registrar todo -->
+                @if (unloggedCount > 0 && loggedCount === 0) {
+                <button type="button" (click)="openRegisterModal(mealType)"
+                  class="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-black bg-awakin-sun hover:bg-amber-400 text-stone-950 shadow-xs transition-all active:scale-95 cursor-pointer"
+                  [title]="foods.length > 1 ? 'Registrar los ' + foods.length + ' alimentos juntos' : 'Registrar comida'">
+                  <i class="pi pi-camera text-xs"></i>
+                  <span>{{ foods.length > 1 ? 'Registrar todo' : 'Registrar' }}</span>
+                </button>
+                }
+
+                <!-- Caso 2: Algunos registrados y algunos pendientes -> Registrar restantes -->
+                @if (unloggedCount > 0 && loggedCount > 0) {
+                <button type="button" (click)="openRegisterModal(mealType)"
+                  class="flex items-center gap-1 px-2.5 py-1.5 rounded-full text-[11px] font-black bg-awakin-sun/15 hover:bg-awakin-sun text-stone-900 border border-awakin-sun/30 transition-all active:scale-95 cursor-pointer"
+                  title="Registrar los {{ unloggedCount }} alimentos restantes de esta comida">
+                  <i class="pi pi-camera text-[10px]"></i>
+                  <span>Registrar ({{ unloggedCount }})</span>
+                </button>
+                }
               }
 
-              <!-- Caso 2: Algunos registrados y algunos pendientes -> Registrar restantes + Compartir los listos -->
-              @if (unloggedCount > 0 && loggedCount > 0) {
-              <button type="button" (click)="openRegisterModal(mealType)"
-                class="flex items-center gap-1 px-2.5 py-1.5 rounded-full text-[11px] font-black bg-awakin-sun/15 hover:bg-awakin-sun text-stone-900 border border-awakin-sun/30 transition-all active:scale-95 cursor-pointer"
-                title="Registrar los {{ unloggedCount }} alimentos restantes de esta comida">
-                <i class="pi pi-camera text-[10px]"></i>
-                <span>Registrar ({{ unloggedCount }})</span>
-              </button>
-              <button type="button" (click)="openStoryForMeal(mealType, $event)"
-                class="w-7 h-7 rounded-full bg-stone-100 hover:bg-stone-200 text-stone-600 hover:text-awakin-sun flex items-center justify-center transition-all cursor-pointer shadow-2xs"
-                title="Compartir historia de los alimentos registrados de {{ def.title }}">
-                <i class="pi pi-share-alt text-[10px]"></i>
-              </button>
-              }
-
-              <!-- Caso 3: Todos registrados -> Compartir todo -->
-              @if (unloggedCount === 0 && loggedCount > 0) {
-              <button type="button" (click)="openStoryForMeal(mealType, $event)"
-                class="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-black bg-stone-900 hover:bg-stone-800 text-white shadow-xs transition-all active:scale-95 cursor-pointer"
-                title="Compartir historia completa de {{ def.title }}">
-                <i class="pi pi-share-alt text-xs text-awakin-sun"></i>
-                <span>Compartir todo</span>
-              </button>
+              <!-- Botones de Compartir (disponibles siempre que haya alimentos registrados, dentro o fuera de plazo) -->
+              @if (loggedCount > 0) {
+                <!-- Si todos los alimentos de la comida están registrados -> Compartir todo -->
+                @if (unloggedCount === 0) {
+                <button type="button" (click)="openStoryForMeal(mealType, $event)"
+                  class="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-black bg-stone-900 hover:bg-stone-800 text-white shadow-xs transition-all active:scale-95 cursor-pointer"
+                  title="Compartir historia completa de {{ def.title }}">
+                  <i class="pi pi-share-alt text-xs text-awakin-sun"></i>
+                  <span>Compartir todo</span>
+                </button>
+                } @else if (canLogForSelectedDate()) {
+                <!-- Parcial en día activo: Icono circular junto al botón de registro restante -->
+                <button type="button" (click)="openStoryForMeal(mealType, $event)"
+                  class="w-7 h-7 rounded-full bg-stone-100 hover:bg-stone-200 text-stone-600 hover:text-awakin-sun flex items-center justify-center transition-all cursor-pointer shadow-2xs"
+                  title="Compartir historia de los alimentos registrados de {{ def.title }}">
+                  <i class="pi pi-share-alt text-[10px]"></i>
+                </button>
+                } @else {
+                <!-- Parcial en día fuera de plazo: Botón Compartir indicando la cantidad registrada -->
+                <button type="button" (click)="openStoryForMeal(mealType, $event)"
+                  class="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-black bg-stone-900 hover:bg-stone-800 text-white shadow-xs transition-all active:scale-95 cursor-pointer"
+                  title="Compartir historia de los {{ loggedCount }} alimentos registrados de {{ def.title }}">
+                  <i class="pi pi-share-alt text-xs text-awakin-sun"></i>
+                  <span>Compartir ({{ loggedCount }})</span>
+                </button>
+                }
               }
             </div>
             }
@@ -700,14 +716,28 @@
                   <span class="tabular-nums"><span class="text-white">{{ storyData()?.fat }}</span>G</span>
                 </div>
 
-                <!-- Fila del Platillo (Sin iconos aleatorios) -->
+                <!-- Fila del Platillo / Platillos (Lista completa en colapsado si son múltiples) -->
+                @if (storyData()?.dishes && storyData()!.dishes!.length > 1) {
+                <div class="pt-0.5 space-y-1.5">
+                  @for (dish of storyData()?.dishes; track $index) {
+                  <div class="flex items-center justify-between text-xs text-white leading-tight">
+                    <span class="font-extrabold whitespace-normal break-words flex-1 pr-2 leading-tight">• {{ dish.name }}</span>
+                    <span class="text-[10px] text-stone-300 font-medium shrink-0 tabular-nums">{{ dish.portionText }}</span>
+                  </div>
+                  }
+                  <p class="text-[10px] text-stone-400 font-medium mt-1 pt-0.5 border-t border-white/5">
+                    {{ storyData()?.portionText }} · {{ storyData()?.kcal }} kcal
+                  </p>
+                </div>
+                } @else {
                 <div class="pt-0.5">
-                  <h4 class="font-extrabold text-xs sm:text-sm text-white truncate leading-tight">{{
+                  <h4 class="font-extrabold text-xs sm:text-sm text-white whitespace-normal break-words leading-tight">{{
                     storyData()?.dishName }}</h4>
                   <p class="text-[10px] text-stone-400 font-medium mt-0.5">
                     {{ storyData()?.portionText }} · {{ storyData()?.kcal }} kcal
                   </p>
                 </div>
+                }
 
                 <!-- Card Extendido Opcional: Ingredientes y Cantidades (Sin scroll, adaptativo vertical) -->
                 @if (showIngredientsInCard() && storyData()?.ingredients && storyData()!.ingredients!.length > 0) {
