@@ -115,6 +115,20 @@ export class ProfileAvatarComponent implements OnInit {
       return true;
     }
 
+    // 4. Acceso de gestión: si el usuario autenticado es Head Coach o Instructor del Kin del atleta
+    const authId = session?.avatar?.id;
+    if (authId && current.kin?.id) {
+      if (current.kin.head_coach_id === authId) {
+        return true;
+      }
+      const isKinInstructor = (current.kin.instructors || []).some(
+        (inst) => inst.instructor_id === authId
+      );
+      if (isKinInstructor) {
+        return true;
+      }
+    }
+
     return false;
   });
 
@@ -672,17 +686,54 @@ export class ProfileAvatarComponent implements OnInit {
 
   // Tribu / Kin helpers
   getKin(): KinInfo | null {
-    return this.athlete()?.kin || null;
+    const ath = this.athlete();
+    if (ath?.kin) return ath.kin;
+    if (ath?.kins && ath.kins.length > 0) return ath.kins[0];
+    return null;
+  }
+
+  getKins(): KinInfo[] {
+    const ath = this.athlete();
+    if (ath?.kins && ath.kins.length > 0) {
+      return ath.kins;
+    }
+    return ath?.kin ? [ath.kin] : [];
   }
 
   hasKin(): boolean {
-    return !!this.athlete()?.kin;
+    return this.getKins().length > 0;
+  }
+
+  isMultiKin(): boolean {
+    return this.getKins().length > 1;
   }
 
   getKinRoleBadge(): string {
-    const kin = this.athlete()?.kin;
-    if (!kin) return '';
-    return kin.role_in_kin === 'LEADER' ? 'Líder / Coach' : 'Miembro';
+    const kins = this.getKins();
+    if (kins.length === 0) return '';
+    if (kins.length > 1) {
+      return `Instructor`;
+    }
+    const kin = kins[0];
+    if (kin.role_in_kin === 'HEAD COACH') return 'Líder / Head Coach';
+    if (kin.role_in_kin === 'INSTRUCTOR') return 'Instructor / Coach';
+    return 'Miembro';
+  }
+
+  getKinNamesPreview(): string {
+    const kins = this.getKins();
+    if (kins.length === 0) return '';
+    if (kins.length === 1) return kins[0].team_name;
+    if (kins.length === 2) return `${kins[0].team_name} & ${kins[1].team_name}`;
+    return `${kins[0].team_name} (+${kins.length - 1} más)`;
+  }
+
+  getKinNamesTooltip(): string {
+    return this.getKins().map((k) => k.team_name).join(', ');
+  }
+
+  getKinInstructors() {
+    return this.getKin()?.instructors || [];
   }
 
 

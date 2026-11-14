@@ -6,6 +6,18 @@ import { supabaseClient } from './supabase.service';
 import { compressImage } from '../helpers/image-compressor.helper';
 import { environment } from '../../../environments/environment';
 
+export interface KinInstructor {
+  id?: string;
+  kin_id?: string;
+  instructor_id: string;
+  role?: string;
+  created_at?: string;
+  username?: string;
+  first_name?: string | null;
+  last_name?: string | null;
+  profile_image_url?: string | null;
+}
+
 export interface KinInfo {
   id: string;
   team_name: string;
@@ -16,6 +28,7 @@ export interface KinInfo {
   head_coach_id?: string | null;
   instructor_id?: string | null;
   role_in_kin?: string;
+  instructors?: KinInstructor[];
 }
 
 export interface AthleteFeedPost {
@@ -46,6 +59,7 @@ export interface AthleteProfile {
   head_coach_id?: string | null;
   instructor_id?: string | null;
   kin?: KinInfo | null;
+  kins?: KinInfo[];
 }
 
 export interface NutritionMealRecord {
@@ -167,21 +181,23 @@ export class AthleteService {
   }
 
   /**
-   * Carga la lista de atletas desde el backend
+   * Carga la lista de atletas desde el backend, opcionalmente filtrada por Kin/Team
    */
-  public loadInitialAthletes(preferredIdentifier?: string): void {
+  public loadInitialAthletes(preferredIdentifier?: string, kinId?: string): void {
     this.isLoading.set(true);
-    this.http.get<AthleteProfile[]>(this.baseUrl).pipe(timeout(3500)).subscribe({
+    const url = kinId ? `${this.baseUrl}?kin_id=${encodeURIComponent(kinId)}` : this.baseUrl;
+    this.http.get<AthleteProfile[]>(url).pipe(timeout(3500)).subscribe({
       next: (athletes) => {
         this.processAthletesList(athletes, preferredIdentifier);
       },
       error: async (err) => {
         console.warn('Backend timeout/error cargando atletas, recurriendo a Supabase:', err);
         try {
-          const { data } = await this.supabase
-            .from('athletes')
-            .select('*')
-            .order('first_name');
+          let query = this.supabase.from('athletes').select('*').order('first_name');
+          if (kinId) {
+            query = query.eq('kin_id', kinId);
+          }
+          const { data } = await query;
           this.processAthletesList((data as AthleteProfile[]) || [], preferredIdentifier);
         } catch (e) {
           console.error('Error en fallback Supabase de atletas:', e);
@@ -398,6 +414,41 @@ export class AthleteService {
       url += `&exclude_id=${encodeURIComponent(excludeId)}`;
     }
     return this.http.get<{ username: string; available: boolean; message: string }>(url);
+  }
+
+  // ==========================================================================
+  // MULTI-INSTRUCTOR Y GESTIÓN DE CLIENTES DE KIN/TEAM
+  // ==========================================================================
+
+  /**
+   * Obtiene la lista de instructores asignados a un Kin
+   */
+  public getKinInstructors(kinId: string): Observable<KinInstructor[]> {
+    return this.http.get<KinInstructor[]>(`${this.baseUrl}/kin/${kinId}/instructors`);
+  }
+
+  /**
+   * Asocia un nuevo instructor a un Kin
+   */
+  public addKinInstructor(kinId: string, instructorId: string, role: string = 'instructor'): Observable<KinInstructor> {
+    return this.http.post<KinInstructor>(`${this.baseUrl}/kin/${kinId}/instructors`, {
+      instructor_id: instructorId,
+      role
+    });
+  }
+
+  /**
+   * Remueve la asignación de un instructor de un Kin
+   */
+  public removeKinInstructor(kinId: string, instructorId: string): Observable<{ status: string; message: string }> {
+    return this.http.delete<{ status: string; message: string }>(`${this.baseUrl}/kin/${kinId}/instructors/${instructorId}`);
+  }
+
+  /**
+   * Obtiene los clientes / miembros de un Kin/Team para que cualquier instructor asignado los gestione
+   */
+  public getTeamAthletes(kinId: string): Observable<AthleteProfile[]> {
+    return this.http.get<AthleteProfile[]>(`${this.baseUrl}/kin/${kinId}/athletes`);
   }
 }
 
