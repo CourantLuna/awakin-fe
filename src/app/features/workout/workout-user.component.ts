@@ -6,7 +6,7 @@ import { WeekCalendarHeaderComponent } from '../../components/week-calendar/week
 // 👇 NUEVAS IMPORTACIONES
 import { SelectModule } from 'primeng/select';
 import { FormsModule } from '@angular/forms';
-import { BodyMapComponent } from './components/body-map/body-map.component';
+import { ExerciseGalleryDrawerComponent } from './components/exercise-gallery-drawer/exercise-gallery-drawer.component';
 
 interface WorkoutPlan {
   id: string;
@@ -21,7 +21,6 @@ interface WorkoutPlan {
 @Component({
   selector: 'app-workout-user',
   standalone: true,
-  // 👇 AÑADIR A IMPORTS
   imports: [
     CommonModule,
     PrimeNGModule,
@@ -29,7 +28,7 @@ interface WorkoutPlan {
     WeekCalendarHeaderComponent,
     SelectModule,
     FormsModule,
-    BodyMapComponent
+    ExerciseGalleryDrawerComponent
   ],
   templateUrl: './workout-user.component.html',
 })
@@ -38,6 +37,11 @@ export class WorkoutUserComponent implements OnInit {
 
   currentLabel = signal<string>('Hoy');
   streak = signal<number>(12);
+  isExerciseGalleryOpen = signal<boolean>(false);
+
+  openExerciseGallery(): void {
+    this.isExerciseGalleryOpen.set(true);
+  }
 
   // ==========================================
   // ESTADO DE ENTRENAMIENTOS

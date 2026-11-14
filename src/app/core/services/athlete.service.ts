@@ -233,7 +233,7 @@ export class AthleteService {
                 (a) => a.id === authId || (authEmail && a.email?.toLowerCase() === authEmail.toLowerCase())
               );
             }
-          } catch (e) {}
+          } catch (e) { }
         }
       }
 
@@ -272,7 +272,7 @@ export class AthleteService {
         try {
           localStorage.setItem('awakin_athlete_profile', JSON.stringify(athlete));
           localStorage.setItem('awakin_active_athlete_id', athlete.id);
-        } catch (e) {}
+        } catch (e) { }
       })
     );
   }
@@ -286,7 +286,7 @@ export class AthleteService {
         this.currentAthlete.set(updated);
         try {
           localStorage.setItem('awakin_athlete_profile', JSON.stringify(updated));
-        } catch (e) {}
+        } catch (e) { }
         // Actualizar también en la lista local de disponibles
         this.availableAthletes.update((list) =>
           list.map((a) => (a.id === updated.id ? updated : a))
