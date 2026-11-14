@@ -133,19 +133,20 @@
     <!-- IDENTIFICACIÓN DE TRIBU / KIN -->
     <div class="mt-3">
       @if (hasKin()) {
-      <div class="inline-flex items-center gap-2.5 px-3 py-1.5 rounded-xl border shadow-xs transition-all"
-        [style.borderColor]="(getKin()?.primary_color || '#FE970A') + '55'"
-        [style.backgroundColor]="(getKin()?.primary_color || '#FE970A') + '10'" [title]="getKinNamesTooltip()">
+      <div
+        class="inline-flex bg-stone-100 drop-shadow-xs  items-center gap-2.5 px-3 py-1.5 rounded-xl shadow-xs transition-all"
+        [style.borderColor]="(getKin()?.primary_color || '#FE970A')" [title]="getKinNamesTooltip()">
 
         @if (isMultiKin()) {
         <!-- Stack de círculos superpuestos con badge overlay de cantidad # -->
         <div class="relative flex items-center -space-x-2.5 shrink-0 py-0.5">
           @for (k of getKins().slice(0, 3); track k.id; let idx = $index) {
           <div
-            class="w-7 h-7 rounded-full flex items-center justify-center font-black text-[9px] text-white shadow-xs border-2 border-white shrink-0 overflow-hidden"
-            [style.backgroundColor]="k.primary_color || '#FE970A'" [style.zIndex]="10 - idx" [title]="k.team_name">
+            class="w-8 h-8 rounded-full bg-white flex items-center justify-center font-black text-[9px] text-white shadow-xs border-1 shrink-0 overflow-hidden"
+            [style.borderColor]="(getKin()?.primary_color || '#FE970A')" [style.zIndex]="10 - idx"
+            [title]="k.team_name">
             @if (k.team_logo_url) {
-            <img [src]="k.team_logo_url" [alt]="k.team_name" class="w-full h-full object-cover" />
+            <img [src]="k.team_logo_url" [alt]="k.team_name" class="w-full p-0.5 h-full object-cover" />
             } @else {
             <i class="pi pi-shield text-[10px]"></i>
             }
@@ -153,7 +154,7 @@
           }
           <!-- Badge overlay sobre los círculos con el # de cantidad de kins -->
           <span
-            class="absolute -bottom-1 -right-1 bg-stone-900 text-white text-[8px] font-black px-1.5 py-0.2 rounded-full border-2 border-white shadow-xs z-20 flex items-center justify-center min-w-4.5 leading-tight">
+            class="absolute -bottom-1 -right-1 bg-[#FE970A] text-white text-[8px] font-black px-1.5 py-0.2 rounded-full border-1  shadow-xs z-20 flex items-center justify-center min-w-4.5 leading-tight">
             #{{ getKins().length }}
           </span>
         </div>
@@ -161,10 +162,11 @@
         <!-- Logo único en forma de círculo -->
         <div class="relative shrink-0">
           <div
-            class="w-7 h-7 rounded-full flex items-center justify-center font-black text-[9px] text-white shadow-xs border-2 border-white shrink-0 overflow-hidden"
-            [style.backgroundColor]="getKin()?.primary_color || '#FE970A'">
+            class="w-8 h-8 rounded-full bg-white flex items-center justify-center font-black text-[9px] text-white shadow-xs border-1  shrink-0 overflow-hidden"
+            [style.borderColor]="(getKin()?.primary_color || '#FE970A')">
             @if (getKin()?.team_logo_url) {
-            <img [src]="getKin()?.team_logo_url" [alt]="getKin()?.team_name" class="w-full h-full object-cover" />
+            <img [src]="getKin()?.team_logo_url" [alt]="getKin()?.team_name"
+              class=" p-0.5 w-full h-full object-cover" />
             } @else {
             <i class="pi pi-shield text-xs"></i>
             }

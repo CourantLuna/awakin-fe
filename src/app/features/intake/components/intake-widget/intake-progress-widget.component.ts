@@ -18,8 +18,13 @@ export class IntakeProgressWidgetComponent {
 
   imgError = signal<boolean>(false);
 
+  hasKin = computed(() => {
+    const data = this.kinData();
+    return !!data && !!data.id && !!data.team_name;
+  });
+
   kinTeamName = computed(() => {
-    return this.kinData()?.team_name?.trim() || 'Alpha Kin';
+    return this.kinData()?.team_name?.trim() || '';
   });
 
   kinLogoUrl = computed(() => {

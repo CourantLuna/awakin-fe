@@ -690,17 +690,18 @@
                   <!-- Logo y branding de Awakin -->
                   <div class="flex items-center gap-1.5  px-2 py-1 shrink-0">
                     <img loading="eager" decoding="sync" src="/icons/intake-active.png" alt="Awakin Intake" class="w-6 h-6 object-contain shrink-0 " />
-                    @if (athleteKin()?.team_logo_url) {
-                    <img loading="eager" decoding="sync" [src]="kinLogoDataUrl() || athleteKin()?.team_logo_url"
-                      [alt]="athleteKin()?.team_name || 'Tribu'" crossOrigin="anonymous"
-                      class="w-6 h-6  object-cover  shadow-2xs shrink-0" />
-                    } @else {
-                    <div
-                      class="w-4 h-4 rounded-full bg-awakin-sun/20 border border-awakin-sun/50 flex items-center justify-center text-[8px] font-black text-awakin-sun shrink-0">
-                      {{ athleteKin()?.team_name?.charAt(0) || 'K' }}
-                    </div>
+                    @if (athleteKin()) {
+                      @if (athleteKin()?.team_logo_url) {
+                      <img loading="eager" decoding="sync" [src]="kinLogoDataUrl() || athleteKin()?.team_logo_url"
+                        [alt]="athleteKin()?.team_name || 'Tribu'" crossOrigin="anonymous"
+                        class="w-6 h-6  object-cover  shadow-2xs shrink-0" />
+                      } @else {
+                      <div
+                        class="w-4 h-4 rounded-full bg-awakin-sun/20 border border-awakin-sun/50 flex items-center justify-center text-[8px] font-black text-awakin-sun shrink-0">
+                        {{ athleteKin()?.team_name?.charAt(0) || 'K' }}
+                      </div>
+                      }
                     }
-
                   </div>
                 </div>
 
