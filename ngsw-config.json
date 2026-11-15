@@ -1,4 +1,4 @@
-{ 
+{
   "$schema": "./node_modules/@angular/service-worker/config/schema.json",
   "index": "/index.html",
   "assetGroups": [
@@ -37,6 +37,30 @@
         "maxSize": 60,
         "maxAge": "7d",
         "timeout": "4s",
+        "strategy": "performance"
+      }
+    },
+    {
+      "name": "exercises-api-data",
+      "urls": [
+        "https://exercises.awakin.app/api/**"
+      ],
+      "cacheConfig": {
+        "maxSize": 100,
+        "maxAge": "7d",
+        "timeout": "3s",
+        "strategy": "freshness"
+      }
+    },
+    {
+      "name": "exercises-media-assets",
+      "urls": [
+        "https://exercises.awakin.app/public/images/**",
+        "https://exercises.awakin.app/public/videos/**"
+      ],
+      "cacheConfig": {
+        "maxSize": 500,
+        "maxAge": "30d",
         "strategy": "performance"
       }
     }

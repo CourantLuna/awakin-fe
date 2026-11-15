@@ -1,170 +1,14 @@
-import { Component, model, signal, computed } from '@angular/core';
+import { Component, model, signal, computed, inject, OnInit, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { PrimeNGModule } from '../../../../shared/prime-ng.module';
 import { PopoverModule } from 'primeng/popover';
+import { DialogModule } from 'primeng/dialog';
 import { BodyMapComponent, BodyMapGender, BodyMapAnatomyMode, MuscleRegion } from '../body-map/body-map.component';
-
-export interface ExerciseItem {
-  id: string;
-  name: string;
-  primaryMuscleId: string;
-  primaryMuscleName: string;
-  equipment: string;
-  difficulty: 'Principiante' | 'Intermedio' | 'Avanzado';
-  thumbnailUrl?: string;
-  tags?: string[];
-}
-
-export const AVAILABLE_EQUIPMENT: string[] = [
-  'Barra',
-  'Mancuernas',
-  'Poleas',
-  'Máquinas',
-  'Peso Corporal',
-  'Bandas',
-  'Kettlebell',
-  'Banco'
-];
-
-// Mock de base inicial para demostración y prototipado
-const MOCK_EXERCISES: ExerciseItem[] = [
-  {
-    id: 'ex-1',
-    name: 'Press de Banca Plano con Barra',
-    primaryMuscleId: 'mid-lower-pectoralis',
-    primaryMuscleName: 'Pectoral medio e inferior',
-    equipment: 'Barra',
-    difficulty: 'Intermedio',
-    tags: ['Pecho', 'Empuje', 'Fuerza']
-  },
-  {
-    id: 'ex-2',
-    name: 'Press Inclinado con Mancuernas',
-    primaryMuscleId: 'upper-pectoralis',
-    primaryMuscleName: 'Pectoral superior',
-    equipment: 'Mancuernas',
-    difficulty: 'Intermedio',
-    tags: ['Pecho', 'Clavicular']
-  },
-  {
-    id: 'ex-3',
-    name: 'Sentadilla Libre Trasera',
-    primaryMuscleId: 'rectus-femoris',
-    primaryMuscleName: 'Cuádriceps',
-    equipment: 'Barra',
-    difficulty: 'Avanzado',
-    tags: ['Piernas', 'Cuádriceps', 'Compuesto']
-  },
-  {
-    id: 'ex-4',
-    name: 'Prensa de Piernas 45°',
-    primaryMuscleId: 'outer-quadricep',
-    primaryMuscleName: 'Cuádriceps lateral',
-    equipment: 'Máquinas',
-    difficulty: 'Principiante',
-    tags: ['Piernas', 'Hipertrofia']
-  },
-  {
-    id: 'ex-5',
-    name: 'Dominadas Pronas (Pull-ups)',
-    primaryMuscleId: 'lats',
-    primaryMuscleName: 'Dorsal ancho',
-    equipment: 'Peso Corporal',
-    difficulty: 'Avanzado',
-    tags: ['Espalda', 'Tracción', 'Calistenia']
-  },
-  {
-    id: 'ex-6',
-    name: 'Jalón al Pecho en Polea',
-    primaryMuscleId: 'lats',
-    primaryMuscleName: 'Dorsal ancho',
-    equipment: 'Poleas',
-    difficulty: 'Principiante',
-    tags: ['Espalda', 'Amplitud']
-  },
-  {
-    id: 'ex-7',
-    name: 'Remo con Barra Pendlay',
-    primaryMuscleId: 'traps-middle',
-    primaryMuscleName: 'Trapecio medio',
-    equipment: 'Barra',
-    difficulty: 'Avanzado',
-    tags: ['Espalda', 'Densidad']
-  },
-  {
-    id: 'ex-8',
-    name: 'Elevaciones Laterales con Mancuerna',
-    primaryMuscleId: 'lateral-deltoid',
-    primaryMuscleName: 'Deltoides lateral',
-    equipment: 'Mancuernas',
-    difficulty: 'Principiante',
-    tags: ['Hombros', 'Aislamiento']
-  },
-  {
-    id: 'ex-9',
-    name: 'Press Militar de Pie (Overhead Press)',
-    primaryMuscleId: 'anterior-deltoid',
-    primaryMuscleName: 'Deltoides anterior',
-    equipment: 'Barra',
-    difficulty: 'Intermedio',
-    tags: ['Hombros', 'Fuerza']
-  },
-  {
-    id: 'ex-10',
-    name: 'Curl de Bíceps en Banco Scott con Barra Z',
-    primaryMuscleId: 'short-head-bicep',
-    primaryMuscleName: 'Bíceps (cabeza corta)',
-    equipment: 'Barra',
-    difficulty: 'Intermedio',
-    tags: ['Brazos', 'Bíceps']
-  },
-  {
-    id: 'ex-11',
-    name: 'Extensión de Tríceps en Polea Alta',
-    primaryMuscleId: 'lateral-head-triceps',
-    primaryMuscleName: 'Tríceps (cabeza lateral)',
-    equipment: 'Poleas',
-    difficulty: 'Principiante',
-    tags: ['Brazos', 'Tríceps']
-  },
-  {
-    id: 'ex-12',
-    name: 'Peso Muerto Rumano con Barra',
-    primaryMuscleId: 'lateral-hamstrings',
-    primaryMuscleName: 'Isquiotibiales',
-    equipment: 'Barra',
-    difficulty: 'Intermedio',
-    tags: ['Piernas', 'Cadena Posterior']
-  },
-  {
-    id: 'ex-13',
-    name: 'Hip Thrust con Barra en Banco',
-    primaryMuscleId: 'gluteus-maximus',
-    primaryMuscleName: 'Glúteo mayor',
-    equipment: 'Barra',
-    difficulty: 'Intermedio',
-    tags: ['Glúteos', 'Potencia']
-  },
-  {
-    id: 'ex-14',
-    name: 'Elevación de Gemelos en Máquina de Pie',
-    primaryMuscleId: 'gastrocnemius',
-    primaryMuscleName: 'Gastrocnemio (Gemelos)',
-    equipment: 'Máquinas',
-    difficulty: 'Principiante',
-    tags: ['Pantorrillas']
-  },
-  {
-    id: 'ex-15',
-    name: 'Abdominales en Polea Alta (Kneeling Cable Crunch)',
-    primaryMuscleId: 'upper-abdominals',
-    primaryMuscleName: 'Abdominales superiores',
-    equipment: 'Poleas',
-    difficulty: 'Intermedio',
-    tags: ['Core', 'Abdomen']
-  }
-];
+import { ExerciseApiService } from '../../services/exercise-api.service';
+import { ExerciseSummary, ExerciseDetail } from '../../models/exercises.models';
+import { EquipmentMeta, getEquipmentMeta, EQUIPMENT_META_MAP } from './equipment-icons';
 
 @Component({
   selector: 'app-exercise-gallery-drawer',
@@ -174,16 +18,20 @@ const MOCK_EXERCISES: ExerciseItem[] = [
     FormsModule,
     PrimeNGModule,
     PopoverModule,
+    DialogModule,
     BodyMapComponent
   ],
   templateUrl: './exercise-gallery-drawer.component.html'
 })
-export class ExerciseGalleryDrawerComponent {
+export class ExerciseGalleryDrawerComponent implements OnInit {
+  private readonly exerciseApi = inject(ExerciseApiService);
+  private readonly sanitizer = inject(DomSanitizer);
+
   isOpen = model<boolean>(false);
 
   // Estados de Búsqueda y Filtros
   searchQuery = signal<string>('');
-  selectedEquipment = signal<string | null>(null);
+  selectedEquipment = signal<string>('all');
   selectedMuscle = signal<MuscleRegion | null>(null);
 
   // Estados de visualización del mapa corporal
@@ -191,54 +39,162 @@ export class ExerciseGalleryDrawerComponent {
   bodyMapGender = signal<BodyMapGender>('male');
   bodyMapAnatomy = signal<BodyMapAnatomyMode>('advanced');
 
-  // Catálogos
-  equipmentOptions = AVAILABLE_EQUIPMENT;
-  exercises = signal<ExerciseItem[]>(MOCK_EXERCISES);
+  // Datos reactivos de la API
+  exercises = signal<ExerciseSummary[]>([]);
+  totalExercises = signal<number>(0);
+  isLoading = signal<boolean>(false);
+  hasInitialLoaded = signal<boolean>(false);
+  activeDetail = signal<ExerciseDetail | null>(null);
+  isDetailModalOpen = signal<boolean>(false);
+  isLoadingDetail = signal<boolean>(false);
+
+  // Catálogo dinámico de equipamiento obtenido de GET /api/equipment
+  equipmentList = signal<EquipmentMeta[]>([
+    getEquipmentMeta('all')
+  ]);
+  isLoadingEquipment = signal<boolean>(false);
+
+  // Temporizador para debounce de búsqueda
+  private searchTimer: any = null;
+
+  constructor() {
+    // Si se abre el drawer por primera vez, cargar iniciales
+    effect(() => {
+      if (this.isOpen()) {
+        if (this.equipmentList().length <= 1 && !this.isLoadingEquipment()) {
+          this.fetchEquipmentCatalog();
+        }
+        if (!this.hasInitialLoaded() && !this.isLoading()) {
+          this.fetchExercises();
+        }
+      }
+    });
+  }
+
+  ngOnInit(): void {
+    this.fetchEquipmentCatalog();
+  }
+
+  /**
+   * Carga dinámica del catálogo de equipamientos desde GET /api/equipment
+   */
+  fetchEquipmentCatalog(): void {
+    this.isLoadingEquipment.set(true);
+    this.exerciseApi.getEquipmentList().subscribe({
+      next: (res) => {
+        if (res?.data && Array.isArray(res.data)) {
+          const totalAll = res.data.reduce((acc, item) => acc + (item.count || 0), 0);
+          const mapped: EquipmentMeta[] = [
+            {
+              value: 'all',
+              label: 'Todos los Equipos',
+              iconSvg: EQUIPMENT_META_MAP['all'].iconSvg,
+              count: totalAll
+            },
+            ...res.data.map((item) => getEquipmentMeta(item.name, item.count))
+          ];
+          this.equipmentList.set(mapped);
+        }
+        this.isLoadingEquipment.set(false);
+      },
+      error: (err) => {
+        console.warn('Error obteniendo catálogo de equipamientos, usando fallback:', err);
+        // Fallback enriquecido si falla la red
+        const fallbackKeys = Object.keys(EQUIPMENT_META_MAP);
+        const fallbackList = fallbackKeys.map(k => getEquipmentMeta(k));
+        this.equipmentList.set(fallbackList);
+        this.isLoadingEquipment.set(false);
+      }
+    });
+  }
 
   // Conteo de filtros activos
   activeFiltersCount = computed(() => {
     let count = 0;
-    if (this.selectedEquipment()) count++;
+    if (this.selectedEquipment() && this.selectedEquipment() !== 'all') count++;
     if (this.selectedMuscle()) count++;
     if (this.searchQuery().trim()) count++;
     return count;
   });
 
-  // Ejercicios filtrados reactivamente
-  filteredExercises = computed(() => {
-    const query = this.searchQuery().trim().toLowerCase();
-    const equip = this.selectedEquipment();
-    const muscle = this.selectedMuscle();
-
-    return this.exercises().filter((ex) => {
-      // Filtro por texto libre
-      if (query) {
-        const matchesName = ex.name.toLowerCase().includes(query);
-        const matchesMuscle = ex.primaryMuscleName.toLowerCase().includes(query);
-        const matchesTags = ex.tags?.some((t) => t.toLowerCase().includes(query));
-        if (!matchesName && !matchesMuscle && !matchesTags) {
-          return false;
-        }
-      }
-
-      // Filtro por equipamiento
-      if (equip && equip !== 'Todos' && ex.equipment !== equip) {
-        return false;
-      }
-
-      // Filtro por músculo del mapa
-      if (muscle && ex.primaryMuscleId !== muscle.id) {
-        // Validación de coincidencia directa o por categoría estándar
-        const muscleId = muscle.id.toLowerCase();
-        const exMuscleId = ex.primaryMuscleId.toLowerCase();
-        if (!exMuscleId.includes(muscleId) && !muscleId.includes(exMuscleId)) {
-          return false;
-        }
-      }
-
-      return true;
-    });
+  selectedEquipmentMeta = computed(() => {
+    const val = this.selectedEquipment();
+    const list = this.equipmentList();
+    const found = list.find((e) => e.value === val);
+    return found || getEquipmentMeta(val);
   });
+
+  selectedEquipmentLabel = computed(() => {
+    return this.selectedEquipmentMeta().label;
+  });
+
+  sanitizeSvg(svg: string): SafeHtml {
+    return this.sanitizer.bypassSecurityTrustHtml(svg);
+  }
+
+  /**
+   * Carga ejercicios desde la API basándose en los filtros actuales
+   */
+  fetchExercises(page = 1): void {
+    this.isLoading.set(true);
+
+    const muscle = this.selectedMuscle();
+    const query = this.searchQuery().trim();
+    const equip = this.selectedEquipment();
+
+    if (muscle) {
+      // Búsqueda por región anatómica seleccionada en el Body Map
+      this.exerciseApi.getExercisesByBodyMap(
+        muscle.id,
+        page,
+        24,
+        equip,
+        query || undefined
+      ).subscribe({
+        next: (res) => {
+          this.exercises.set(res.data || []);
+          this.totalExercises.set(res.pagination?.total || (res.data ? res.data.length : 0));
+          this.hasInitialLoaded.set(true);
+          this.isLoading.set(false);
+        },
+        error: (err) => {
+          console.error('Error cargando ejercicios por BodyMap:', err);
+          this.hasInitialLoaded.set(true);
+          this.isLoading.set(false);
+        }
+      });
+    } else {
+      // Búsqueda general por texto o equipamiento
+      this.exerciseApi.searchExercises({
+        search: query || undefined,
+        equipment: equip !== 'all' ? equip : undefined,
+        page,
+        limit: 24
+      }).subscribe({
+        next: (res) => {
+          this.exercises.set(res.data || []);
+          this.totalExercises.set(res.pagination?.total || (res.data ? res.data.length : 0));
+          this.hasInitialLoaded.set(true);
+          this.isLoading.set(false);
+        },
+        error: (err) => {
+          console.error('Error buscando ejercicios:', err);
+          this.hasInitialLoaded.set(true);
+          this.isLoading.set(false);
+        }
+      });
+    }
+  }
+
+  // Debounced input search
+  onSearchInput(): void {
+    if (this.searchTimer) {
+      clearTimeout(this.searchTimer);
+    }
+    this.searchTimer = setTimeout(() => {
+      this.fetchExercises();
+    }, 350);
+  }
 
   // Handlers del Body Map
   onMuscleSelected(muscle: MuscleRegion): void {
@@ -247,33 +203,70 @@ export class ExerciseGalleryDrawerComponent {
     } else {
       this.selectedMuscle.set(muscle);
     }
+    this.fetchExercises();
   }
 
   onMuscleSelectionCleared(): void {
     this.selectedMuscle.set(null);
+    this.fetchExercises();
   }
 
   // Métodos de filtros
-  setEquipment(eq: string | null): void {
-    this.selectedEquipment.set(eq === 'Todos' ? null : eq);
+  setEquipment(eqValue: string): void {
+    this.selectedEquipment.set(eqValue);
+    this.fetchExercises();
   }
 
   clearSearch(): void {
     this.searchQuery.set('');
+    this.fetchExercises();
   }
 
   clearMuscleFilter(): void {
     this.selectedMuscle.set(null);
+    this.fetchExercises();
   }
 
   clearAllFilters(): void {
     this.searchQuery.set('');
-    this.selectedEquipment.set(null);
+    this.selectedEquipment.set('all');
     this.selectedMuscle.set(null);
+    this.fetchExercises();
+  }
+
+  // Detalle del Ejercicio
+  openExerciseDetail(exercise: ExerciseSummary): void {
+    this.isLoadingDetail.set(true);
+    // Mostrar versión rápida inicial
+    this.activeDetail.set({
+      ...exercise,
+      instruction_steps: exercise.instruction ? [exercise.instruction] : []
+    });
+    this.isDetailModalOpen.set(true);
+
+    this.exerciseApi.getExerciseDetail(exercise.id).subscribe({
+      next: (res) => {
+        if (res && res.data) {
+          this.activeDetail.set(res.data);
+        }
+        this.isLoadingDetail.set(false);
+      },
+      error: () => {
+        this.isLoadingDetail.set(false);
+      }
+    });
+  }
+
+  closeDetail(): void {
+    this.isDetailModalOpen.set(false);
+    this.activeDetail.set(null);
+  }
+
+  getMediaUrl(path?: string | null): string {
+    return this.exerciseApi.getMediaUrl(path);
   }
 
   close(): void {
     this.isOpen.set(false);
   }
 }
-
