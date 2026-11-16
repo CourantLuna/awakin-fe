@@ -59,6 +59,9 @@ export interface AthleteProfile {
   head_coach_id?: string | null;
   instructor_id?: string | null;
   altura_cm?: number | null;
+  gender?: string | null;
+  birth_date?: string | null;
+  nivel_actividad?: string | null;
   sexo?: string | null;
   genero?: string | null;
   fecha_nacimiento?: string | null;
@@ -111,6 +114,7 @@ export interface AthleteProfileUpdate {
   username?: string;
   bio_description?: string;
   profile_image_url?: string;
+  nivel_actividad?: string;
 }
 
 

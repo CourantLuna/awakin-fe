@@ -16,6 +16,21 @@ import { ChartImageExportService } from './services/chart-image-export.service';
 
 export type ProfileFeedTab = 'posts' | 'meals' | 'workouts' | 'progress';
 
+export interface ActivityLevelOption {
+  key: 'SEDENTARY' | 'LIGHTLY_ACTIVE' | 'MODERATELY_ACTIVE' | 'VERY_ACTIVE' | 'EXTREMELY_ACTIVE';
+  label: string;
+  factor: number;
+  desc: string;
+}
+
+export const ACTIVITY_LEVELS: ActivityLevelOption[] = [
+  { key: 'SEDENTARY', label: 'Sedentario', factor: 1.20, desc: 'Poco o ningún ejercicio' },
+  { key: 'LIGHTLY_ACTIVE', label: 'Ligeramente activo', factor: 1.38, desc: 'Ejercicio ligero 1-3 días/sem' },
+  { key: 'MODERATELY_ACTIVE', label: 'Moderadamente activo', factor: 1.55, desc: 'Ejercicio moderado 3-5 días/sem' },
+  { key: 'VERY_ACTIVE', label: 'Muy activo / Activo', factor: 1.73, desc: 'Ejercicio fuerte 6-7 días/sem' },
+  { key: 'EXTREMELY_ACTIVE', label: 'Extremadamente activo', factor: 1.90, desc: 'Entrenamiento intenso / trabajo físico' }
+];
+
 @Component({
   selector: 'app-profile-avatar.component',
   standalone: true,
@@ -191,7 +206,7 @@ export class ProfileAvatarComponent implements OnInit {
     if (ath?.altura_cm && Number(ath.altura_cm) > 0) {
       return { cm: Number(ath.altura_cm), isEstimated: false };
     }
-    const rawSex = (ath?.sexo || ath?.genero || '').toLowerCase().trim();
+    const rawSex = (ath?.gender || ath?.sexo || ath?.genero || '').toLowerCase().trim();
     if (['f', 'femenino', 'female', 'mujer'].includes(rawSex)) {
       return { cm: 159, isEstimated: true };
     }
@@ -212,10 +227,11 @@ export class ProfileAvatarComponent implements OnInit {
     const ath = this.athlete();
 
     let age = 30;
+    const birthDateStr = ath?.birth_date || ath?.fecha_nacimiento;
     if (ath?.edad && Number(ath.edad) > 0) {
       age = Number(ath.edad);
-    } else if (ath?.fecha_nacimiento) {
-      const birth = new Date(ath.fecha_nacimiento);
+    } else if (birthDateStr) {
+      const birth = new Date(birthDateStr);
       if (!isNaN(birth.getTime())) {
         const calculatedAge = Math.floor((Date.now() - birth.getTime()) / (365.25 * 24 * 60 * 60 * 1000));
         if (calculatedAge > 10 && calculatedAge < 110) {
@@ -224,7 +240,7 @@ export class ProfileAvatarComponent implements OnInit {
       }
     }
 
-    const rawSex = (ath?.sexo || ath?.genero || '').toLowerCase().trim();
+    const rawSex = (ath?.gender || ath?.sexo || ath?.genero || '').toLowerCase().trim();
     let sexOffset = -78;
     if (['m', 'masculino', 'male', 'hombre'].includes(rawSex)) {
       sexOffset = 5;
@@ -239,6 +255,39 @@ export class ProfileAvatarComponent implements OnInit {
       isEstimated
     };
   });
+
+  // Niveles de actividad y cálculo de Gasto Calórico Total (TMB × Factor)
+  readonly activityLevels = ACTIVITY_LEVELS;
+  isSavingActivityLevel = signal<boolean>(false);
+
+  currentActivityLevel = computed<ActivityLevelOption>(() => {
+    const raw = (this.athlete()?.nivel_actividad || 'SEDENTARY').toUpperCase().trim();
+    return this.activityLevels.find((a) => a.key === raw) || this.activityLevels[0];
+  });
+
+  currentTdee = computed(() => {
+    const tmb = this.currentTmb();
+    if (!tmb) return null;
+    const act = this.currentActivityLevel();
+    return Math.round(tmb.kcal * act.factor);
+  });
+
+  updateActivityLevel(levelKey: string): void {
+    const ath = this.athlete();
+    if (!ath || this.isSavingActivityLevel()) return;
+    if (ath.nivel_actividad === levelKey) return;
+
+    this.isSavingActivityLevel.set(true);
+    this.athleteService.updateProfile(ath.id, { nivel_actividad: levelKey }).subscribe({
+      next: () => {
+        this.isSavingActivityLevel.set(false);
+      },
+      error: (err) => {
+        console.error('Error actualizando nivel de actividad:', err);
+        this.isSavingActivityLevel.set(false);
+      }
+    });
+  }
 
   // Gráfico 1: Evolución de Peso (SVG interactivo)
   weightChartData = computed(() => {

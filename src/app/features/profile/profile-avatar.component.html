@@ -583,6 +583,74 @@
           </div>
         </div>
       </div>
+
+      <!-- NIVEL DE ACTIVIDAD, FACTOR Y GASTO CALÓRICO (TMB × FACTOR) -->
+      <div class="bg-stone-50 border border-stone-200/80 rounded-2xl p-3.5 mb-6 relative z-10 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div class="flex items-center gap-3 min-w-0">
+          <div class="w-9 h-9 rounded-xl bg-awakin-sun/15 border border-awakin-sun/25 flex items-center justify-center text-awakin-sun shrink-0">
+            <i class="pi pi-bolt text-sm font-black"></i>
+          </div>
+          <div class="min-w-0">
+            <div class="flex items-center gap-1.5 flex-wrap">
+              <span class="text-[9px] font-black uppercase tracking-wider text-stone-500">Nivel de Actividad</span>
+              <span class="px-1.5 py-0.2 rounded-md bg-awakin-sun/15 text-awakin-sun text-[10px] font-black">
+                ×{{ currentActivityLevel().factor | number:'1.2-2' }}
+              </span>
+              @if (isSavingActivityLevel()) {
+              <i class="pi pi-spin pi-spinner text-[10px] text-stone-400"></i>
+              }
+            </div>
+            <button #activityBtn type="button" (click)="activityPopover.toggle($event, activityBtn)"
+              class="mt-0.5 inline-flex items-center gap-1.5 text-xs font-black text-stone-900 hover:text-awakin-sun transition-colors cursor-pointer">
+              <span class="truncate">{{ currentActivityLevel().label }}</span>
+              <i class="pi pi-chevron-down text-[9px] text-stone-400"></i>
+            </button>
+          </div>
+        </div>
+
+        @if (currentTdee()) {
+        <div class="flex items-center justify-between sm:justify-end gap-3 pt-2 sm:pt-0 border-t sm:border-t-0 border-stone-200/70">
+          <div class="text-left sm:text-right">
+            <span class="text-[9px] font-black uppercase tracking-wider text-stone-500 block">
+              Gasto Diario (TMB × {{ currentActivityLevel().factor | number:'1.2-2' }})
+            </span>
+            <div class="flex items-baseline sm:justify-end gap-1 mt-0.5">
+              <span class="text-lg font-black text-emerald-600">{{ currentTdee() | number:'1.0-0' }}</span>
+              <span class="text-[11px] font-bold text-stone-500">kcal/día</span>
+            </div>
+          </div>
+        </div>
+        }
+
+        <p-popover #activityPopover styleClass="p-0 overflow-hidden shadow-2xl rounded-2xl border border-stone-200 w-72 max-w-[90vw]">
+          <div class="p-3 bg-white">
+            <div class="pb-2 mb-2 border-b border-stone-100 flex items-center justify-between">
+              <span class="text-[10px] font-black uppercase tracking-wider text-stone-500">Factor de Actividad</span>
+              <span class="text-[10px] font-bold text-stone-400">TMB × Coef.</span>
+            </div>
+            <div class="flex flex-col gap-1">
+              @for (lvl of activityLevels; track lvl.key) {
+              <button type="button" (click)="updateActivityLevel(lvl.key); activityPopover.hide()"
+                class="w-full text-left px-2.5 py-2 rounded-xl transition-colors flex items-center justify-between gap-2 cursor-pointer"
+                [ngClass]="currentActivityLevel().key === lvl.key
+                  ? 'bg-awakin-sun/10 text-awakin-sun'
+                  : 'text-stone-700 hover:bg-stone-100'">
+                <div class="min-w-0">
+                  <div class="text-xs font-black truncate">{{ lvl.label }}</div>
+                  <div class="text-[10px] text-stone-400 truncate">{{ lvl.desc }}</div>
+                </div>
+                <span class="text-xs font-black px-2 py-0.5 rounded-lg shrink-0"
+                  [ngClass]="currentActivityLevel().key === lvl.key
+                    ? 'bg-awakin-sun text-white'
+                    : 'bg-stone-100 text-stone-700'">
+                  {{ lvl.factor | number:'1.2-2' }}
+                </span>
+              </button>
+              }
+            </div>
+          </div>
+        </p-popover>
+      </div>
       }
 
       <!-- ========================================== -->
@@ -1405,231 +1473,264 @@
 
 <!-- ========================================== -->
 <!-- MODAL: NUEVO REGISTRO DE PROGRESO         -->
-<!-- MATCHING SCREENSHOT 2                      -->
 <!-- ========================================== -->
 <p-dialog [(visible)]="isNewProgressModalOpen" [modal]="true" [draggable]="false" [resizable]="false" [closable]="false"
-  styleClass="w-[94vw] max-w-md bg-[#131b2a] text-slate-100 rounded-3xl overflow-hidden shadow-2xl p-0 border border-slate-800">
+  [showHeader]="false" [dismissableMask]="true" appendTo="body"
+  [style]="{ width: '94vw', maxWidth: '460px', borderRadius: '24px' }"
+  styleClass="overflow-hidden shadow-2xl border border-stone-200 [&_.p-dialog-content]:!p-0">
 
-  <div class="p-5 space-y-4 bg-[#131b2a]">
-    <!-- CABECERA DEL MODAL: TÍTULO Y BOTÓN CERRAR (X) -->
-    <div class="flex items-center justify-between pb-2 border-b border-slate-800">
-      <h3 class="text-base font-black text-white tracking-tight">
-        Nuevo Registro
-      </h3>
+  <div class="bg-white flex flex-col max-h-[88vh]">
+    <!-- CABECERA -->
+    <div class="px-5 py-4 border-b border-stone-100 bg-stone-50/80 flex items-center justify-between shrink-0">
+      <div class="flex items-center gap-3">
+        <div class="w-9 h-9 rounded-2xl bg-awakin-sun/15 border border-awakin-sun/25 flex items-center justify-center text-awakin-sun shrink-0">
+          <i class="pi pi-plus-circle text-base"></i>
+        </div>
+        <div>
+          <h3 class="text-base font-black text-stone-900 tracking-tight leading-tight">Nuevo Registro</h3>
+          <p class="text-[11px] text-stone-500 font-medium">Peso, medidas corporales y fotos</p>
+        </div>
+      </div>
       <button type="button" (click)="closeNewProgressModal()"
-        class="w-8 h-8 rounded-full bg-stone-100 hover:bg-stone-200 text-stone-600 hover:text-stone-900 flex items-center justify-center text-sm transition-all cursor-pointer">
-        <i class="pi pi-times"></i>
+        class="w-8 h-8 rounded-full bg-stone-100 hover:bg-stone-200 text-stone-600 hover:text-stone-900 flex items-center justify-center transition-all cursor-pointer shrink-0">
+        <i class="pi pi-times text-xs"></i>
       </button>
     </div>
 
-    <!-- FECHA DEL REGISTRO (MATCHING SCREENSHOT 2) -->
-    <div>
-      <label class="block text-[10px] font-black uppercase tracking-wider text-stone-500 mb-1.5">
-        FECHA DEL REGISTRO
-      </label>
-      <div class="relative">
-        <input type="date" [ngModel]="progressDate()" (ngModelChange)="progressDate.set($event)"
-          class="w-full bg-[#0d1422] border border-slate-700/80 rounded-xl text-xs px-3 py-2.5 text-white font-bold focus:outline-none focus:border-emerald-500" />
+    <!-- CUERPO DEL FORMULARIO -->
+    <div class="p-5 space-y-4 overflow-y-auto flex-1">
+      <!-- FECHA Y PESO -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <!-- Fecha -->
+        <div>
+          <label class="block text-[10px] font-black uppercase tracking-wider text-stone-500 mb-1.5">
+            Fecha del Registro
+          </label>
+          <input type="date" [ngModel]="progressDate()" (ngModelChange)="progressDate.set($event)"
+            class="w-full h-10 bg-stone-50 hover:bg-stone-100/70 focus:bg-white border border-stone-200 focus:border-awakin-sun focus:ring-2 focus:ring-awakin-sun/15 rounded-xl text-xs px-3 text-stone-900 font-bold transition-all outline-hidden" />
+        </div>
+
+        <!-- Peso con Selector KG / LB -->
+        <div>
+          <label class="block text-[10px] font-black uppercase tracking-wider text-stone-500 mb-1.5">
+            Peso Corporal
+          </label>
+          <div
+            class="h-10 flex items-center bg-stone-50 hover:bg-stone-100/70 focus-within:bg-white border border-stone-200 focus-within:border-awakin-sun focus-within:ring-2 focus-within:ring-awakin-sun/15 rounded-xl overflow-hidden transition-all">
+            <input type="number" step="0.1" [ngModel]="progressWeight()" (ngModelChange)="progressWeight.set($event)"
+              placeholder="Ej: 70.5"
+              class="w-full min-w-0 flex-1 bg-transparent border-0 text-xs px-3 text-stone-900 font-bold placeholder:text-stone-400 focus:outline-none" />
+            <div class="flex items-center p-0.5 bg-stone-200/70 rounded-lg mr-1 shrink-0">
+              <button type="button" (click)="progressWeightUnit.set('lb')"
+                class="px-2 py-1 rounded-md text-[10px] font-black transition-all cursor-pointer"
+                [ngClass]="progressWeightUnit() === 'lb' ? 'bg-awakin-sun text-white shadow-2xs' : 'text-stone-600 hover:text-stone-900'">
+                LB
+              </button>
+              <button type="button" (click)="progressWeightUnit.set('kg')"
+                class="px-2 py-1 rounded-md text-[10px] font-black transition-all cursor-pointer"
+                [ngClass]="progressWeightUnit() === 'kg' ? 'bg-awakin-sun text-white shadow-2xs' : 'text-stone-600 hover:text-stone-900'">
+                KG
+              </button>
+            </div>
+          </div>
+        </div>
       </div>
-    </div>
 
-    <!-- PESO CON SELECTOR DE UNIDAD KG / LB (MATCHING SCREENSHOT 2) -->
-    <div>
-      <label class="block text-[10px] font-black uppercase tracking-wider text-stone-500 mb-1.5">
-        PESO
-      </label>
-      <div
-        class="flex items-center bg-[#0d1422] border border-slate-700/80 rounded-xl overflow-hidden focus-within:border-emerald-500">
-        <input type="number" step="0.1" [ngModel]="progressWeight()" (ngModelChange)="progressWeight.set($event)"
-          placeholder="Ej: 70.5"
-          class="flex-1 bg-transparent border-0 text-xs px-3 py-2.5 text-white font-bold placeholder:text-slate-600 focus:outline-none" />
-
-        <select [ngModel]="progressWeightUnit()" (ngModelChange)="progressWeightUnit.set($event)"
-          class="bg-[#172135] text-slate-200 text-xs font-black px-3 py-2.5 border-l border-slate-700/80 focus:outline-none cursor-pointer">
-          <option value="kg">KG</option>
-          <option value="lb">LB</option>
-        </select>
-      </div>
-    </div>
-
-    <!-- MEDIDAS PRINCIPALES: CINTURA, CADERA, PECHO (MATCHING SCREENSHOT 2) -->
-    <div class="grid grid-cols-3 gap-2">
+      <!-- MEDIDAS PRINCIPALES: CINTURA, CADERA, PECHO -->
       <div>
-        <label class="block text-[9px] font-black uppercase tracking-wider text-stone-500 mb-1 text-center">
-          CINTURA (CM)
+        <label class="block text-[10px] font-black uppercase tracking-wider text-stone-500 mb-1.5">
+          Medidas Principales
         </label>
-        <input type="number" step="0.5" [ngModel]="progressWaist()" (ngModelChange)="progressWaist.set($event)"
-          placeholder="-- cm"
-          class="w-full bg-[#0d1422] border border-slate-700/80 rounded-xl text-xs px-2.5 py-2.5 text-white text-center font-bold placeholder:text-slate-600 focus:outline-none focus:border-emerald-500" />
+        <div class="grid grid-cols-3 gap-2.5">
+          <div>
+            <span class="block text-[9px] font-bold uppercase text-stone-400 mb-1 text-center">Cintura</span>
+            <div class="h-10 flex items-center bg-stone-50 focus-within:bg-white border border-stone-200 focus-within:border-awakin-sun focus-within:ring-2 focus-within:ring-awakin-sun/15 rounded-xl px-2.5 transition-all">
+              <input type="number" step="0.5" [ngModel]="progressWaist()" (ngModelChange)="progressWaist.set($event)"
+                placeholder="--"
+                class="w-full min-w-0 bg-transparent border-0 text-xs text-stone-900 text-center font-bold placeholder:text-stone-400 focus:outline-none" />
+              <span class="text-[10px] font-bold text-stone-400 ml-1 shrink-0">cm</span>
+            </div>
+          </div>
+
+          <div>
+            <span class="block text-[9px] font-bold uppercase text-stone-400 mb-1 text-center">Cadera</span>
+            <div class="h-10 flex items-center bg-stone-50 focus-within:bg-white border border-stone-200 focus-within:border-awakin-sun focus-within:ring-2 focus-within:ring-awakin-sun/15 rounded-xl px-2.5 transition-all">
+              <input type="number" step="0.5" [ngModel]="progressHip()" (ngModelChange)="progressHip.set($event)"
+                placeholder="--"
+                class="w-full min-w-0 bg-transparent border-0 text-xs text-stone-900 text-center font-bold placeholder:text-stone-400 focus:outline-none" />
+              <span class="text-[10px] font-bold text-stone-400 ml-1 shrink-0">cm</span>
+            </div>
+          </div>
+
+          <div>
+            <span class="block text-[9px] font-bold uppercase text-stone-400 mb-1 text-center">Pecho</span>
+            <div class="h-10 flex items-center bg-stone-50 focus-within:bg-white border border-stone-200 focus-within:border-awakin-sun focus-within:ring-2 focus-within:ring-awakin-sun/15 rounded-xl px-2.5 transition-all">
+              <input type="number" step="0.5" [ngModel]="progressChest()" (ngModelChange)="progressChest.set($event)"
+                placeholder="--"
+                class="w-full min-w-0 bg-transparent border-0 text-xs text-stone-900 text-center font-bold placeholder:text-stone-400 focus:outline-none" />
+              <span class="text-[10px] font-bold text-stone-400 ml-1 shrink-0">cm</span>
+            </div>
+          </div>
+        </div>
       </div>
 
+      <!-- MEDIDAS AVANZADAS COLAPSABLES -->
+      <div class="bg-stone-50/70 border border-stone-200/80 rounded-2xl p-3">
+        <button type="button" (click)="toggleAdvancedMetrics()"
+          class="w-full text-[11px] font-bold text-awakin-sun hover:text-awakin-sun-dim transition-colors flex items-center justify-between cursor-pointer">
+          <span class="flex items-center gap-1.5">
+            <i class="pi pi-sliders-h text-xs"></i>
+            <span>Medidas adicionales (Cuello, Bíceps, Muslo, % Grasa)</span>
+          </span>
+          <i class="pi text-[10px]" [ngClass]="showAdvancedMetrics() ? 'pi-chevron-up' : 'pi-chevron-down'"></i>
+        </button>
+
+        @if (showAdvancedMetrics()) {
+        <div class="grid grid-cols-2 gap-2.5 mt-3 pt-3 border-t border-stone-200/80 animate-fade-in">
+          <div>
+            <label class="block text-[9px] font-bold uppercase text-stone-500 mb-1">Cuello (cm)</label>
+            <input type="number" step="0.5" [ngModel]="progressNeck()" (ngModelChange)="progressNeck.set($event)"
+              placeholder="--"
+              class="w-full h-9 bg-white border border-stone-200 focus:border-awakin-sun rounded-xl text-xs px-2.5 text-stone-900 font-bold placeholder:text-stone-400 outline-hidden" />
+          </div>
+          <div>
+            <label class="block text-[9px] font-bold uppercase text-stone-500 mb-1">Bíceps (cm)</label>
+            <input type="number" step="0.5" [ngModel]="progressBiceps()" (ngModelChange)="progressBiceps.set($event)"
+              placeholder="--"
+              class="w-full h-9 bg-white border border-stone-200 focus:border-awakin-sun rounded-xl text-xs px-2.5 text-stone-900 font-bold placeholder:text-stone-400 outline-hidden" />
+          </div>
+          <div>
+            <label class="block text-[9px] font-bold uppercase text-stone-500 mb-1">Muslo (cm)</label>
+            <input type="number" step="0.5" [ngModel]="progressThigh()" (ngModelChange)="progressThigh.set($event)"
+              placeholder="--"
+              class="w-full h-9 bg-white border border-stone-200 focus:border-awakin-sun rounded-xl text-xs px-2.5 text-stone-900 font-bold placeholder:text-stone-400 outline-hidden" />
+          </div>
+          <div>
+            <label class="block text-[9px] font-bold uppercase text-stone-500 mb-1">% Grasa Corporal</label>
+            <input type="number" step="0.1" [ngModel]="progressBodyFat()" (ngModelChange)="progressBodyFat.set($event)"
+              placeholder="--"
+              class="w-full h-9 bg-white border border-stone-200 focus:border-awakin-sun rounded-xl text-xs px-2.5 text-stone-900 font-bold placeholder:text-stone-400 outline-hidden" />
+          </div>
+        </div>
+        }
+      </div>
+
+      <!-- FOTOS (FRONTAL, LATERAL, ESPALDA) -->
       <div>
-        <label class="block text-[9px] font-black uppercase tracking-wider text-stone-500 mb-1 text-center">
-          CADERA (CM)
-        </label>
-        <input type="number" step="0.5" [ngModel]="progressHip()" (ngModelChange)="progressHip.set($event)"
-          placeholder="-- cm"
-          class="w-full bg-[#0d1422] border border-slate-700/80 rounded-xl text-xs px-2.5 py-2.5 text-white text-center font-bold placeholder:text-slate-600 focus:outline-none focus:border-emerald-500" />
+        <div class="flex items-center justify-between mb-2">
+          <label class="text-[10px] font-black uppercase tracking-wider text-stone-500">
+            Fotos de Progreso
+          </label>
+          <span class="text-[10px] font-semibold text-stone-400">Opcional</span>
+        </div>
+
+        <div class="grid grid-cols-3 gap-2.5">
+          <!-- FRONTAL -->
+          <div class="flex flex-col">
+            <span class="text-[9px] font-black uppercase text-stone-500 tracking-wider mb-1 text-center">Frontal</span>
+            <div (click)="frontInput.click()"
+              class="aspect-[3/4] rounded-2xl border-2 border-dashed border-stone-300 hover:border-awakin-sun bg-stone-50 hover:bg-awakin-sun/5 flex flex-col items-center justify-center p-1.5 cursor-pointer transition-all relative overflow-hidden group select-none">
+              @if (photoFrontPreview()) {
+              <img loading="lazy" decoding="async" [src]="photoFrontPreview()" alt="Preview Frontal"
+                class="w-full h-full object-cover rounded-xl" />
+              <button type="button" (click)="$event.stopPropagation(); removeProgressPhoto('front')"
+                class="absolute top-1.5 right-1.5 w-6 h-6 rounded-full bg-stone-900/75 hover:bg-rose-600 text-white flex items-center justify-center text-[10px] transition-all cursor-pointer shadow-md">
+                <i class="pi pi-times"></i>
+              </button>
+              <div
+                class="absolute bottom-1.5 bg-emerald-600/95 text-white text-[8px] font-black px-2 py-0.5 rounded-full shadow-xs">
+                Listo ✓
+              </div>
+              } @else {
+              <i class="pi pi-camera text-xl text-stone-400 mb-1 group-hover:scale-110 group-hover:text-awakin-sun transition-all"></i>
+              <span class="text-[10px] font-bold text-stone-500 group-hover:text-awakin-sun">Subir</span>
+              }
+            </div>
+            <input #frontInput type="file" accept="image/*" (change)="onProgressPhotoSelected($event, 'front')" class="hidden" />
+          </div>
+
+          <!-- LATERAL -->
+          <div class="flex flex-col">
+            <span class="text-[9px] font-black uppercase text-stone-500 tracking-wider mb-1 text-center">Lateral</span>
+            <div (click)="sideInput.click()"
+              class="aspect-[3/4] rounded-2xl border-2 border-dashed border-stone-300 hover:border-awakin-sun bg-stone-50 hover:bg-awakin-sun/5 flex flex-col items-center justify-center p-1.5 cursor-pointer transition-all relative overflow-hidden group select-none">
+              @if (photoSidePreview()) {
+              <img loading="lazy" decoding="async" [src]="photoSidePreview()" alt="Preview Lateral"
+                class="w-full h-full object-cover rounded-xl" />
+              <button type="button" (click)="$event.stopPropagation(); removeProgressPhoto('side')"
+                class="absolute top-1.5 right-1.5 w-6 h-6 rounded-full bg-stone-900/75 hover:bg-rose-600 text-white flex items-center justify-center text-[10px] transition-all cursor-pointer shadow-md">
+                <i class="pi pi-times"></i>
+              </button>
+              <div
+                class="absolute bottom-1.5 bg-emerald-600/95 text-white text-[8px] font-black px-2 py-0.5 rounded-full shadow-xs">
+                Listo ✓
+              </div>
+              } @else {
+              <i class="pi pi-camera text-xl text-stone-400 mb-1 group-hover:scale-110 group-hover:text-awakin-sun transition-all"></i>
+              <span class="text-[10px] font-bold text-stone-500 group-hover:text-awakin-sun">Subir</span>
+              }
+            </div>
+            <input #sideInput type="file" accept="image/*" (change)="onProgressPhotoSelected($event, 'side')" class="hidden" />
+          </div>
+
+          <!-- ESPALDA -->
+          <div class="flex flex-col">
+            <span class="text-[9px] font-black uppercase text-stone-500 tracking-wider mb-1 text-center">Espalda</span>
+            <div (click)="backInput.click()"
+              class="aspect-[3/4] rounded-2xl border-2 border-dashed border-stone-300 hover:border-awakin-sun bg-stone-50 hover:bg-awakin-sun/5 flex flex-col items-center justify-center p-1.5 cursor-pointer transition-all relative overflow-hidden group select-none">
+              @if (photoBackPreview()) {
+              <img loading="lazy" decoding="async" [src]="photoBackPreview()" alt="Preview Espalda"
+                class="w-full h-full object-cover rounded-xl" />
+              <button type="button" (click)="$event.stopPropagation(); removeProgressPhoto('back')"
+                class="absolute top-1.5 right-1.5 w-6 h-6 rounded-full bg-stone-900/75 hover:bg-rose-600 text-white flex items-center justify-center text-[10px] transition-all cursor-pointer shadow-md">
+                <i class="pi pi-times"></i>
+              </button>
+              <div
+                class="absolute bottom-1.5 bg-emerald-600/95 text-white text-[8px] font-black px-2 py-0.5 rounded-full shadow-xs">
+                Listo ✓
+              </div>
+              } @else {
+              <i class="pi pi-camera text-xl text-stone-400 mb-1 group-hover:scale-110 group-hover:text-awakin-sun transition-all"></i>
+              <span class="text-[10px] font-bold text-stone-500 group-hover:text-awakin-sun">Subir</span>
+              }
+            </div>
+            <input #backInput type="file" accept="image/*" (change)="onProgressPhotoSelected($event, 'back')" class="hidden" />
+          </div>
+        </div>
       </div>
 
-      <div>
-        <label class="block text-[9px] font-black uppercase tracking-wider text-stone-500 mb-1 text-center">
-          PECHO (CM)
-        </label>
-        <input type="number" step="0.5" [ngModel]="progressChest()" (ngModelChange)="progressChest.set($event)"
-          placeholder="-- cm"
-          class="w-full bg-[#0d1422] border border-slate-700/80 rounded-xl text-xs px-2.5 py-2.5 text-white text-center font-bold placeholder:text-slate-600 focus:outline-none focus:border-emerald-500" />
+      <!-- MENSAJES DE ESTADO / ERROR -->
+      @if (savingStepText()) {
+      <div class="text-[11px] font-bold text-awakin-sun flex items-center gap-2 justify-center py-1">
+        <i class="pi pi-spin pi-spinner text-xs"></i>
+        <span>{{ savingStepText() }}</span>
       </div>
-    </div>
+      }
 
-    <!-- MEDIDAS AVANZADAS COLAPSABLES -->
-    <div>
-      <button type="button" (click)="toggleAdvancedMetrics()"
-        class="text-[10px] font-bold text-emerald-400 hover:text-emerald-300 transition-colors flex items-center gap-1 cursor-pointer">
-        <i class="pi" [ngClass]="showAdvancedMetrics() ? 'pi-chevron-down' : 'pi-chevron-right'"></i>
-        <span>{{ showAdvancedMetrics() ? 'Ocultar medidas adicionales' : '+ Medidas adicionales (Cuello, Bíceps, %
-          Grasa...)' }}</span>
-      </button>
-
-      @if (showAdvancedMetrics()) {
-      <div class="grid grid-cols-2 gap-2 mt-2 pt-2 border-t border-slate-800 animate-fade-in">
-        <div>
-          <label class="block text-[8px] font-bold uppercase text-stone-500 mb-1">Cuello (cm)</label>
-          <input type="number" step="0.5" [ngModel]="progressNeck()" (ngModelChange)="progressNeck.set($event)"
-            class="w-full bg-[#0d1422] border border-slate-700/80 rounded-xl text-xs px-2.5 py-2 text-white font-bold" />
-        </div>
-        <div>
-          <label class="block text-[8px] font-bold uppercase text-stone-500 mb-1">Bíceps (cm)</label>
-          <input type="number" step="0.5" [ngModel]="progressBiceps()" (ngModelChange)="progressBiceps.set($event)"
-            class="w-full bg-[#0d1422] border border-slate-700/80 rounded-xl text-xs px-2.5 py-2 text-white font-bold" />
-        </div>
-        <div>
-          <label class="block text-[8px] font-bold uppercase text-stone-500 mb-1">Muslo (cm)</label>
-          <input type="number" step="0.5" [ngModel]="progressThigh()" (ngModelChange)="progressThigh.set($event)"
-            class="w-full bg-[#0d1422] border border-slate-700/80 rounded-xl text-xs px-2.5 py-2 text-white font-bold" />
-        </div>
-        <div>
-          <label class="block text-[8px] font-bold uppercase text-stone-500 mb-1">% Grasa Corporal</label>
-          <input type="number" step="0.1" [ngModel]="progressBodyFat()" (ngModelChange)="progressBodyFat.set($event)"
-            class="w-full bg-[#0d1422] border border-slate-700/80 rounded-xl text-xs px-2.5 py-2 text-white font-bold" />
-        </div>
+      @if (saveProgressError()) {
+      <div class="p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-semibold flex items-center gap-2">
+        <i class="pi pi-exclamation-triangle shrink-0"></i>
+        <span>{{ saveProgressError() }}</span>
       </div>
       }
     </div>
 
-    <!-- FOTOS (OPCIONAL PERO RECOMENDADO) - MATCHING SCREENSHOT 2 -->
-    <div>
-      <label class="block text-[10px] font-black uppercase tracking-wider text-stone-500 mb-2">
-        FOTOS (OPCIONAL PERO RECOMENDADO)
-      </label>
-
-      <div class="grid grid-cols-3 gap-2">
-        <!-- FRONTAL -->
-        <div class="flex flex-col">
-          <span class="text-[9px] font-black uppercase text-stone-500 tracking-wider mb-1 text-center">FRONTAL</span>
-          <div (click)="frontInput.click()"
-            class="aspect-[3/4] rounded-2xl border-2 border-dashed border-slate-600 hover:border-emerald-500 bg-[#f8fafc] text-slate-700 hover:bg-emerald-50/20 flex flex-col items-center justify-center p-2 cursor-pointer transition-all relative overflow-hidden group select-none shadow-sm">
-            @if (photoFrontPreview()) {
-            <img loading="lazy" decoding="async" [src]="photoFrontPreview()" alt="Preview Frontal"
-              class="w-full h-full object-cover rounded-xl" />
-            <button type="button" (click)="$event.stopPropagation(); removeProgressPhoto('front')"
-              class="absolute top-1.5 right-1.5 w-6 h-6 rounded-full bg-black/75 hover:bg-rose-600 text-white flex items-center justify-center text-[10px] transition-all cursor-pointer shadow-md">
-              <i class="pi pi-times"></i>
-            </button>
-            <div
-              class="absolute bottom-1 bg-emerald-600/90 text-white text-[8px] font-black px-1.5 py-0.5 rounded-full">
-              Listo ✓
-            </div>
-            } @else {
-            <i
-              class="pi pi-camera text-2xl text-stone-500 mb-1 group-hover:scale-110 group-hover:text-emerald-500 transition-all"></i>
-            <span class="text-[10px] font-bold text-slate-500 group-hover:text-emerald-600">Tocar</span>
-            }
-          </div>
-          <input #frontInput type="file" accept="image/*" (change)="onProgressPhotoSelected($event, 'front')"
-            class="hidden" />
-        </div>
-
-        <!-- LATERAL -->
-        <div class="flex flex-col">
-          <span class="text-[9px] font-black uppercase text-stone-500 tracking-wider mb-1 text-center">LATERAL</span>
-          <div (click)="sideInput.click()"
-            class="aspect-[3/4] rounded-2xl border-2 border-dashed border-slate-600 hover:border-emerald-500 bg-[#f8fafc] text-slate-700 hover:bg-emerald-50/20 flex flex-col items-center justify-center p-2 cursor-pointer transition-all relative overflow-hidden group select-none shadow-sm">
-            @if (photoSidePreview()) {
-            <img loading="lazy" decoding="async" [src]="photoSidePreview()" alt="Preview Lateral"
-              class="w-full h-full object-cover rounded-xl" />
-            <button type="button" (click)="$event.stopPropagation(); removeProgressPhoto('side')"
-              class="absolute top-1.5 right-1.5 w-6 h-6 rounded-full bg-black/75 hover:bg-rose-600 text-white flex items-center justify-center text-[10px] transition-all cursor-pointer shadow-md">
-              <i class="pi pi-times"></i>
-            </button>
-            <div
-              class="absolute bottom-1 bg-emerald-600/90 text-white text-[8px] font-black px-1.5 py-0.5 rounded-full">
-              Listo ✓
-            </div>
-            } @else {
-            <i
-              class="pi pi-camera text-2xl text-stone-500 mb-1 group-hover:scale-110 group-hover:text-emerald-500 transition-all"></i>
-            <span class="text-[10px] font-bold text-slate-500 group-hover:text-emerald-600">Tocar</span>
-            }
-          </div>
-          <input #sideInput type="file" accept="image/*" (change)="onProgressPhotoSelected($event, 'side')"
-            class="hidden" />
-        </div>
-
-        <!-- ESPALDA -->
-        <div class="flex flex-col">
-          <span class="text-[9px] font-black uppercase text-stone-500 tracking-wider mb-1 text-center">ESPALDA</span>
-          <div (click)="backInput.click()"
-            class="aspect-[3/4] rounded-2xl border-2 border-dashed border-slate-600 hover:border-emerald-500 bg-[#f8fafc] text-slate-700 hover:bg-emerald-50/20 flex flex-col items-center justify-center p-2 cursor-pointer transition-all relative overflow-hidden group select-none shadow-sm">
-            @if (photoBackPreview()) {
-            <img loading="lazy" decoding="async" [src]="photoBackPreview()" alt="Preview Espalda"
-              class="w-full h-full object-cover rounded-xl" />
-            <button type="button" (click)="$event.stopPropagation(); removeProgressPhoto('back')"
-              class="absolute top-1.5 right-1.5 w-6 h-6 rounded-full bg-black/75 hover:bg-rose-600 text-white flex items-center justify-center text-[10px] transition-all cursor-pointer shadow-md">
-              <i class="pi pi-times"></i>
-            </button>
-            <div
-              class="absolute bottom-1 bg-emerald-600/90 text-white text-[8px] font-black px-1.5 py-0.5 rounded-full">
-              Listo ✓
-            </div>
-            } @else {
-            <i
-              class="pi pi-camera text-2xl text-stone-500 mb-1 group-hover:scale-110 group-hover:text-emerald-500 transition-all"></i>
-            <span class="text-[10px] font-bold text-slate-500 group-hover:text-emerald-600">Tocar</span>
-            }
-          </div>
-          <input #backInput type="file" accept="image/*" (change)="onProgressPhotoSelected($event, 'back')"
-            class="hidden" />
-        </div>
-      </div>
-    </div>
-
-    <!-- MENSAJES DE ESTADO / ERROR -->
-    @if (savingStepText()) {
-    <div class="text-[10px] font-semibold text-emerald-400 flex items-center gap-1.5 justify-center py-1">
-      <i class="pi pi-spin pi-spinner text-xs"></i>
-      <span>{{ savingStepText() }}</span>
-    </div>
-    }
-
-    @if (saveProgressError()) {
-    <div class="p-2.5 rounded-xl bg-rose-950/60 border border-rose-800/60 text-rose-300 text-[11px] font-semibold">
-      <i class="pi pi-exclamation-triangle mr-1"></i>{{ saveProgressError() }}
-    </div>
-    }
-
-    <!-- BOTÓN GUARDAR PROGRESO (MATCHING SCREENSHOT 2) -->
-    <div class="pt-2">
+    <!-- FOOTER CON BOTÓN GUARDAR -->
+    <div class="px-5 py-3.5 border-t border-stone-100 bg-stone-50/80 flex items-center gap-2 shrink-0">
+      <button type="button" (click)="closeNewProgressModal()" [disabled]="isSavingProgress()"
+        class="px-4 py-3 rounded-2xl bg-white hover:bg-stone-100 border border-stone-200 text-stone-600 font-bold text-xs transition-all cursor-pointer disabled:opacity-50">
+        Cancelar
+      </button>
       <button type="button" (click)="saveProgress()" [disabled]="isSavingProgress()"
-        class="w-full py-3.5 px-4 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white font-black text-sm rounded-2xl flex items-center justify-center gap-2 shadow-lg shadow-emerald-600/30 active:scale-98 transition-all cursor-pointer">
+        class="flex-1 py-3 px-4 bg-awakin-sun hover:bg-awakin-sun-dim disabled:opacity-50 text-white font-black text-xs uppercase tracking-wider rounded-2xl flex items-center justify-center gap-2 shadow-lg shadow-awakin-sun/25 active:scale-98 transition-all cursor-pointer">
         @if (isSavingProgress()) {
-        <i class="pi pi-spin pi-spinner"></i>
+        <i class="pi pi-spin pi-spinner text-xs"></i>
         <span>Guardando...</span>
         } @else if (saveProgressSuccess()) {
-        <i class="pi pi-check"></i>
-        <span>¡Guardado Exitosamente!</span>
+        <i class="pi pi-check text-xs"></i>
+        <span>¡Guardado!</span>
         } @else {
-        <i class="pi pi-save text-base"></i>
+        <i class="pi pi-save text-xs"></i>
         <span>Guardar Progreso</span>
         }
       </button>
