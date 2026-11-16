@@ -123,6 +123,30 @@ export interface AthleteRecordsResponse {
   posts?: AthleteFeedPost[];
 }
 
+export interface MealMacroDistribution {
+  id: string;
+  protocol_id: string;
+  meal_type: 'DESAYUNO' | 'MERIENDA_AM' | 'ALMUERZO' | 'MERIENDA_PM' | 'CENA';
+  protein_pct: number;
+  carbs_pct: number;
+  fats_pct: number;
+  sort_order: number;
+}
+
+export interface AthleteNutritionProtocol {
+  id: string;
+  athlete_id: string;
+  protocol: 'DEFICIT' | 'MAINTENANCE' | 'SURPLUS' | 'RECOMPOSITION';
+  goal_kcal: number;
+  protein_target_g?: number | null;
+  carbs_target_g?: number | null;
+  fats_target_g?: number | null;
+  is_active: boolean;
+  created_at?: string;
+  updated_at?: string;
+  athlete_meal_macro_distributions?: MealMacroDistribution[];
+}
+
 export interface AthleteProfileUpdate {
   first_name?: string;
   last_name?: string;
@@ -144,6 +168,7 @@ export class AthleteService {
   public availableAthletes = signal<AthleteProfile[]>([]);
   public currentRecords = signal<AthleteRecordsResponse | null>(null);
   public currentPosts = signal<AthleteFeedPost[]>([]);
+  public currentNutritionProtocol = signal<AthleteNutritionProtocol | null>(null);
   public isLoading = signal<boolean>(false);
 
   // Nivel de actividad del atleta (solo lectura desde Supabase)
@@ -350,6 +375,41 @@ export class AthleteService {
     }
     this.loadAthleteRecords(athlete.id);
     this.loadAthletePosts(athlete.id);
+    this.loadNutritionProtocol(athlete.id);
+  }
+
+  /**
+   * Carga el protocolo nutricional activo y su distribución de macros por comida desde Supabase
+   */
+  public async loadNutritionProtocol(athleteId: string): Promise<void> {
+    if (!athleteId) return;
+    try {
+      const { data, error } = await this.supabase
+        .from('athlete_nutrition_protocols')
+        .select('*, athlete_meal_macro_distributions(*)')
+        .eq('athlete_id', athleteId)
+        .eq('is_active', true)
+        .maybeSingle();
+
+      if (error) {
+        console.warn('No se pudo cargar protocolo nutricional activo:', error.message);
+        return;
+      }
+
+      if (data) {
+        const distributions = Array.isArray(data.athlete_meal_macro_distributions)
+          ? [...data.athlete_meal_macro_distributions].sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0))
+          : [];
+        this.currentNutritionProtocol.set({
+          ...data,
+          athlete_meal_macro_distributions: distributions
+        } as AthleteNutritionProtocol);
+      } else {
+        this.currentNutritionProtocol.set(null);
+      }
+    } catch (e) {
+      console.warn('Error consultando protocolo nutricional:', e);
+    }
   }
 
   /**

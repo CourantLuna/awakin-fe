@@ -1,4 +1,4 @@
-import { Component, inject, OnInit, signal, computed } from '@angular/core';
+import { Component, inject, OnInit, signal, computed, effect, untracked } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { firstValueFrom } from 'rxjs';
@@ -12,6 +12,7 @@ import {
   NutritionMealRecord,
   ProgressMetricRecord
 } from '../../core/services/athlete.service';
+import { WorkoutSupabaseService } from '../workout/services/workout-supabase.service';
 import { ChartImageExportService } from './services/chart-image-export.service';
 
 export type ProfileFeedTab = 'posts' | 'meals' | 'workouts' | 'progress';
@@ -26,13 +27,29 @@ export type ProfileFeedTab = 'posts' | 'meals' | 'workouts' | 'progress';
 export class ProfileAvatarComponent implements OnInit {
   public authService = inject(AuthService);
   public athleteService = inject(AthleteService);
+  public workoutService = inject(WorkoutSupabaseService);
 
   // Estado del perfil del atleta activo (conectado a la BD Supabase)
   athlete = this.athleteService.currentAthlete;
   athletesList = this.athleteService.availableAthletes;
   records = this.athleteService.currentRecords;
   posts = this.athleteService.currentPosts;
+  workoutLogs = this.workoutService.workoutLogs;
   isLoading = this.athleteService.isLoading;
+
+  private lastLoadedWorkoutAthleteId: string | null = null;
+
+  constructor() {
+    effect(() => {
+      const id = this.athlete()?.id;
+      if (id && id !== this.lastLoadedWorkoutAthleteId) {
+        this.lastLoadedWorkoutAthleteId = id;
+        untracked(() => {
+          this.workoutService.loadWorkoutLogs(id);
+        });
+      }
+    });
+  }
 
   // Control de las pestañas del feed (posts, comidas, workouts)
   activeTab = signal<ProfileFeedTab>('posts');
@@ -429,6 +446,16 @@ export class ProfileAvatarComponent implements OnInit {
       return;
     }
     this.activeTab.set(tab);
+  }
+
+  formatMuscleBreakdown(setsByMuscle: Record<string, number> | null | undefined): { muscle: string; sets: number }[] {
+    if (!setsByMuscle) return [];
+    return Object.entries(setsByMuscle).map(([muscle, sets]) => ({ muscle, sets }));
+  }
+
+  countCompletedSets(sets: { is_completed?: boolean }[] | undefined): number {
+    if (!sets) return 0;
+    return sets.filter((s) => s.is_completed !== false).length;
   }
 
   // ==========================================

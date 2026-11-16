@@ -299,6 +299,12 @@
           class="w-7 h-7 object-contain transition-all duration-200"
           [ngClass]="activeTab() === 'workouts' ? 'scale-110 drop-shadow-xs' : 'opacity-50 hover:opacity-80'"
           alt="Workouts" />
+        @if (workoutLogs().length > 0) {
+        <span
+          class="absolute -top-1 -right-2.5 min-w-[16px] h-4 px-1 rounded-full bg-amber-50 border border-amber-300 text-amber-800 text-[8px] font-black flex items-center justify-center shadow-xs">
+          {{ workoutLogs().length }}
+        </span>
+        }
       </div>
     </button>
 
@@ -420,26 +426,101 @@
   }
 
   <!-- ========================================== -->
-  <!-- CONTENIDO TAB 3: WORKOUTS (EN CONSTRUCCIÓN) -->
+  <!-- CONTENIDO TAB 3: WORKOUTS REGISTRADOS      -->
   <!-- ========================================== -->
   @if (activeTab() === 'workouts') {
-  <div class="py-20 text-center px-4 animate-fade-in">
-    <div
-      class="w-16 h-16 mx-auto rounded-3xl bg-stone-100 border border-stone-200 flex items-center justify-center text-amber-500 mb-3 shadow-xs">
-      <i class="pi pi-bolt text-2xl"></i>
+  <div class="mt-2 px-3 md:px-5 pb-6 space-y-3 animate-fade-in">
+    @if (workoutLogs().length > 0) {
+      @for (log of workoutLogs(); track log.id) {
+      <div class="bg-white border border-stone-200/90 rounded-3xl p-4 shadow-xs space-y-3">
+        <!-- Cabecera del entrenamiento -->
+        <div class="flex items-start justify-between gap-3">
+          <div class="min-w-0 flex-1">
+            <div class="flex items-center gap-2 flex-wrap">
+              <span class="px-2 py-0.5 rounded-full bg-awakin-sun/15 text-amber-900 text-[9px] font-black uppercase tracking-wider">
+                {{ log.workout_date | date:'d MMM yyyy' }}
+              </span>
+              <span class="text-[11px] font-bold text-stone-500 inline-flex items-center gap-1">
+                <i class="pi pi-clock text-[10px] text-awakin-sun"></i> {{ log.duration_minutes }} min
+              </span>
+              @if (log.location) {
+              <span class="text-[11px] font-semibold text-stone-400 inline-flex items-center gap-1 truncate">
+                <i class="pi pi-map-marker text-[10px]"></i> {{ log.location }}
+              </span>
+              }
+            </div>
+            <h4 class="text-sm font-black text-stone-900 uppercase tracking-tight mt-1.5 truncate">
+              {{ log.routine_name }}
+            </h4>
+          </div>
+
+          @if (log.photo_url) {
+          <button type="button" (click)="openLightbox(log.photo_url, log.routine_name, log.workout_date)"
+            class="w-14 h-14 rounded-2xl overflow-hidden border border-stone-200 shrink-0 cursor-pointer group relative">
+            <img loading="lazy" decoding="async" [src]="log.photo_url" [alt]="log.routine_name"
+              class="w-full h-full object-cover group-hover:scale-105 transition-transform" />
+          </button>
+          }
+        </div>
+
+        <!-- KPIs de volumen y series -->
+        <div class="grid grid-cols-2 gap-2">
+          <div class="bg-stone-50 border border-stone-200/70 rounded-2xl px-3 py-2 flex items-center justify-between">
+            <span class="text-[10px] font-black uppercase text-stone-400">Volumen</span>
+            <span class="text-xs font-black text-emerald-600">
+              {{ log.total_volume | number:'1.0-0' }} {{ log.volume_unit }}
+            </span>
+          </div>
+          <div class="bg-stone-50 border border-stone-200/70 rounded-2xl px-3 py-2 flex items-center justify-between">
+            <span class="text-[10px] font-black uppercase text-stone-400">Series Totales</span>
+            <span class="text-xs font-black text-awakin-sun">{{ log.total_sets }}</span>
+          </div>
+        </div>
+
+        <!-- Desglose por músculo -->
+        @if (formatMuscleBreakdown(log.sets_by_muscle).length > 0) {
+        <div class="flex items-center gap-1.5 flex-wrap">
+          @for (m of formatMuscleBreakdown(log.sets_by_muscle); track m.muscle) {
+          <span class="px-2.5 py-0.5 rounded-full bg-stone-100 border border-stone-200 text-[10px] font-bold text-stone-700 capitalize">
+            {{ m.muscle }}: <strong class="text-stone-900">{{ m.sets }}</strong>
+          </span>
+          }
+        </div>
+        }
+
+        <!-- Resumen de ejercicios -->
+        @if (log.exercises && log.exercises.length > 0) {
+        <div class="pt-2 border-t border-stone-100 space-y-1">
+          @for (ex of log.exercises; track ex.id || $index) {
+          <div class="flex items-center justify-between text-[11px]">
+            <span class="font-bold text-stone-700 truncate pr-2">{{ ex.exercise_name }}</span>
+            <span class="text-stone-400 font-bold shrink-0">{{ countCompletedSets(ex.sets) }} series</span>
+          </div>
+          }
+        </div>
+        }
+
+        @if (log.notes) {
+        <p class="text-[11px] text-stone-500 bg-stone-50 px-3 py-2 rounded-xl border border-stone-100">
+          {{ log.notes }}
+        </p>
+        }
+      </div>
+      }
+    } @else {
+    <div class="py-16 text-center px-4">
+      <div
+        class="w-16 h-16 mx-auto rounded-3xl bg-stone-100 border border-stone-200 flex items-center justify-center text-amber-500 mb-3 shadow-xs">
+        <i class="pi pi-bolt text-2xl"></i>
+      </div>
+      <h3 class="text-xs font-black text-stone-900 uppercase tracking-wider mb-1">
+        Sin Entrenamientos Registrados
+      </h3>
+      <p class="text-[11px] text-stone-500 max-w-xs mx-auto leading-relaxed">
+        Completa y guarda tu primera sesión en el módulo <span class="font-bold text-stone-700">Workout</span> para ver aquí tu historial, volumen y series por músculo.
+      </p>
     </div>
-    <h3 class="text-xs font-black text-stone-900 uppercase tracking-wider mb-1">
-      Workouts Registrados
-    </h3>
-    <p class="text-[11px] text-stone-500 max-w-xs mx-auto leading-relaxed mb-3">
-      El registro y análisis de sesiones de entrenamiento se encuentra en construcción. Pronto podrás ver aquí tus
-      rutinas, series y cargas levantadas.
-    </p>
-    <div
-      class="inline-flex items-center gap-1.5 px-3 py-1 bg-amber-500/10 border border-amber-500/30 rounded-full text-amber-800 text-[10px] font-bold">
-      <i class="pi pi-clock text-[10px]"></i>
-      <span>En Construcción</span>
-    </div>
+    }
   </div>
   }
 

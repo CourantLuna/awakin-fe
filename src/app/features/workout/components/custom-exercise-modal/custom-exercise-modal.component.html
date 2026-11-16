@@ -1,0 +1,136 @@
+<p-dialog [(visible)]="isOpen" [modal]="true" [draggable]="false" [resizable]="false" [closable]="false"
+  [showHeader]="false" [dismissableMask]="true" appendTo="body"
+  [style]="{ width: '95vw', maxWidth: '540px', borderRadius: '24px' }"
+  styleClass="overflow-hidden shadow-2xl border border-stone-200 [&_.p-dialog-content]:!p-0">
+
+  <div class="bg-white flex flex-col max-h-[90vh]">
+    <!-- HEADER -->
+    <div class="px-5 py-4 border-b border-stone-100 bg-stone-50/80 flex items-center justify-between shrink-0">
+      <div class="flex items-center gap-3">
+        <div class="w-9 h-9 rounded-2xl bg-awakin-sun/15 border border-awakin-sun/25 flex items-center justify-center text-awakin-sun shrink-0">
+          <i class="pi pi-user-plus text-base"></i>
+        </div>
+        <div>
+          <h3 class="text-base font-black text-stone-900 tracking-tight">Ejercicio Personalizado</h3>
+          <p class="text-[11px] text-stone-500 font-medium">Selecciona músculo objetivo y secundarios en el mapa</p>
+        </div>
+      </div>
+      <button type="button" (click)="resetAndClose()"
+        class="w-8 h-8 rounded-full bg-stone-100 hover:bg-stone-200 text-stone-600 flex items-center justify-center transition-all cursor-pointer">
+        <i class="pi pi-times text-xs"></i>
+      </button>
+    </div>
+
+    <!-- BODY -->
+    <div class="p-5 space-y-4 overflow-y-auto flex-1">
+      <!-- Nombre + Equipamiento -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div>
+          <label class="block text-[10px] font-black uppercase tracking-wider text-stone-500 mb-1.5">
+            Nombre del Ejercicio <span class="text-awakin-sun">*</span>
+          </label>
+          <input type="text" [ngModel]="name()" (ngModelChange)="name.set($event)"
+            placeholder="Ej: Press inclinado unilateral"
+            class="w-full h-10 bg-stone-50 focus:bg-white border border-stone-200 focus:border-awakin-sun rounded-xl text-xs px-3 text-stone-900 font-bold outline-hidden" />
+        </div>
+
+        <div>
+          <label class="block text-[10px] font-black uppercase tracking-wider text-stone-500 mb-1.5">
+            Equipamiento
+          </label>
+          <select [ngModel]="equipment()" (ngModelChange)="equipment.set($event)"
+            class="w-full h-10 bg-stone-50 focus:bg-white border border-stone-200 focus:border-awakin-sun rounded-xl text-xs px-3 text-stone-900 font-bold outline-hidden cursor-pointer">
+            @for (eq of equipmentOptions; track eq.value) {
+            <option [value]="eq.value">{{ eq.label }}</option>
+            }
+          </select>
+        </div>
+      </div>
+
+      <!-- Selector de Modo en BodyMap: Target vs Secundarios -->
+      <div class="bg-stone-50 border border-stone-200/80 rounded-2xl p-3 space-y-3">
+        <div class="flex items-center justify-between gap-2 flex-wrap">
+          <div class="inline-flex p-1 bg-white rounded-xl border border-stone-200 shadow-2xs">
+            <button type="button" (click)="selectionStep.set('target')"
+              class="px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all cursor-pointer"
+              [ngClass]="selectionStep() === 'target' ? 'bg-awakin-sun text-white shadow-xs' : 'text-stone-500 hover:text-stone-900'">
+              1. Objetivo (Target)
+            </button>
+            <button type="button" (click)="selectionStep.set('secondary')"
+              class="px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all cursor-pointer"
+              [ngClass]="selectionStep() === 'secondary' ? 'bg-stone-900 text-white shadow-xs' : 'text-stone-500 hover:text-stone-900'">
+              2. Secundarios
+            </button>
+          </div>
+
+          <span class="text-[10px] font-semibold text-stone-500">
+            {{ selectionStep() === 'target' ? 'Toca el músculo principal' : 'Toca músculos secundarios' }}
+          </span>
+        </div>
+
+        <!-- Pills de músculos seleccionados -->
+        <div class="flex items-center gap-1.5 flex-wrap">
+          @if (targetMuscle()) {
+          <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-awakin-sun/15 border border-awakin-sun/30 text-amber-900 text-[10px] font-black">
+            <i class="pi pi-bolt text-[9px] text-awakin-sun"></i>
+            Objetivo: {{ targetMuscle() }}
+          </span>
+          } @else {
+          <span class="text-[10px] font-bold text-rose-500">
+            * Selecciona un músculo objetivo en el mapa
+          </span>
+          }
+
+          @for (sec of secondaryMuscles(); track sec) {
+          <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-white border border-stone-200 text-stone-700 text-[10px] font-bold">
+            +{{ sec }}
+            <button type="button" (click)="removeSecondary(sec)" class="text-stone-400 hover:text-rose-600 cursor-pointer">
+              <i class="pi pi-times text-[8px]"></i>
+            </button>
+          </span>
+          }
+        </div>
+
+        <!-- Mapa Anatómico -->
+        <div class="bg-white rounded-2xl border border-stone-200/80 p-2 overflow-hidden">
+          <app-body-map [defaultGender]="'male'" [anatomyMode]="'advanced'" (muscleSelected)="onMuscleClicked($event)"></app-body-map>
+        </div>
+      </div>
+
+      <!-- Descanso y Notas -->
+      <div class="grid grid-cols-3 gap-3">
+        <div>
+          <label class="block text-[10px] font-black uppercase tracking-wider text-stone-500 mb-1.5">
+            Descanso (seg)
+          </label>
+          <input type="number" step="15" min="15" [ngModel]="restSeconds()" (ngModelChange)="restSeconds.set($event)"
+            class="w-full h-10 bg-stone-50 focus:bg-white border border-stone-200 focus:border-awakin-sun rounded-xl text-xs px-3 text-stone-900 font-bold outline-hidden" />
+        </div>
+        <div class="col-span-2">
+          <label class="block text-[10px] font-black uppercase tracking-wider text-stone-500 mb-1.5">
+            Notas (opcional)
+          </label>
+          <input type="text" [ngModel]="notes()" (ngModelChange)="notes.set($event)"
+            placeholder="Ej: Tempo controlado 3-1-1"
+            class="w-full h-10 bg-stone-50 focus:bg-white border border-stone-200 focus:border-awakin-sun rounded-xl text-xs px-3 text-stone-900 font-bold outline-hidden" />
+        </div>
+      </div>
+    </div>
+
+    <!-- FOOTER -->
+    <div class="px-5 py-3.5 border-t border-stone-100 bg-stone-50/80 flex items-center gap-2 shrink-0">
+      <button type="button" (click)="resetAndClose()"
+        class="px-4 py-3 rounded-2xl bg-white hover:bg-stone-100 border border-stone-200 text-stone-600 font-bold text-xs transition-all cursor-pointer">
+        Cancelar
+      </button>
+      <button type="button" (click)="save()" [disabled]="!canSave()"
+        class="flex-1 py-3 px-4 rounded-2xl font-black text-xs uppercase tracking-wider transition-all flex items-center justify-center gap-2"
+        [ngClass]="canSave()
+          ? 'bg-awakin-sun hover:bg-awakin-sun-dim text-white shadow-lg shadow-awakin-sun/25 active:scale-98 cursor-pointer'
+          : 'bg-stone-200 text-stone-400 cursor-not-allowed'">
+        <i class="pi pi-check text-xs"></i>
+        <span>Agregar Ejercicio</span>
+      </button>
+    </div>
+  </div>
+</p-dialog>

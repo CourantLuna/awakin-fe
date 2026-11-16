@@ -70,7 +70,7 @@ export class ChartImageExportService {
 
     // Cargar logos en paralelo
     const [awakinLogo, kinLogo, userAvatar] = await Promise.all([
-      this.safeLoadImage('/icons/icon-192x192.png'),
+      this.safeLoadImage('/icons/awakin-isotipo.png'),
       data.kinLogoUrl ? this.safeLoadImage(data.kinLogoUrl) : Promise.resolve(null),
       data.userImageUrl ? this.safeLoadImage(data.userImageUrl) : Promise.resolve(null)
     ]);
@@ -118,20 +118,10 @@ export class ChartImageExportService {
     const logoSize = 84;
     const logoX = 60;
 
-    // Logo de Awakin (izquierda)
+    // Logo de Awakin (PNG sin fondo y sin recortes)
     ctx.save();
-    this.roundRect(ctx, logoX, startY, logoSize, logoSize, 22);
-    ctx.fillStyle = '#FFFFFF';
-    ctx.fill();
-    ctx.strokeStyle = this.BORDER_COLOR;
-    ctx.lineWidth = 2;
-    ctx.stroke();
-
     if (awakinLogo) {
-      ctx.beginPath();
-      this.roundRect(ctx, logoX + 4, startY + 4, logoSize - 8, logoSize - 8, 18);
-      ctx.clip();
-      this.drawImageCover(ctx, awakinLogo, logoX + 4, startY + 4, logoSize - 8, logoSize - 8);
+      this.drawImageContain(ctx, awakinLogo, logoX, startY, logoSize, logoSize);
     } else {
       ctx.fillStyle = this.AWAKIN_SUN;
       ctx.font = `900 34px ${this.FONT}`;
@@ -141,28 +131,14 @@ export class ChartImageExportService {
     }
     ctx.restore();
 
-    // Logo del Kin superpuesto (solo si pertenece a uno)
+    // Logo del Kin superpuesto (PNG sin fondo y sin recortes, solo si pertenece a uno)
     if (kinLogo) {
-      const badgeSize = 48;
-      const badgeX = logoX + logoSize - badgeSize / 2 + 6;
-      const badgeY = startY + logoSize - badgeSize / 2 + 4;
-      const centerX = badgeX + badgeSize / 2;
-      const centerY = badgeY + badgeSize / 2;
+      const badgeSize = 52;
+      const badgeX = logoX + logoSize - badgeSize / 2 + 4;
+      const badgeY = startY + logoSize - badgeSize / 2 + 2;
 
       ctx.save();
-      // Anillo blanco exterior para separación limpia
-      ctx.beginPath();
-      ctx.arc(centerX, centerY, badgeSize / 2 + 4, 0, Math.PI * 2);
-      ctx.fillStyle = '#FFFFFF';
-      ctx.fill();
-      ctx.strokeStyle = this.AWAKIN_SUN;
-      ctx.lineWidth = 2.5;
-      ctx.stroke();
-
-      ctx.beginPath();
-      ctx.arc(centerX, centerY, badgeSize / 2, 0, Math.PI * 2);
-      ctx.clip();
-      this.drawImageCover(ctx, kinLogo, badgeX, badgeY, badgeSize, badgeSize);
+      this.drawImageContain(ctx, kinLogo, badgeX, badgeY, badgeSize, badgeSize);
       ctx.restore();
     }
 
@@ -836,6 +812,30 @@ export class ChartImageExportService {
     ctx.drawImage(img, sx, sy, sw, sh, x, y, w, h);
   }
 
+  private drawImageContain(
+    ctx: CanvasRenderingContext2D,
+    img: HTMLImageElement,
+    x: number,
+    y: number,
+    w: number,
+    h: number
+  ): void {
+    const imgRatio = img.width / img.height;
+    const boxRatio = w / h;
+    let drawW = w;
+    let drawH = h;
+
+    if (imgRatio > boxRatio) {
+      drawH = w / imgRatio;
+    } else {
+      drawW = h * imgRatio;
+    }
+
+    const dx = x + (w - drawW) / 2;
+    const dy = y + (h - drawH) / 2;
+    ctx.drawImage(img, dx, dy, drawW, drawH);
+  }
+
   private roundRect(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, r: number): void {
     ctx.beginPath();
     ctx.moveTo(x + r, y);
@@ -916,25 +916,16 @@ export class ChartImageExportService {
     ctx.fillStyle = bottomScrim;
     ctx.fillRect(0, this.HEIGHT - 560, this.WIDTH, 560);
 
-    // 4. Overlay Logos Awakin + Kin arriba a la izquierda
+    // 4. Overlay Logos Awakin + Kin arriba a la izquierda (PNG sin fondo y sin recortes)
     const startY = 52;
     const logoSize = 76;
     const logoX = 48;
 
     ctx.save();
-    ctx.shadowColor = 'rgba(0, 0, 0, 0.35)';
-    ctx.shadowBlur = 16;
-    this.roundRect(ctx, logoX, startY, logoSize, logoSize, 20);
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.95)';
-    ctx.fill();
-    ctx.restore();
-
-    ctx.save();
+    ctx.shadowColor = 'rgba(0, 0, 0, 0.45)';
+    ctx.shadowBlur = 12;
     if (awakinLogo) {
-      ctx.beginPath();
-      this.roundRect(ctx, logoX + 3, startY + 3, logoSize - 6, logoSize - 6, 17);
-      ctx.clip();
-      this.drawImageCover(ctx, awakinLogo, logoX + 3, startY + 3, logoSize - 6, logoSize - 6);
+      this.drawImageContain(ctx, awakinLogo, logoX, startY, logoSize, logoSize);
     } else {
       ctx.fillStyle = this.AWAKIN_SUN;
       ctx.font = `900 32px ${this.FONT}`;
@@ -945,25 +936,14 @@ export class ChartImageExportService {
     ctx.restore();
 
     if (kinLogo) {
-      const badgeSize = 44;
-      const badgeX = logoX + logoSize - badgeSize / 2 + 4;
-      const badgeY = startY + logoSize - badgeSize / 2 + 4;
-      const centerX = badgeX + badgeSize / 2;
-      const centerY = badgeY + badgeSize / 2;
+      const badgeSize = 48;
+      const badgeX = logoX + logoSize - badgeSize / 2 + 2;
+      const badgeY = startY + logoSize - badgeSize / 2 + 2;
 
       ctx.save();
-      ctx.beginPath();
-      ctx.arc(centerX, centerY, badgeSize / 2 + 3.5, 0, Math.PI * 2);
-      ctx.fillStyle = '#FFFFFF';
-      ctx.fill();
-      ctx.strokeStyle = this.AWAKIN_SUN;
-      ctx.lineWidth = 2.5;
-      ctx.stroke();
-
-      ctx.beginPath();
-      ctx.arc(centerX, centerY, badgeSize / 2, 0, Math.PI * 2);
-      ctx.clip();
-      this.drawImageCover(ctx, kinLogo, badgeX, badgeY, badgeSize, badgeSize);
+      ctx.shadowColor = 'rgba(0, 0, 0, 0.45)';
+      ctx.shadowBlur = 10;
+      this.drawImageContain(ctx, kinLogo, badgeX, badgeY, badgeSize, badgeSize);
       ctx.restore();
     }
 

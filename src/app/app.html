@@ -1,5 +1,37 @@
 <router-outlet></router-outlet>
 
+@if (isLoggedIn() && activeSession.hasActiveSession() && !activeSession.isDrawerOpen()) {
+  <div (click)="activeSession.reopenDrawer()"
+    class="fixed bottom-24 left-1/2 -translate-x-1/2 z-40 w-[92vw] max-w-md bg-stone-900 hover:bg-stone-800 text-white rounded-2xl px-4 py-3 shadow-2xl border border-stone-700/80 flex items-center justify-between gap-3 cursor-pointer active:scale-[0.99] transition-all">
+    <div class="flex items-center gap-3 min-w-0">
+      <div class="w-9 h-9 rounded-xl bg-awakin-sun/20 border border-awakin-sun/40 flex items-center justify-center shrink-0">
+        <span class="w-2.5 h-2.5 rounded-full bg-awakin-sun animate-pulse"></span>
+      </div>
+      <div class="min-w-0">
+        <div class="text-xs font-black uppercase tracking-tight truncate text-white">
+          {{ activeSession.sessionName() }}
+        </div>
+        <div class="flex items-center gap-2 text-[11px] font-bold text-stone-400 mt-0.5">
+          <span class="text-awakin-sun font-mono">{{ activeSession.formattedElapsed() }}</span>
+          <span>•</span>
+          <span>{{ activeSession.completedSetsCount() }}/{{ activeSession.totalSetsCount() }} series</span>
+          @if (activeSession.restRemaining() > 0) {
+            <span>•</span>
+            <span class="text-emerald-400 font-mono">Descanso {{ activeSession.formattedRest() }}</span>
+          }
+        </div>
+      </div>
+    </div>
+
+    <div class="flex items-center gap-1.5 shrink-0">
+      <span class="px-2.5 py-1 rounded-lg bg-awakin-sun text-white text-[10px] font-black uppercase tracking-wider">
+        Volver
+      </span>
+    </div>
+  </div>
+}
+
 @if (isLoggedIn()) {
   <app-navigation />
+  <app-workout-session-drawer />
 }

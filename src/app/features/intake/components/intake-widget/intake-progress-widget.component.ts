@@ -13,6 +13,7 @@ export class IntakeProgressWidgetComponent {
   minA = input.required<number>();
   goalB = input.required<number>();
   maintC = input.required<number>();
+  protocol = input<string | null>(null);
   showCurves = input<boolean>(true);
   kinData = input<KinInfo | null>(null);
 
@@ -59,13 +60,14 @@ export class IntakeProgressWidgetComponent {
   @ViewChild('trackPath') trackPath!: ElementRef<SVGPathElement>;
 
   maxLimit = computed(() => {
-    const maxlimitProtocol: any = {
+    const maxlimitProtocol: Record<string, number> = {
       DEFICIT: this.maintC() * 1.33,
       SURPLUS: this.goalB() * 1.33,
       MAINTENANCE: this.maintC() * 1.33,
+      RECOMPOSITION: Math.max(this.maintC(), this.goalB()) * 1.33,
     };
 
-    return maxlimitProtocol[this.protocolState()];
+    return maxlimitProtocol[this.protocolState()] ?? this.maintC() * 1.33;
   });
 
   // El porcentaje de llenado del arco
@@ -104,8 +106,12 @@ export class IntakeProgressWidgetComponent {
 
   // Dentro de la clase IntakeProgressWidgetComponent
 
-  // Determina el estado del protocolo basado en el consumo vs objetivo
-  protocolState = computed(() => {
+  // Determina el estado del protocolo desde Supabase (o inferido como fallback)
+  protocolState = computed<'DEFICIT' | 'SURPLUS' | 'MAINTENANCE' | 'RECOMPOSITION'>(() => {
+    const explicit = (this.protocol() || '').toUpperCase().trim();
+    if (explicit === 'DEFICIT' || explicit === 'SURPLUS' || explicit === 'MAINTENANCE' || explicit === 'RECOMPOSITION') {
+      return explicit;
+    }
     const diff = this.goalB() - this.maintC();
     if (diff < -50) return 'DEFICIT';
     if (diff > 50) return 'SURPLUS';
@@ -113,28 +119,31 @@ export class IntakeProgressWidgetComponent {
   });
 
   getProtocolName() {
-    const states: any = {
+    const states: Record<string, string> = {
       DEFICIT: 'Déficit Activo',
       SURPLUS: 'Superávit',
       MAINTENANCE: 'Mantenimiento',
+      RECOMPOSITION: 'Recomposición',
     };
     return states[this.protocolState()];
   }
 
   getProtocolClass() {
-    const states: any = {
+    const states: Record<string, string> = {
       DEFICIT: 'bg-emerald-50 border-emerald-100 text-emerald-700',
       SURPLUS: 'bg-amber-50 border-amber-100 text-amber-700',
       MAINTENANCE: 'bg-stone-50 border-stone-100 text-stone-600',
+      RECOMPOSITION: 'bg-sky-50 border-sky-100 text-sky-700',
     };
     return states[this.protocolState()];
   }
 
   getProtocolColor() {
-    const colors: any = {
+    const colors: Record<string, string> = {
       DEFICIT: '#10b981', // Emerald 500
       SURPLUS: '#f59e0b', // Amber 500
       MAINTENANCE: '#93918B', // Awakin Stone
+      RECOMPOSITION: '#0ea5e9', // Sky 500
     };
     return colors[this.protocolState()];
   }

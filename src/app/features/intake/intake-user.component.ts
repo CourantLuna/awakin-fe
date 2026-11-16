@@ -277,6 +277,9 @@ export class IntakeUserComponent implements OnInit {
           if (!this.athleteService.currentRecords()) {
             this.athleteService.loadAthleteRecords(athleteId);
           }
+          if (!this.athleteService.currentNutritionProtocol()) {
+            this.athleteService.loadNutritionProtocol(athleteId);
+          }
           this.loadDayRecords();
         });
       }
@@ -335,15 +338,19 @@ export class IntakeUserComponent implements OnInit {
     maintenance: 1850,
   };
 
-  // Metas nutricionales independientes del día
-  dailyGoalCalories = signal<number>(2100);
-  dailyGoalProtein = signal<number>(150);
-  dailyGoalCarbs = signal<number>(250);
-  dailyGoalFats = signal<number>(55);
+  // Protocolo nutricional activo del atleta desde Supabase
+  activeNutritionProtocol = this.athleteService.currentNutritionProtocol;
+
+  // Metas nutricionales diarias conectadas al protocolo activo
+  dailyGoalCalories = computed<number>(() => this.activeNutritionProtocol()?.goal_kcal ?? 2100);
+  dailyGoalProtein = computed<number>(() => Math.round(Number(this.activeNutritionProtocol()?.protein_target_g ?? 150)));
+  dailyGoalCarbs = computed<number>(() => Math.round(Number(this.activeNutritionProtocol()?.carbs_target_g ?? 250)));
+  dailyGoalFats = computed<number>(() => Math.round(Number(this.activeNutritionProtocol()?.fats_target_g ?? 55)));
+  currentProtocolType = computed<string | null>(() => this.activeNutritionProtocol()?.protocol ?? null);
 
   // Set Points del protocolo (TBM, Goal, Maint = TDEE)
   minBasal = computed<number>(() => this.athleteService.currentTmb()?.kcal ?? 1450);
-  targetGoal = signal<number>(2100);       // GOAL = 2100 kcal
+  targetGoal = computed<number>(() => this.dailyGoalCalories());
   maintenanceLevel = computed<number>(() => this.athleteService.currentTdee() ?? 1850);
 
   // En intake-user.component.ts
@@ -692,6 +699,10 @@ export class IntakeUserComponent implements OnInit {
 
   selectMealTypeInModal(type: MealType) {
     this.selectedMealType.set(type);
+    if (this.selectedAdherence() === 'FREE') {
+      this.selectedFoodItemsForLog.set([]);
+      return;
+    }
     const unloggedFoods = this.getFoodsForMeal(type).filter((f) => !f.isLogged);
     const foodsToSelect = unloggedFoods.length > 0 ? unloggedFoods : this.getFoodsForMeal(type);
     this.selectedFoodItemsForLog.set(foodsToSelect);
@@ -777,6 +788,23 @@ export class IntakeUserComponent implements OnInit {
 
   onAdherenceChange(adh: '100' | 'ADAPTATION' | 'FREE' | null) {
     this.selectedAdherence.set(adh);
+    if (adh === 'FREE') {
+      // Fuera del plan: no asociar ni obligar a seleccionar platillos del plan
+      this.selectedFoodItemsForLog.set([]);
+      this.targetFoodItem.set(null);
+      this.selectedDishFor100.set(null);
+    } else if (adh === '100' || adh === 'ADAPTATION') {
+      // Al elegir Adaptación o 100% en el plan, mostrar y preseleccionar alimentos del tipo de comida actual
+      const type = this.selectedMealType();
+      if (type && this.selectedFoodItemsForLog().length === 0) {
+        const unloggedFoods = this.getFoodsForMeal(type).filter((f) => !f.isLogged);
+        const foodsToSelect = unloggedFoods.length > 0 ? unloggedFoods : this.getFoodsForMeal(type);
+        this.selectedFoodItemsForLog.set(foodsToSelect);
+        this.targetFoodItem.set(foodsToSelect[0] || null);
+        this.selectedDishFor100.set(foodsToSelect[0] || null);
+        this.syncNotesWithSelectedFoods();
+      }
+    }
   }
 
   selectDishFor100(dish: FoodItem) {
@@ -847,8 +875,23 @@ export class IntakeUserComponent implements OnInit {
       return;
     }
     this.registerError.set(null);
+    const isGeneralFreeRegister = !mealType && !food;
     const chosenType = food ? food.mealType : (mealType || 'LUNCH');
     this.selectedMealType.set(chosenType);
+
+    if (isGeneralFreeRegister) {
+      // Abierto desde "+ REGISTRAR COMIDA" junto a PLAN DE HOY: por defecto Fuera del plan y sin platillos obligatorios
+      this.selectedFoodItemsForLog.set([]);
+      this.targetFoodItem.set(null);
+      this.selectedDishFor100.set(null);
+      this.notesText.set('');
+      this.existingMealPhotoUrl.set(this.getExistingPhotoForMeal(chosenType));
+      this.uploadedPhotoUrl.set(null);
+      this.selectedFile.set(null);
+      this.selectedAdherence.set('FREE');
+      this.isRegisterModalOpen.set(true);
+      return;
+    }
 
     if (food) {
       // Si se hizo click en un alimento específico, seleccionarlo inicialmente
@@ -956,7 +999,7 @@ export class IntakeUserComponent implements OnInit {
       const selectedItems = this.selectedFoodItemsForLog();
       const chosenMealType = this.selectedMealType();
 
-      if (selectedItems.length > 0) {
+      if (this.selectedAdherence() !== 'FREE' && selectedItems.length > 0) {
         // Enfoque A: Registrar cada alimento seleccionado con la misma foto_url
         const savePromises = selectedItems.map(async (food) => {
           const foodId = food.id;

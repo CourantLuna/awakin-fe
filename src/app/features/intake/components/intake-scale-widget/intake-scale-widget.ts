@@ -40,6 +40,7 @@ export class IntakeScaleWidgetComponent {
   });
 
   // --- CONTEXTO DEL SISTEMA ---
+  protocol = input<string | null>(null);
   kinData = input<KinInfo | null>(null);
   // --- CONFIGURACIÓN REACTIVA DEL GRÁFICO (Chart.js) ---
   macroData = computed(() => {

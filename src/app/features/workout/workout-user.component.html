@@ -2,7 +2,7 @@
   <p-toolbar styleClass="bg-transparent border-none p-0 mb-3">
     <ng-template pTemplate="start">
       <button (click)="calendar.onMenuClick.emit()"
-        class="w-10 h-10 flex items-center justify-center text-black active:opacity-40 transition-all">
+        class="w-10 h-10 flex items-center justify-center text-black active:opacity-40 transition-all cursor-pointer">
         <i class="pi pi-ellipsis-h text-xl"></i>
       </button>
     </ng-template>
@@ -10,13 +10,13 @@
     <ng-template pTemplate="center">
       <div class="flex items-center gap-1">
         <button (click)="calendar.navigate(-1)"
-          class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-stone-100 active:scale-90 transition-all text-stone-400 hover:text-black">
+          class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-stone-100 active:scale-90 transition-all text-stone-400 hover:text-black cursor-pointer">
           <i class="pi pi-chevron-left text-xs"></i>
         </button>
 
         <div class="flex items-center rounded-full border border-stone-200 bg-stone-50 shadow-sm transition-all">
           <button (click)="handleTopBtnAction()"
-            class="flex items-center gap-1 pl-5 pe-2 py-2 active:bg-stone-100 transition-colors group border-r border-stone-200">
+            class="flex items-center gap-1 pl-5 pe-2 py-2 active:bg-stone-100 transition-colors group border-r border-stone-200 cursor-pointer">
             <i class="pi pi-calendar text-sm text-awakin-sun group-hover:rotate-12 transition-transform"></i>
             <span class="text-sm font-bold tracking-wide capitalize text-gray-800 min-w-[60px] text-center">
               {{ currentLabel() }}
@@ -25,7 +25,7 @@
 
           @if (calendar) {
           <button (click)="toggleCalendarViewMode()"
-            class="px-4 py-2 hover:bg-stone-100 active:bg-stone-200 transition-colors flex items-center justify-center group">
+            class="px-4 py-2 hover:bg-stone-100 active:bg-stone-200 transition-colors flex items-center justify-center group cursor-pointer">
             <i class="pi pi-chevron-down inline-block transform 0.3s ease-in-out text-[10px] text-stone-400 group-hover:text-awakin-sun transition-all"
               [ngClass]="{ 'rotate-180': calendar.viewMode() === 'month' }"></i>
           </button>
@@ -33,7 +33,7 @@
         </div>
 
         <button (click)="calendar.navigate(1)"
-          class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-stone-100 active:scale-90 transition-all text-stone-400 hover:text-black">
+          class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-stone-100 active:scale-90 transition-all text-stone-400 hover:text-black cursor-pointer">
           <i class="pi pi-chevron-right text-xs"></i>
         </button>
       </div>
@@ -49,70 +49,49 @@
     </ng-template>
   </p-toolbar>
 
-  <app-week-calendar-header #calendar [streak]="streak()" [weekStart]="1" (onLabelChange)="updateLabel($event)">
+  <app-week-calendar-header #calendar [streak]="streak()" [weekStart]="1" (onLabelChange)="updateLabel($event)"
+    (onDateChange)="onDateSelected($event)">
   </app-week-calendar-header>
 
-  <div class="px-5 py-3 flex items-center">
-    <p-select [options]="availableRoutines()" [ngModel]="selectedRoutineId()" (ngModelChange)="onRoutineChange($event)"
-      optionLabel="title" optionValue="id" appendTo="body"
-      styleClass="!border-none !shadow-none !bg-transparent p-0 m-0 focus:!ring-0 [&_.p-select-label]:!p-0 [&_.p-select-dropdown]:!hidden w-full"
-      panelStyleClass="bg-white rounded-xl shadow-2xl border border-stone-100 overflow-hidden text-sm mt-1 z-[100] min-w-[260px]">
-      <ng-template pTemplate="selectedItem" let-selectedOption>
-        <div class="flex items-center gap-2 cursor-pointer group">
-          <h3 class="font-black text-stone-600 uppercase tracking-widest group-hover:text-awakin-sun transition-colors">
-            Rutina Hoy
-          </h3>
-          <i class="pi pi-angle-down text-stone-400 group-hover:text-awakin-sun transition-colors mt-0.5"></i>
 
-          <span class="ml-2 font-medium text-stone-400 truncate border-l border-stone-200 pl-2">
-            {{ selectedOption?.title }}
-          </span>
-        </div>
-      </ng-template>
-
-      <ng-template pTemplate="item" let-routine>
-        <div class="w-full py-1.5">
-          <div class="flex justify-between items-center mb-0.5 gap-4">
-            <span class="text-[11px] font-bold"
-              [ngClass]="selectedRoutineId() === routine.id ? 'text-awakin-sun' : 'text-stone-800'">
-              {{ routine.title }}
-            </span>
-            @if (selectedRoutineId() === routine.id) {
-            <i class="pi pi-check text-awakin-sun text-[10px]"></i>
-            }
-          </div>
-
-          <div class="flex items-center gap-2 mt-1">
-            <span class="text-[9px] text-stone-500 font-medium flex items-center gap-1">
-              <i class="pi pi-clock text-[8px] text-stone-400"></i> {{ routine.duration }} min
-            </span>
-            <span class="w-1 h-1 rounded-full"></span>
-            <span class="text-[9px] text-stone-500 font-medium flex items-center gap-1">
-              <i class="pi pi-list text-[8px] text-stone-400"></i> {{ routine.exercisesCount }} ej.
-            </span>
-          </div>
-        </div>
-      </ng-template>
-    </p-select>
-  </div>
 </div>
 
-<div class="pb-24 pt-6 px-4">
-  <div class="flex justify-between items-center mb-6">
+<div class="pb-24 pt-5 px-4 max-w-4xl mx-auto">
+  <!-- HEADER WORKOUT + BOTÓN HISTORIAL -->
+  <div class="flex justify-between items-center mb-5">
     <div>
       <h1 class="text-2xl font-black text-stone-900 uppercase tracking-widest italic leading-none">
         WORKOUT
       </h1>
-      <p class="text-stone-500 text-xs font-medium mt-1">Día 4 • Semana de Sobrecarga</p>
+      <p class="text-stone-500 text-xs font-medium mt-1">
+        {{ weekDayLabels[selectedDayOfWeek()].name }}
+        @if (activePlan(); as plan) {
+        <span> • {{ plan.name }}</span>
+        }
+      </p>
     </div>
     <div class="flex gap-2">
-      <button
-        class="w-10 h-10 bg-white border border-stone-200 rounded-full flex items-center justify-center text-stone-600 shadow-sm active:scale-95 transition-all">
-        <i class="pi pi-history"></i>
+      <button type="button" (click)="isHistoryDrawerOpen.set(true)"
+        class="h-10 px-3 bg-white border border-stone-200 rounded-full flex items-center justify-center gap-1.5 text-stone-700 hover:border-awakin-sun shadow-xs active:scale-95 transition-all cursor-pointer">
+        <i class="pi pi-history text-sm text-awakin-sun"></i>
+        @if (workoutLogs().length > 0) {
+        <span class="text-xs font-black">{{ workoutLogs().length }}</span>
+        }
       </button>
     </div>
   </div>
 
+  <!-- HERO CARD: RUTINA DEL DÍA / SELECCIONADA -->
+  @if (isLoadingWorkouts()) {
+  <div class="w-full bg-stone-900 rounded-[2rem] p-6 mb-6 min-h-[220px] animate-pulse flex flex-col justify-between">
+    <div class="space-y-3">
+      <div class="h-5 w-28 bg-stone-800 rounded-md"></div>
+      <div class="h-8 w-3/4 bg-stone-800 rounded-xl"></div>
+      <div class="h-4 w-1/2 bg-stone-800 rounded-lg"></div>
+    </div>
+    <div class="h-12 w-full bg-stone-800 rounded-2xl mt-6"></div>
+  </div>
+  } @else if (activeDisplayedRoutine(); as routine) {
   <div
     class="relative w-full bg-stone-900 rounded-[2rem] p-6 mb-6 overflow-hidden shadow-2xl shadow-stone-900/20 flex flex-col justify-between min-h-[220px]">
     <div class="absolute -right-10 -top-10 w-48 h-48 bg-awakin-sun/20 rounded-full blur-3xl pointer-events-none"></div>
@@ -120,58 +99,164 @@
       class="pi pi-bolt absolute right-[-20px] bottom-[-20px] text-[120px] text-white/5 pointer-events-none rotate-12"></i>
 
     <div class="relative z-10">
-      <div class="flex items-center gap-2 mb-3">
+      <div class="flex items-center justify-between gap-2 mb-3 flex-wrap">
+        <div class="flex items-center gap-2 flex-wrap">
+          <span class="bg-awakin-sun text-white text-[9px] font-black uppercase tracking-widest px-2.5 py-1 rounded-md">
+            {{ selectedRoutineOverrideId() ? 'Rutina Seleccionada' : 'Asignado ' + currentLabel() }}
+          </span>
+          <span class="text-stone-400 text-[10px] font-bold uppercase tracking-wider flex items-center gap-1">
+            <i class="pi pi-clock text-[9px]"></i> ~{{ routine.estimated_minutes || 45 }} min
+          </span>
+          <span class="text-stone-400 text-[10px] font-bold uppercase tracking-wider">
+            • {{ routine.exercises.length }} ej. • {{ routine.total_sets || 0 }} series
+          </span>
+        </div>
+
+        @if (logForSelectedDate(); as dayLog) {
         <span
-          class="bg-awakin-sun text-white text-[9px] font-black uppercase tracking-widest px-2 py-1 rounded-md">Asignado
-          Hoy</span>
-        <span class="text-stone-400 text-[10px] font-bold uppercase tracking-wider"><i
-            class="pi pi-clock text-[9px]"></i> {{ todayWorkout().duration }} min</span>
+          class="px-2.5 py-1 rounded-full bg-emerald-500/20 border border-emerald-400/40 text-emerald-300 text-[10px] font-black flex items-center gap-1">
+          <i class="pi pi-check-circle text-[10px]"></i>
+          {{ dayLog.duration_minutes }}m • {{ dayLog.total_volume | number:'1.0-0' }} {{ dayLog.volume_unit }}
+        </span>
+        }
       </div>
 
-      <h2 class="text-3xl font-black text-white uppercase italic leading-tight">
-        {{ todayWorkout().title }}
+      <h2 class="text-2xl sm:text-3xl font-black text-white uppercase italic leading-tight">
+        {{ routine.name }}
       </h2>
-      <p class="text-stone-400 text-xs font-medium mt-1">{{ todayWorkout().subtitle }}</p>
+      @if (routine.description) {
+      <p class="text-stone-400 text-xs font-medium mt-1">{{ routine.description }}</p>
+      }
 
-      <div class="flex flex-wrap gap-1.5 mt-4">
-        @for (focus of todayWorkout().focus; track focus) {
+      <!-- Músculos foco -->
+      @if (routine.focus_muscles && routine.focus_muscles.length > 0) {
+      <div class="flex flex-wrap gap-1.5 mt-3">
+        @for (focus of routine.focus_muscles; track focus) {
         <span
-          class="border border-stone-700 text-stone-300 text-[9px] uppercase tracking-wider px-2 py-0.5 rounded-full font-bold">
+          class="border border-stone-700 text-stone-300 text-[9px] uppercase tracking-wider px-2.5 py-0.5 rounded-full font-bold">
           {{ focus }}
         </span>
         }
       </div>
+      }
+
+      <!-- Preview rápido de ejercicios -->
+      @if (routine.exercises.length > 0) {
+      <div class="mt-4 pt-3 border-t border-stone-800/80 grid grid-cols-1 sm:grid-cols-2 gap-1.5">
+        @for (ex of routine.exercises.slice(0, 4); track ex.id; let i = $index) {
+        <div class="flex items-center gap-2 text-[11px] text-stone-300 truncate">
+          <span class="text-awakin-sun font-black text-[10px]">{{ i + 1 }}.</span>
+          <span class="truncate font-semibold">{{ ex.exercise_name || 'Ejercicio #' + ex.exercise_api_id }}</span>
+          <span class="text-stone-500 text-[10px] shrink-0">({{ ex.sets.length }}s)</span>
+        </div>
+        }
+        @if (routine.exercises.length > 4) {
+        <div class="text-[10px] text-stone-500 font-bold">+{{ routine.exercises.length - 4 }} ejercicios más</div>
+        }
+      </div>
+      }
     </div>
 
-    <div class="mt-6 relative z-10">
-      <p-button (onClick)="startWorkout()"
-        styleClass="!w-full !bg-awakin-sun !border-none !text-white !font-black !text-sm !tracking-widest !py-4 !rounded-2xl shadow-[0_4px_15px_rgba(254,151,10,0.4)] hover:!bg-[#E68800] active:!scale-[0.98] !transition-all !justify-center">
+    <div class="mt-6 relative z-10 flex items-center gap-2">
+      <p-button (onClick)="startWorkout(routine)" class="flex-1"
+        styleClass="!w-full !bg-awakin-sun !border-none !text-white !font-black !text-sm !tracking-widest !py-3.5 !rounded-2xl shadow-[0_4px_15px_rgba(254,151,10,0.4)] hover:!bg-[#E68800] active:!scale-[0.98] !transition-all !justify-center">
         <div class="flex items-center gap-2">
           <i class="pi pi-play-circle text-lg"></i> INICIAR SESIÓN
         </div>
       </p-button>
     </div>
   </div>
+  } @else {
+  <!-- DÍA DE DESCANSO / SIN RUTINA ASIGNADA PARA ESTE DÍA -->
+  <div class="w-full bg-white border border-stone-200 rounded-[2rem] p-6 mb-6 shadow-sm text-center space-y-3">
+    <div
+      class="w-12 h-12 mx-auto rounded-2xl bg-awakin-sun/10 border border-awakin-sun/20 flex items-center justify-center text-awakin-sun">
+      <i class="pi pi-sun text-xl"></i>
+    </div>
+    <div>
+      <span class="text-[10px] font-black uppercase tracking-widest text-awakin-sun">
+        {{ weekDayLabels[selectedDayOfWeek()].name }}
+      </span>
+      <h3 class="text-lg font-black text-stone-900 uppercase tracking-tight mt-0.5">
+        Día de Descanso o Sin Rutina Asignada
+      </h3>
+      <p class="text-xs text-stone-500 max-w-sm mx-auto mt-1">
+        Puedes elegir cualquier rutina de tu plan semanal o iniciar un entrenamiento libre.
+      </p>
+    </div>
 
+    <div class="flex items-center justify-center gap-2 pt-2 flex-wrap">
+      @if (availableRoutines().length > 0) {
+      <button type="button" (click)="isWeeklyPlanDrawerOpen.set(true)"
+        class="px-4 py-2.5 rounded-xl bg-awakin-sun hover:bg-awakin-sun-dim text-white font-black text-xs uppercase tracking-wider shadow-md shadow-awakin-sun/25 cursor-pointer transition-all">
+        Elegir Rutina del Plan
+      </button>
+      }
+      <button type="button" (click)="startFreeWorkout()"
+        class="px-4 py-2.5 rounded-xl bg-stone-100 hover:bg-stone-200 text-stone-800 font-black text-xs uppercase tracking-wider cursor-pointer transition-all">
+        Entreno Libre
+      </button>
+    </div>
+  </div>
+  }
+
+  <!-- PLAN DE ENTRENAMIENTO SEMANAL (ACCESO RÁPIDO A CUALQUIER DÍA) -->
+  @if (activePlan(); as plan) {
+  <div class="bg-white border border-stone-200 rounded-3xl p-4 mb-6 shadow-sm">
+    <div class="flex items-center justify-between mb-3">
+      <div>
+        <h3 class="text-xs font-black text-stone-900 uppercase tracking-widest">
+          Plan Semanal
+        </h3>
+        <p class="text-[10px] text-stone-500 font-medium">
+          {{ plan.name }} ({{ plan.start_date }} ~ {{ plan.end_date }})
+        </p>
+      </div>
+      <button type="button" (click)="isWeeklyPlanDrawerOpen.set(true)"
+        class="text-[10px] font-black text-awakin-sun hover:underline uppercase tracking-wider cursor-pointer">
+        Ver Todo
+      </button>
+    </div>
+
+    <div class="grid grid-cols-7 gap-1.5">
+      @for (dayNum of weekDays; track dayNum) {
+      @let link = weeklyScheduleMap().get(dayNum);
+      @let isSelectedDay = selectedDayOfWeek() === dayNum;
+      @let isSelectedRoutine = link?.routine && selectedRoutineId() === link?.routine?.id;
+      <button type="button" (click)="link?.routine ? selectPlanDayRoutine(dayNum) : null" [disabled]="!link?.routine"
+        class="p-2 rounded-2xl border flex flex-col items-center justify-center gap-1 transition-all" [ngClass]="isSelectedRoutine
+          ? 'bg-awakin-sun text-white border-awakin-sun shadow-sm cursor-pointer'
+          : link?.routine
+            ? (isSelectedDay ? 'bg-amber-50 border-awakin-sun/50 text-stone-900 cursor-pointer' : 'bg-stone-50 hover:bg-stone-100 border-stone-200 text-stone-800 cursor-pointer')
+            : 'bg-stone-50/40 border-stone-100 text-stone-300 cursor-default'">
+        <span class="text-[10px] font-black">{{ weekDayLabels[dayNum].short }}</span>
+        <i class="pi text-[10px]" [ngClass]="link?.routine ? 'pi-bolt' : 'pi-minus'"></i>
+      </button>
+      }
+    </div>
+  </div>
+  }
+
+  <!-- ACCIONES RÁPIDAS -->
   <div class="flex gap-3 overflow-x-auto hide-scrollbar pb-2 mb-6 snap-x">
-    <button
-      class="snap-center shrink-0 w-[140px] bg-white border border-stone-200 p-4 rounded-2xl flex flex-col items-center justify-center gap-2 shadow-sm active:scale-95 transition-all">
+    <button type="button" (click)="startFreeWorkout()"
+      class="snap-center shrink-0 w-[135px] bg-white border border-stone-200 p-4 rounded-2xl flex flex-col items-center justify-center gap-2 shadow-sm active:scale-95 transition-all cursor-pointer hover:border-awakin-sun/50">
       <div class="w-10 h-10 rounded-full bg-stone-100 text-stone-700 flex items-center justify-center text-lg">
         <i class="pi pi-plus"></i>
       </div>
       <span class="text-[10px] font-bold text-stone-800 uppercase tracking-wider text-center">Entreno Libre</span>
     </button>
 
-    <button
-      class="snap-center shrink-0 w-[140px] bg-white border border-stone-200 p-4 rounded-2xl flex flex-col items-center justify-center gap-2 shadow-sm active:scale-95 transition-all">
-      <div class="w-10 h-10 rounded-full bg-blue-50 text-blue-500 flex items-center justify-center text-lg">
-        <i class="pi pi-stopwatch"></i>
+    <button type="button" (click)="isWeeklyPlanDrawerOpen.set(true)"
+      class="snap-center shrink-0 w-[135px] bg-white border border-stone-200 p-4 rounded-2xl flex flex-col items-center justify-center gap-2 shadow-sm active:scale-95 transition-all cursor-pointer hover:border-awakin-sun/50">
+      <div class="w-10 h-10 rounded-full bg-amber-50 text-awakin-sun flex items-center justify-center text-lg">
+        <i class="pi pi-calendar"></i>
       </div>
-      <span class="text-[10px] font-bold text-stone-800 uppercase tracking-wider text-center">Cardio / Deporte</span>
+      <span class="text-[10px] font-bold text-stone-800 uppercase tracking-wider text-center">Plan Semanal</span>
     </button>
 
-    <button
-      class="snap-center shrink-0 w-[140px] bg-white border border-stone-200 p-4 rounded-2xl flex flex-col items-center justify-center gap-2 shadow-sm active:scale-95 transition-all">
+    <button type="button" (click)="openCreateRoutineModal()"
+      class="snap-center shrink-0 w-[135px] bg-white border border-stone-200 p-4 rounded-2xl flex flex-col items-center justify-center gap-2 shadow-sm active:scale-95 transition-all cursor-pointer hover:border-awakin-sun/50">
       <div class="w-10 h-10 rounded-full bg-emerald-50 text-emerald-500 flex items-center justify-center text-lg">
         <i class="pi pi-list"></i>
       </div>
@@ -179,20 +264,22 @@
     </button>
   </div>
 
+  <!-- CARGA MUSCULAR SEMANAL (DATOS REALES DE WORKOUT_LOGS) -->
   <div class="grid grid-cols-2 gap-4 mb-6">
     <div class="bg-white rounded-2xl border border-stone-200 p-4 shadow-sm flex flex-col col-span-2">
       <div class="flex justify-between items-center mb-2">
         <h3 class="text-xs font-bold text-stone-800 uppercase tracking-widest">
-          Carga Muscular (Semana)
+          Carga Muscular (Últimos 7 días)
         </h3>
         <i class="pi pi-chart-pie text-stone-400"></i>
       </div>
       <div class="w-full h-[200px] relative">
-        <p-chart type="radar" [data]="radarData" [options]="radarOptions" height="100%"></p-chart>
+        <p-chart type="radar" [data]="radarData()" [options]="radarOptions" height="100%"></p-chart>
       </div>
     </div>
   </div>
 
+  <!-- LIBRERÍA AWAKIN -->
   <div class="mb-6">
     <div class="flex justify-between items-center mb-4">
       <h3 class="text-xs font-bold text-stone-800 uppercase tracking-widest">Librería Awakin</h3>
@@ -214,28 +301,251 @@
             class="text-sm font-bold text-stone-800 uppercase tracking-wider group-hover:text-awakin-sun transition-colors">
             Ejercicios
           </h4>
-          <p class="text-[10px] font-medium text-stone-500 mt-0.5">+450 movimientos en video HD</p>
-        </div>
-        <i class="pi pi-angle-right text-stone-300 group-hover:text-awakin-sun"></i>
-      </button>
-
-      <button
-        class="w-full bg-white border border-stone-200 rounded-2xl p-4 flex items-center gap-4 shadow-sm active:scale-[0.98] transition-all group cursor-pointer">
-        <div
-          class="w-12 h-12 rounded-xl bg-stone-50 flex items-center justify-center text-stone-400 group-hover:text-awakin-sun group-hover:bg-awakin-sun/10 transition-colors">
-          <i class="pi pi-folder-open text-xl"></i>
-        </div>
-        <div class="flex-1 text-left">
-          <h4 class="text-sm font-bold text-stone-800 uppercase tracking-wider">
-            Programas Especializados
-          </h4>
-          <p class="text-[10px] font-medium text-stone-500 mt-0.5">Bloques de 4-8 semanas</p>
+          <p class="text-[10px] font-medium text-stone-500 mt-0.5">Mapa anatómico + catálogo completo en HD</p>
         </div>
         <i class="pi pi-angle-right text-stone-300 group-hover:text-awakin-sun"></i>
       </button>
     </div>
   </div>
 </div>
+
+<!-- ========================================================================= -->
+<!-- DRAWER: PLAN DE ENTRENAMIENTO SEMANAL (PERMITIR INICIAR CUALQUIER DÍA)    -->
+<!-- ========================================================================= -->
+<p-drawer [(visible)]="isWeeklyPlanDrawerOpen" position="bottom" appendTo="body"
+  [style]="{ height: '90dvh', maxHeight: '90dvh', width: '100%', borderTopLeftRadius: '24px', borderTopRightRadius: '24px', backgroundColor: '#FAFAF9' }"
+  styleClass="[&_.p-drawer-content]:!p-4 [&_.p-drawer-header]:!px-5 [&_.p-drawer-header]:!py-4 [&_.p-drawer-header]:!border-b [&_.p-drawer-header]:!border-stone-200 [&_.p-drawer-header]:!bg-white"
+  header="Plan Semanal de Entrenamientos">
+  <div class="max-w-3xl mx-auto space-y-3 pb-10">
+    @if (activePlan(); as plan) {
+    <div class="bg-white border border-stone-200 rounded-2xl p-4 shadow-2xs">
+      <h4 class="text-sm font-black text-stone-900 uppercase">{{ plan.name }}</h4>
+      @if (plan.description) {
+      <p class="text-xs text-stone-500 mt-0.5">{{ plan.description }}</p>
+      }
+      <p class="text-[10px] font-bold text-awakin-sun mt-1">
+        Vigencia: {{ plan.start_date }} ~ {{ plan.end_date }}
+      </p>
+    </div>
+
+    @for (dayNum of weekDays; track dayNum) {
+    @let link = weeklyScheduleMap().get(dayNum);
+    <div class="bg-white border rounded-2xl p-4 shadow-2xs flex items-center justify-between gap-3"
+      [ngClass]="selectedDayOfWeek() === dayNum ? 'border-awakin-sun ring-1 ring-awakin-sun/30' : 'border-stone-200'">
+      <div class="min-w-0 flex-1">
+        <div class="flex items-center gap-2">
+          <span class="px-2 py-0.5 rounded-md text-[10px] font-black uppercase"
+            [ngClass]="selectedDayOfWeek() === dayNum ? 'bg-awakin-sun text-white' : 'bg-stone-100 text-stone-600'">
+            {{ weekDayLabels[dayNum].name }}
+          </span>
+          @if (selectedDayOfWeek() === dayNum) {
+          <span class="text-[9px] font-black text-awakin-sun uppercase">Día seleccionado</span>
+          }
+        </div>
+
+        @if (link?.routine; as r) {
+        <h5 class="text-sm font-black text-stone-900 mt-1.5 truncate">{{ r.name }}</h5>
+        <p class="text-[11px] text-stone-500">
+          {{ r.exercises.length }} ejercicios • {{ r.total_sets || 0 }} series • ~{{ r.estimated_minutes || 45 }} min
+        </p>
+        } @else {
+        <p class="text-xs font-bold text-stone-400 mt-1.5">Descanso / Sin rutina asignada</p>
+        }
+      </div>
+
+      @if (link?.routine; as r) {
+      <div class="flex items-center gap-1.5 shrink-0">
+        <button type="button" (click)="selectPlanDayRoutine(dayNum); isWeeklyPlanDrawerOpen.set(false)"
+          class="px-3 py-2 rounded-xl bg-stone-100 hover:bg-stone-200 text-stone-700 text-xs font-bold cursor-pointer">
+          Ver
+        </button>
+        <button type="button" (click)="isWeeklyPlanDrawerOpen.set(false); startWorkout(r)"
+          class="px-3.5 py-2 rounded-xl bg-awakin-sun hover:bg-awakin-sun-dim text-white text-xs font-black uppercase cursor-pointer shadow-xs">
+          Iniciar
+        </button>
+      </div>
+      }
+    </div>
+    }
+    } @else {
+    <div class="py-12 text-center text-stone-400 text-xs">
+      No tienes un plan de entrenamiento activo asignado todavía.
+    </div>
+    }
+  </div>
+</p-drawer>
+
+<!-- ========================================================================= -->
+<!-- DRAWER: HISTORIAL DE ENTRENAMIENTOS (WORKOUT LOGS)                        -->
+<!-- ========================================================================= -->
+<p-drawer [(visible)]="isHistoryDrawerOpen" position="bottom" appendTo="body"
+  [style]="{ height: '90dvh', maxHeight: '90dvh', width: '100%', borderTopLeftRadius: '24px', borderTopRightRadius: '24px', backgroundColor: '#FAFAF9' }"
+  styleClass="[&_.p-drawer-content]:!p-4 [&_.p-drawer-header]:!px-5 [&_.p-drawer-header]:!py-4 [&_.p-drawer-header]:!border-b [&_.p-drawer-header]:!border-stone-200 [&_.p-drawer-header]:!bg-white"
+  header="Historial de Entrenamientos">
+  <div class="max-w-3xl mx-auto space-y-3 pb-10">
+    @for (log of workoutLogs(); track log.id) {
+    <div class="bg-white border border-stone-200 rounded-3xl p-4 shadow-sm space-y-3">
+      <div class="flex items-start justify-between gap-3">
+        <div class="min-w-0">
+          <span class="text-[10px] font-black uppercase tracking-wider text-awakin-sun">
+            {{ formatLogDate(log.workout_date) }}
+          </span>
+          <h4 class="text-sm font-black text-stone-900 uppercase mt-0.5">{{ log.routine_name }}</h4>
+          <div class="flex items-center gap-2 text-[11px] text-stone-500 font-semibold mt-0.5 flex-wrap">
+            <span><i class="pi pi-clock text-[10px] mr-0.5"></i> {{ log.duration_minutes }} min</span>
+            @if (log.location) {
+            <span>• <i class="pi pi-map-marker text-[10px] mr-0.5"></i> {{ log.location }}</span>
+            }
+          </div>
+        </div>
+
+        <div class="text-right shrink-0">
+          <span class="text-base font-black text-emerald-600 block">
+            {{ log.total_volume | number:'1.0-0' }} {{ log.volume_unit }}
+          </span>
+          <span class="text-[10px] font-bold text-stone-400">{{ log.total_sets }} series</span>
+        </div>
+      </div>
+
+      @if (log.photo_url) {
+      <div class="rounded-2xl overflow-hidden border border-stone-200 h-44 bg-stone-100">
+        <img [src]="log.photo_url" alt="Foto entrenamiento" class="w-full h-full object-cover" />
+      </div>
+      }
+
+      @if (getMuscleEntries(log.sets_by_muscle).length > 0) {
+      <div class="flex items-center gap-1.5 flex-wrap pt-1 border-t border-stone-100">
+        @for (item of getMuscleEntries(log.sets_by_muscle); track item.muscle) {
+        <span class="px-2 py-0.5 rounded-full bg-stone-100 text-stone-700 text-[10px] font-bold capitalize">
+          {{ item.muscle }}: {{ item.sets }}s
+        </span>
+        }
+      </div>
+      }
+    </div>
+    } @empty {
+    <div class="py-12 text-center bg-white border border-dashed border-stone-300 rounded-3xl">
+      <i class="pi pi-history text-stone-300 text-2xl mb-2"></i>
+      <p class="text-xs font-bold text-stone-500">Aún no has registrado entrenamientos.</p>
+    </div>
+    }
+  </div>
+</p-drawer>
+
+<!-- ========================================================================= -->
+<!-- MODAL: CREAR NUEVA RUTINA                                                 -->
+<!-- ========================================================================= -->
+<p-dialog [(visible)]="isCreateRoutineModalOpen" [modal]="true" [draggable]="false" [resizable]="false"
+  [closable]="false" [showHeader]="false" [dismissableMask]="true" appendTo="body"
+  [style]="{ width: '95vw', maxWidth: '540px', borderRadius: '24px' }"
+  styleClass="overflow-hidden shadow-2xl border border-stone-200 [&_.p-dialog-content]:!p-0">
+  <div class="bg-white flex flex-col max-h-[90vh]">
+    <div class="px-5 py-4 border-b border-stone-100 bg-stone-50/80 flex items-center justify-between">
+      <div>
+        <h3 class="text-base font-black text-stone-900">Crear Nueva Rutina</h3>
+        <p class="text-[11px] text-stone-500 font-medium">Combina ejercicios de la librería o personalizados</p>
+      </div>
+      <button type="button" (click)="isCreateRoutineModalOpen.set(false)"
+        class="w-8 h-8 rounded-full bg-stone-100 hover:bg-stone-200 text-stone-600 flex items-center justify-center cursor-pointer">
+        <i class="pi pi-times text-xs"></i>
+      </button>
+    </div>
+
+    <div class="p-5 space-y-4 overflow-y-auto flex-1">
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <div class="sm:col-span-2">
+          <label class="block text-[10px] font-black uppercase tracking-wider text-stone-500 mb-1">Nombre *</label>
+          <input type="text" [ngModel]="newRoutineName()" (ngModelChange)="newRoutineName.set($event)"
+            placeholder="Ej: Día 4: Torso Fuerza"
+            class="w-full h-10 bg-stone-50 border border-stone-200 focus:border-awakin-sun rounded-xl px-3 text-xs font-bold text-stone-900 outline-hidden" />
+        </div>
+        <div>
+          <label class="block text-[10px] font-black uppercase tracking-wider text-stone-500 mb-1">Día (Plan)</label>
+          <select [ngModel]="newRoutineDay()" (ngModelChange)="newRoutineDay.set($event)"
+            class="w-full h-10 bg-stone-50 border border-stone-200 focus:border-awakin-sun rounded-xl px-2.5 text-xs font-bold text-stone-900 outline-hidden cursor-pointer">
+            <option [ngValue]="null">Sin asignar</option>
+            @for (d of weekDays; track d) {
+            <option [ngValue]="d">{{ weekDayLabels[d].name }}</option>
+            }
+          </select>
+        </div>
+      </div>
+
+      <div>
+        <label class="block text-[10px] font-black uppercase tracking-wider text-stone-500 mb-1">Descripción</label>
+        <input type="text" [ngModel]="newRoutineDescription()" (ngModelChange)="newRoutineDescription.set($event)"
+          placeholder="Objetivo o enfoque de la rutina"
+          class="w-full h-10 bg-stone-50 border border-stone-200 focus:border-awakin-sun rounded-xl px-3 text-xs font-bold text-stone-900 outline-hidden" />
+      </div>
+
+      <!-- Ejercicios añadidos -->
+      @if (newRoutineExercises().length > 0) {
+      <div class="space-y-1.5">
+        <label class="block text-[10px] font-black uppercase tracking-wider text-stone-500">
+          Ejercicios en esta rutina ({{ newRoutineExercises().length }})
+        </label>
+        @for (ex of newRoutineExercises(); track ex.tempId; let idx = $index) {
+        <div class="flex items-center justify-between p-2.5 bg-stone-50 border border-stone-200 rounded-xl">
+          <div class="min-w-0 pr-2">
+            <div class="text-xs font-black text-stone-900 truncate">{{ idx + 1 }}. {{ ex.exercise_name }}</div>
+            <div class="text-[10px] text-stone-500 capitalize">{{ ex.target_muscle }} • {{ ex.sets.length }} series
+            </div>
+          </div>
+          <button type="button" (click)="removeBuilderExercise(idx)"
+            class="text-stone-400 hover:text-rose-600 p-1 cursor-pointer">
+            <i class="pi pi-trash text-xs"></i>
+          </button>
+        </div>
+        }
+      </div>
+      }
+
+      <!-- Buscador rápido librería + Botón personalizado -->
+      <div class="border-t border-stone-100 pt-3 space-y-2.5">
+        <div class="flex items-center justify-between gap-2">
+          <span class="text-[10px] font-black uppercase tracking-wider text-stone-500">Añadir Ejercicios</span>
+          <button type="button" (click)="isCustomExForBuilderOpen.set(true)"
+            class="text-[11px] font-black text-awakin-sun hover:underline flex items-center gap-1 cursor-pointer">
+            <i class="pi pi-user-plus text-[10px]"></i> Personalizado (BodyMap)
+          </button>
+        </div>
+
+        <input type="text" [ngModel]="builderSearchQuery()"
+          (ngModelChange)="builderSearchQuery.set($event); onBuilderSearchInput()"
+          placeholder="Buscar en librería de ejercicios..."
+          class="w-full h-9 bg-stone-100 focus:bg-white border border-stone-200 focus:border-awakin-sun rounded-xl px-3 text-xs font-bold text-stone-900 outline-hidden" />
+
+        <div class="max-h-44 overflow-y-auto space-y-1.5 pr-1">
+          @for (item of builderSearchResults(); track item.id) {
+          <button type="button" (click)="addBuilderLibraryExercise(item)"
+            class="w-full text-left p-2 rounded-xl border border-stone-200 hover:border-awakin-sun hover:bg-awakin-sun/5 flex items-center justify-between gap-2 transition-all cursor-pointer">
+            <div class="min-w-0">
+              <div class="text-xs font-bold text-stone-900 truncate uppercase">{{ item.name }}</div>
+              <div class="text-[10px] text-stone-500 capitalize">{{ item.target }} • {{ item.equipment }}</div>
+            </div>
+            <i class="pi pi-plus text-awakin-sun text-xs shrink-0"></i>
+          </button>
+          }
+        </div>
+      </div>
+    </div>
+
+    <div class="px-5 py-3.5 border-t border-stone-100 bg-stone-50/80 flex items-center gap-2">
+      <button type="button" (click)="isCreateRoutineModalOpen.set(false)"
+        class="px-4 py-3 rounded-2xl bg-white border border-stone-200 text-stone-600 font-bold text-xs cursor-pointer">
+        Cancelar
+      </button>
+      <button type="button" (click)="saveNewRoutine()"
+        [disabled]="!newRoutineName().trim() || newRoutineExercises().length === 0 || isSavingRoutine()"
+        class="flex-1 py-3 px-4 rounded-2xl bg-awakin-sun hover:bg-awakin-sun-dim disabled:bg-stone-200 disabled:text-stone-400 text-white font-black text-xs uppercase tracking-wider cursor-pointer">
+        {{ isSavingRoutine() ? 'Guardando...' : 'Guardar Rutina' }}
+      </button>
+    </div>
+  </div>
+</p-dialog>
+
+<app-custom-exercise-modal [(isOpen)]="isCustomExForBuilderOpen" (onCreated)="onBuilderCustomExerciseCreated($event)">
+</app-custom-exercise-modal>
 
 <!-- ========================================================================= -->
 <!-- SHEET FULLSCREEN: GALERÍA DE EJERCICIOS + BODY MAP + FILTRO EQUIPAMIENTOS -->
