@@ -459,12 +459,14 @@
       <div class="flex items-start justify-between mb-4 relative z-10">
         <div>
           <div class="flex items-center gap-2">
-            <svg class="w-6 h-6 text-emerald-400 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-              stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-              <polyline points="22 7 13.5 15.5 8.5 10.5 2 17"></polyline>
-              <polyline points="16 7 22 7 22 13"></polyline>
-            </svg>
-            <h2 class="text-xl md:text-2xl font-black text-white tracking-tight">
+            <div class="w-8 h-8 rounded-xl bg-awakin-sun/15 border border-awakin-sun/25 flex items-center justify-center text-awakin-sun shrink-0">
+              <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="22 7 13.5 15.5 8.5 10.5 2 17"></polyline>
+                <polyline points="16 7 22 7 22 13"></polyline>
+              </svg>
+            </div>
+            <h2 class="text-xl md:text-2xl font-black text-stone-900 tracking-tight">
               Mi Progreso Corporal
             </h2>
           </div>
@@ -473,75 +475,97 @@
           </p>
         </div>
 
-        <!-- BOTÓN (+) PARA AÑADIR NUEVO REGISTRO (MATCHING SCREENSHOT 1) -->
+        <!-- BOTÓN (+) PARA AÑADIR NUEVO REGISTRO -->
         <button (click)="openNewProgressModal()"
-          class="w-10 h-10 rounded-full bg-emerald-600 hover:bg-emerald-500 text-white flex items-center justify-center shadow-lg shadow-emerald-600/30 active:scale-95 transition-all cursor-pointer shrink-0"
+          class="w-10 h-10 rounded-full bg-awakin-sun hover:bg-awakin-sun-dim text-white flex items-center justify-center shadow-lg shadow-awakin-sun/30 active:scale-95 transition-all cursor-pointer shrink-0"
           title="Nuevo Registro de Progreso">
           <i class="pi pi-plus text-base font-black"></i>
         </button>
       </div>
 
-      <!-- BARRA DE ACCIÓN: COMPARTIR GRÁFICOS Y SELECTOR DE UNIDAD KG / LB -->
+      <!-- BARRA DE ACCIÓN: COMPARTIR PROGRESO Y SELECTOR DE UNIDAD KG / LB -->
       <div class="flex items-center justify-between gap-2 mb-5 relative z-10">
         <button (click)="shareProgressCharts()"
-          class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-stone-100 hover:bg-stone-200 border border-stone-300 text-stone-700 hover:text-stone-900 text-xs font-bold transition-all shadow-sm cursor-pointer active:scale-95"
-          title="Compartir Gráficos">
-          <i class="pi pi-share-alt text-xs"></i>
-          <span>Compartir Gráficos</span>
+          class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-stone-100 hover:bg-stone-200 border border-stone-200 text-stone-800 text-xs font-bold transition-all shadow-2xs cursor-pointer active:scale-95"
+          title="Compartir Progreso">
+          <i class="pi pi-share-alt text-xs text-awakin-sun"></i>
+          <span>Compartir Progreso</span>
         </button>
 
         <!-- SELECTOR DE UNIDAD KG / LB -->
-        <div class="inline-flex items-center p-0.5 bg-stone-100 rounded-full border border-stone-300">
+        <div class="inline-flex items-center p-0.5 bg-stone-100 rounded-full border border-stone-200">
           <button (click)="toggleWeightUnit('lb')"
             class="px-3 py-1 rounded-full text-[10px] font-black transition-all cursor-pointer"
-            [ngClass]="preferredWeightUnit() === 'lb' ? 'bg-emerald-500 text-white shadow-xs' : 'text-stone-600 hover:text-stone-800'">
+            [ngClass]="preferredWeightUnit() === 'lb' ? 'bg-awakin-sun text-white shadow-xs' : 'text-stone-600 hover:text-stone-900'">
             LB
           </button>
           <button (click)="toggleWeightUnit('kg')"
             class="px-3 py-1 rounded-full text-[10px] font-black transition-all cursor-pointer"
-            [ngClass]="preferredWeightUnit() === 'kg' ? 'bg-emerald-500 text-white shadow-xs' : 'text-stone-600 hover:text-stone-800'">
+            [ngClass]="preferredWeightUnit() === 'kg' ? 'bg-awakin-sun text-white shadow-xs' : 'text-stone-600 hover:text-stone-900'">
             KG
           </button>
         </div>
       </div>
 
-      <!-- RESUMEN KPI EN TIEMPO REAL (ÚLTIMO PESO, DELTA, MEDIDAS) -->
+      <!-- RESUMEN KPI EN TIEMPO REAL (ÚLTIMO PESO, DELTA, TMB ACTUAL, MEDIDAS) -->
       @if (latestRecord()) {
-      <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5 mb-6 relative z-10">
+      <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2.5 mb-6 relative z-10">
         <!-- Último Peso -->
-        <div class="bg-stone-50 border border-stone-200 rounded-2xl p-3 shadow-sm">
+        <div class="bg-stone-50 border border-stone-200/80 rounded-2xl p-3 shadow-2xs">
           <span class="text-[9px] font-black uppercase tracking-wider text-stone-500">Último Peso</span>
           <div class="flex items-baseline gap-1 mt-0.5">
             <span class="text-xl font-black text-stone-900">
               {{ convertWeight(latestRecord()!.peso || 0, latestRecord()!.unidad_peso, preferredWeightUnit()) |
               number:'1.1-1' }}
             </span>
-            <span class="text-xs font-bold text-emerald-400 uppercase">{{ preferredWeightUnit() }}</span>
+            <span class="text-xs font-bold text-emerald-600 uppercase">{{ preferredWeightUnit() }}</span>
           </div>
         </div>
 
         <!-- Variación Total -->
-        <div class="bg-stone-50 border border-stone-200 rounded-2xl p-3 shadow-sm">
+        <div class="bg-stone-50 border border-stone-200/80 rounded-2xl p-3 shadow-2xs">
           <span class="text-[9px] font-black uppercase tracking-wider text-stone-500">Variación Total</span>
           <div class="flex items-baseline gap-1 mt-0.5">
             @if (weightDelta()) {
-            <span class="text-xl font-black" [ngClass]="weightDelta()!.isLoss ? 'text-emerald-400' : 'text-amber-400'">
+            <span class="text-xl font-black" [ngClass]="weightDelta()!.isLoss ? 'text-emerald-600' : 'text-amber-600'">
               {{ weightDelta()!.diff > 0 ? '+' : '' }}{{ weightDelta()!.diff }}
             </span>
             <span class="text-[10px] font-semibold text-stone-500">
               {{ weightDelta()!.unit }} ({{ weightDelta()!.percent }}%)
             </span>
             } @else {
-            <span class="text-sm font-bold text-slate-500">Inicial</span>
+            <span class="text-sm font-bold text-stone-500">Inicial</span>
+            }
+          </div>
+        </div>
+
+        <!-- TMB Actual -->
+        <div class="bg-stone-50 border border-stone-200/80 rounded-2xl p-3 shadow-2xs col-span-2 sm:col-span-1">
+          <div class="flex items-center justify-between gap-1">
+            <span class="text-[9px] font-black uppercase tracking-wider text-stone-500">TMB Actual</span>
+            @if (currentTmb()) {
+            <span class="text-[9px] font-semibold text-stone-400" [title]="currentTmb()!.isEstimated ? 'Altura promedio población RD' : 'Altura del atleta'">
+              {{ currentTmb()!.alturaCm }} cm{{ currentTmb()!.isEstimated ? ' (RD)' : '' }}
+            </span>
+            }
+          </div>
+          <div class="flex items-baseline gap-1 mt-0.5">
+            @if (currentTmb()) {
+            <span class="text-xl font-black text-awakin-sun">
+              {{ currentTmb()!.kcal | number:'1.0-0' }}
+            </span>
+            <span class="text-xs font-bold text-stone-500">kcal</span>
+            } @else {
+            <span class="text-sm font-bold text-stone-400">--</span>
             }
           </div>
         </div>
 
         <!-- Cintura Actual -->
-        <div class="bg-stone-50 border border-stone-200 rounded-2xl p-3 shadow-sm">
+        <div class="bg-stone-50 border border-stone-200/80 rounded-2xl p-3 shadow-2xs">
           <span class="text-[9px] font-black uppercase tracking-wider text-stone-500">Cintura</span>
           <div class="flex items-baseline gap-1 mt-0.5">
-            <span class="text-xl font-black text-amber-300">
+            <span class="text-xl font-black text-amber-600">
               {{ latestRecord()!.cintura || '--' }}
             </span>
             <span class="text-xs font-bold text-stone-500">cm</span>
@@ -549,10 +573,10 @@
         </div>
 
         <!-- Cadera Actual -->
-        <div class="bg-stone-50 border border-stone-200 rounded-2xl p-3 shadow-sm">
+        <div class="bg-stone-50 border border-stone-200/80 rounded-2xl p-3 shadow-2xs">
           <span class="text-[9px] font-black uppercase tracking-wider text-stone-500">Cadera</span>
           <div class="flex items-baseline gap-1 mt-0.5">
-            <span class="text-xl font-black text-sky-300">
+            <span class="text-xl font-black text-sky-600">
               {{ latestRecord()!.cadera || '--' }}
             </span>
             <span class="text-xs font-bold text-stone-500">cm</span>
@@ -563,24 +587,22 @@
 
       <!-- ========================================== -->
       <!-- CARD 1: EVOLUCIÓN DE PESO (LB / KG)         -->
-      <!-- MATCHING SCREENSHOT 1                      -->
       <!-- ========================================== -->
-      <div class="bg-[#141d2e]/95 border border-slate-800/90 rounded-3xl p-4 md:p-5 shadow-xl relative mb-5">
+      <div class="bg-white border border-stone-200/90 rounded-3xl p-4 md:p-5 shadow-sm relative mb-5">
         <div class="flex items-center justify-between mb-3">
           <div class="flex items-center gap-2">
-            <!-- Icono rosa / salmón -->
             <div
-              class="w-7 h-7 rounded-lg bg-rose-500/20 border border-rose-500/30 flex items-center justify-center text-rose-400">
+              class="w-7 h-7 rounded-lg bg-rose-50 border border-rose-200 flex items-center justify-center text-rose-500">
               <i class="pi pi-chart-line text-xs font-bold"></i>
             </div>
-            <h3 class="text-sm md:text-base font-black text-white tracking-tight">
+            <h3 class="text-sm md:text-base font-black text-stone-900 tracking-tight">
               Evolución de Peso ({{ preferredWeightUnit() }})
             </h3>
           </div>
 
           @if (weightDelta()) {
-          <span class="text-[10px] font-black px-2 py-0.5 rounded-full"
-            [ngClass]="weightDelta()!.isLoss ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40' : 'bg-amber-500/20 text-amber-300 border border-amber-500/40'">
+          <span class="text-[10px] font-black px-2.5 py-0.5 rounded-full"
+            [ngClass]="weightDelta()!.isLoss ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-amber-50 text-amber-700 border border-amber-200'">
             {{ weightDelta()!.diff > 0 ? '+' : '' }}{{ weightDelta()!.diff }} {{ weightDelta()!.unit }}
           </span>
           }
@@ -593,7 +615,7 @@
             class="w-full h-auto overflow-visible">
             <defs>
               <linearGradient id="weightGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-                <stop offset="0%" stop-color="#10b981" stop-opacity="0.35" />
+                <stop offset="0%" stop-color="#10b981" stop-opacity="0.22" />
                 <stop offset="100%" stop-color="#10b981" stop-opacity="0.0" />
               </linearGradient>
             </defs>
@@ -602,8 +624,8 @@
             @for (line of weightChartData().gridLines; track line.y) {
             <g>
               <line x1="38" [attr.y1]="line.y" [attr.x2]="weightChartData().width - 15" [attr.y2]="line.y"
-                stroke="#334155" stroke-dasharray="3 3" stroke-width="1" />
-              <text x="32" [attr.y]="line.y + 3" fill="#64748b" font-size="9" font-weight="700" text-anchor="end">
+                stroke="#e7e5e4" stroke-dasharray="3 3" stroke-width="1" />
+              <text x="32" [attr.y]="line.y + 3" fill="#78716c" font-size="9" font-weight="700" text-anchor="end">
                 {{ line.val }}
               </text>
             </g>
@@ -623,13 +645,10 @@
             <g (mouseenter)="showTooltip('weight', pt.x, pt.y, pt.weight + ' ' + preferredWeightUnit(), pt.dateLabel)"
               (click)="showTooltip('weight', pt.x, pt.y, pt.weight + ' ' + preferredWeightUnit(), pt.dateLabel)"
               class="cursor-pointer group">
-              <!-- Círculo exterior de pulsación -->
-              <circle [attr.cx]="pt.x" [attr.cy]="pt.y" r="8" fill="#10b981" fill-opacity="0.2"
+              <circle [attr.cx]="pt.x" [attr.cy]="pt.y" r="8" fill="#10b981" fill-opacity="0.15"
                 class="group-hover:scale-125 transition-transform" />
-              <!-- Círculo de punto blanco con borde verde -->
               <circle [attr.cx]="pt.x" [attr.cy]="pt.y" r="4.5" fill="#ffffff" stroke="#10b981" stroke-width="2.5" />
-              <!-- Etiqueta de Fecha en el eje X -->
-              <text [attr.x]="pt.x" [attr.y]="weightChartData().height - 5" fill="#94a3b8" font-size="9"
+              <text [attr.x]="pt.x" [attr.y]="weightChartData().height - 5" fill="#78716c" font-size="9"
                 font-weight="700" text-anchor="middle">
                 {{ pt.dateLabel }}
               </text>
@@ -640,9 +659,9 @@
           <!-- TOOLTIP FLOTANTE INTERACTIVO -->
           @if (activeTooltip() && activeTooltip()!.type === 'weight') {
           <div
-            class="absolute bg-slate-900 border border-emerald-500/50 text-white text-[11px] font-black px-2.5 py-1 rounded-xl shadow-xl pointer-events-none transform -translate-x-1/2 -translate-y-full mb-2"
+            class="absolute bg-white border border-stone-200 text-stone-900 text-[11px] font-black px-2.5 py-1.5 rounded-xl shadow-lg pointer-events-none transform -translate-x-1/2 -translate-y-full mb-2"
             [style.left.px]="activeTooltip()!.x" [style.top.px]="activeTooltip()!.y">
-            <div class="text-emerald-400">{{ activeTooltip()!.text }}</div>
+            <div class="text-emerald-600">{{ activeTooltip()!.text }}</div>
             <div class="text-[9px] text-stone-500 font-semibold">{{ activeTooltip()!.subtext }}</div>
           </div>
           }
@@ -652,7 +671,7 @@
         <div class="py-8 text-center">
           <p class="text-xs text-stone-500 mb-2">Aún no hay registros de peso corporal.</p>
           <button (click)="openNewProgressModal()"
-            class="px-3 py-1.5 bg-emerald-600/30 border border-emerald-500/50 text-emerald-300 rounded-xl text-xs font-bold hover:bg-emerald-600/50 transition-all cursor-pointer">
+            class="px-3 py-1.5 bg-awakin-sun/10 border border-awakin-sun/30 text-awakin-sun rounded-xl text-xs font-bold hover:bg-awakin-sun/20 transition-all cursor-pointer">
             + Registrar Peso
           </button>
         </div>
@@ -661,15 +680,14 @@
 
       <!-- ========================================== -->
       <!-- CARD 2: MEDIDAS CORPORALES (CM)            -->
-      <!-- MATCHING SCREENSHOT 1 (CADERA, CINTURA, PECHO) -->
       <!-- ========================================== -->
-      <div class="bg-[#141d2e]/95 border border-slate-800/90 rounded-3xl p-4 md:p-5 shadow-xl relative mb-5">
+      <div class="bg-white border border-stone-200/90 rounded-3xl p-4 md:p-5 shadow-sm relative mb-5">
         <div class="flex items-center gap-2 mb-3">
           <div
-            class="w-7 h-7 rounded-lg bg-sky-500/20 border border-sky-500/30 flex items-center justify-center text-sky-400">
+            class="w-7 h-7 rounded-lg bg-sky-50 border border-sky-200 flex items-center justify-center text-sky-600">
             <i class="pi pi-pencil text-xs font-bold"></i>
           </div>
-          <h3 class="text-sm md:text-base font-black text-white tracking-tight">
+          <h3 class="text-sm md:text-base font-black text-stone-900 tracking-tight">
             Medidas Corporales (cm)
           </h3>
         </div>
@@ -683,8 +701,8 @@
             @for (line of bodyMetricsChartData().gridLines; track line.y) {
             <g>
               <line x1="38" [attr.y1]="line.y" [attr.x2]="bodyMetricsChartData().width - 15" [attr.y2]="line.y"
-                stroke="#334155" stroke-dasharray="3 3" stroke-width="1" />
-              <text x="32" [attr.y]="line.y + 3" fill="#64748b" font-size="9" font-weight="700" text-anchor="end">
+                stroke="#e7e5e4" stroke-dasharray="3 3" stroke-width="1" />
+              <text x="32" [attr.y]="line.y + 3" fill="#78716c" font-size="9" font-weight="700" text-anchor="end">
                 {{ line.val }}
               </text>
             </g>
@@ -692,19 +710,19 @@
 
             <!-- LÍNEA CADERA (AZUL SKY) -->
             @if (bodyMetricsChartData().caderaPath) {
-            <path [attr.d]="bodyMetricsChartData().caderaPath" fill="none" stroke="#38bdf8" stroke-width="2.5"
+            <path [attr.d]="bodyMetricsChartData().caderaPath" fill="none" stroke="#0ea5e9" stroke-width="2.5"
               stroke-linecap="round" stroke-linejoin="round" />
             }
 
-            <!-- LÍNEA CINTURA (AMBER / AMARILLO) -->
+            <!-- LÍNEA CINTURA (AMBER / AWAKIN SUN) -->
             @if (bodyMetricsChartData().cinturaPath) {
-            <path [attr.d]="bodyMetricsChartData().cinturaPath" fill="none" stroke="#fbbf24" stroke-width="2.5"
+            <path [attr.d]="bodyMetricsChartData().cinturaPath" fill="none" stroke="#f59e0b" stroke-width="2.5"
               stroke-linecap="round" stroke-linejoin="round" />
             }
 
             <!-- LÍNEA PECHO (ROSA / MAGENTA) -->
             @if (bodyMetricsChartData().pechoPath) {
-            <path [attr.d]="bodyMetricsChartData().pechoPath" fill="none" stroke="#f472b6" stroke-width="2.5"
+            <path [attr.d]="bodyMetricsChartData().pechoPath" fill="none" stroke="#ec4899" stroke-width="2.5"
               stroke-linecap="round" stroke-linejoin="round" />
             }
 
@@ -713,9 +731,8 @@
             <g (mouseenter)="showTooltip('metric', pt.x, pt.y, 'Cadera: ' + pt.val + ' cm', pt.dateLabel)"
               (click)="showTooltip('metric', pt.x, pt.y, 'Cadera: ' + pt.val + ' cm', pt.dateLabel)"
               class="cursor-pointer">
-              <circle [attr.cx]="pt.x" [attr.cy]="pt.y" r="4.5" fill="#38bdf8" stroke="#ffffff" stroke-width="1.5" />
-              <!-- Fechas X -->
-              <text [attr.x]="pt.x" [attr.y]="bodyMetricsChartData().height - 5" fill="#94a3b8" font-size="9"
+              <circle [attr.cx]="pt.x" [attr.cy]="pt.y" r="4.5" fill="#ffffff" stroke="#0ea5e9" stroke-width="2" />
+              <text [attr.x]="pt.x" [attr.y]="bodyMetricsChartData().height - 5" fill="#78716c" font-size="9"
                 font-weight="700" text-anchor="middle">
                 {{ pt.dateLabel }}
               </text>
@@ -727,7 +744,7 @@
             <g (mouseenter)="showTooltip('metric', pt.x, pt.y, 'Cintura: ' + pt.val + ' cm', pt.dateLabel)"
               (click)="showTooltip('metric', pt.x, pt.y, 'Cintura: ' + pt.val + ' cm', pt.dateLabel)"
               class="cursor-pointer">
-              <circle [attr.cx]="pt.x" [attr.cy]="pt.y" r="4.5" fill="#fbbf24" stroke="#ffffff" stroke-width="1.5" />
+              <circle [attr.cx]="pt.x" [attr.cy]="pt.y" r="4.5" fill="#ffffff" stroke="#f59e0b" stroke-width="2" />
             </g>
             }
 
@@ -736,7 +753,7 @@
             <g (mouseenter)="showTooltip('metric', pt.x, pt.y, 'Pecho: ' + pt.val + ' cm', pt.dateLabel)"
               (click)="showTooltip('metric', pt.x, pt.y, 'Pecho: ' + pt.val + ' cm', pt.dateLabel)"
               class="cursor-pointer">
-              <circle [attr.cx]="pt.x" [attr.cy]="pt.y" r="4.5" fill="#f472b6" stroke="#ffffff" stroke-width="1.5" />
+              <circle [attr.cx]="pt.x" [attr.cy]="pt.y" r="4.5" fill="#ffffff" stroke="#ec4899" stroke-width="2" />
             </g>
             }
           </svg>
@@ -744,7 +761,7 @@
           <!-- TOOLTIP FLOTANTE INTERACTIVO -->
           @if (activeTooltip() && activeTooltip()!.type === 'metric') {
           <div
-            class="absolute bg-slate-900 border border-slate-700 text-white text-[11px] font-black px-2.5 py-1 rounded-xl shadow-xl pointer-events-none transform -translate-x-1/2 -translate-y-full mb-2"
+            class="absolute bg-white border border-stone-200 text-stone-900 text-[11px] font-black px-2.5 py-1.5 rounded-xl shadow-lg pointer-events-none transform -translate-x-1/2 -translate-y-full mb-2"
             [style.left.px]="activeTooltip()!.x" [style.top.px]="activeTooltip()!.y">
             <div>{{ activeTooltip()!.text }}</div>
             <div class="text-[9px] text-stone-500 font-semibold">{{ activeTooltip()!.subtext }}</div>
@@ -752,27 +769,27 @@
           }
         </div>
 
-        <!-- LEYENDA INFERIOR DE COLOR (MATCHING SCREENSHOT 1) -->
+        <!-- LEYENDA INFERIOR DE COLOR -->
         <div
-          class="flex items-center justify-center gap-5 mt-4 pt-3 border-t border-slate-800 text-xs font-bold select-none">
+          class="flex items-center justify-center gap-5 mt-4 pt-3 border-t border-stone-100 text-xs font-bold select-none">
           <div class="flex items-center gap-1.5">
-            <span class="w-3 h-3 rounded-full bg-[#38bdf8] shadow-xs"></span>
-            <span class="text-slate-300">Cadera</span>
+            <span class="w-3 h-3 rounded-full bg-[#0ea5e9] shadow-2xs"></span>
+            <span class="text-stone-600">Cadera</span>
           </div>
           <div class="flex items-center gap-1.5">
-            <span class="w-3 h-3 rounded-full bg-[#fbbf24] shadow-xs"></span>
-            <span class="text-slate-300">Cintura</span>
+            <span class="w-3 h-3 rounded-full bg-[#f59e0b] shadow-2xs"></span>
+            <span class="text-stone-600">Cintura</span>
           </div>
           <div class="flex items-center gap-1.5">
-            <span class="w-3 h-3 rounded-full bg-[#f472b6] shadow-xs"></span>
-            <span class="text-slate-300">Pecho</span>
+            <span class="w-3 h-3 rounded-full bg-[#ec4899] shadow-2xs"></span>
+            <span class="text-stone-600">Pecho</span>
           </div>
         </div>
         } @else {
         <div class="py-8 text-center">
           <p class="text-xs text-stone-500 mb-2">Aún no hay registros de medidas corporales.</p>
           <button (click)="openNewProgressModal()"
-            class="px-3 py-1.5 bg-sky-600/30 border border-sky-500/50 text-sky-300 rounded-xl text-xs font-bold hover:bg-sky-600/50 transition-all cursor-pointer">
+            class="px-3 py-1.5 bg-sky-50 border border-sky-200 text-sky-700 rounded-xl text-xs font-bold hover:bg-sky-100 transition-all cursor-pointer">
             + Registrar Medidas
           </button>
         </div>
@@ -781,13 +798,12 @@
 
       <!-- ========================================== -->
       <!-- CARD 3: LOG FOTOGRÁFICO                   -->
-      <!-- MATCHING SCREENSHOT 1 (FRONTAL, LATERAL, ESPALDA) -->
       <!-- ========================================== -->
       <div class="mt-8">
         <div class="flex items-center justify-between mb-3">
           <div class="flex items-center gap-2">
             <span class="text-lg">📸</span>
-            <h3 class="text-base font-black text-white tracking-tight">
+            <h3 class="text-base font-black text-stone-900 tracking-tight">
               Log Fotográfico
             </h3>
           </div>
@@ -802,33 +818,33 @@
         <div class="space-y-4">
           @for (rec of descendingProgress(); track rec.id) {
           <div
-            class="bg-[#141d2e]/95 border border-slate-800/90 rounded-3xl p-4 shadow-xl hover:border-slate-700 transition-all">
+            class="bg-white border border-stone-200/90 rounded-3xl p-4 shadow-sm hover:border-stone-300 transition-all">
             <!-- CABECERA DEL CHECK-IN (FECHA, MEDIDAS, COMPARTIR, ELIMINAR) -->
-            <div class="flex items-center justify-between mb-3 pb-2 border-b border-slate-800/80">
+            <div class="flex items-center justify-between mb-3 pb-2.5 border-b border-stone-100">
               <div class="flex items-center gap-2 flex-wrap">
-                <i class="pi pi-calendar text-emerald-400 text-xs"></i>
-                <span class="text-xs font-black text-white tracking-tight">
+                <i class="pi pi-calendar text-awakin-sun text-xs"></i>
+                <span class="text-xs font-black text-stone-900 tracking-tight">
                   {{ formatDateSpanish(rec.timestamp) }}
                 </span>
 
                 @if (rec.peso) {
                 <span
-                  class="text-[9px] font-black px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                  class="text-[9px] font-black px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
                   {{ rec.peso }} {{ rec.unidad_peso || 'lb' }}
                 </span>
                 }
                 @if (rec.cintura) {
-                <span class="text-[9px] font-bold text-amber-300 bg-amber-500/10 px-1.5 py-0.5 rounded-md">
+                <span class="text-[9px] font-bold text-amber-700 bg-amber-50 border border-amber-200/70 px-1.5 py-0.5 rounded-md">
                   C: {{ rec.cintura }}cm
                 </span>
                 }
                 @if (rec.cadera) {
-                <span class="text-[9px] font-bold text-sky-300 bg-sky-500/10 px-1.5 py-0.5 rounded-md">
+                <span class="text-[9px] font-bold text-sky-700 bg-sky-50 border border-sky-200/70 px-1.5 py-0.5 rounded-md">
                   Cad: {{ rec.cadera }}cm
                 </span>
                 }
                 @if (rec.pecho) {
-                <span class="text-[9px] font-bold text-pink-300 bg-pink-500/10 px-1.5 py-0.5 rounded-md">
+                <span class="text-[9px] font-bold text-pink-700 bg-pink-50 border border-pink-200/70 px-1.5 py-0.5 rounded-md">
                   P: {{ rec.pecho }}cm
                 </span>
                 }
@@ -837,36 +853,36 @@
               <!-- BOTONES DE ACCIÓN: COMPARTIR Y ELIMINAR -->
               <div class="flex items-center gap-1.5 shrink-0">
                 <button (click)="shareProgressRecord(rec)"
-                  class="w-7 h-7 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white flex items-center justify-center text-xs transition-all cursor-pointer shadow-xs"
+                  class="w-7 h-7 rounded-lg bg-stone-100 hover:bg-stone-200 text-stone-600 hover:text-stone-900 flex items-center justify-center text-xs transition-all cursor-pointer"
                   title="Compartir este check-in">
                   <i class="pi pi-share-alt text-[10px]"></i>
                 </button>
                 <button (click)="deleteProgress(rec.id)"
-                  class="w-7 h-7 rounded-lg bg-rose-950/60 hover:bg-rose-900 border border-rose-800/50 text-rose-300 hover:text-white flex items-center justify-center text-xs transition-all cursor-pointer shadow-xs"
+                  class="w-7 h-7 rounded-lg bg-rose-50 hover:bg-rose-100 border border-rose-200 text-rose-600 hover:text-rose-700 flex items-center justify-center text-xs transition-all cursor-pointer"
                   title="Eliminar este check-in">
                   <i class="pi pi-trash text-[10px]"></i>
                 </button>
               </div>
             </div>
 
-            <!-- FOTOS: 3 COLUMNAS (FRONTAL, LATERAL, ESPALDA) MATCHING SCREENSHOT 1 -->
+            <!-- FOTOS: 3 COLUMNAS (FRONTAL, LATERAL, ESPALDA) -->
             <div class="grid grid-cols-3 gap-2">
               <!-- Foto Frontal -->
               <div class="flex flex-col">
                 <span
                   class="text-[9px] font-black uppercase text-stone-500 tracking-wider mb-1 text-center">Frontal</span>
                 <div
-                  class="aspect-[3/4] rounded-2xl bg-[#0b101b] border border-slate-800 overflow-hidden relative group">
+                  class="aspect-[3/4] rounded-2xl bg-stone-100 border border-stone-200 overflow-hidden relative group">
                   @if (rec.foto_frontal_url) {
                   <img loading="lazy" decoding="async" [src]="rec.foto_frontal_url" alt="Foto Frontal"
                     (click)="openLightbox(rec.foto_frontal_url!, 'Vista Frontal', rec.timestamp)"
                     class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 cursor-pointer" />
                   <div
-                    class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center pointer-events-none">
+                    class="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center pointer-events-none">
                     <i class="pi pi-search-plus text-white text-base"></i>
                   </div>
                   } @else {
-                  <div class="w-full h-full flex flex-col items-center justify-center text-slate-600 p-2 text-center">
+                  <div class="w-full h-full flex flex-col items-center justify-center text-stone-400 p-2 text-center">
                     <i class="pi pi-camera text-base mb-1"></i>
                     <span class="text-[8px] font-semibold leading-tight">Sin foto frontal</span>
                   </div>
@@ -879,17 +895,17 @@
                 <span
                   class="text-[9px] font-black uppercase text-stone-500 tracking-wider mb-1 text-center">Lateral</span>
                 <div
-                  class="aspect-[3/4] rounded-2xl bg-[#0b101b] border border-slate-800 overflow-hidden relative group">
+                  class="aspect-[3/4] rounded-2xl bg-stone-100 border border-stone-200 overflow-hidden relative group">
                   @if (rec.foto_lateral_url) {
                   <img loading="lazy" decoding="async" [src]="rec.foto_lateral_url" alt="Foto Lateral"
                     (click)="openLightbox(rec.foto_lateral_url!, 'Vista Lateral', rec.timestamp)"
                     class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 cursor-pointer" />
                   <div
-                    class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center pointer-events-none">
+                    class="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center pointer-events-none">
                     <i class="pi pi-search-plus text-white text-base"></i>
                   </div>
                   } @else {
-                  <div class="w-full h-full flex flex-col items-center justify-center text-slate-600 p-2 text-center">
+                  <div class="w-full h-full flex flex-col items-center justify-center text-stone-400 p-2 text-center">
                     <i class="pi pi-camera text-base mb-1"></i>
                     <span class="text-[8px] font-semibold leading-tight">Sin foto lateral</span>
                   </div>
@@ -902,17 +918,17 @@
                 <span
                   class="text-[9px] font-black uppercase text-stone-500 tracking-wider mb-1 text-center">Espalda</span>
                 <div
-                  class="aspect-[3/4] rounded-2xl bg-[#0b101b] border border-slate-800 overflow-hidden relative group">
+                  class="aspect-[3/4] rounded-2xl bg-stone-100 border border-stone-200 overflow-hidden relative group">
                   @if (rec.foto_espalda_url) {
                   <img loading="lazy" decoding="async" [src]="rec.foto_espalda_url" alt="Foto Espalda"
                     (click)="openLightbox(rec.foto_espalda_url!, 'Vista Espalda', rec.timestamp)"
                     class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 cursor-pointer" />
                   <div
-                    class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center pointer-events-none">
+                    class="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center pointer-events-none">
                     <i class="pi pi-search-plus text-white text-base"></i>
                   </div>
                   } @else {
-                  <div class="w-full h-full flex flex-col items-center justify-center text-slate-600 p-2 text-center">
+                  <div class="w-full h-full flex flex-col items-center justify-center text-stone-400 p-2 text-center">
                     <i class="pi pi-camera text-base mb-1"></i>
                     <span class="text-[8px] font-semibold leading-tight">Sin foto espalda</span>
                   </div>
@@ -925,12 +941,12 @@
         </div>
         } @else {
         <!-- ESTADO VACÍO ELEGANTE -->
-        <div class="py-12 px-4 text-center bg-[#141d2e]/60 border border-dashed border-slate-800 rounded-3xl">
+        <div class="py-12 px-4 text-center bg-stone-50 border border-dashed border-stone-300 rounded-3xl">
           <div
-            class="w-14 h-14 mx-auto rounded-2xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 mb-3 shadow-inner">
+            class="w-14 h-14 mx-auto rounded-2xl bg-awakin-sun/10 border border-awakin-sun/25 flex items-center justify-center text-awakin-sun mb-3">
             <i class="pi pi-camera text-2xl"></i>
           </div>
-          <h4 class="text-sm font-black text-white uppercase tracking-wider mb-1">
+          <h4 class="text-sm font-black text-stone-900 uppercase tracking-wider mb-1">
             Sin Fotos de Progreso Registradas
           </h4>
           <p class="text-xs text-stone-500 max-w-sm mx-auto mb-4 leading-relaxed">
@@ -938,7 +954,7 @@
             cobren vida.
           </p>
           <button (click)="openNewProgressModal()"
-            class="inline-flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold text-xs rounded-2xl shadow-lg shadow-emerald-600/30 active:scale-95 transition-all cursor-pointer">
+            class="inline-flex items-center gap-2 px-5 py-2.5 bg-awakin-sun hover:bg-awakin-sun-dim text-white font-bold text-xs rounded-2xl shadow-lg shadow-awakin-sun/25 active:scale-95 transition-all cursor-pointer">
             <i class="pi pi-plus text-xs"></i>
             <span>Registrar Primera Medición</span>
           </button>
@@ -1401,7 +1417,7 @@
         Nuevo Registro
       </h3>
       <button type="button" (click)="closeNewProgressModal()"
-        class="w-8 h-8 rounded-full bg-slate-800/80 hover:bg-slate-700 text-stone-500 hover:text-white flex items-center justify-center text-sm transition-all cursor-pointer">
+        class="w-8 h-8 rounded-full bg-stone-100 hover:bg-stone-200 text-stone-600 hover:text-stone-900 flex items-center justify-center text-sm transition-all cursor-pointer">
         <i class="pi pi-times"></i>
       </button>
     </div>
@@ -1643,171 +1659,274 @@
 </p-dialog>
 
 <!-- ========================================== -->
-<!-- MODAL: COMPARTIR GRÁFICOS (INTEGRADO)      -->
+<!-- MODAL: COMPARTIR PROGRESO (9:16 COLLAGE)   -->
 <!-- ========================================== -->
 @if (isShareChartsModalOpen()) {
 <div class="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4"
   (click)="closeShareChartsModal()">
   <div
-    class="bg-white rounded-3xl shadow-2xl border border-stone-200 w-full max-w-md max-h-[90vh] flex flex-col overflow-hidden animate-fade-in"
+    class="bg-white rounded-3xl shadow-2xl border border-stone-200 w-full max-w-md max-h-[92vh] flex flex-col overflow-hidden animate-fade-in"
     (click)="$event.stopPropagation()">
 
     <!-- HEADER -->
-    <div class="p-6 border-b border-stone-100 flex items-center justify-between">
+    <div class="px-5 py-4 border-b border-stone-100 flex items-center justify-between bg-stone-50/70">
       <div class="flex items-center gap-3">
         <div
-          class="w-10 h-10 rounded-2xl bg-emerald-50 flex items-center justify-center text-emerald-600 font-black text-lg">
+          class="w-9 h-9 rounded-2xl bg-awakin-sun/15 border border-awakin-sun/25 flex items-center justify-center text-awakin-sun font-black text-base">
           <i class="pi pi-share-alt"></i>
         </div>
         <div>
-          <h3 class="text-lg font-black text-stone-900 tracking-tight">Compartir Gráficos</h3>
-          <p class="text-xs text-stone-500 font-medium">Selecciona fechas para generar tu imagen 9:16</p>
+          <h3 class="text-base font-black text-stone-900 tracking-tight">Compartir Progreso</h3>
+          <p class="text-[11px] text-stone-500 font-medium">
+            @if (!shareChartShowPreview()) {
+              Elige tus registros para comparar (máx. 4)
+            } @else {
+              Vista previa de tu historia 9:16
+            }
+          </p>
         </div>
       </div>
       <button type="button" (click)="closeShareChartsModal()"
-        class="w-8 h-8 rounded-xl bg-stone-100 hover:bg-stone-200 text-stone-600 flex items-center justify-center text-sm transition-all cursor-pointer">
-        <i class="pi pi-times"></i>
+        class="w-8 h-8 rounded-full bg-stone-100 hover:bg-stone-200 text-stone-600 flex items-center justify-center text-sm transition-all cursor-pointer">
+        <i class="pi pi-times text-xs"></i>
       </button>
     </div>
 
-    <!-- CONTENIDO -->
-    <div class="p-6 overflow-y-auto flex-1 space-y-6">
-
-      <!-- SELECTOR DE FECHAS -->
-      <div class="space-y-3">
-        <div class="flex items-center justify-between">
-          <label class="text-xs font-black uppercase tracking-wider text-stone-600">Fechas a incluir</label>
-          <span class="text-xs font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full">
-            {{ shareChartSelectedDates().length }} / 8
-          </span>
+    <!-- PASO 1: SELECCIÓN DE LOGS -->
+    @if (!shareChartShowPreview()) {
+    <div class="p-5 overflow-y-auto flex-1 space-y-4">
+      <div class="text-center space-y-1">
+        <div
+          class="w-11 h-11 mx-auto rounded-2xl bg-awakin-sun/10 border border-awakin-sun/20 flex items-center justify-center text-awakin-sun mb-2">
+          <i class="pi pi-images text-lg"></i>
         </div>
-
-        <div class="grid grid-cols-2 gap-2">
-          @for (date of availableShareChartDates(); track date) {
-          <button type="button" (click)="toggleShareChartDate(date)" [class]="
-              'px-3 py-2.5 rounded-xl text-xs font-bold transition-all border' +
-              (isShareChartDateSelected(date) ? ' bg-emerald-600 text-white border-emerald-600 shadow-sm' : ' bg-stone-50 text-stone-700 border-stone-200 hover:bg-stone-100')
-            ">
-            {{ formatShareChartDate(date) }}
-          </button>
-          }
-        </div>
-
-        @if (shareChartSelectedDates().length < 2) { <p
-          class="text-[10px] text-stone-400 font-medium flex items-center gap-1">
-          <i class="pi pi-info-circle"></i>
-          Selecciona al menos 2 fechas para comparar
-          </p>
-          }
-          @if (shareChartSelectedDates().length > 8) {
-          <p class="text-[10px] text-red-500 font-medium flex items-center gap-1">
-            <i class="pi pi-exclamation-circle"></i>
-            Máximo 8 fechas permitidas
-          </p>
-          }
+        <h4 class="text-sm font-black text-stone-900 tracking-tight">Selecciona Registros</h4>
+        <p class="text-xs text-stone-500 leading-relaxed max-w-xs mx-auto">
+          Puedes elegir de 1 a 4 fechas para generar tu historia o comparar tu evolución.
+        </p>
       </div>
 
-      <!-- VISTA PREVIA DE REGISTROS SELECCIONADOS -->
-      @if (shareChartSelectedDates().length > 0) {
-      <div class="bg-stone-50 rounded-2xl border border-stone-100 p-4">
-        <div class="flex items-center justify-between mb-3">
-          <span class="text-xs font-bold uppercase tracking-wider text-stone-500">Registros seleccionados</span>
-          <span class="text-xs font-bold text-stone-600">{{ shareChartSelectedRecords().length }} check-ins</span>
-        </div>
-        <div class="space-y-2">
-          @for (rec of shareChartSelectedRecords(); track rec.id) {
-          <div class="flex items-center gap-3 p-2.5 rounded-xl bg-white border border-stone-100">
-            <span class="text-[10px] font-bold text-stone-400 w-16">{{ formatShareChartDate(rec.timestamp.split('T')[0])
-              }}</span>
-            @if (rec.peso) {
-            <span class="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded">
-              {{ rec.peso }} {{ rec.unidad_peso || shareChartWeightUnit() }}
-            </span>
-            }
-            @if (rec.cintura) {
-            <span class="text-[10px] font-bold text-amber-500 bg-amber-50 px-2 py-0.5 rounded">
-              C: {{ rec.cintura }}cm
-            </span>
-            }
-            @if (rec.cadera) {
-            <span class="text-[10px] font-bold text-sky-500 bg-sky-50 px-2 py-0.5 rounded">
-              Cad: {{ rec.cadera }}cm
-            </span>
-            }
+      <!-- LISTA DE LOGS -->
+      <div class="space-y-2 max-h-[42vh] overflow-y-auto pr-1">
+        @for (rec of availableShareChartRecords(); track rec.id) {
+        <button type="button" (click)="toggleShareChartRecord(rec.id)"
+          class="w-full text-left p-3 rounded-2xl border transition-all flex items-center justify-between gap-3 cursor-pointer"
+          [ngClass]="isShareChartRecordSelected(rec.id)
+            ? 'bg-awakin-sun/5 border-awakin-sun shadow-xs'
+            : 'bg-white border-stone-200 hover:bg-stone-50'">
+          <div class="flex items-center gap-3 min-w-0">
+            <!-- Checkbox visual -->
+            <div class="w-5 h-5 rounded-md border flex items-center justify-center shrink-0 transition-all"
+              [ngClass]="isShareChartRecordSelected(rec.id)
+                ? 'bg-awakin-sun border-awakin-sun text-white'
+                : 'bg-white border-stone-300 text-transparent'">
+              <i class="pi pi-check text-[10px] font-black"></i>
+            </div>
+
+            <div class="min-w-0">
+              <div class="flex items-center gap-1.5">
+                <span class="text-xs font-black text-stone-900 truncate">
+                  {{ formatShareChartDate(rec.timestamp) }}
+                </span>
+                @if (hasRecordPhotos(rec)) {
+                <span class="inline-flex items-center gap-0.5 text-[9px] font-bold text-stone-500 bg-stone-100 px-1.5 py-0.5 rounded-md">
+                  <i class="pi pi-camera text-[8px]"></i> Fotos
+                </span>
+                }
+              </div>
+              <div class="text-[10px] font-semibold text-stone-500 flex items-center gap-2 mt-0.5 flex-wrap">
+                @if (rec.cintura) { <span>C: {{ rec.cintura }}cm</span> }
+                @if (rec.cadera) { <span>Cad: {{ rec.cadera }}cm</span> }
+                @if (rec.pecho) { <span>P: {{ rec.pecho }}cm</span> }
+              </div>
+            </div>
           </div>
-          }
-        </div>
-      </div>
-      }
 
-      <!-- BOTÓN GENERAR -->
-      <div class="pt-2">
-        <button type="button" (click)="generateShareChartImage()" [disabled]="!canGenerateShareChart()"
-          class="w-full py-4 rounded-2xl font-black text-xs uppercase tracking-wider transition-all shadow-sm flex items-center justify-center gap-2"
-          [class]="
-            canGenerateShareChart()
-              ? 'bg-emerald-600 text-white hover:bg-emerald-500 shadow-emerald-600/30 active:scale-95 cursor-pointer'
-              : 'bg-stone-200 text-stone-400 cursor-not-allowed'
-          ">
-          @if (shareChartIsGenerating()) {
-          <i class="pi pi-spin pi-spinner text-xs"></i>
-          <span>Generando Imagen...</span>
-          } @else {
-          <i class="pi pi-image text-xs"></i>
-          <span>Generar Imagen 9:16</span>
+          @if (rec.peso) {
+          <span class="text-xs font-black text-emerald-600 shrink-0">
+            {{ convertWeight(rec.peso, rec.unidad_peso, shareChartWeightUnit()) | number:'1.1-1' }} {{ shareChartWeightUnit() }}
+          </span>
           }
         </button>
+        } @empty {
+        <div class="py-8 text-center text-xs text-stone-400">
+          No hay registros de progreso disponibles.
+        </div>
+        }
+      </div>
+
+      <!-- TOGGLE: INCLUIR FOTOS Y DISEÑO DE COLLAGE -->
+      <div class="space-y-2.5 pt-1">
+        <div class="flex items-center justify-center">
+          <button type="button" (click)="shareChartIncludePhotos.set(!shareChartIncludePhotos())"
+            class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-stone-50 hover:bg-stone-100 border border-stone-200 transition-all cursor-pointer">
+            <div class="w-4 h-4 rounded border flex items-center justify-center transition-all"
+              [ngClass]="shareChartIncludePhotos()
+                ? 'bg-awakin-sun border-awakin-sun text-white'
+                : 'bg-white border-stone-300 text-transparent'">
+              <i class="pi pi-check text-[9px] font-black"></i>
+            </div>
+            <span class="text-xs font-bold text-stone-800">Incluir Fotos (Frontal, Lateral, Espalda)</span>
+          </button>
+        </div>
+
+        @if (shareChartIncludePhotos()) {
+        <div class="grid grid-cols-2 gap-2">
+          <button type="button" (click)="shareChartCollageLayout.set('fullbleed')"
+            class="px-3 py-2 rounded-xl border text-left transition-all cursor-pointer flex items-center gap-2"
+            [ngClass]="shareChartCollageLayout() === 'fullbleed'
+              ? 'bg-awakin-sun/10 border-awakin-sun text-stone-900 shadow-2xs'
+              : 'bg-stone-50 border-stone-200 text-stone-600 hover:bg-stone-100'">
+            <i class="pi pi-th-large text-xs" [ngClass]="shareChartCollageLayout() === 'fullbleed' ? 'text-awakin-sun' : 'text-stone-400'"></i>
+            <div class="min-w-0">
+              <div class="text-[11px] font-black leading-tight">IG Layout</div>
+              <div class="text-[9px] text-stone-500 truncate">Fondo completo</div>
+            </div>
+          </button>
+
+          <button type="button" (click)="shareChartCollageLayout.set('cards')"
+            class="px-3 py-2 rounded-xl border text-left transition-all cursor-pointer flex items-center gap-2"
+            [ngClass]="shareChartCollageLayout() === 'cards'
+              ? 'bg-awakin-sun/10 border-awakin-sun text-stone-900 shadow-2xs'
+              : 'bg-stone-50 border-stone-200 text-stone-600 hover:bg-stone-100'">
+            <i class="pi pi-images text-xs" [ngClass]="shareChartCollageLayout() === 'cards' ? 'text-awakin-sun' : 'text-stone-400'"></i>
+            <div class="min-w-0">
+              <div class="text-[11px] font-black leading-tight">Tarjetas</div>
+              <div class="text-[9px] text-stone-500 truncate">Marco clásico</div>
+            </div>
+          </button>
+        </div>
+        }
       </div>
 
       @if (shareChartErrorMessage()) {
       <div
-        class="p-3 rounded-xl bg-red-50 border border-red-100 text-red-700 text-xs font-medium flex items-start gap-2">
+        class="p-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs font-medium flex items-start gap-2">
         <i class="pi pi-exclamation-triangle mt-0.5 shrink-0"></i>
         <span>{{ shareChartErrorMessage() }}</span>
       </div>
       }
-    </div>
 
-    <!-- VISTA PREVIA DE IMAGEN GENERADA -->
-    @if (shareChartShowPreview() && shareChartGeneratedImageUrl()) {
-    <div class="p-6 border-t border-stone-100 bg-stone-50 flex-1 overflow-y-auto">
-      <div class="flex items-center justify-between mb-4">
-        <h4 class="text-sm font-black text-stone-900 uppercase tracking-wider">Vista Previa</h4>
-        <button type="button" (click)="shareChartShowPreview.set(false)"
-          class="text-[10px] font-bold text-stone-500 hover:text-stone-700 transition-colors">
-          Ocultar
-        </button>
-      </div>
-
-      <div class="flex items-center justify-center mb-4">
-        <div class="relative rounded-2xl overflow-hidden border border-stone-200 shadow-lg bg-white">
-          <img loading="lazy" decoding="async" [src]="shareChartGeneratedImageUrl()" alt="Vista previa del gráfico"
-            class="w-full h-auto max-h-[400px] object-contain" />
-        </div>
-      </div>
-
-      <div class="flex gap-2">
-        <button type="button" (click)="downloadShareChartImage()"
-          class="flex-1 py-3 rounded-xl bg-stone-900 text-white font-black text-xs uppercase tracking-wider transition-all hover:bg-stone-800 active:scale-95 cursor-pointer flex items-center justify-center gap-2">
-          <i class="pi pi-download text-xs"></i>
-          <span>Descargar</span>
-        </button>
-        <button type="button" (click)="shareShareChartImage()"
-          class="flex-1 py-3 rounded-xl bg-emerald-600 text-white font-black text-xs uppercase tracking-wider transition-all hover:bg-emerald-500 active:scale-95 cursor-pointer flex items-center justify-center gap-2">
-          <i class="pi pi-share-alt text-xs"></i>
-          <span>Compartir</span>
-        </button>
-      </div>
+      <!-- BOTÓN GENERAR HISTORIA -->
+      <button type="button" (click)="generateShareChartImage()" [disabled]="!canGenerateShareChart()"
+        class="w-full py-3.5 rounded-2xl font-black text-xs uppercase tracking-wider transition-all shadow-sm flex items-center justify-center gap-2"
+        [ngClass]="canGenerateShareChart()
+          ? 'bg-awakin-sun text-white hover:bg-awakin-sun-dim shadow-lg shadow-awakin-sun/25 active:scale-95 cursor-pointer'
+          : 'bg-stone-200 text-stone-400 cursor-not-allowed'">
+        @if (shareChartIsGenerating()) {
+        <i class="pi pi-spin pi-spinner text-xs"></i>
+        <span>Generando Collage 9:16...</span>
+        } @else {
+        <i class="pi pi-sparkles text-xs"></i>
+        <span>Generar Historia ({{ shareChartSelectedRecordIds().length }})</span>
+        }
+      </button>
     </div>
     }
 
-    <!-- FOOTER -->
-    <div class="p-4 border-t border-stone-100 bg-stone-50 flex justify-end gap-2">
-      <button type="button" (click)="closeShareChartsModal()"
-        class="px-4 py-2 rounded-xl text-stone-600 font-bold text-xs hover:bg-stone-200 transition-all cursor-pointer">
-        Cancelar
+    <!-- PASO 2: VISTA PREVIA DE IMAGEN 9:16 GENERADA -->
+    @if (shareChartShowPreview() && shareChartGeneratedImageUrl()) {
+    <div class="p-4 bg-stone-50 flex-1 overflow-y-auto flex flex-col items-center justify-center gap-2.5">
+      @if (shareChartIncludePhotos()) {
+      <div class="flex items-center justify-center gap-2 flex-wrap">
+        <div class="inline-flex items-center p-1 bg-white rounded-full border border-stone-200 shadow-2xs">
+          <button type="button" (click)="setShareCollageLayout('fullbleed')"
+            class="px-3 py-1 rounded-full text-[10px] font-black transition-all cursor-pointer"
+            [ngClass]="shareChartCollageLayout() === 'fullbleed' ? 'bg-awakin-sun text-white shadow-xs' : 'text-stone-600 hover:text-stone-900'">
+            IG Layout
+          </button>
+          <button type="button" (click)="setShareCollageLayout('cards')"
+            class="px-3 py-1 rounded-full text-[10px] font-black transition-all cursor-pointer"
+            [ngClass]="shareChartCollageLayout() === 'cards' ? 'bg-awakin-sun text-white shadow-xs' : 'text-stone-600 hover:text-stone-900'">
+            Tarjetas
+          </button>
+        </div>
+
+        @if (shareChartCollageLayout() === 'fullbleed') {
+        <button type="button" (click)="resetBackdropPosition()"
+          class="px-2.5 py-1 rounded-full bg-white hover:bg-stone-100 border border-stone-200 text-stone-600 text-[10px] font-bold flex items-center gap-1 transition-all cursor-pointer shadow-2xs"
+          title="Restablecer posición">
+          <i class="pi pi-refresh text-[9px]"></i>
+          <span>Centrar</span>
+        </button>
+        }
+      </div>
+      }
+
+      @if (shareChartIncludePhotos() && shareChartCollageLayout() === 'fullbleed') {
+      <p class="text-[10px] text-stone-500 font-semibold flex items-center gap-1">
+        <i class="pi pi-arrows-alt text-awakin-sun text-[10px]"></i>
+        Arrastra la tarjeta de logros para posicionarla
+      </p>
+      }
+
+      <div #previewFrame
+        class="rounded-2xl overflow-hidden border border-stone-200 shadow-xl bg-white max-w-[280px] w-full relative select-none">
+        @if (shareChartIsGenerating() || shareChartIsExporting()) {
+        <div class="absolute inset-0 bg-white/80 backdrop-blur-xs flex items-center justify-center z-20">
+          <i class="pi pi-spin pi-spinner text-awakin-sun text-xl"></i>
+        </div>
+        }
+        <img [src]="shareChartGeneratedImageUrl()" alt="Vista previa de historia 9:16"
+          class="w-full h-auto object-contain block pointer-events-none" />
+
+        <!-- BACKDROP ARRASTRABLE EN IG LAYOUT -->
+        @if (shareChartIncludePhotos() && shareChartCollageLayout() === 'fullbleed' && sharePreviewMetrics().cells.length > 0) {
+        <div
+          (pointerdown)="onBackdropPointerDown($event, previewFrame)"
+          (pointermove)="onBackdropPointerMove($event)"
+          (pointerup)="onBackdropPointerUp($event)"
+          (pointercancel)="onBackdropPointerUp($event)"
+          [style.left.%]="backdropPos().xRatio * 100"
+          [style.top.%]="backdropPos().yRatio * 100"
+          style="transform: translateX(-50%); touch-action: none;"
+          class="absolute z-10 w-[91.8%] rounded-xl px-2 py-2 bg-transparent backdrop-blur-xs border border-white/30 shadow-md cursor-grab active:cursor-grabbing transition-shadow"
+          [class.ring-2]="isDraggingBackdrop()"
+          [class.ring-awakin-sun]="isDraggingBackdrop()">
+          <div class="flex items-center justify-center gap-1 mb-1 drop-shadow-xs">
+            <i class="pi pi-arrows-alt text-[7px] text-white/75"></i>
+            <span class="text-[6.5px] font-black uppercase tracking-wider text-awakin-sun">
+              {{ sharePreviewMetrics().title }}
+            </span>
+          </div>
+          <div class="grid gap-1 text-center drop-shadow-xs"
+            [style.gridTemplateColumns]="'repeat(' + sharePreviewMetrics().cells.length + ', minmax(0, 1fr))'">
+            @for (cell of sharePreviewMetrics().cells; track cell.label; let idx = $index) {
+            <div class="flex flex-col items-center justify-center px-0.5"
+              [class.border-l]="idx > 0" [class.border-white/25]="idx > 0">
+              <span class="text-[5.5px] font-extrabold text-white/85 uppercase leading-tight">{{ cell.label }}</span>
+              <span class="text-[9px] font-black text-white leading-tight mt-0.5">{{ cell.value }}</span>
+              @if (cell.delta) {
+              <span class="text-[6px] font-extrabold leading-tight"
+                [ngClass]="cell.deltaGood ? 'text-emerald-400' : 'text-amber-300'">
+                {{ cell.delta }}
+              </span>
+              }
+            </div>
+            }
+          </div>
+        </div>
+        }
+      </div>
+    </div>
+
+    <div class="p-4 border-t border-stone-100 bg-white flex items-center gap-2">
+      <button type="button" (click)="backToShareSelection()" [disabled]="shareChartIsExporting()"
+        class="px-4 py-3 rounded-xl bg-stone-100 hover:bg-stone-200 text-stone-700 font-bold text-xs transition-all cursor-pointer disabled:opacity-50">
+        Atrás
+      </button>
+      <button type="button" (click)="downloadShareChartImage()" [disabled]="shareChartIsExporting()"
+        class="px-4 py-3 rounded-xl bg-stone-900 hover:bg-stone-800 text-white font-black text-xs uppercase tracking-wider transition-all active:scale-95 cursor-pointer flex items-center justify-center gap-1.5 disabled:opacity-50">
+        <i class="pi pi-download text-xs"></i>
+        <span class="hidden sm:inline">Guardar</span>
+      </button>
+      <button type="button" (click)="shareShareChartImage()" [disabled]="shareChartIsExporting()"
+        class="flex-1 py-3 rounded-xl bg-awakin-sun hover:bg-awakin-sun-dim text-white font-black text-xs uppercase tracking-wider transition-all shadow-lg shadow-awakin-sun/25 active:scale-95 cursor-pointer flex items-center justify-center gap-2 disabled:opacity-50">
+        <i class="pi pi-share-alt text-xs"></i>
+        <span>Compartir</span>
       </button>
     </div>
+    }
   </div>
 </div>
 }

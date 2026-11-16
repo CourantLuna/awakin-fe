@@ -58,6 +58,11 @@ export interface AthleteProfile {
   kin_id?: string | null;
   head_coach_id?: string | null;
   instructor_id?: string | null;
+  altura_cm?: number | null;
+  sexo?: string | null;
+  genero?: string | null;
+  fecha_nacimiento?: string | null;
+  edad?: number | null;
   kin?: KinInfo | null;
   kins?: KinInfo[];
 }

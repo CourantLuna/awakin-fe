@@ -184,6 +184,62 @@ export class ProfileAvatarComponent implements OnInit {
     };
   });
 
+  // Altura efectiva en cm: usa altura_cm del atleta; si es null, usa promedio de población dominicana
+  // (172 cm hombres, 159 cm mujeres, 166 cm general)
+  effectiveHeightInfo = computed(() => {
+    const ath = this.athlete();
+    if (ath?.altura_cm && Number(ath.altura_cm) > 0) {
+      return { cm: Number(ath.altura_cm), isEstimated: false };
+    }
+    const rawSex = (ath?.sexo || ath?.genero || '').toLowerCase().trim();
+    if (['f', 'femenino', 'female', 'mujer'].includes(rawSex)) {
+      return { cm: 159, isEstimated: true };
+    }
+    if (['m', 'masculino', 'male', 'hombre'].includes(rawSex)) {
+      return { cm: 172, isEstimated: true };
+    }
+    return { cm: 166, isEstimated: true };
+  });
+
+  // TMB Actual (Tasa Metabólica Basal - Mifflin-St Jeor)
+  currentTmb = computed(() => {
+    const latest = this.latestRecord();
+    if (!latest || !latest.peso) return null;
+    const pesoKg = this.convertWeight(Number(latest.peso), latest.unidad_peso, 'kg');
+    if (pesoKg <= 0) return null;
+
+    const { cm: alturaCm, isEstimated } = this.effectiveHeightInfo();
+    const ath = this.athlete();
+
+    let age = 30;
+    if (ath?.edad && Number(ath.edad) > 0) {
+      age = Number(ath.edad);
+    } else if (ath?.fecha_nacimiento) {
+      const birth = new Date(ath.fecha_nacimiento);
+      if (!isNaN(birth.getTime())) {
+        const calculatedAge = Math.floor((Date.now() - birth.getTime()) / (365.25 * 24 * 60 * 60 * 1000));
+        if (calculatedAge > 10 && calculatedAge < 110) {
+          age = calculatedAge;
+        }
+      }
+    }
+
+    const rawSex = (ath?.sexo || ath?.genero || '').toLowerCase().trim();
+    let sexOffset = -78;
+    if (['m', 'masculino', 'male', 'hombre'].includes(rawSex)) {
+      sexOffset = 5;
+    } else if (['f', 'femenino', 'female', 'mujer'].includes(rawSex)) {
+      sexOffset = -161;
+    }
+
+    const kcal = Math.round(10 * pesoKg + 6.25 * alturaCm - 5 * age + sexOffset);
+    return {
+      kcal,
+      alturaCm,
+      isEstimated
+    };
+  });
+
   // Gráfico 1: Evolución de Peso (SVG interactivo)
   weightChartData = computed(() => {
     const items = this.chronologicalProgress();
@@ -395,9 +451,16 @@ export class ProfileAvatarComponent implements OnInit {
   activeTooltip = signal<{ type: 'weight' | 'metric'; x: number; y: number; text: string; subtext?: string } | null>(null);
 
   ngOnInit() {
-    // Cargar bajo demanda el perfil del atleta autenticado
+    // Cargar o refrescar el perfil, registros nutricionales, posts y logs de progreso
     const current = this.athlete();
-    if (!current) {
+    if (current?.id) {
+      if (!this.records()) {
+        this.athleteService.loadAthleteRecords(current.id);
+        this.athleteService.loadAthletePosts(current.id);
+      }
+      // Refrescar perfil en segundo plano para mantener altura_cm, kin y stats actualizados
+      this.athleteService.loadAthleteProfile(current.id);
+    } else {
       const session = this.authService.currentSession();
       if (session?.avatar?.id) {
         this.athleteService.loadAthleteProfile(session.avatar.id);
@@ -1161,52 +1224,142 @@ export class ProfileAvatarComponent implements OnInit {
   // Servicio de generación de imágenes para gráficos
   private chartExportService = inject(ChartImageExportService);
 
-  // Estado del modal de compartir gráficos
+  // Estado del modal de compartir progreso
   isShareChartsModalOpen = signal<boolean>(false);
   shareChartRecords = signal<ProgressMetricRecord[]>([]);
   shareChartUserName = signal<string>('');
+  shareChartUserFullName = signal<string | null>(null);
   shareChartUserImageUrl = signal<string | null>(null);
   shareChartKinLogoUrl = signal<string | null>(null);
+  shareChartKinName = signal<string | null>(null);
   shareChartWeightUnit = signal<'kg' | 'lb'>('lb');
-  shareChartSelectedDates = signal<string[]>([]);
+  shareChartSelectedRecordIds = signal<string[]>([]);
+  shareChartIncludePhotos = signal<boolean>(true);
+  shareChartCollageLayout = signal<'cards' | 'fullbleed'>('fullbleed');
   shareChartIsGenerating = signal<boolean>(false);
+  shareChartIsExporting = signal<boolean>(false);
   shareChartGeneratedImageUrl = signal<string | null>(null);
   shareChartErrorMessage = signal<string | null>(null);
   shareChartShowPreview = signal<boolean>(false);
 
-  // Fechas disponibles para compartir
-  availableShareChartDates = computed(() => {
-    return this.shareChartRecords()
-      .map(r => r.timestamp.split('T')[0])
-      .filter((date, index, arr) => arr.indexOf(date) === index)
-      .sort((a, b) => new Date(a).getTime() - new Date(b).getTime());
+  // Posición arrastrable del backdrop de Logros (ratios relativos al lienzo 9:16)
+  backdropPos = signal<{ xRatio: number; yRatio: number }>({ xRatio: 0.5, yRatio: 0.81 });
+  isDraggingBackdrop = signal<boolean>(false);
+  private backdropDragStart = { pointerX: 0, pointerY: 0, startXRatio: 0.5, startYRatio: 0.81, containerW: 280, containerH: 498 };
+
+  // Métricas calculadas para el backdrop arrastrable en la vista previa
+  sharePreviewMetrics = computed(() => {
+    const selected = [...this.shareChartSelectedRecords()].sort(
+      (a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
+    );
+    const unit = this.shareChartWeightUnit();
+    const isComparison = selected.length >= 2;
+    const first = selected[0];
+    const last = selected[selected.length - 1];
+    const cells: Array<{ label: string; value: string; delta?: string; deltaGood?: boolean }> = [];
+
+    if (last?.peso) {
+      const lastW = this.convertWeight(Number(last.peso), last.unidad_peso, unit);
+      let delta: string | undefined;
+      let deltaGood = true;
+      if (isComparison && first?.peso) {
+        const firstW = this.convertWeight(Number(first.peso), first.unidad_peso, unit);
+        const diff = Number((lastW - firstW).toFixed(1));
+        delta = `${diff > 0 ? '+' : ''}${diff} ${unit}`;
+        deltaGood = diff <= 0;
+      }
+      cells.push({ label: 'PESO', value: `${lastW.toFixed(1)} ${unit}`, delta, deltaGood });
+    }
+
+    if (last?.cintura) {
+      let delta: string | undefined;
+      let deltaGood = true;
+      if (isComparison && first?.cintura) {
+        const diff = Number((last.cintura - first.cintura).toFixed(1));
+        delta = `${diff > 0 ? '+' : ''}${diff} cm`;
+        deltaGood = diff <= 0;
+      }
+      cells.push({ label: 'CINTURA', value: `${last.cintura} cm`, delta, deltaGood });
+    }
+
+    if (last?.cadera) {
+      let delta: string | undefined;
+      if (isComparison && first?.cadera) {
+        const diff = Number((last.cadera - first.cadera).toFixed(1));
+        delta = `${diff > 0 ? '+' : ''}${diff} cm`;
+      }
+      cells.push({ label: 'CADERA', value: `${last.cadera} cm`, delta, deltaGood: true });
+    }
+
+    if (last?.pecho) {
+      let delta: string | undefined;
+      if (isComparison && first?.pecho) {
+        const diff = Number((last.pecho - first.pecho).toFixed(1));
+        delta = `${diff > 0 ? '+' : ''}${diff} cm`;
+      }
+      cells.push({ label: 'PECHO', value: `${last.pecho} cm`, delta, deltaGood: true });
+    }
+
+    const tmb = this.currentTmb()?.kcal;
+    if (tmb && cells.length < 4) {
+      cells.push({ label: 'TMB ACTUAL', value: `${tmb} kcal` });
+    }
+
+    return {
+      title: isComparison ? 'LOGROS • INICIO VS ACTUAL' : 'MIS MEDIDAS',
+      cells
+    };
   });
 
-  // Registros seleccionados para el gráfico
+  // Logs disponibles ordenados del más reciente al más antiguo
+  availableShareChartRecords = computed(() => {
+    return [...this.shareChartRecords()].sort(
+      (a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+    );
+  });
+
+  // Registros seleccionados para el collage/comparación
   shareChartSelectedRecords = computed(() => {
-    const dates = this.shareChartSelectedDates();
-    return this.shareChartRecords().filter(r => dates.includes(r.timestamp.split('T')[0]));
+    const ids = this.shareChartSelectedRecordIds();
+    return this.shareChartRecords().filter(r => ids.includes(r.id));
   });
 
-  // Puede generar imagen (min 2, max 8 fechas)
+  // Puede generar imagen (min 1, max 4 registros)
   canGenerateShareChart = computed(() => {
-    return this.shareChartSelectedDates().length >= 2 && this.shareChartSelectedDates().length <= 8 && !this.shareChartIsGenerating();
+    const count = this.shareChartSelectedRecordIds().length;
+    return count >= 1 && count <= 4 && !this.shareChartIsGenerating();
   });
 
-  // Abrir modal de compartir gráficos con datos del progreso
-  shareProgressCharts() {
+  // Abrir modal de compartir progreso con datos del atleta
+  shareProgressCharts(preselectedRecordId?: string) {
     const ath = this.athlete();
     if (!ath) return;
 
     const records = this.progressRecords();
     const kin = ath.kin;
+    const fullName = [ath.first_name, ath.last_name].filter(Boolean).join(' ').trim() || null;
 
     this.shareChartRecords.set(records);
     this.shareChartUserName.set(ath.username || 'atleta');
+    this.shareChartUserFullName.set(fullName);
     this.shareChartUserImageUrl.set(ath.profile_image_url || null);
+    // Solo el Kin asociado al atleta actual
     this.shareChartKinLogoUrl.set(kin?.team_logo_url || null);
+    this.shareChartKinName.set(kin?.team_name || null);
     this.shareChartWeightUnit.set(this.preferredWeightUnit());
-    this.shareChartSelectedDates.set([]);
+    this.shareChartIncludePhotos.set(true);
+
+    if (preselectedRecordId) {
+      this.shareChartSelectedRecordIds.set([preselectedRecordId]);
+    } else if (records.length > 0) {
+      const sorted = [...records].sort(
+        (a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+      );
+      this.shareChartSelectedRecordIds.set([sorted[0].id]);
+    } else {
+      this.shareChartSelectedRecordIds.set([]);
+    }
+
     this.shareChartIsGenerating.set(false);
     this.shareChartGeneratedImageUrl.set(null);
     this.shareChartErrorMessage.set(null);
@@ -1224,12 +1377,20 @@ export class ProfileAvatarComponent implements OnInit {
     this.shareChartShowPreview.set(false);
 
     try {
+      const isFullBleed = this.shareChartIncludePhotos() && this.shareChartCollageLayout() === 'fullbleed';
       const data = {
         records: this.shareChartSelectedRecords(),
         userName: this.shareChartUserName(),
+        userFullName: this.shareChartUserFullName(),
         userImageUrl: this.shareChartUserImageUrl(),
         kinLogoUrl: this.shareChartKinLogoUrl(),
-        weightUnit: this.shareChartWeightUnit()
+        kinName: this.shareChartKinName(),
+        weightUnit: this.shareChartWeightUnit(),
+        includePhotos: this.shareChartIncludePhotos(),
+        collageLayout: this.shareChartCollageLayout(),
+        tmbKcal: this.currentTmb()?.kcal ?? null,
+        // En vista previa de IG Layout, omitimos el backdrop en el canvas para hacerlo arrastrable en HTML
+        omitMetricsBackdrop: isFullBleed
       };
 
       const imageUrl = await this.chartExportService.generateShareImage(data);
@@ -1243,61 +1404,162 @@ export class ProfileAvatarComponent implements OnInit {
     }
   }
 
+  // Renderiza la imagen final con la posición exacta del backdrop arrastrable
+  private async getFinalExportImageUrl(): Promise<string | null> {
+    const isFullBleed = this.shareChartIncludePhotos() && this.shareChartCollageLayout() === 'fullbleed';
+    if (!isFullBleed) {
+      return this.shareChartGeneratedImageUrl();
+    }
+
+    this.shareChartIsExporting.set(true);
+    try {
+      const pos = this.backdropPos();
+      return await this.chartExportService.generateShareImage({
+        records: this.shareChartSelectedRecords(),
+        userName: this.shareChartUserName(),
+        userFullName: this.shareChartUserFullName(),
+        userImageUrl: this.shareChartUserImageUrl(),
+        kinLogoUrl: this.shareChartKinLogoUrl(),
+        kinName: this.shareChartKinName(),
+        weightUnit: this.shareChartWeightUnit(),
+        includePhotos: true,
+        collageLayout: 'fullbleed',
+        tmbKcal: this.currentTmb()?.kcal ?? null,
+        omitMetricsBackdrop: false,
+        metricsBackdropXRatio: pos.xRatio,
+        metricsBackdropYRatio: pos.yRatio
+      });
+    } finally {
+      this.shareChartIsExporting.set(false);
+    }
+  }
+
+  // Handlers de arrastre (Pointer Events para mouse y touch)
+  onBackdropPointerDown(event: PointerEvent, containerEl: HTMLElement) {
+    event.preventDefault();
+    event.stopPropagation();
+    const target = event.currentTarget as HTMLElement;
+    target.setPointerCapture(event.pointerId);
+
+    const rect = containerEl.getBoundingClientRect();
+    const pos = this.backdropPos();
+    this.isDraggingBackdrop.set(true);
+    this.backdropDragStart = {
+      pointerX: event.clientX,
+      pointerY: event.clientY,
+      startXRatio: pos.xRatio,
+      startYRatio: pos.yRatio,
+      containerW: rect.width || 280,
+      containerH: rect.height || 498
+    };
+  }
+
+  onBackdropPointerMove(event: PointerEvent) {
+    if (!this.isDraggingBackdrop()) return;
+    event.preventDefault();
+
+    const dx = event.clientX - this.backdropDragStart.pointerX;
+    const dy = event.clientY - this.backdropDragStart.pointerY;
+
+    const newXRatio = this.backdropDragStart.startXRatio + dx / this.backdropDragStart.containerW;
+    const newYRatio = this.backdropDragStart.startYRatio + dy / this.backdropDragStart.containerH;
+
+    // Limitar dentro del lienzo 9:16 respetando márgenes seguros
+    const clampedX = Math.max(0.42, Math.min(0.58, newXRatio));
+    const clampedY = Math.max(0.08, Math.min(0.81, newYRatio));
+
+    this.backdropPos.set({ xRatio: clampedX, yRatio: clampedY });
+  }
+
+  onBackdropPointerUp(event: PointerEvent) {
+    if (!this.isDraggingBackdrop()) return;
+    const target = event.currentTarget as HTMLElement;
+    if (target.hasPointerCapture(event.pointerId)) {
+      target.releasePointerCapture(event.pointerId);
+    }
+    this.isDraggingBackdrop.set(false);
+  }
+
+  resetBackdropPosition() {
+    this.backdropPos.set({ xRatio: 0.5, yRatio: 0.81 });
+  }
+
+  // Cambiar diseño de collage y regenerar si está en vista previa
+  setShareCollageLayout(layout: 'cards' | 'fullbleed') {
+    this.shareChartCollageLayout.set(layout);
+    if (this.shareChartShowPreview()) {
+      this.generateShareChartImage();
+    }
+  }
+
+  // Volver de vista previa a selección
+  backToShareSelection() {
+    this.shareChartShowPreview.set(false);
+  }
+
   // Descargar imagen generada
-  downloadShareChartImage() {
-    if (!this.shareChartGeneratedImageUrl()) return;
+  async downloadShareChartImage() {
+    const finalUrl = await this.getFinalExportImageUrl();
+    if (!finalUrl) return;
 
     const link = document.createElement('a');
-    link.href = this.shareChartGeneratedImageUrl()!;
+    link.href = finalUrl;
     link.download = `awakin-progreso-${this.shareChartUserName()}-${new Date().toISOString().split('T')[0]}.png`;
     link.click();
   }
 
   // Compartir imagen generada
   async shareShareChartImage() {
-    if (!this.shareChartGeneratedImageUrl()) return;
+    const finalUrl = await this.getFinalExportImageUrl();
+    if (!finalUrl) return;
 
     try {
-      const response = await fetch(this.shareChartGeneratedImageUrl()!);
+      const response = await fetch(finalUrl);
       const blob = await response.blob();
       const file = new File([blob], `awakin-progreso-${this.shareChartUserName()}.png`, { type: 'image/png' });
 
       if (navigator.share && navigator.canShare({ files: [file] })) {
         await navigator.share({
           title: `Mi Progreso Corporal - ${this.shareChartUserName()}`,
-          text: 'Mi evolución de peso y medidas en Awakin OS',
+          text: 'Mi evolución en Awakin',
           files: [file]
         });
       } else {
-        this.downloadShareChartImage();
+        const link = document.createElement('a');
+        link.href = finalUrl;
+        link.download = `awakin-progreso-${this.shareChartUserName()}-${new Date().toISOString().split('T')[0]}.png`;
+        link.click();
       }
     } catch (err) {
       console.error('Error compartiendo:', err);
-      this.downloadShareChartImage();
     }
   }
 
-  // Cerrar modal de compartir gráficos
+  // Cerrar modal de compartir progreso
   closeShareChartsModal() {
     this.isShareChartsModalOpen.set(false);
-    this.shareChartSelectedDates.set([]);
+    this.shareChartSelectedRecordIds.set([]);
     this.shareChartGeneratedImageUrl.set(null);
     this.shareChartShowPreview.set(false);
   }
 
-  // Alternar selección de fecha
-  toggleShareChartDate(date: string) {
-    const current = this.shareChartSelectedDates();
-    if (current.includes(date)) {
-      this.shareChartSelectedDates.set(current.filter(d => d !== date));
-    } else if (current.length < 8) {
-      this.shareChartSelectedDates.set([...current, date]);
+  // Alternar selección de registro (max 4)
+  toggleShareChartRecord(recordId: string) {
+    const current = this.shareChartSelectedRecordIds();
+    if (current.includes(recordId)) {
+      this.shareChartSelectedRecordIds.set(current.filter(id => id !== recordId));
+    } else if (current.length < 4) {
+      this.shareChartSelectedRecordIds.set([...current, recordId]);
     }
   }
 
-  // Verificar si una fecha está seleccionada
-  isShareChartDateSelected(date: string): boolean {
-    return this.shareChartSelectedDates().includes(date);
+  // Verificar si un registro está seleccionado
+  isShareChartRecordSelected(recordId: string): boolean {
+    return this.shareChartSelectedRecordIds().includes(recordId);
+  }
+
+  hasRecordPhotos(rec: ProgressMetricRecord): boolean {
+    return !!(rec.foto_frontal_url || rec.foto_lateral_url || rec.foto_espalda_url);
   }
 
   // Formatear fecha para mostrar
@@ -1310,26 +1572,9 @@ export class ProfileAvatarComponent implements OnInit {
     }
   }
 
-  // Compartir un registro fotográfico puntual (mantenido para compatibilidad)
+  // Compartir un registro puntual abriendo el modal preseleccionado
   shareProgressRecord(record: ProgressMetricRecord) {
-    const dateFormatted = this.formatDateSpanish(record.timestamp);
-    let text = `📸 Check-in de Progreso (${dateFormatted})\n`;
-    if (record.peso) text += `• Peso: ${record.peso} ${record.unidad_peso || 'lb'}\n`;
-    if (record.cintura) text += `• Cintura: ${record.cintura} cm\n`;
-    if (record.cadera) text += `• Cadera: ${record.cadera} cm\n`;
-    if (record.pecho) text += `• Pecho: ${record.pecho} cm\n`;
-    text += `Awakin OS.`;
-
-    if (navigator.share) {
-      navigator.share({
-        title: `Check-in ${dateFormatted}`,
-        text
-      }).catch(() => { });
-    } else {
-      navigator.clipboard.writeText(text).then(() => {
-        alert('¡Datos del check-in copiados al portapapeles!');
-      });
-    }
+    this.shareProgressCharts(record.id);
   }
 
   // Visualizador Lightbox de fotos

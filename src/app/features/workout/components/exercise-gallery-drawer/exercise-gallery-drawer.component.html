@@ -316,6 +316,92 @@
           </article>
           }
         </div>
+
+        <!-- Paginación Híbrida: Botón Cargar Más en Móvil + Paginador Numérico en Desktop -->
+        @if (totalExercises() > 0) {
+        <div class="mt-6 pt-4 border-t border-stone-200/60 flex flex-col items-center gap-3">
+          
+          <!-- Versión Desktop: Paginador Numérico clásico con botones Previous / Next -->
+          @if (totalPages() > 1) {
+          <div class="hidden sm:flex items-center justify-between w-full max-w-2xl px-2">
+            <div class="text-xs text-stone-500 font-semibold">
+              Página <span class="font-bold text-stone-900">{{ currentPage() }}</span> de <span class="font-bold text-stone-900">{{ totalPages() }}</span>
+              <span class="text-stone-400 ml-1">({{ totalExercises() }} ejercicios)</span>
+            </div>
+
+            <div class="inline-flex items-center gap-1">
+              <!-- Botón Primera Página -->
+              <button type="button" (click)="goToPage(1)" [disabled]="currentPage() === 1 || isLoading()"
+                class="w-8 h-8 rounded-lg border border-stone-200 bg-white text-stone-700 hover:bg-stone-100 disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center text-xs transition-colors cursor-pointer"
+                title="Primera página">
+                <i class="pi pi-angle-double-left text-[11px]"></i>
+              </button>
+
+              <!-- Botón Anterior -->
+              <button type="button" (click)="goToPage(currentPage() - 1)" [disabled]="currentPage() === 1 || isLoading()"
+                class="w-8 h-8 rounded-lg border border-stone-200 bg-white text-stone-700 hover:bg-stone-100 disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center text-xs transition-colors cursor-pointer"
+                title="Página anterior">
+                <i class="pi pi-chevron-left text-[11px]"></i>
+              </button>
+
+              <!-- Números de Página -->
+              @for (p of visiblePages(); track p) {
+              <button type="button" (click)="goToPage(p)" [disabled]="isLoading()"
+                class="w-8 h-8 rounded-lg text-xs font-black transition-all cursor-pointer flex items-center justify-center"
+                [class.bg-awakin-sun]="currentPage() === p"
+                [class.text-white]="currentPage() === p"
+                [class.shadow-xs]="currentPage() === p"
+                [class.bg-white]="currentPage() !== p"
+                [class.text-stone-700]="currentPage() !== p"
+                [class.border]="currentPage() !== p"
+                [class.border-stone-200]="currentPage() !== p"
+                [class.hover:bg-stone-100]="currentPage() !== p">
+                {{ p }}
+              </button>
+              }
+
+              <!-- Botón Siguiente -->
+              <button type="button" (click)="goToPage(currentPage() + 1)" [disabled]="currentPage() === totalPages() || isLoading()"
+                class="w-8 h-8 rounded-lg border border-stone-200 bg-white text-stone-700 hover:bg-stone-100 disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center text-xs transition-colors cursor-pointer"
+                title="Página siguiente">
+                <i class="pi pi-chevron-right text-[11px]"></i>
+              </button>
+
+              <!-- Botón Última Página -->
+              <button type="button" (click)="goToPage(totalPages())" [disabled]="currentPage() === totalPages() || isLoading()"
+                class="w-8 h-8 rounded-lg border border-stone-200 bg-white text-stone-700 hover:bg-stone-100 disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center text-xs transition-colors cursor-pointer"
+                title="Última página">
+                <i class="pi pi-angle-double-right text-[11px]"></i>
+              </button>
+            </div>
+          </div>
+          }
+
+          <!-- Versión Móvil: Botón Cargar Más Progresivo -->
+          <div class="sm:hidden w-full flex flex-col items-center">
+            @if (hasMorePages()) {
+            <button type="button" (click)="loadMoreExercises()" [disabled]="isLoadingMore()"
+              class="w-full px-5 py-2.5 rounded-xl bg-white hover:bg-stone-50 active:scale-98 border border-stone-200 text-stone-800 text-xs font-black uppercase tracking-wider flex items-center justify-center gap-2 shadow-xs transition-all cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed">
+              @if (isLoadingMore()) {
+              <i class="pi pi-spin pi-spinner text-awakin-sun text-xs"></i>
+              <span>Cargando más ejercicios...</span>
+              } @else {
+              <i class="pi pi-arrow-down text-awakin-sun text-xs"></i>
+              <span>Cargar más ejercicios</span>
+              <span class="px-1.5 py-0.5 rounded-md bg-stone-100 text-stone-600 text-[10px] font-bold">
+                {{ exercises().length }} de {{ totalExercises() }}
+              </span>
+              }
+            </button>
+            } @else if (exercises().length > 0) {
+            <span class="text-[10px] font-bold uppercase tracking-wider text-stone-400 py-1">
+              Todos los {{ totalExercises() }} ejercicios cargados
+            </span>
+            }
+          </div>
+
+        </div>
+        }
         } @else {
         <div
           class="bg-white rounded-2xl border border-dashed border-stone-300 p-8 text-center flex flex-col items-center justify-center">
@@ -410,6 +496,92 @@
         </article>
         }
       </div>
+
+      <!-- Paginación Híbrida en Vista Lista: Desktop Numerada + Móvil Cargar Más -->
+      @if (totalExercises() > 0) {
+      <div class="mt-6 pt-4 border-t border-stone-200/60 flex flex-col items-center gap-3">
+        
+        <!-- Versión Desktop: Paginador Numérico clásico con botones Previous / Next -->
+        @if (totalPages() > 1) {
+        <div class="hidden sm:flex items-center justify-between w-full max-w-2xl px-2">
+          <div class="text-xs text-stone-500 font-semibold">
+            Página <span class="font-bold text-stone-900">{{ currentPage() }}</span> de <span class="font-bold text-stone-900">{{ totalPages() }}</span>
+            <span class="text-stone-400 ml-1">({{ totalExercises() }} ejercicios)</span>
+          </div>
+
+          <div class="inline-flex items-center gap-1">
+            <!-- Botón Primera Página -->
+            <button type="button" (click)="goToPage(1)" [disabled]="currentPage() === 1 || isLoading()"
+              class="w-8 h-8 rounded-lg border border-stone-200 bg-white text-stone-700 hover:bg-stone-100 disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center text-xs transition-colors cursor-pointer"
+              title="Primera página">
+              <i class="pi pi-angle-double-left text-[11px]"></i>
+            </button>
+
+            <!-- Botón Anterior -->
+            <button type="button" (click)="goToPage(currentPage() - 1)" [disabled]="currentPage() === 1 || isLoading()"
+              class="w-8 h-8 rounded-lg border border-stone-200 bg-white text-stone-700 hover:bg-stone-100 disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center text-xs transition-colors cursor-pointer"
+              title="Página anterior">
+              <i class="pi pi-chevron-left text-[11px]"></i>
+            </button>
+
+            <!-- Números de Página -->
+            @for (p of visiblePages(); track p) {
+            <button type="button" (click)="goToPage(p)" [disabled]="isLoading()"
+              class="w-8 h-8 rounded-lg text-xs font-black transition-all cursor-pointer flex items-center justify-center"
+              [class.bg-awakin-sun]="currentPage() === p"
+              [class.text-white]="currentPage() === p"
+              [class.shadow-xs]="currentPage() === p"
+              [class.bg-white]="currentPage() !== p"
+              [class.text-stone-700]="currentPage() !== p"
+              [class.border]="currentPage() !== p"
+              [class.border-stone-200]="currentPage() !== p"
+              [class.hover:bg-stone-100]="currentPage() !== p">
+              {{ p }}
+            </button>
+            }
+
+            <!-- Botón Siguiente -->
+            <button type="button" (click)="goToPage(currentPage() + 1)" [disabled]="currentPage() === totalPages() || isLoading()"
+              class="w-8 h-8 rounded-lg border border-stone-200 bg-white text-stone-700 hover:bg-stone-100 disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center text-xs transition-colors cursor-pointer"
+              title="Página siguiente">
+              <i class="pi pi-chevron-right text-[11px]"></i>
+            </button>
+
+            <!-- Botón Última Página -->
+            <button type="button" (click)="goToPage(totalPages())" [disabled]="currentPage() === totalPages() || isLoading()"
+              class="w-8 h-8 rounded-lg border border-stone-200 bg-white text-stone-700 hover:bg-stone-100 disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center text-xs transition-colors cursor-pointer"
+              title="Última página">
+              <i class="pi pi-angle-double-right text-[11px]"></i>
+            </button>
+          </div>
+        </div>
+        }
+
+        <!-- Versión Móvil: Botón Cargar Más Progresivo -->
+        <div class="sm:hidden w-full flex flex-col items-center">
+          @if (hasMorePages()) {
+          <button type="button" (click)="loadMoreExercises()" [disabled]="isLoadingMore()"
+            class="w-full px-5 py-2.5 rounded-xl bg-white hover:bg-stone-50 active:scale-98 border border-stone-200 text-stone-800 text-xs font-black uppercase tracking-wider flex items-center justify-center gap-2 shadow-xs transition-all cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed">
+            @if (isLoadingMore()) {
+            <i class="pi pi-spin pi-spinner text-awakin-sun text-xs"></i>
+            <span>Cargando más ejercicios...</span>
+            } @else {
+            <i class="pi pi-arrow-down text-awakin-sun text-xs"></i>
+            <span>Cargar más ejercicios</span>
+            <span class="px-1.5 py-0.5 rounded-md bg-stone-100 text-stone-600 text-[10px] font-bold">
+              {{ exercises().length }} de {{ totalExercises() }}
+            </span>
+            }
+          </button>
+          } @else if (exercises().length > 0) {
+          <span class="text-[10px] font-bold uppercase tracking-wider text-stone-400 py-1">
+            Todos los {{ totalExercises() }} ejercicios cargados
+          </span>
+          }
+        </div>
+
+      </div>
+      }
       } @else {
       <div
         class="bg-white rounded-2xl border border-dashed border-stone-300 p-8 text-center flex flex-col items-center justify-center">
@@ -426,6 +598,17 @@
     }
 
   </div>
+
+  <!-- ========================================================================= -->
+  <!-- BOTÓN FLOTANTE (FAB) SCROLL TO TOP -->
+  <!-- ========================================================================= -->
+  @if (showScrollTop()) {
+  <button type="button" (click)="scrollToTop()"
+    class="fixed bottom-6 right-6 z-40 w-11 h-11 rounded-full bg-stone-900/90 hover:bg-stone-900 text-white shadow-xl hover:shadow-2xl border border-white/20 backdrop-blur-md flex items-center justify-center transition-all duration-300 hover:scale-110 active:scale-95 cursor-pointer animate-fade-in"
+    title="Volver arriba">
+    <i class="pi pi-arrow-up text-sm font-black"></i>
+  </button>
+  }
 </p-drawer>
 
 <!-- ========================================================================= -->
@@ -457,13 +640,21 @@
 
     <div class="overflow-y-auto p-4 flex flex-col gap-4">
 
-      <!-- GIF animado servido desde CDN Edge -->
+      <!-- Contenedor fijo de medios (GIF / Imagen) con relación de aspecto 1:1 estricta -->
       <div
-        class="w-full aspect-square max-h-[280px] rounded-2xl bg-stone-900/5 border border-stone-200/80 overflow-hidden flex items-center justify-center relative">
+        class="w-full h-64 sm:h-72 rounded-2xl bg-stone-900/5 border border-stone-200/80 overflow-hidden flex items-center justify-center relative shrink-0">
+        @if (isLoadingDetail() && !detail.gif_url) {
+        <div class="absolute inset-0 bg-stone-100 flex flex-col items-center justify-center gap-2 z-10">
+          <i class="pi pi-spin pi-spinner text-awakin-sun text-xl"></i>
+          <span class="text-[10px] font-bold text-stone-500 uppercase tracking-wider">Cargando animación...</span>
+        </div>
+        }
         @if (detail.gif_url) {
         <img [src]="getMediaUrl(detail.gif_url)" [alt]="detail.name" class="w-full h-full object-contain" />
         } @else if (detail.image) {
         <img [src]="getMediaUrl(detail.image)" [alt]="detail.name" class="w-full h-full object-contain" />
+        } @else {
+        <i class="pi pi-image text-stone-300 text-3xl"></i>
         }
       </div>
 
