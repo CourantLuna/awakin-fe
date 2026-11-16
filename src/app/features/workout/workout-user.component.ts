@@ -66,15 +66,19 @@ export class WorkoutUserComponent implements OnInit {
   // Override manual de rutina (cuando el usuario elige otra rutina diferente a la del día)
   selectedRoutineOverrideId = signal<string | null>(null);
 
-  // Builder de nueva rutina
+  // Builder de nueva rutina y banner
   newRoutineName = signal<string>('');
   newRoutineDescription = signal<string>('');
   newRoutineDay = signal<number | null>(null);
+  newRoutineBannerFile = signal<File | null>(null);
+  newRoutineBannerPreview = signal<string | null>(null);
   newRoutineExercises = signal<ActiveSessionExercise[]>([]);
   builderSearchQuery = signal<string>('');
   builderSearchResults = signal<ExerciseSummary[]>([]);
   isSearchingBuilder = signal<boolean>(false);
   isSavingRoutine = signal<boolean>(false);
+  isUploadingBanner = signal<boolean>(false);
+  bannerUploadError = signal<string | null>(null);
   private builderSearchTimer: any = null;
 
   // Atleta activo
@@ -294,6 +298,38 @@ export class WorkoutUserComponent implements OnInit {
     this.isExerciseGalleryOpen.set(true);
   }
 
+  async onRoutineBannerSelected(event: Event, routine: WorkoutRoutine): Promise<void> {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    input.value = '';
+    if (!file || this.isUploadingBanner()) return;
+
+    this.isUploadingBanner.set(true);
+    this.bannerUploadError.set(null);
+    try {
+      await this.workoutService.updateRoutineBanner(routine.id, file);
+    } catch (e: any) {
+      this.bannerUploadError.set(e?.message || 'Error subiendo banner de la rutina.');
+    } finally {
+      this.isUploadingBanner.set(false);
+    }
+  }
+
+  onNewRoutineBannerSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    if (!file) return;
+    this.newRoutineBannerFile.set(file);
+    const reader = new FileReader();
+    reader.onload = (e: any) => this.newRoutineBannerPreview.set(e.target.result);
+    reader.readAsDataURL(file);
+  }
+
+  clearNewRoutineBanner(): void {
+    this.newRoutineBannerFile.set(null);
+    this.newRoutineBannerPreview.set(null);
+  }
+
   // ==========================================
   // BUILDER DE NUEVA RUTINA
   // ==========================================
@@ -301,6 +337,7 @@ export class WorkoutUserComponent implements OnInit {
     this.newRoutineName.set('');
     this.newRoutineDescription.set('');
     this.newRoutineDay.set(this.selectedDayOfWeek());
+    this.clearNewRoutineBanner();
     this.newRoutineExercises.set([]);
     this.isCreateRoutineModalOpen.set(true);
     if (this.builderSearchResults().length === 0) {
@@ -372,6 +409,7 @@ export class WorkoutUserComponent implements OnInit {
         athleteId,
         name: this.newRoutineName(),
         description: this.newRoutineDescription(),
+        bannerFile: this.newRoutineBannerFile(),
         planId: this.activePlan()?.id || null,
         dayOfWeek: this.newRoutineDay(),
         exercises: this.newRoutineExercises().map((ex) => ({

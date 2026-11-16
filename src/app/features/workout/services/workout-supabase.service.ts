@@ -36,6 +36,7 @@ export interface CreateRoutineInput {
   athleteId: string;
   name: string;
   description?: string | null;
+  bannerFile?: File | null;
   planId?: string | null;
   dayOfWeek?: number | null;
   exercises: Array<{
@@ -345,11 +346,17 @@ export class WorkoutSupabaseService {
    * Crea una nueva rutina en Supabase (soporta ejercicios del API y ejercicios personalizados)
    */
   public async createRoutine(input: CreateRoutineInput): Promise<WorkoutRoutine> {
+    let bannerUrl: string | null = null;
+    if (input.bannerFile) {
+      bannerUrl = await this.uploadRoutineBanner(input.bannerFile, input.athleteId);
+    }
+
     const { data: routineRow, error: rErr } = await this.supabase
       .from('workout_routines')
       .insert({
         name: input.name.trim(),
         description: input.description?.trim() || null,
+        banner_url: bannerUrl,
         created_by: input.athleteId,
         is_active: true
       })
@@ -410,6 +417,39 @@ export class WorkoutSupabaseService {
   }
 
   /**
+   * Sube un banner a 'routine_banners' y actualiza workout_routines.banner_url en Supabase y en los signals locales
+   */
+  public async updateRoutineBanner(routineId: string, file: File): Promise<string> {
+    const publicUrl = await this.uploadRoutineBanner(file, routineId);
+    const { error } = await this.supabase
+      .from('workout_routines')
+      .update({ banner_url: publicUrl })
+      .eq('id', routineId);
+
+    if (error) {
+      throw new Error(error.message || 'No se pudo actualizar el banner de la rutina.');
+    }
+
+    this.allRoutines.update((list) =>
+      list.map((r) => (r.id === routineId ? { ...r, banner_url: publicUrl } : r))
+    );
+
+    this.activePlan.update((plan) => {
+      if (!plan) return plan;
+      return {
+        ...plan,
+        plan_routines: plan.plan_routines.map((pr) =>
+          pr.routine?.id === routineId
+            ? { ...pr, routine: { ...pr.routine, banner_url: publicUrl } }
+            : pr
+        )
+      };
+    });
+
+    return publicUrl;
+  }
+
+  /**
    * Obtiene el detalle de un ejercicio del API usando caché en memoria
    */
   public async getCachedExerciseDetail(apiId: string): Promise<ExerciseDetail | null> {
@@ -445,6 +485,7 @@ export class WorkoutSupabaseService {
       id: raw.id,
       name: raw.name,
       description: raw.description,
+      banner_url: raw.banner_url || null,
       created_by: raw.created_by,
       kin_id: raw.kin_id,
       is_active: raw.is_active,
@@ -505,10 +546,23 @@ export class WorkoutSupabaseService {
   }
 
   private async uploadWorkoutPhoto(file: File, athleteId: string): Promise<string> {
-    const compressed = await compressImage(file, 1080, 0.82);
     const filename = `workout_${athleteId}_${Date.now()}_${Math.random().toString(36).substring(2, 7)}.jpg`;
-    const storagePath = `workouts/${athleteId}/${filename}`;
-    const bucket = 'workout_photos';
+    return this.uploadImageToBucket(file, 'workout_photos', `workouts/${athleteId}/${filename}`, filename, 1080);
+  }
+
+  private async uploadRoutineBanner(file: File, ownerKey: string): Promise<string> {
+    const filename = `banner_${ownerKey}_${Date.now()}_${Math.random().toString(36).substring(2, 7)}.jpg`;
+    return this.uploadImageToBucket(file, 'routine_banners', `routines/${ownerKey}/${filename}`, filename, 1400);
+  }
+
+  private async uploadImageToBucket(
+    file: File,
+    bucket: string,
+    storagePath: string,
+    filename: string,
+    maxDimension: number
+  ): Promise<string> {
+    const compressed = await compressImage(file, maxDimension, 0.82);
 
     let backendDetail: string | null = null;
     try {
@@ -521,7 +575,7 @@ export class WorkoutSupabaseService {
         return res.public_url;
       }
     } catch (e: any) {
-      console.warn('Backend upload a workout_photos falló, intentando Supabase directo:', e);
+      console.warn(`Backend upload a ${bucket} falló, intentando Supabase directo:`, e);
       backendDetail = e?.error?.detail || e?.message || null;
     }
 
@@ -534,12 +588,12 @@ export class WorkoutSupabaseService {
       });
 
     if (error) {
-      throw new Error(backendDetail || error.message || `No se pudo subir la foto al bucket '${bucket}'.`);
+      throw new Error(backendDetail || error.message || `No se pudo subir la imagen al bucket '${bucket}'.`);
     }
 
     const { data } = this.supabase.storage.from(bucket).getPublicUrl(storagePath);
     if (!data?.publicUrl) {
-      throw new Error('No se pudo obtener la URL pública de la foto de entrenamiento.');
+      throw new Error(`No se pudo obtener la URL pública del bucket '${bucket}'.`);
     }
     return data.publicUrl;
   }

@@ -50,6 +50,7 @@ export interface WorkoutRoutine {
   id: string;
   name: string;
   description?: string | null;
+  banner_url?: string | null;
   created_by?: string | null;
   kin_id?: string | null;
   is_active: boolean;

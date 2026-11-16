@@ -432,79 +432,100 @@
   <div class="mt-2 px-3 md:px-5 pb-6 space-y-3 animate-fade-in">
     @if (workoutLogs().length > 0) {
       @for (log of workoutLogs(); track log.id) {
-      <div class="bg-white border border-stone-200/90 rounded-3xl p-4 shadow-xs space-y-3">
-        <!-- Cabecera del entrenamiento -->
-        <div class="flex items-start justify-between gap-3">
-          <div class="min-w-0 flex-1">
-            <div class="flex items-center gap-2 flex-wrap">
-              <span class="px-2 py-0.5 rounded-full bg-awakin-sun/15 text-amber-900 text-[9px] font-black uppercase tracking-wider">
-                {{ log.workout_date | date:'d MMM yyyy' }}
-              </span>
-              <span class="text-[11px] font-bold text-stone-500 inline-flex items-center gap-1">
-                <i class="pi pi-clock text-[10px] text-awakin-sun"></i> {{ log.duration_minutes }} min
-              </span>
-              @if (log.location) {
-              <span class="text-[11px] font-semibold text-stone-400 inline-flex items-center gap-1 truncate">
-                <i class="pi pi-map-marker text-[10px]"></i> {{ log.location }}
-              </span>
-              }
+      <div class="relative overflow-hidden border border-stone-200/90 rounded-3xl shadow-xs"
+        [ngClass]="log.photo_url ? 'bg-stone-100' : 'bg-white'">
+        @if (log.photo_url) {
+        <img loading="lazy" decoding="async" [src]="log.photo_url" [alt]="log.routine_name"
+          class="absolute inset-0 w-full h-full object-cover pointer-events-none select-none" />
+        <div class="absolute inset-0 bg-white/80 backdrop-blur-[2px] pointer-events-none"></div>
+        }
+
+        <div class="relative z-10 p-4 space-y-3">
+          <!-- Cabecera del entrenamiento -->
+          <div class="flex items-start justify-between gap-2">
+            <div class="min-w-0 flex-1">
+              <div class="flex items-center gap-2 flex-wrap">
+                <span class="px-2 py-0.5 rounded-full bg-awakin-sun/15 text-amber-900 text-[9px] font-black uppercase tracking-wider">
+                  {{ log.workout_date | date:'d MMM yyyy' }}
+                </span>
+                <span class="text-[11px] font-bold text-stone-600 inline-flex items-center gap-1">
+                  <i class="pi pi-clock text-[10px] text-awakin-sun"></i> {{ log.duration_minutes }} min
+                </span>
+                @if (log.location) {
+                <span class="text-[11px] font-semibold text-stone-500 inline-flex items-center gap-1 truncate">
+                  <i class="pi pi-map-marker text-[10px]"></i> {{ log.location }}
+                </span>
+                }
+              </div>
+              <h4 class="text-sm font-black text-stone-900 uppercase tracking-tight mt-1.5 truncate">
+                {{ log.routine_name }}
+              </h4>
             </div>
-            <h4 class="text-sm font-black text-stone-900 uppercase tracking-tight mt-1.5 truncate">
-              {{ log.routine_name }}
-            </h4>
+
+            <div class="flex items-center gap-1.5 shrink-0">
+              @if (log.photo_url) {
+              <button type="button" (click)="openLightbox(log.photo_url, log.routine_name, log.workout_date)"
+                class="w-8 h-8 rounded-full bg-white/85 hover:bg-white border border-stone-200/90 text-stone-700 flex items-center justify-center shadow-2xs transition-all cursor-pointer"
+                title="Ver foto completa">
+                <i class="pi pi-image text-xs"></i>
+              </button>
+              }
+              <button type="button" (click)="openWorkoutStoryModal(log)"
+                class="px-2.5 h-8 rounded-full bg-stone-900 hover:bg-stone-800 text-white text-[10px] font-black uppercase tracking-wider flex items-center gap-1.5 shadow-xs active:scale-95 transition-all cursor-pointer"
+                title="Generar historia 9:16 y compartir">
+                <i class="pi pi-share-alt text-[10px] text-awakin-sun"></i>
+                <span>Historia</span>
+              </button>
+            </div>
           </div>
 
-          @if (log.photo_url) {
-          <button type="button" (click)="openLightbox(log.photo_url, log.routine_name, log.workout_date)"
-            class="w-14 h-14 rounded-2xl overflow-hidden border border-stone-200 shrink-0 cursor-pointer group relative">
-            <img loading="lazy" decoding="async" [src]="log.photo_url" [alt]="log.routine_name"
-              class="w-full h-full object-cover group-hover:scale-105 transition-transform" />
-          </button>
-          }
-        </div>
+          <!-- KPIs de volumen y series -->
+          <div class="grid grid-cols-2 gap-2">
+            <div class="border border-stone-200/80 rounded-2xl px-3 py-2 flex items-center justify-between"
+              [ngClass]="log.photo_url ? 'bg-white/75 backdrop-blur-xs' : 'bg-stone-50'">
+              <span class="text-[10px] font-black uppercase text-stone-500">Volumen</span>
+              <span class="text-xs font-black text-emerald-600">
+                {{ log.total_volume | number:'1.0-0' }} {{ log.volume_unit }}
+              </span>
+            </div>
+            <div class="border border-stone-200/80 rounded-2xl px-3 py-2 flex items-center justify-between"
+              [ngClass]="log.photo_url ? 'bg-white/75 backdrop-blur-xs' : 'bg-stone-50'">
+              <span class="text-[10px] font-black uppercase text-stone-500">Series Totales</span>
+              <span class="text-xs font-black text-awakin-sun">{{ log.total_sets }}</span>
+            </div>
+          </div>
 
-        <!-- KPIs de volumen y series -->
-        <div class="grid grid-cols-2 gap-2">
-          <div class="bg-stone-50 border border-stone-200/70 rounded-2xl px-3 py-2 flex items-center justify-between">
-            <span class="text-[10px] font-black uppercase text-stone-400">Volumen</span>
-            <span class="text-xs font-black text-emerald-600">
-              {{ log.total_volume | number:'1.0-0' }} {{ log.volume_unit }}
+          <!-- Desglose por músculo -->
+          @if (formatMuscleBreakdown(log.sets_by_muscle).length > 0) {
+          <div class="flex items-center gap-1.5 flex-wrap">
+            @for (m of formatMuscleBreakdown(log.sets_by_muscle); track m.muscle) {
+            <span class="px-2.5 py-0.5 rounded-full border border-stone-200/90 text-[10px] font-bold text-stone-700 capitalize"
+              [ngClass]="log.photo_url ? 'bg-white/75 backdrop-blur-xs' : 'bg-stone-100'">
+              {{ m.muscle }}: <strong class="text-stone-900">{{ m.sets }}</strong>
             </span>
-          </div>
-          <div class="bg-stone-50 border border-stone-200/70 rounded-2xl px-3 py-2 flex items-center justify-between">
-            <span class="text-[10px] font-black uppercase text-stone-400">Series Totales</span>
-            <span class="text-xs font-black text-awakin-sun">{{ log.total_sets }}</span>
-          </div>
-        </div>
-
-        <!-- Desglose por músculo -->
-        @if (formatMuscleBreakdown(log.sets_by_muscle).length > 0) {
-        <div class="flex items-center gap-1.5 flex-wrap">
-          @for (m of formatMuscleBreakdown(log.sets_by_muscle); track m.muscle) {
-          <span class="px-2.5 py-0.5 rounded-full bg-stone-100 border border-stone-200 text-[10px] font-bold text-stone-700 capitalize">
-            {{ m.muscle }}: <strong class="text-stone-900">{{ m.sets }}</strong>
-          </span>
-          }
-        </div>
-        }
-
-        <!-- Resumen de ejercicios -->
-        @if (log.exercises && log.exercises.length > 0) {
-        <div class="pt-2 border-t border-stone-100 space-y-1">
-          @for (ex of log.exercises; track ex.id || $index) {
-          <div class="flex items-center justify-between text-[11px]">
-            <span class="font-bold text-stone-700 truncate pr-2">{{ ex.exercise_name }}</span>
-            <span class="text-stone-400 font-bold shrink-0">{{ countCompletedSets(ex.sets) }} series</span>
+            }
           </div>
           }
-        </div>
-        }
 
-        @if (log.notes) {
-        <p class="text-[11px] text-stone-500 bg-stone-50 px-3 py-2 rounded-xl border border-stone-100">
-          {{ log.notes }}
-        </p>
-        }
+          <!-- Resumen de ejercicios -->
+          @if (log.exercises && log.exercises.length > 0) {
+          <div class="pt-2 border-t border-stone-200/70 space-y-1">
+            @for (ex of log.exercises; track ex.id || $index) {
+            <div class="flex items-center justify-between text-[11px]">
+              <span class="font-bold text-stone-800 truncate pr-2">{{ ex.exercise_name }}</span>
+              <span class="text-stone-500 font-bold shrink-0">{{ countCompletedSets(ex.sets) }} series</span>
+            </div>
+            }
+          </div>
+          }
+
+          @if (log.notes) {
+          <p class="text-[11px] text-stone-600 px-3 py-2 rounded-xl border border-stone-200/70"
+            [ngClass]="log.photo_url ? 'bg-white/75 backdrop-blur-xs' : 'bg-stone-50'">
+            {{ log.notes }}
+          </p>
+          }
+        </div>
       </div>
       }
     } @else {
@@ -2070,3 +2091,49 @@
   </div>
 </div>
 }
+
+<!-- ========================================================================= -->
+<!-- MODAL: COMPARTIR HISTORIA 9:16 DE ENTRENAMIENTO (AWAKIN × KIN)           -->
+<!-- ========================================================================= -->
+<p-dialog [(visible)]="isShareWorkoutModalOpen" [modal]="true" [draggable]="false" [resizable]="false"
+  [closable]="false" [showHeader]="false" [dismissableMask]="true" appendTo="body"
+  [style]="{ width: '92vw', maxWidth: '420px', borderRadius: '24px' }"
+  styleClass="overflow-hidden shadow-2xl border border-stone-200 [&_.p-dialog-content]:!p-0">
+  <div class="bg-white flex flex-col max-h-[90vh]">
+    <div class="px-5 py-4 border-b border-stone-100 bg-stone-50/80 flex items-center justify-between">
+      <div>
+        <h3 class="text-sm font-black text-stone-900 uppercase tracking-tight">Historia 9:16 Awakin</h3>
+        <p class="text-[11px] text-stone-500 font-medium">Comparte tu ritual de entrenamiento</p>
+      </div>
+      <button type="button" (click)="closeWorkoutStoryModal()"
+        class="w-8 h-8 rounded-full bg-stone-100 hover:bg-stone-200 text-stone-600 flex items-center justify-center cursor-pointer">
+        <i class="pi pi-times text-xs"></i>
+      </button>
+    </div>
+
+    <div class="p-4 overflow-y-auto flex-1 flex items-center justify-center bg-stone-100/80">
+      @if (isGeneratingWorkoutStory()) {
+      <div class="py-16 text-center space-y-2">
+        <i class="pi pi-spin pi-spinner text-awakin-sun text-2xl"></i>
+        <p class="text-xs font-bold text-stone-500">Generando historia 9:16...</p>
+      </div>
+      } @else if (shareWorkoutStoryImageUrl(); as storyUrl) {
+      <img [src]="storyUrl" alt="Historia 9:16 Awakin"
+        class="w-full max-w-[280px] aspect-[9/16] rounded-2xl shadow-xl border border-stone-200 object-cover" />
+      }
+    </div>
+
+    <div class="p-4 border-t border-stone-100 bg-white flex items-center gap-2">
+      <button type="button" (click)="downloadWorkoutStory()" [disabled]="isGeneratingWorkoutStory() || !shareWorkoutStoryImageUrl()"
+        class="px-4 py-3 rounded-xl bg-stone-900 hover:bg-stone-800 text-white font-black text-xs uppercase tracking-wider transition-all active:scale-95 cursor-pointer flex items-center justify-center gap-1.5 disabled:opacity-50">
+        <i class="pi pi-download text-xs"></i>
+        <span>9:16 PNG</span>
+      </button>
+      <button type="button" (click)="shareWorkoutStory()" [disabled]="isGeneratingWorkoutStory() || !shareWorkoutStoryImageUrl()"
+        class="flex-1 py-3 rounded-xl bg-awakin-sun hover:bg-awakin-sun-dim text-white font-black text-xs uppercase tracking-wider transition-all shadow-lg shadow-awakin-sun/25 active:scale-95 cursor-pointer flex items-center justify-center gap-2 disabled:opacity-50">
+        <i class="pi pi-share-alt text-xs"></i>
+        <span>Compartir</span>
+      </button>
+    </div>
+  </div>
+</p-dialog>

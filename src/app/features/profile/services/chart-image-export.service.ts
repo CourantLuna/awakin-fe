@@ -1,5 +1,16 @@
 import { Injectable } from '@angular/core';
 import { ProgressMetricRecord } from '../../../core/services/athlete.service';
+import { WorkoutLog } from '../../workout/models/workout.models';
+
+export interface ShareWorkoutStoryData {
+  log: WorkoutLog;
+  userName: string;
+  userFullName?: string | null;
+  userImageUrl: string | null;
+  kinLogoUrl: string | null;
+  kinName?: string | null;
+  streakDays?: number;
+}
 
 export interface ShareChartData {
   records: ProgressMetricRecord[];
@@ -104,6 +115,256 @@ export class ChartImageExportService {
 
     // 5. Footer con Avatar + Nombre + Marca
     this.drawFooter(ctx, userAvatar, data.userName, data.userFullName);
+
+    return canvas.toDataURL('image/png', 0.95);
+  }
+
+  /**
+   * Genera una historia 9:16 (1080x1920) estilo culto/tribu Awakin para compartir entrenamientos
+   */
+  async generateWorkoutStoryImage(data: ShareWorkoutStoryData): Promise<string> {
+    const canvas = document.createElement('canvas');
+    canvas.width = this.WIDTH;
+    canvas.height = this.HEIGHT;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) {
+      throw new Error('No se pudo crear el contexto del canvas');
+    }
+
+    const { log } = data;
+    const [awakinLogo, kinLogo, userAvatar, workoutPhoto] = await Promise.all([
+      this.safeLoadImage('/icons/awakin-isotipo.png'),
+      data.kinLogoUrl ? this.safeLoadImage(data.kinLogoUrl) : Promise.resolve(null),
+      data.userImageUrl ? this.safeLoadImage(data.userImageUrl) : Promise.resolve(null),
+      log.photo_url ? this.safeLoadImage(log.photo_url) : Promise.resolve(null)
+    ]);
+
+    // 1. Fondo: Foto del entrenamiento full-bleed o lienzo oscuro ritual Awakin
+    ctx.fillStyle = '#0C0A09';
+    ctx.fillRect(0, 0, this.WIDTH, this.HEIGHT);
+
+    if (workoutPhoto) {
+      this.drawImageCover(ctx, workoutPhoto, 0, 0, this.WIDTH, this.HEIGHT);
+      const grad = ctx.createLinearGradient(0, 0, 0, this.HEIGHT);
+      grad.addColorStop(0, 'rgba(12, 10, 9, 0.82)');
+      grad.addColorStop(0.32, 'rgba(12, 10, 9, 0.35)');
+      grad.addColorStop(0.62, 'rgba(12, 10, 9, 0.72)');
+      grad.addColorStop(1, 'rgba(12, 10, 9, 0.96)');
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, this.WIDTH, this.HEIGHT);
+    } else {
+      const aura = ctx.createRadialGradient(this.WIDTH / 2, this.HEIGHT * 0.28, 40, this.WIDTH / 2, this.HEIGHT * 0.28, 720);
+      aura.addColorStop(0, 'rgba(254, 151, 10, 0.26)');
+      aura.addColorStop(0.55, 'rgba(254, 151, 10, 0.06)');
+      aura.addColorStop(1, 'rgba(12, 10, 9, 0)');
+      ctx.fillStyle = aura;
+      ctx.fillRect(0, 0, this.WIDTH, this.HEIGHT);
+    }
+
+    // 2. Cabecera de Tribu / Pertenencia (Awakin + Kin)
+    const padX = 64;
+    const topY = 82;
+    const logoSize = 86;
+
+    if (awakinLogo) {
+      this.drawImageContain(ctx, awakinLogo, padX, topY, logoSize, logoSize);
+    }
+    if (kinLogo) {
+      const badgeSize = 54;
+      this.drawImageContain(ctx, kinLogo, padX + logoSize - 22, topY + logoSize - 24, badgeSize, badgeSize);
+    }
+
+    const headerTextX = padX + logoSize + (kinLogo ? 44 : 26);
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'alphabetic';
+
+    const tribeTag = kinLogo && data.kinName
+      ? `TRIBU ${data.kinName.toUpperCase()}  ×  AWAKIN`
+      : 'AWAKIN  •  EL RITUAL DIARIO';
+    ctx.fillStyle = this.AWAKIN_SUN;
+    ctx.font = `900 22px ${this.FONT}`;
+    ctx.fillText(tribeTag, headerTextX, topY + 34);
+
+    ctx.fillStyle = '#FFFFFF';
+    ctx.font = `900 32px ${this.FONT}`;
+    ctx.fillText('NO ES SUERTE. ES DISCIPLINA.', headerTextX, topY + 76);
+
+    // Pill de Racha / Fecha
+    const dateLabel = this.formatDateSpanish(log.workout_date).toUpperCase();
+    const metaText = data.streakDays && data.streakDays > 0
+      ? `🔥 RACHA ${data.streakDays}D   •   ${dateLabel}`
+      : `⚡ RITUAL COMPLETADO   •   ${dateLabel}`;
+    ctx.font = `800 20px ${this.FONT}`;
+    const metaW = ctx.measureText(metaText).width + 44;
+    const metaY = topY + logoSize + 28;
+    this.roundRect(ctx, padX, metaY, metaW, 42, 21);
+    ctx.fillStyle = 'rgba(254, 151, 10, 0.18)';
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(254, 151, 10, 0.55)';
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+
+    ctx.fillStyle = '#FDBA74';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(metaText, padX + 22, metaY + 22);
+
+    // 3. Bloque inferior: Nombre de rutina + Tarjeta Glass de KPIs + Músculos
+    const footerH = 150;
+    const cardW = this.WIDTH - padX * 2;
+    const muscles = Object.entries(log.sets_by_muscle || {}).slice(0, 4);
+    const exercises = (log.exercises || []).slice(0, 4);
+
+    const cardH = 210 + (muscles.length > 0 ? 64 : 0) + (exercises.length > 0 ? exercises.length * 40 + 44 : 0);
+    const cardY = this.HEIGHT - footerH - cardH - 36;
+
+    // Título de la rutina encima de la tarjeta
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'alphabetic';
+    if (log.location) {
+      ctx.fillStyle = 'rgba(255,255,255,0.75)';
+      ctx.font = `700 22px ${this.FONT}`;
+      ctx.fillText(`📍 ${log.location.toUpperCase()}`, padX, cardY - 82);
+    }
+
+    ctx.fillStyle = '#FFFFFF';
+    ctx.font = `italic 900 46px ${this.FONT}`;
+    const routineTitle = log.routine_name.toUpperCase();
+    ctx.fillText(
+      routineTitle.length > 30 ? routineTitle.slice(0, 29) + '…' : routineTitle,
+      padX,
+      cardY - 30
+    );
+
+    // Tarjeta Glass oscura con borde Awakin Sun
+    ctx.save();
+    this.roundRect(ctx, padX, cardY, cardW, cardH, 36);
+    ctx.fillStyle = 'rgba(20, 18, 17, 0.78)';
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(254, 151, 10, 0.45)';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+    ctx.restore();
+
+    // 3 KPIs principales
+    const kpiColW = cardW / 3;
+    const kpiY = cardY + 56;
+    const kpis = [
+      { label: 'VOLUMEN', value: `${Math.round(log.total_volume || 0).toLocaleString('en-US')} ${log.volume_unit || 'lb'}`, color: '#34D399' },
+      { label: 'SERIES', value: `${log.total_sets || 0}`, color: this.AWAKIN_SUN },
+      { label: 'DURACIÓN', value: `${log.duration_minutes || 0} min`, color: '#FFFFFF' }
+    ];
+
+    kpis.forEach((kpi, idx) => {
+      const cx = padX + kpiColW * idx + kpiColW / 2;
+      ctx.textAlign = 'center';
+      ctx.fillStyle = 'rgba(214, 211, 209, 0.72)';
+      ctx.font = `800 18px ${this.FONT}`;
+      ctx.fillText(kpi.label, cx, kpiY);
+
+      ctx.fillStyle = kpi.color;
+      ctx.font = `900 44px ${this.FONT}`;
+      ctx.fillText(kpi.value, cx, kpiY + 58);
+
+      if (idx > 0) {
+        ctx.strokeStyle = 'rgba(255,255,255,0.12)';
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.moveTo(padX + kpiColW * idx, cardY + 34);
+        ctx.lineTo(padX + kpiColW * idx, cardY + 148);
+        ctx.stroke();
+      }
+    });
+
+    let innerY = cardY + 174;
+
+    // Pills de músculos
+    if (muscles.length > 0) {
+      let pillX = padX + 36;
+      ctx.textAlign = 'left';
+      ctx.textBaseline = 'middle';
+      ctx.font = `800 19px ${this.FONT}`;
+      for (const [m, sets] of muscles) {
+        const txt = `${m.toUpperCase()} • ${sets}S`;
+        const pw = ctx.measureText(txt).width + 32;
+        if (pillX + pw > padX + cardW - 36) break;
+        this.roundRect(ctx, pillX, innerY, pw, 36, 18);
+        ctx.fillStyle = 'rgba(255,255,255,0.1)';
+        ctx.fill();
+        ctx.fillStyle = '#F5F5F4';
+        ctx.fillText(txt, pillX + 16, innerY + 19);
+        pillX += pw + 12;
+      }
+      innerY += 62;
+    }
+
+    // Ejercicios destacados
+    if (exercises.length > 0) {
+      ctx.strokeStyle = 'rgba(255,255,255,0.1)';
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.moveTo(padX + 36, innerY);
+      ctx.lineTo(padX + cardW - 36, innerY);
+      ctx.stroke();
+      innerY += 32;
+
+      ctx.textBaseline = 'alphabetic';
+      for (let i = 0; i < exercises.length; i++) {
+        const ex = exercises[i];
+        const completed = (ex.sets || []).filter((s) => s.is_completed !== false).length;
+        ctx.textAlign = 'left';
+        ctx.fillStyle = this.AWAKIN_SUN;
+        ctx.font = `900 22px ${this.FONT}`;
+        ctx.fillText(`${i + 1}.`, padX + 36, innerY);
+
+        ctx.fillStyle = '#F5F5F4';
+        ctx.font = `700 22px ${this.FONT}`;
+        const name = ex.exercise_name.length > 34 ? ex.exercise_name.slice(0, 33) + '…' : ex.exercise_name;
+        ctx.fillText(name, padX + 68, innerY);
+
+        ctx.textAlign = 'right';
+        ctx.fillStyle = '#A8A29E';
+        ctx.font = `800 20px ${this.FONT}`;
+        ctx.fillText(`${completed} series`, padX + cardW - 36, innerY);
+        innerY += 40;
+      }
+    }
+
+    // 4. Footer con Avatar + @username + sello de pertenencia
+    const footerCenterY = this.HEIGHT - 78;
+    const avatarSize = 68;
+    const avCenterX = padX + avatarSize / 2;
+
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(avCenterX, footerCenterY, avatarSize / 2, 0, Math.PI * 2);
+    ctx.clip();
+    if (userAvatar) {
+      this.drawImageCover(ctx, userAvatar, padX, footerCenterY - avatarSize / 2, avatarSize, avatarSize);
+    } else {
+      ctx.fillStyle = this.AWAKIN_SUN;
+      ctx.fillRect(padX, footerCenterY - avatarSize / 2, avatarSize, avatarSize);
+      ctx.fillStyle = '#FFFFFF';
+      ctx.font = `900 26px ${this.FONT}`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText((data.userFullName || data.userName).charAt(0).toUpperCase(), avCenterX, footerCenterY);
+    }
+    ctx.restore();
+
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'alphabetic';
+    ctx.fillStyle = '#FFFFFF';
+    ctx.font = `900 26px ${this.FONT}`;
+    ctx.fillText(`@${data.userName}`, padX + avatarSize + 20, footerCenterY - 4);
+
+    ctx.fillStyle = this.AWAKIN_SUN;
+    ctx.font = `800 18px ${this.FONT}`;
+    ctx.fillText('ENTRENANDO CON AWAKIN APP', padX + avatarSize + 20, footerCenterY + 24);
+
+    ctx.textAlign = 'right';
+    ctx.fillStyle = 'rgba(255,255,255,0.55)';
+    ctx.font = `800 20px ${this.FONT}`;
+    ctx.fillText('awakin.app', this.WIDTH - padX, footerCenterY + 6);
 
     return canvas.toDataURL('image/png', 0.95);
   }

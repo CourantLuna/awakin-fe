@@ -13,6 +13,7 @@ import {
   ProgressMetricRecord
 } from '../../core/services/athlete.service';
 import { WorkoutSupabaseService } from '../workout/services/workout-supabase.service';
+import { WorkoutLog } from '../workout/models/workout.models';
 import { ChartImageExportService } from './services/chart-image-export.service';
 
 export type ProfileFeedTab = 'posts' | 'meals' | 'workouts' | 'progress';
@@ -1517,6 +1518,82 @@ export class ProfileAvatarComponent implements OnInit {
     this.shareChartSelectedRecordIds.set([]);
     this.shareChartGeneratedImageUrl.set(null);
     this.shareChartShowPreview.set(false);
+  }
+
+  // ==========================================
+  // COMPARTIR HISTORIA 9:16 DE ENTRENAMIENTO
+  // ==========================================
+  isShareWorkoutModalOpen = signal<boolean>(false);
+  isGeneratingWorkoutStory = signal<boolean>(false);
+  shareWorkoutStoryImageUrl = signal<string | null>(null);
+  shareWorkoutTargetLog = signal<WorkoutLog | null>(null);
+
+  async openWorkoutStoryModal(log: WorkoutLog): Promise<void> {
+    this.shareWorkoutTargetLog.set(log);
+    this.shareWorkoutStoryImageUrl.set(null);
+    this.isShareWorkoutModalOpen.set(true);
+    this.isGeneratingWorkoutStory.set(true);
+
+    try {
+      const ath = this.athlete();
+      const fullName = `${ath?.first_name || ''} ${ath?.last_name || ''}`.trim() || null;
+      const url = await this.chartExportService.generateWorkoutStoryImage({
+        log,
+        userName: ath?.username || 'atleta',
+        userFullName: fullName,
+        userImageUrl: ath?.profile_image_url || null,
+        kinLogoUrl: ath?.kin?.team_logo_url || null,
+        kinName: ath?.kin?.team_name || null,
+        streakDays: ath?.streak_days ?? 0
+      });
+      this.shareWorkoutStoryImageUrl.set(url);
+    } catch (err) {
+      console.error('Error generando historia 9:16 de workout:', err);
+    } finally {
+      this.isGeneratingWorkoutStory.set(false);
+    }
+  }
+
+  async shareWorkoutStory(): Promise<void> {
+    const imgUrl = this.shareWorkoutStoryImageUrl();
+    const log = this.shareWorkoutTargetLog();
+    if (!imgUrl || !log) return;
+
+    try {
+      const response = await fetch(imgUrl);
+      const blob = await response.blob();
+      const username = this.athlete()?.username || 'atleta';
+      const file = new File([blob], `awakin-workout-${username}.png`, { type: 'image/png' });
+
+      if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+        await navigator.share({
+          title: `${log.routine_name} — Awakin`,
+          text: `Entrenamiento completado con Awakin: ${log.routine_name}`,
+          files: [file]
+        });
+      } else {
+        this.downloadWorkoutStory();
+      }
+    } catch (err) {
+      console.error('Error compartiendo historia de workout:', err);
+    }
+  }
+
+  downloadWorkoutStory(): void {
+    const imgUrl = this.shareWorkoutStoryImageUrl();
+    const log = this.shareWorkoutTargetLog();
+    if (!imgUrl) return;
+    const link = document.createElement('a');
+    link.href = imgUrl;
+    const datePart = (log?.workout_date || '').split('T')[0] || new Date().toISOString().split('T')[0];
+    link.download = `awakin-story-${this.athlete()?.username || 'atleta'}-${datePart}.png`;
+    link.click();
+  }
+
+  closeWorkoutStoryModal(): void {
+    this.isShareWorkoutModalOpen.set(false);
+    this.shareWorkoutStoryImageUrl.set(null);
+    this.shareWorkoutTargetLog.set(null);
   }
 
   // Alternar selección de registro (max 4)

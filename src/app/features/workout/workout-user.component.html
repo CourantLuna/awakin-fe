@@ -94,9 +94,17 @@
   } @else if (activeDisplayedRoutine(); as routine) {
   <div
     class="relative w-full bg-stone-900 rounded-[2rem] p-6 mb-6 overflow-hidden shadow-2xl shadow-stone-900/20 flex flex-col justify-between min-h-[220px]">
+    @if (routine.banner_url) {
+    <img [src]="routine.banner_url" [alt]="routine.name"
+      class="absolute inset-0 w-full h-full object-cover pointer-events-none select-none" />
+    <div
+      class="absolute inset-0 bg-gradient-to-t from-stone-950/95 via-stone-950/75 to-stone-900/55 backdrop-blur-[1.5px] pointer-events-none">
+    </div>
+    } @else {
     <div class="absolute -right-10 -top-10 w-48 h-48 bg-awakin-sun/20 rounded-full blur-3xl pointer-events-none"></div>
     <i
       class="pi pi-bolt absolute right-[-20px] bottom-[-20px] text-[120px] text-white/5 pointer-events-none rotate-12"></i>
+    }
 
     <div class="relative z-10">
       <div class="flex items-center justify-between gap-2 mb-3 flex-wrap">
@@ -104,22 +112,38 @@
           <span class="bg-awakin-sun text-white text-[9px] font-black uppercase tracking-widest px-2.5 py-1 rounded-md">
             {{ selectedRoutineOverrideId() ? 'Rutina Seleccionada' : 'Asignado ' + currentLabel() }}
           </span>
-          <span class="text-stone-400 text-[10px] font-bold uppercase tracking-wider flex items-center gap-1">
+          <span class="text-stone-300 text-[10px] font-bold uppercase tracking-wider flex items-center gap-1">
             <i class="pi pi-clock text-[9px]"></i> ~{{ routine.estimated_minutes || 45 }} min
           </span>
-          <span class="text-stone-400 text-[10px] font-bold uppercase tracking-wider">
+          <span class="text-stone-300 text-[10px] font-bold uppercase tracking-wider">
             • {{ routine.exercises.length }} ej. • {{ routine.total_sets || 0 }} series
           </span>
         </div>
 
-        @if (logForSelectedDate(); as dayLog) {
-        <span
-          class="px-2.5 py-1 rounded-full bg-emerald-500/20 border border-emerald-400/40 text-emerald-300 text-[10px] font-black flex items-center gap-1">
-          <i class="pi pi-check-circle text-[10px]"></i>
-          {{ dayLog.duration_minutes }}m • {{ dayLog.total_volume | number:'1.0-0' }} {{ dayLog.volume_unit }}
-        </span>
-        }
+        <div class="flex items-center gap-1.5">
+          @if (logForSelectedDate(); as dayLog) {
+          <span
+            class="px-2.5 py-1 rounded-full bg-emerald-500/20 border border-emerald-400/40 text-emerald-300 text-[10px] font-black flex items-center gap-1">
+            <i class="pi pi-check-circle text-[10px]"></i>
+            {{ dayLog.duration_minutes }}m • {{ dayLog.total_volume | number:'1.0-0' }} {{ dayLog.volume_unit }}
+          </span>
+          }
+
+          <input #routineBannerInput type="file" accept="image/*" (change)="onRoutineBannerSelected($event, routine)"
+            class="hidden" />
+          <button type="button" (click)="routineBannerInput.click()" [disabled]="isUploadingBanner()"
+            class="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/15 text-white flex items-center justify-center transition-all cursor-pointer disabled:opacity-60"
+            [title]="routine.banner_url ? 'Cambiar banner de rutina' : 'Subir banner de rutina'">
+            <i class="pi text-xs" [ngClass]="isUploadingBanner() ? 'pi-spin pi-spinner' : 'pi-camera'"></i>
+          </button>
+        </div>
       </div>
+
+      @if (bannerUploadError()) {
+      <div class="mb-2 px-3 py-1.5 rounded-xl bg-rose-500/20 border border-rose-400/40 text-rose-200 text-[11px] font-semibold">
+        {{ bannerUploadError() }}
+      </div>
+      }
 
       <h2 class="text-2xl sm:text-3xl font-black text-white uppercase italic leading-tight">
         {{ routine.name }}
@@ -476,6 +500,27 @@
         <input type="text" [ngModel]="newRoutineDescription()" (ngModelChange)="newRoutineDescription.set($event)"
           placeholder="Objetivo o enfoque de la rutina"
           class="w-full h-10 bg-stone-50 border border-stone-200 focus:border-awakin-sun rounded-xl px-3 text-xs font-bold text-stone-900 outline-hidden" />
+      </div>
+
+      <div>
+        <label class="block text-[10px] font-black uppercase tracking-wider text-stone-500 mb-1">Banner de Rutina (opcional)</label>
+        <input #newRoutineBannerInput type="file" accept="image/*" (change)="onNewRoutineBannerSelected($event)"
+          class="hidden" />
+        @if (!newRoutineBannerPreview()) {
+        <button type="button" (click)="newRoutineBannerInput.click()"
+          class="w-full py-2.5 px-3 rounded-xl border-2 border-dashed border-stone-200 hover:border-awakin-sun bg-stone-50 text-stone-500 hover:text-awakin-sun text-xs font-bold flex items-center justify-center gap-2 transition-all cursor-pointer">
+          <i class="pi pi-image"></i>
+          <span>Subir imagen banner</span>
+        </button>
+        } @else {
+        <div class="relative rounded-2xl overflow-hidden border border-stone-200 h-28">
+          <img [src]="newRoutineBannerPreview()" alt="Preview banner" class="w-full h-full object-cover" />
+          <button type="button" (click)="clearNewRoutineBanner()"
+            class="absolute top-2 right-2 w-7 h-7 rounded-full bg-stone-900/75 text-white flex items-center justify-center cursor-pointer">
+            <i class="pi pi-times text-xs"></i>
+          </button>
+        </div>
+        }
       </div>
 
       <!-- Ejercicios añadidos -->
