@@ -1,10 +1,25 @@
-import { Injectable, inject, signal } from '@angular/core';
+import { Injectable, inject, signal, computed } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, tap, from, switchMap, timeout } from 'rxjs';
 import { SupabaseClient } from '@supabase/supabase-js';
 import { supabaseClient } from './supabase.service';
 import { compressImage } from '../helpers/image-compressor.helper';
 import { environment } from '../../../environments/environment';
+
+export interface ActivityLevelOption {
+  key: 'SEDENTARY' | 'LIGHTLY_ACTIVE' | 'MODERATELY_ACTIVE' | 'VERY_ACTIVE' | 'EXTREMELY_ACTIVE';
+  label: string;
+  factor: number;
+  desc: string;
+}
+
+export const ACTIVITY_LEVELS: ActivityLevelOption[] = [
+  { key: 'SEDENTARY', label: 'Sedentario', factor: 1.20, desc: 'Poco o ningún ejercicio' },
+  { key: 'LIGHTLY_ACTIVE', label: 'Ligeramente activo', factor: 1.38, desc: 'Ejercicio ligero 1-3 días/sem' },
+  { key: 'MODERATELY_ACTIVE', label: 'Moderadamente activo', factor: 1.55, desc: 'Ejercicio moderado 3-5 días/sem' },
+  { key: 'VERY_ACTIVE', label: 'Muy activo / Activo', factor: 1.73, desc: 'Ejercicio fuerte 6-7 días/sem' },
+  { key: 'EXTREMELY_ACTIVE', label: 'Extremadamente activo', factor: 1.90, desc: 'Entrenamiento intenso / trabajo físico' }
+];
 
 export interface KinInstructor {
   id?: string;
@@ -130,6 +145,72 @@ export class AthleteService {
   public currentRecords = signal<AthleteRecordsResponse | null>(null);
   public currentPosts = signal<AthleteFeedPost[]>([]);
   public isLoading = signal<boolean>(false);
+
+  // Nivel de actividad del atleta (solo lectura desde Supabase)
+  public currentActivityLevel = computed<ActivityLevelOption>(() => {
+    const raw = (this.currentAthlete()?.nivel_actividad || 'SEDENTARY').toUpperCase().trim();
+    return ACTIVITY_LEVELS.find((a) => a.key === raw) || ACTIVITY_LEVELS[0];
+  });
+
+  // TMB Actual (Mifflin-St Jeor) compartido para Perfil e Intake
+  public currentTmb = computed(() => {
+    const progress = this.currentRecords()?.progress || [];
+    const sorted = [...progress]
+      .filter((r) => r.peso != null && Number(r.peso) > 0)
+      .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+
+    const latest = sorted[0];
+    if (!latest || !latest.peso) return null;
+
+    const rawUnit = (latest.unidad_peso || 'lb').toLowerCase();
+    const pesoKg = rawUnit === 'kg' ? Number(latest.peso) : Number(latest.peso) * 0.45359237;
+    if (pesoKg <= 0) return null;
+
+    const ath = this.currentAthlete();
+    const rawSex = (ath?.gender || ath?.sexo || ath?.genero || '').toLowerCase().trim();
+
+    let alturaCm = 166;
+    let isEstimated = true;
+    if (ath?.altura_cm && Number(ath.altura_cm) > 0) {
+      alturaCm = Number(ath.altura_cm);
+      isEstimated = false;
+    } else if (['f', 'femenino', 'female', 'mujer'].includes(rawSex)) {
+      alturaCm = 159;
+    } else if (['m', 'masculino', 'male', 'hombre'].includes(rawSex)) {
+      alturaCm = 172;
+    }
+
+    let age = 30;
+    const birthDateStr = ath?.birth_date || ath?.fecha_nacimiento;
+    if (ath?.edad && Number(ath.edad) > 0) {
+      age = Number(ath.edad);
+    } else if (birthDateStr) {
+      const birth = new Date(birthDateStr);
+      if (!isNaN(birth.getTime())) {
+        const calculatedAge = Math.floor((Date.now() - birth.getTime()) / (365.25 * 24 * 60 * 60 * 1000));
+        if (calculatedAge > 10 && calculatedAge < 110) {
+          age = calculatedAge;
+        }
+      }
+    }
+
+    let sexOffset = -78;
+    if (['m', 'masculino', 'male', 'hombre'].includes(rawSex)) {
+      sexOffset = 5;
+    } else if (['f', 'femenino', 'female', 'mujer'].includes(rawSex)) {
+      sexOffset = -161;
+    }
+
+    const kcal = Math.round(10 * pesoKg + 6.25 * alturaCm - 5 * age + sexOffset);
+    return { kcal, alturaCm, isEstimated };
+  });
+
+  // TDEE = TMB × Factor de Actividad
+  public currentTdee = computed<number | null>(() => {
+    const tmb = this.currentTmb();
+    if (!tmb) return null;
+    return Math.round(tmb.kcal * this.currentActivityLevel().factor);
+  });
 
   constructor() {
     this.hydrateAthleteProfile();

@@ -507,9 +507,9 @@
         </div>
       </div>
 
-      <!-- RESUMEN KPI EN TIEMPO REAL (ÚLTIMO PESO, DELTA, TMB ACTUAL, MEDIDAS) -->
+      <!-- RESUMEN KPI EN TIEMPO REAL -->
       @if (latestRecord()) {
-      <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2.5 mb-6 relative z-10">
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5 mb-2.5 relative z-10">
         <!-- Último Peso -->
         <div class="bg-stone-50 border border-stone-200/80 rounded-2xl p-3 shadow-2xs">
           <span class="text-[9px] font-black uppercase tracking-wider text-stone-500">Último Peso</span>
@@ -539,28 +539,6 @@
           </div>
         </div>
 
-        <!-- TMB Actual -->
-        <div class="bg-stone-50 border border-stone-200/80 rounded-2xl p-3 shadow-2xs col-span-2 sm:col-span-1">
-          <div class="flex items-center justify-between gap-1">
-            <span class="text-[9px] font-black uppercase tracking-wider text-stone-500">TMB Actual</span>
-            @if (currentTmb()) {
-            <span class="text-[9px] font-semibold text-stone-400" [title]="currentTmb()!.isEstimated ? 'Altura promedio población RD' : 'Altura del atleta'">
-              {{ currentTmb()!.alturaCm }} cm{{ currentTmb()!.isEstimated ? ' (RD)' : '' }}
-            </span>
-            }
-          </div>
-          <div class="flex items-baseline gap-1 mt-0.5">
-            @if (currentTmb()) {
-            <span class="text-xl font-black text-awakin-sun">
-              {{ currentTmb()!.kcal | number:'1.0-0' }}
-            </span>
-            <span class="text-xs font-bold text-stone-500">kcal</span>
-            } @else {
-            <span class="text-sm font-bold text-stone-400">--</span>
-            }
-          </div>
-        </div>
-
         <!-- Cintura Actual -->
         <div class="bg-stone-50 border border-stone-200/80 rounded-2xl p-3 shadow-2xs">
           <span class="text-[9px] font-black uppercase tracking-wider text-stone-500">Cintura</span>
@@ -584,72 +562,52 @@
         </div>
       </div>
 
-      <!-- NIVEL DE ACTIVIDAD, FACTOR Y GASTO CALÓRICO (TMB × FACTOR) -->
-      <div class="bg-stone-50 border border-stone-200/80 rounded-2xl p-3.5 mb-6 relative z-10 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-        <div class="flex items-center gap-3 min-w-0">
-          <div class="w-9 h-9 rounded-xl bg-awakin-sun/15 border border-awakin-sun/25 flex items-center justify-center text-awakin-sun shrink-0">
-            <i class="pi pi-bolt text-sm font-black"></i>
-          </div>
-          <div class="min-w-0">
-            <div class="flex items-center gap-1.5 flex-wrap">
-              <span class="text-[9px] font-black uppercase tracking-wider text-stone-500">Nivel de Actividad</span>
-              <span class="px-1.5 py-0.2 rounded-md bg-awakin-sun/15 text-awakin-sun text-[10px] font-black">
-                ×{{ currentActivityLevel().factor | number:'1.2-2' }}
-              </span>
-              @if (isSavingActivityLevel()) {
-              <i class="pi pi-spin pi-spinner text-[10px] text-stone-400"></i>
-              }
-            </div>
-            <button #activityBtn type="button" (click)="activityPopover.toggle($event, activityBtn)"
-              class="mt-0.5 inline-flex items-center gap-1.5 text-xs font-black text-stone-900 hover:text-awakin-sun transition-colors cursor-pointer">
-              <span class="truncate">{{ currentActivityLevel().label }}</span>
-              <i class="pi pi-chevron-down text-[9px] text-stone-400"></i>
-            </button>
-          </div>
-        </div>
-
-        @if (currentTdee()) {
-        <div class="flex items-center justify-between sm:justify-end gap-3 pt-2 sm:pt-0 border-t sm:border-t-0 border-stone-200/70">
-          <div class="text-left sm:text-right">
-            <span class="text-[9px] font-black uppercase tracking-wider text-stone-500 block">
-              Gasto Diario (TMB × {{ currentActivityLevel().factor | number:'1.2-2' }})
+      <!-- INDICADORES METABÓLICOS (SOLO LECTURA): TMB ACTUAL Y TDEE AL LADO -->
+      <div class="grid grid-cols-2 gap-2.5 mb-6 relative z-10">
+        <!-- TMB Actual -->
+        <div class="bg-stone-50 border border-stone-200/80 rounded-2xl p-3 shadow-2xs">
+          <div class="flex items-center justify-between gap-1">
+            <span class="text-[9px] font-black uppercase tracking-wider text-stone-500">TMB Actual</span>
+            @if (currentTmb()) {
+            <span class="text-[9px] font-semibold text-stone-400" [title]="currentTmb()!.isEstimated ? 'Altura promedio población RD' : 'Altura del atleta'">
+              {{ currentTmb()!.alturaCm }} cm{{ currentTmb()!.isEstimated ? ' (RD)' : '' }}
             </span>
-            <div class="flex items-baseline sm:justify-end gap-1 mt-0.5">
-              <span class="text-lg font-black text-emerald-600">{{ currentTdee() | number:'1.0-0' }}</span>
-              <span class="text-[11px] font-bold text-stone-500">kcal/día</span>
-            </div>
+            }
+          </div>
+          <div class="flex items-baseline gap-1 mt-0.5">
+            @if (currentTmb()) {
+            <span class="text-xl font-black text-awakin-sun">
+              {{ currentTmb()!.kcal | number:'1.0-0' }}
+            </span>
+            <span class="text-xs font-bold text-stone-500">kcal</span>
+            } @else {
+            <span class="text-sm font-bold text-stone-400">--</span>
+            }
           </div>
         </div>
-        }
 
-        <p-popover #activityPopover styleClass="p-0 overflow-hidden shadow-2xl rounded-2xl border border-stone-200 w-72 max-w-[90vw]">
-          <div class="p-3 bg-white">
-            <div class="pb-2 mb-2 border-b border-stone-100 flex items-center justify-between">
-              <span class="text-[10px] font-black uppercase tracking-wider text-stone-500">Factor de Actividad</span>
-              <span class="text-[10px] font-bold text-stone-400">TMB × Coef.</span>
-            </div>
-            <div class="flex flex-col gap-1">
-              @for (lvl of activityLevels; track lvl.key) {
-              <button type="button" (click)="updateActivityLevel(lvl.key); activityPopover.hide()"
-                class="w-full text-left px-2.5 py-2 rounded-xl transition-colors flex items-center justify-between gap-2 cursor-pointer"
-                [ngClass]="currentActivityLevel().key === lvl.key
-                  ? 'bg-awakin-sun/10 text-awakin-sun'
-                  : 'text-stone-700 hover:bg-stone-100'">
-                <div class="min-w-0">
-                  <div class="text-xs font-black truncate">{{ lvl.label }}</div>
-                  <div class="text-[10px] text-stone-400 truncate">{{ lvl.desc }}</div>
-                </div>
-                <span class="text-xs font-black px-2 py-0.5 rounded-lg shrink-0"
-                  [ngClass]="currentActivityLevel().key === lvl.key
-                    ? 'bg-awakin-sun text-white'
-                    : 'bg-stone-100 text-stone-700'">
-                  {{ lvl.factor | number:'1.2-2' }}
-                </span>
-              </button>
-              }
-            </div>
+        <!-- TDEE (TMB × Factor de Actividad) -->
+        <div class="bg-stone-50 border border-stone-200/80 rounded-2xl p-3 shadow-2xs">
+          <div class="flex items-center justify-between gap-1">
+            <span class="text-[9px] font-black uppercase tracking-wider text-stone-500">TDEE</span>
+            <span class="px-1.5 py-0.2 rounded-md bg-emerald-50 border border-emerald-200/70 text-emerald-700 text-[9px] font-black">
+              ×{{ currentActivityLevel().factor | number:'1.2-2' }}
+            </span>
           </div>
-        </p-popover>
+          <div class="flex items-baseline gap-1 mt-0.5">
+            @if (currentTdee()) {
+            <span class="text-xl font-black text-emerald-600">
+              {{ currentTdee() | number:'1.0-0' }}
+            </span>
+            <span class="text-xs font-bold text-stone-500">kcal</span>
+            } @else {
+            <span class="text-sm font-bold text-stone-400">--</span>
+            }
+          </div>
+          <p class="text-[9px] font-semibold text-stone-400 truncate mt-0.5">
+            {{ currentActivityLevel().label }}
+          </p>
+        </div>
       </div>
       }
 

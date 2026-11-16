@@ -274,6 +274,9 @@ export class IntakeUserComponent implements OnInit {
         untracked(() => {
           this.intakeService.loadAvailableMenus(athleteId).subscribe();
           this.intakeService.loadWeeklyPlansForAthlete(athleteId).subscribe();
+          if (!this.athleteService.currentRecords()) {
+            this.athleteService.loadAthleteRecords(athleteId);
+          }
           this.loadDayRecords();
         });
       }
@@ -338,10 +341,10 @@ export class IntakeUserComponent implements OnInit {
   dailyGoalCarbs = signal<number>(250);
   dailyGoalFats = signal<number>(55);
 
-  // Set Points del protocolo (TBM, Goal, Maint)
-  minBasal = signal<number>(1450);         // TBM = 1450 kcal
+  // Set Points del protocolo (TBM, Goal, Maint = TDEE)
+  minBasal = computed<number>(() => this.athleteService.currentTmb()?.kcal ?? 1450);
   targetGoal = signal<number>(2100);       // GOAL = 2100 kcal
-  maintenanceLevel = signal<number>(1850); // MAINT = 1850 kcal
+  maintenanceLevel = computed<number>(() => this.athleteService.currentTdee() ?? 1850);
 
   // En intake-user.component.ts
   currentLabel = signal<string>('Hoy');
