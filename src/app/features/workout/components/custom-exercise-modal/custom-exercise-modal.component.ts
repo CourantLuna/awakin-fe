@@ -1,9 +1,10 @@
-import { Component, model, output, signal } from '@angular/core';
+import { Component, computed, inject, model, output, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { DialogModule } from 'primeng/dialog';
-import { BodyMapComponent, MuscleRegion } from '../body-map/body-map.component';
+import { BodyMapComponent, BodyMapGender, MuscleRegion } from '../body-map/body-map.component';
 import { ActiveSessionExercise } from '../../models/workout.models';
+import { AthleteService } from '../../../../core/services/athlete.service';
 
 export interface CustomExercisePayload {
   exercise_name: string;
@@ -21,8 +22,16 @@ export interface CustomExercisePayload {
   templateUrl: './custom-exercise-modal.component.html'
 })
 export class CustomExerciseModalComponent {
+  private readonly athleteService = inject(AthleteService);
+
   isOpen = model<boolean>(false);
   onCreated = output<ActiveSessionExercise>();
+
+  athleteGender = computed<BodyMapGender>(() => {
+    const a = this.athleteService.currentAthlete();
+    const raw = (a?.gender || a?.sexo || a?.genero || '').toLowerCase().trim();
+    return (raw === 'female' || raw === 'f' || raw === 'mujer' || raw === 'femenino') ? 'female' : 'male';
+  });
 
   name = signal<string>('');
   equipment = signal<string>('body weight');

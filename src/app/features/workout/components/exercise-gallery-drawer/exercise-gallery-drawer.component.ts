@@ -9,6 +9,7 @@ import { BodyMapComponent, BodyMapGender, BodyMapAnatomyMode, MuscleRegion } fro
 import { ExerciseApiService } from '../../services/exercise-api.service';
 import { ExerciseSummary, ExerciseDetail } from '../../models/exercises.models';
 import { EquipmentMeta, getEquipmentMeta, EQUIPMENT_META_MAP } from './equipment-icons';
+import { AthleteService } from '../../../../core/services/athlete.service';
 
 @Component({
   selector: 'app-exercise-gallery-drawer',
@@ -26,6 +27,7 @@ import { EquipmentMeta, getEquipmentMeta, EQUIPMENT_META_MAP } from './equipment
 export class ExerciseGalleryDrawerComponent implements OnInit, OnDestroy {
   private readonly exerciseApi = inject(ExerciseApiService);
   private readonly sanitizer = inject(DomSanitizer);
+  private readonly athleteService = inject(AthleteService);
 
   isOpen = model<boolean>(false);
 
@@ -64,6 +66,16 @@ export class ExerciseGalleryDrawerComponent implements OnInit, OnDestroy {
   private scrollListenerRemover: (() => void) | null = null;
 
   constructor() {
+    // Sincronizar género del mapa corporal con el género del atleta autenticado
+    effect(() => {
+      const current = this.athleteService.currentAthlete();
+      if (current) {
+        const raw = (current.gender || current.sexo || current.genero || '').toLowerCase().trim();
+        const isFemale = raw === 'female' || raw === 'f' || raw === 'mujer' || raw === 'femenino';
+        this.bodyMapGender.set(isFemale ? 'female' : 'male');
+      }
+    });
+
     // Si se abre el drawer por primera vez, cargar iniciales y vincular listener de scroll
     effect(() => {
       if (this.isOpen()) {

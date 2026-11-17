@@ -93,7 +93,7 @@
 
         <!-- Mapa Anatómico -->
         <div class="bg-white rounded-2xl border border-stone-200/80 p-2 overflow-hidden">
-          <app-body-map [defaultGender]="'male'" [anatomyMode]="'advanced'" (muscleSelected)="onMuscleClicked($event)"></app-body-map>
+          <app-body-map [defaultGender]="athleteGender()" [anatomyMode]="'advanced'" (muscleSelected)="onMuscleClicked($event)"></app-body-map>
         </div>
       </div>
 
