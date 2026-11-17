@@ -131,16 +131,13 @@
 
           <input #routineBannerInput type="file" accept="image/*" (change)="onRoutineBannerSelected($event, routine)"
             class="hidden" />
-          <button type="button" (click)="routineBannerInput.click()" [disabled]="isUploadingBanner()"
-            class="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/15 text-white flex items-center justify-center transition-all cursor-pointer disabled:opacity-60"
-            [title]="routine.banner_url ? 'Cambiar banner de rutina' : 'Subir banner de rutina'">
-            <i class="pi text-xs" [ngClass]="isUploadingBanner() ? 'pi-spin pi-spinner' : 'pi-camera'"></i>
-          </button>
+
         </div>
       </div>
 
       @if (bannerUploadError()) {
-      <div class="mb-2 px-3 py-1.5 rounded-xl bg-rose-500/20 border border-rose-400/40 text-rose-200 text-[11px] font-semibold">
+      <div
+        class="mb-2 px-3 py-1.5 rounded-xl bg-rose-500/20 border border-rose-400/40 text-rose-200 text-[11px] font-semibold">
         {{ bannerUploadError() }}
       </div>
       }
@@ -182,12 +179,20 @@
     </div>
 
     <div class="mt-6 relative z-10 flex items-center gap-2">
+      @if (!logForSelectedDate()) {
       <p-button (onClick)="startWorkout(routine)" class="flex-1"
         styleClass="!w-full !bg-awakin-sun !border-none !text-white !font-black !text-sm !tracking-widest !py-3.5 !rounded-2xl shadow-[0_4px_15px_rgba(254,151,10,0.4)] hover:!bg-[#E68800] active:!scale-[0.98] !transition-all !justify-center">
         <div class="flex items-center gap-2">
           <i class="pi pi-play-circle text-lg"></i> INICIAR SESIÓN
         </div>
       </p-button>
+      } @else
+      {
+      <div class="flex items-center gap-2">
+        <i class="pi pi-check text-lg"></i> COMPLETADO
+      </div>
+      }
+
     </div>
   </div>
   } @else {
@@ -503,7 +508,8 @@
       </div>
 
       <div>
-        <label class="block text-[10px] font-black uppercase tracking-wider text-stone-500 mb-1">Banner de Rutina (opcional)</label>
+        <label class="block text-[10px] font-black uppercase tracking-wider text-stone-500 mb-1">Banner de Rutina
+          (opcional)</label>
         <input #newRoutineBannerInput type="file" accept="image/*" (change)="onNewRoutineBannerSelected($event)"
           class="hidden" />
         @if (!newRoutineBannerPreview()) {

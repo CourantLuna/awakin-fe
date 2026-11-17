@@ -8,6 +8,7 @@ import {
   AthleteService,
   AthleteProfile,
   AthleteFeedPost,
+  AthleteNutritionProtocol,
   KinInfo,
   NutritionMealRecord,
   ProgressMetricRecord
@@ -49,6 +50,56 @@ export class ProfileAvatarComponent implements OnInit {
   posts = this.athleteService.currentPosts;
   workoutLogs = this.workoutService.workoutLogs;
   isLoading = this.athleteService.isLoading;
+  nutritionProtocol = this.athleteService.currentNutritionProtocol;
+
+  // Protocolo nutricional activo formateado y tipado
+  currentProtocol = computed(() => {
+    const p = this.nutritionProtocol();
+    if (!p) {
+      return {
+        name: 'Sin Protocolo Asignado',
+        colorClass: 'bg-stone-100 border-stone-200 text-stone-600',
+        icon: 'pi pi-circle text-stone-400',
+        kcal: null,
+        hasProtocol: false
+      };
+    }
+    const typeMap: Record<string, { label: string; color: string; icon: string }> = {
+      DEFICIT: {
+        label: 'Déficit Calórico',
+        color: 'bg-emerald-50 border-emerald-200 text-emerald-800',
+        icon: 'pi pi-arrow-down-right text-emerald-600'
+      },
+      SURPLUS: {
+        label: 'Superávit Calórico',
+        color: 'bg-amber-50 border-amber-200 text-amber-800',
+        icon: 'pi pi-arrow-up-right text-amber-600'
+      },
+      MAINTENANCE: {
+        label: 'Mantenimiento',
+        color: 'bg-stone-100 border-stone-200 text-stone-800',
+        icon: 'pi pi-arrows-h text-stone-600'
+      },
+      RECOMPOSITION: {
+        label: 'Recomposición Corporal',
+        color: 'bg-sky-50 border-sky-200 text-sky-800',
+        icon: 'pi pi-sync text-sky-600'
+      }
+    };
+    const key = (p.protocol || '').toUpperCase().trim();
+    const info = typeMap[key] || {
+      label: p.protocol || 'Protocolo Activo',
+      color: 'bg-amber-50 border-amber-200 text-amber-800',
+      icon: 'pi pi-bullseye text-amber-500'
+    };
+    return {
+      name: info.label,
+      kcal: p.goal_kcal,
+      colorClass: info.color,
+      icon: info.icon,
+      hasProtocol: true
+    };
+  });
 
   private lastLoadedWorkoutAthleteId: string | null = null;
 
@@ -59,6 +110,7 @@ export class ProfileAvatarComponent implements OnInit {
         this.lastLoadedWorkoutAthleteId = id;
         untracked(() => {
           this.workoutService.loadWorkoutLogs(id);
+          this.athleteService.loadNutritionProtocol(id);
         });
       }
     });
@@ -438,6 +490,7 @@ export class ProfileAvatarComponent implements OnInit {
         this.athleteService.loadAthleteRecords(current.id);
         this.athleteService.loadAthletePosts(current.id);
       }
+      this.athleteService.loadNutritionProtocol(current.id);
       // Refrescar perfil en segundo plano para mantener altura_cm, kin y stats actualizados
       this.athleteService.loadAthleteProfile(current.id);
     } else {

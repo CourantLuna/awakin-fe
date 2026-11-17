@@ -1,6 +1,6 @@
 {
-  "name": "awakin-pwa",
-  "short_name": "awakin-pwa",
+  "name": "AWAKIN",
+  "short_name": "AWAKIN",
   "display": "standalone",
   "scope": "./",
   "start_url": "./",
@@ -14,6 +14,12 @@
     {
       "src": "icons/icon-96x96.png",
       "sizes": "96x96",
+      "type": "image/png",
+      "purpose": "maskable any"
+    },
+    {
+      "src": "icons/icon-120x120.png",
+      "sizes": "120x120",
       "type": "image/png",
       "purpose": "maskable any"
     },
@@ -32,6 +38,12 @@
     {
       "src": "icons/icon-152x152.png",
       "sizes": "152x152",
+      "type": "image/png",
+      "purpose": "maskable any"
+    },
+    {
+      "src": "icons/icon-180x180.png",
+      "sizes": "180x180",
       "type": "image/png",
       "purpose": "maskable any"
     },

@@ -8,8 +8,8 @@ export const environment = {
   modules: {
     home: true,
     intake: true,
-    workout: false,
-    kin: false,
+    workout: true,
+    kin: true,
     avatar: true,
   },
 };
