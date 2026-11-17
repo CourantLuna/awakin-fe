@@ -266,6 +266,8 @@ export class WorkoutSupabaseService {
           .sort((a: any, b: any) => a.sort_order - b.sort_order)
       }));
 
+      await this.enrichWorkoutLogsMedia(normalized);
+
       this.workoutLogs.set(normalized);
     } catch (e) {
       console.warn('Error en loadWorkoutLogs:', e);
@@ -517,6 +519,8 @@ export class WorkoutSupabaseService {
           .sort((a: any, b: any) => a.sort_order - b.sort_order)
       };
 
+      await this.enrichWorkoutLogsMedia([normalizedLog]);
+
       // Sincronizar en el signal workoutLogs
       this.workoutLogs.update((logs) =>
         logs.map((l) => (l.id === normalizedLog.id ? normalizedLog : l))
@@ -708,6 +712,81 @@ export class WorkoutSupabaseService {
             }
             ex.equipment = ex.equipment || detail.equipment;
           }
+        }
+      }
+    }
+  }
+
+  public async enrichWorkoutLogsMedia(logs: WorkoutLog[]): Promise<void> {
+    const apiIds = new Set<string>();
+    for (const log of logs) {
+      if (log.exercises) {
+        for (const ex of log.exercises) {
+          if (ex.exercise_api_id) {
+            apiIds.add(ex.exercise_api_id);
+          }
+        }
+      }
+    }
+
+    if (apiIds.size > 0) {
+      await Promise.all(Array.from(apiIds).map((id) => this.getCachedExerciseDetail(id)));
+    }
+
+    const routines = this.allRoutines();
+
+    for (const log of logs) {
+      if (!log.exercises) continue;
+      for (const ex of log.exercises) {
+        let detail = ex.exercise_api_id ? this.exerciseCache.get(ex.exercise_api_id) : null;
+
+        // Si no tiene detail por ID directo, buscar en rutinas cargadas por coincidencia de nombre
+        if (!detail && ex.exercise_name) {
+          const lowerName = ex.exercise_name.trim().toLowerCase();
+          for (const r of routines) {
+            const match = r.exercises.find(
+              (re) =>
+                re.exercise_name?.trim().toLowerCase() === lowerName ||
+                re.apiDetail?.name?.trim().toLowerCase() === lowerName
+            );
+            if (match) {
+              if (match.apiDetail) {
+                detail = match.apiDetail;
+              }
+              if (!ex.exercise_api_id && match.exercise_api_id) {
+                ex.exercise_api_id = match.exercise_api_id;
+              }
+              if (!ex.equipment && match.equipment) {
+                ex.equipment = match.equipment;
+              }
+              if (!ex.target_muscle && match.target_muscle) {
+                ex.target_muscle = match.target_muscle;
+              }
+              if ((!ex.secondary_muscles || ex.secondary_muscles.length === 0) && match.secondary_muscles?.length) {
+                ex.secondary_muscles = match.secondary_muscles;
+              }
+              if (!ex.notes && match.notes) {
+                ex.notes = match.notes;
+              }
+              if (!ex.rest_seconds && match.rest_seconds) {
+                ex.rest_seconds = match.rest_seconds;
+              }
+              break;
+            }
+          }
+        }
+
+        if (detail) {
+          ex.image_url = detail.image ? this.exerciseApi.getMediaUrl(detail.image) : undefined;
+          ex.gif_url = detail.gif_url ? this.exerciseApi.getMediaUrl(detail.gif_url) : undefined;
+          ex.instruction_steps = detail.instruction_steps || (detail.instruction ? [detail.instruction] : []);
+          if (!ex.equipment) ex.equipment = detail.equipment;
+          if (!ex.target_muscle) ex.target_muscle = detail.target;
+          if (!ex.secondary_muscles || ex.secondary_muscles.length === 0) {
+            ex.secondary_muscles = detail.secondary_muscles || [];
+          }
+        } else if (ex.media_urls && ex.media_urls.length > 0 && !ex.image_url) {
+          ex.image_url = ex.media_urls[0];
         }
       }
     }

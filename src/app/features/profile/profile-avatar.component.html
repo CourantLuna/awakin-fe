@@ -1499,7 +1499,7 @@
           </label>
           <div
             class="h-10 flex items-center bg-stone-50 hover:bg-stone-100/70 focus-within:bg-white border border-stone-200 focus-within:border-awakin-sun focus-within:ring-2 focus-within:ring-awakin-sun/15 rounded-xl overflow-hidden transition-all">
-            <input type="number" step="0.1" [ngModel]="progressWeight()" (ngModelChange)="progressWeight.set($event)"
+            <input type="number" step="0.1" inputmode="decimal" [ngModel]="progressWeight()" (ngModelChange)="progressWeight.set($event)"
               placeholder="Ej: 70.5"
               class="w-full min-w-0 flex-1 bg-transparent border-0 text-xs px-3 text-stone-900 font-bold placeholder:text-stone-400 focus:outline-none" />
             <div class="flex items-center p-0.5 bg-stone-200/70 rounded-lg mr-1 shrink-0">
@@ -1528,7 +1528,7 @@
             <span class="block text-[9px] font-bold uppercase text-stone-400 mb-1 text-center">Cintura</span>
             <div
               class="h-10 flex items-center bg-stone-50 focus-within:bg-white border border-stone-200 focus-within:border-awakin-sun focus-within:ring-2 focus-within:ring-awakin-sun/15 rounded-xl px-2.5 transition-all">
-              <input type="number" step="0.5" [ngModel]="progressWaist()" (ngModelChange)="progressWaist.set($event)"
+              <input type="number" step="0.5" inputmode="decimal" [ngModel]="progressWaist()" (ngModelChange)="progressWaist.set($event)"
                 placeholder="--"
                 class="w-full min-w-0 bg-transparent border-0 text-xs text-stone-900 text-center font-bold placeholder:text-stone-400 focus:outline-none" />
               <span class="text-[10px] font-bold text-stone-400 ml-1 shrink-0">cm</span>
@@ -1539,7 +1539,7 @@
             <span class="block text-[9px] font-bold uppercase text-stone-400 mb-1 text-center">Cadera</span>
             <div
               class="h-10 flex items-center bg-stone-50 focus-within:bg-white border border-stone-200 focus-within:border-awakin-sun focus-within:ring-2 focus-within:ring-awakin-sun/15 rounded-xl px-2.5 transition-all">
-              <input type="number" step="0.5" [ngModel]="progressHip()" (ngModelChange)="progressHip.set($event)"
+              <input type="number" step="0.5" inputmode="decimal" [ngModel]="progressHip()" (ngModelChange)="progressHip.set($event)"
                 placeholder="--"
                 class="w-full min-w-0 bg-transparent border-0 text-xs text-stone-900 text-center font-bold placeholder:text-stone-400 focus:outline-none" />
               <span class="text-[10px] font-bold text-stone-400 ml-1 shrink-0">cm</span>
@@ -1550,7 +1550,7 @@
             <span class="block text-[9px] font-bold uppercase text-stone-400 mb-1 text-center">Pecho</span>
             <div
               class="h-10 flex items-center bg-stone-50 focus-within:bg-white border border-stone-200 focus-within:border-awakin-sun focus-within:ring-2 focus-within:ring-awakin-sun/15 rounded-xl px-2.5 transition-all">
-              <input type="number" step="0.5" [ngModel]="progressChest()" (ngModelChange)="progressChest.set($event)"
+              <input type="number" step="0.5" inputmode="decimal" [ngModel]="progressChest()" (ngModelChange)="progressChest.set($event)"
                 placeholder="--"
                 class="w-full min-w-0 bg-transparent border-0 text-xs text-stone-900 text-center font-bold placeholder:text-stone-400 focus:outline-none" />
               <span class="text-[10px] font-bold text-stone-400 ml-1 shrink-0">cm</span>
@@ -1574,25 +1574,25 @@
         <div class="grid grid-cols-2 gap-2.5 mt-3 pt-3 border-t border-stone-200/80 animate-fade-in">
           <div>
             <label class="block text-[9px] font-bold uppercase text-stone-500 mb-1">Cuello (cm)</label>
-            <input type="number" step="0.5" [ngModel]="progressNeck()" (ngModelChange)="progressNeck.set($event)"
+            <input type="number" step="0.5" inputmode="decimal" [ngModel]="progressNeck()" (ngModelChange)="progressNeck.set($event)"
               placeholder="--"
               class="w-full h-9 bg-white border border-stone-200 focus:border-awakin-sun rounded-xl text-xs px-2.5 text-stone-900 font-bold placeholder:text-stone-400 outline-hidden" />
           </div>
           <div>
             <label class="block text-[9px] font-bold uppercase text-stone-500 mb-1">Bíceps (cm)</label>
-            <input type="number" step="0.5" [ngModel]="progressBiceps()" (ngModelChange)="progressBiceps.set($event)"
+            <input type="number" step="0.5" inputmode="decimal" [ngModel]="progressBiceps()" (ngModelChange)="progressBiceps.set($event)"
               placeholder="--"
               class="w-full h-9 bg-white border border-stone-200 focus:border-awakin-sun rounded-xl text-xs px-2.5 text-stone-900 font-bold placeholder:text-stone-400 outline-hidden" />
           </div>
           <div>
             <label class="block text-[9px] font-bold uppercase text-stone-500 mb-1">Muslo (cm)</label>
-            <input type="number" step="0.5" [ngModel]="progressThigh()" (ngModelChange)="progressThigh.set($event)"
+            <input type="number" step="0.5" inputmode="decimal" [ngModel]="progressThigh()" (ngModelChange)="progressThigh.set($event)"
               placeholder="--"
               class="w-full h-9 bg-white border border-stone-200 focus:border-awakin-sun rounded-xl text-xs px-2.5 text-stone-900 font-bold placeholder:text-stone-400 outline-hidden" />
           </div>
           <div>
             <label class="block text-[9px] font-bold uppercase text-stone-500 mb-1">% Grasa Corporal</label>
-            <input type="number" step="0.1" [ngModel]="progressBodyFat()" (ngModelChange)="progressBodyFat.set($event)"
+            <input type="number" step="0.1" inputmode="decimal" [ngModel]="progressBodyFat()" (ngModelChange)="progressBodyFat.set($event)"
               placeholder="--"
               class="w-full h-9 bg-white border border-stone-200 focus:border-awakin-sun rounded-xl text-xs px-2.5 text-stone-900 font-bold placeholder:text-stone-400 outline-hidden" />
           </div>

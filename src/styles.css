@@ -44,8 +44,25 @@
 }
 
 /* Opcional: Ajustes finos para que se sienta más "App Nativa" */
+html,
 body {
     background-color: var(--color-awakin-base);
     color: #1f2937;
     -webkit-font-smoothing: antialiased;
+    touch-action: manipulation;
+}
+
+/* ==========================================================================
+   4. PREVENCIÓN DE AUTO-ZOOM EN DISPOSITIVOS MÓVILES (iOS / Android)
+   En iOS Safari / WebKit PWA, cualquier input/select/textarea con font-size < 16px
+   activa un zoom de cámara automático y forzado al recibir foco.
+   Fijar un tamaño base mínimo de 16px en pantallas móviles previene el auto-zoom
+   de raíz sin alterar la legibilidad ni el diseño desktop.
+   ========================================================================== */
+@media screen and (max-width: 768px) {
+    input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]),
+    select,
+    textarea {
+        font-size: 16px !important;
+    }
 }

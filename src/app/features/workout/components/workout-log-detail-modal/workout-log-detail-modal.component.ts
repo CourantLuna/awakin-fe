@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { DialogModule } from 'primeng/dialog';
 import {
   WorkoutLog,
+  WorkoutLogExercise,
   WorkoutSetType,
   WORKOUT_SET_TYPE_LABELS
 } from '../../models/workout.models';
@@ -13,6 +14,7 @@ import {
 } from '../body-map/workout-mini-body-map.component';
 import { BodyMapGender } from '../body-map/body-map.component';
 import { AthleteService } from '../../../../core/services/athlete.service';
+import { getEquipmentMeta } from '../exercise-gallery-drawer/equipment-icons';
 
 @Component({
   selector: 'app-workout-log-detail-modal',
@@ -34,6 +36,9 @@ export class WorkoutLogDetailModalComponent {
   // Lightbox interno para ampliar la foto del entrenamiento
   isLightboxOpen = signal<boolean>(false);
   lightboxImageUrl = signal<string | null>(null);
+
+  // Inspección de ejercicio (Instrucciones + GIF)
+  inspectedExercise = signal<WorkoutLogExercise | null>(null);
 
   athleteGender = computed<BodyMapGender>(() => {
     if (this.gender()) return this.gender()!;
@@ -188,6 +193,11 @@ export class WorkoutLogDetailModalComponent {
         levelLabel: tone.levelLabel
       };
     });
+  }
+
+  translateEquipmentName(raw: string | null | undefined): string {
+    if (!raw) return 'Peso Corporal';
+    return getEquipmentMeta(raw).label;
   }
 
   getSetTypeInfo(setType?: string): { label: string; short: string; badgeClass: string } {

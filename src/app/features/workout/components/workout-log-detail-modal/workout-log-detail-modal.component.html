@@ -177,29 +177,60 @@
 
         @if (detail.exercises && detail.exercises.length > 0) {
         @for (ex of detail.exercises; track ex.id || $index) {
-        <div class="bg-stone-50/70 border border-stone-200/90 rounded-2xl p-3.5 space-y-2.5">
-          <div class="flex items-start justify-between gap-2">
-            <div class="min-w-0">
-              <div class="flex items-center gap-2">
-                <span
-                  class="w-5 h-5 rounded-full bg-stone-200 text-stone-800 text-[10px] font-black flex items-center justify-center shrink-0">
-                  {{ $index + 1 }}
-                </span>
-                <h5 class="text-xs sm:text-sm font-black text-stone-900 truncate">
-                  {{ ex.exercise_name }}
-                </h5>
+        <div class="bg-white border border-stone-200/90 rounded-3xl p-4 shadow-sm space-y-3">
+          <!-- Cabecera del ejercicio (Miniatura + Título Fijo + Badges) -->
+          <div class="flex items-start gap-3">
+            <button type="button" (click)="inspectedExercise.set(ex)"
+              class="w-16 h-16 rounded-2xl bg-stone-100 border border-stone-200 overflow-hidden shrink-0 flex items-center justify-center relative group cursor-pointer">
+              @if (ex.image_url) {
+              <img [src]="ex.image_url" [alt]="ex.exercise_name" class="w-full h-full object-cover" />
+              <div
+                class="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                <i class="pi pi-play text-white text-xs"></i>
               </div>
-              @if (ex.notes) {
-              <p class="text-[11px] text-stone-500 italic mt-0.5 pl-7">{{ ex.notes }}</p>
+              } @else {
+              <i class="pi pi-bolt text-awakin-sun text-lg"></i>
               }
+            </button>
+
+            <div class="flex-1 min-w-0">
+              <h4 (click)="inspectedExercise.set(ex)"
+                class="text-sm font-black text-stone-900 uppercase tracking-tight leading-snug hover:text-awakin-sun transition-colors cursor-pointer select-none">
+                {{ $index + 1 }}. {{ ex.exercise_name }}
+              </h4>
+
+              <div class="flex items-center gap-1.5 flex-wrap mt-1">
+                @if (ex.target_muscle) {
+                <span class="px-2 py-0.5 rounded-md bg-amber-500/10 text-amber-700 text-[9px] font-black uppercase tracking-tight">
+                  {{ translateMuscleName(ex.target_muscle) }}
+                </span>
+                }
+                @for (sec of ex.secondary_muscles; track sec) {
+                <span class="px-2 py-0.5 rounded-md bg-stone-100 text-stone-600 text-[9px] font-bold uppercase tracking-tight">
+                  {{ translateMuscleName(sec) }}
+                </span>
+                }
+                @if (ex.equipment) {
+                <span class="px-2 py-0.5 rounded-md bg-stone-100 text-stone-600 text-[9px] font-bold uppercase tracking-tight">
+                  {{ translateEquipmentName(ex.equipment) }}
+                </span>
+                }
+                @if (ex.rest_seconds) {
+                <span class="text-[10px] font-bold text-stone-400 inline-flex items-center gap-1">
+                  <i class="pi pi-clock text-[9px]"></i> {{ ex.rest_seconds }}s descanso
+                </span>
+                }
+              </div>
             </div>
-            @if (ex.target_muscle) {
-            <span
-              class="px-2 py-0.5 rounded-full bg-stone-200/80 text-stone-700 text-[10px] font-bold shrink-0 capitalize">
-              {{ translateMuscleName(ex.target_muscle) }}
-            </span>
-            }
           </div>
+
+          <!-- Notas del ejercicio (ocupa todo el ancho con padding) -->
+          @if (ex.notes) {
+          <div class="w-full px-3.5 py-2.5 rounded-xl bg-amber-500/5 border border-amber-500/20 text-xs text-amber-900 flex items-start gap-2">
+            <i class="pi pi-info-circle text-awakin-sun text-sm shrink-0 mt-0.5"></i>
+            <span class="font-medium leading-relaxed">{{ ex.notes }}</span>
+          </div>
+          }
 
           @if (ex.sets && ex.sets.length > 0) {
           <div class="overflow-x-auto">
@@ -297,7 +328,7 @@
 
 <!-- LIGHTBOX PARA AMPLIAR LA FOTO DEL ENTRENAMIENTO (CON STACK DE Z-INDEX DE PRIMENG) -->
 <p-dialog [(visible)]="isLightboxOpen" [modal]="true" [draggable]="false" [resizable]="false" [closable]="false"
-  [showHeader]="false" [dismissableMask]="true" appendTo="body" (onHide)="closeLightbox()"
+  [showHeader]="false" [dismissableMask]="true" appendTo="body" (onHide)="closeLightbox()" [baseZIndex]="12000"
   [style]="{ width: '96vw', maxWidth: '860px', backgroundColor: 'transparent', border: 'none', boxShadow: 'none' }"
   styleClass="!bg-transparent !border-0 !shadow-none [&_.p-dialog-content]:!p-0 [&_.p-dialog-content]:!bg-transparent [&_.p-dialog-content]:!border-0">
   <div class="relative flex flex-col items-center justify-center p-2" (click)="closeLightbox()">
@@ -312,4 +343,65 @@
       (click)="$event.stopPropagation()" />
     }
   </div>
+</p-dialog>
+
+<!-- MODAL: INSTRUCCIONES Y GIF DEL EJERCICIO -->
+<p-dialog [visible]="!!inspectedExercise()" (visibleChange)="$event ? null : inspectedExercise.set(null)" [modal]="true"
+  [draggable]="false" [resizable]="false" [closable]="false" [showHeader]="false" [dismissableMask]="true"
+  appendTo="body" [baseZIndex]="11000" [style]="{ width: '92vw', maxWidth: '480px', borderRadius: '24px' }"
+  styleClass="overflow-hidden shadow-2xl border border-stone-200 [&_.p-dialog-content]:!p-0">
+  @if (inspectedExercise(); as ex) {
+  <div class="bg-white flex flex-col max-h-[85vh]">
+    <div class="px-5 py-4 border-b border-stone-100 bg-stone-50/80 flex items-center justify-between">
+      <div class="min-w-0 pr-2">
+        <span class="text-[9px] font-black uppercase tracking-wider text-awakin-sun">{{ translateEquipmentName(ex.equipment) }}</span>
+        <h3 class="text-sm font-black text-stone-900 uppercase truncate">{{ ex.exercise_name }}</h3>
+      </div>
+      <button type="button" (click)="inspectedExercise.set(null)"
+        class="w-8 h-8 rounded-full bg-stone-100 hover:bg-stone-200 text-stone-600 flex items-center justify-center cursor-pointer">
+        <i class="pi pi-times text-xs"></i>
+      </button>
+    </div>
+
+    <div class="p-4 overflow-y-auto space-y-4">
+      @if (ex.gif_url || ex.image_url) {
+      <div
+        class="w-full h-64 rounded-2xl bg-stone-50 border border-stone-200 overflow-hidden flex items-center justify-center">
+        <img [src]="ex.gif_url || ex.image_url" [alt]="ex.exercise_name" class="w-full h-full object-contain" />
+      </div>
+      }
+
+      <div class="grid grid-cols-2 gap-2 bg-stone-50 p-3 rounded-2xl border border-stone-200/70 text-xs">
+        <div>
+          <span class="text-[9px] font-black uppercase text-stone-400 block">Músculo Objetivo</span>
+          <span class="font-bold text-stone-900 capitalize">{{ translateMuscleName(ex.target_muscle) }}</span>
+        </div>
+        <div>
+          <span class="text-[9px] font-black uppercase text-stone-400 block">Secundarios</span>
+          <span class="font-semibold text-stone-600 capitalize">
+            @for (sec of ex.secondary_muscles; track sec; let isLast = $last) {
+              {{ translateMuscleName(sec) }}{{ isLast ? '' : ', ' }}
+            } @empty {
+              --
+            }
+          </span>
+        </div>
+      </div>
+
+      @if (ex.instruction_steps && ex.instruction_steps.length > 0) {
+      <ol class="space-y-2 text-xs text-stone-600">
+        @for (step of ex.instruction_steps; track step; let i = $index) {
+        <li class="flex items-start gap-2">
+          <span
+            class="w-5 h-5 rounded-full bg-awakin-sun/15 text-stone-900 font-black text-[10px] flex items-center justify-center shrink-0">
+            {{ i + 1 }}
+          </span>
+          <span class="leading-relaxed">{{ step }}</span>
+        </li>
+        }
+      </ol>
+      }
+    </div>
+  </div>
+  }
 </p-dialog>

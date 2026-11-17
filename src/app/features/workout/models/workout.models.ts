@@ -109,6 +109,9 @@ export interface WorkoutLogExercise {
   notes?: string | null;
   sort_order: number;
   sets: WorkoutLogSet[];
+  image_url?: string;
+  gif_url?: string;
+  instruction_steps?: string[];
 }
 
 export interface WorkoutLog {

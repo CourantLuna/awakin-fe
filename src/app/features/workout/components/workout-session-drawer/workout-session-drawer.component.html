@@ -230,14 +230,14 @@
 
           <!-- Peso -->
           <div class="col-span-3">
-            <input type="number" step="2.5" min="0" [(ngModel)]="set.weight_used"
+            <input type="number" step="any" min="0" inputmode="decimal" [(ngModel)]="set.weight_used"
               (ngModelChange)="activeSession.touchExercises()"
               class="w-full h-8 bg-white border border-stone-200 focus:border-awakin-sun rounded-lg text-xs text-center font-black text-stone-900 outline-hidden" />
           </div>
 
           <!-- Reps -->
           <div class="col-span-3">
-            <input type="number" min="0" [(ngModel)]="set.reps_completed"
+            <input type="number" min="0" inputmode="numeric" pattern="[0-9]*" [(ngModel)]="set.reps_completed"
               (ngModelChange)="activeSession.touchExercises()" [placeholder]="set.target_reps"
               class="w-full h-8 bg-white border border-stone-200 focus:border-awakin-sun rounded-lg text-xs text-center font-black text-stone-900 outline-hidden" />
           </div>
@@ -467,12 +467,12 @@
         <div>
           <label class="block text-[10px] font-black uppercase tracking-wider text-stone-500 mb-1">Duración
             (min)</label>
-          <input type="number" min="1" [(ngModel)]="finishDurationMinutes"
+          <input type="number" min="1" inputmode="numeric" pattern="[0-9]*" [(ngModel)]="finishDurationMinutes"
             class="w-full h-10 bg-stone-50 border border-stone-200 focus:border-awakin-sun rounded-xl px-3 text-xs font-bold text-stone-900 outline-hidden" />
         </div>
         <div>
           <label class="block text-[10px] font-black uppercase tracking-wider text-stone-500 mb-1">Ubicación</label>
-          <input type="text" [(ngModel)]="finishLocation" placeholder="Ej: Gimnasio / Casa"
+          <input type="text" inputmode="text" [(ngModel)]="finishLocation" placeholder="Ej: Gimnasio / Casa"
             class="w-full h-10 bg-stone-50 border border-stone-200 focus:border-awakin-sun rounded-xl px-3 text-xs font-bold text-stone-900 outline-hidden" />
         </div>
       </div>

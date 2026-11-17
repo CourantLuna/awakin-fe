@@ -8,6 +8,7 @@ import {
   WORKOUT_SET_TYPE_LABELS
 } from '../../models/workout.models';
 import { WorkoutSupabaseService } from '../../services/workout-supabase.service';
+import { getEquipmentMeta } from '../exercise-gallery-drawer/equipment-icons';
 
 export interface EditableLogSet {
   set_number: number;
@@ -30,6 +31,9 @@ export interface EditableLogExercise {
   media_urls?: string[];
   rest_seconds?: number;
   notes?: string | null;
+  image_url?: string;
+  gif_url?: string;
+  instruction_steps?: string[];
   sets: EditableLogSet[];
 }
 
@@ -56,11 +60,14 @@ export class WorkoutLogEditModalComponent {
   bannerPhotoUrl = signal<string | null>(null);
   editExercises = signal<EditableLogExercise[]>([]);
 
+  // Inspección de ejercicio (Instrucciones + GIF)
+  inspectedExercise = signal<EditableLogExercise | null>(null);
+
   isSaving = signal<boolean>(false);
   saveError = signal<string | null>(null);
 
   readonly setTypeLabels = WORKOUT_SET_TYPE_LABELS;
-  readonly setTypes: WorkoutSetType[] = ['WORKING', 'WARMUP', 'DROPSET', 'FAILURE', 'AMRAP', 'SUPERSET'];
+  readonly setTypes: WorkoutSetType[] = ['WARMUP', 'WORKING', 'DROPSET', 'FAILURE', 'AMRAP', 'SUPERSET'];
 
   constructor() {
     effect(
@@ -72,6 +79,42 @@ export class WorkoutLogEditModalComponent {
       },
       { allowSignalWrites: true }
     );
+  }
+
+  translateMuscleName(raw: string | null | undefined): string {
+    if (!raw) return 'General';
+    const key = raw.toLowerCase().trim();
+    const map: Record<string, string> = {
+      abs: 'Abdominales',
+      'upper back': 'Espalda Superior',
+      'lower back': 'Espalda Baja',
+      biceps: 'Bíceps',
+      triceps: 'Tríceps',
+      chest: 'Pecho',
+      pectorals: 'Pectorales',
+      delts: 'Deltoides',
+      shoulders: 'Hombros',
+      lats: 'Dorsales',
+      quads: 'Cuádriceps',
+      quadriceps: 'Cuádriceps',
+      hamstrings: 'Isquiosurales',
+      calves: 'Pantorrillas',
+      glutes: 'Glúteos',
+      forearms: 'Antebrazos',
+      traps: 'Trapecios',
+      trapezius: 'Trapecios',
+      adductors: 'Aductores',
+      abductors: 'Abductores',
+      neck: 'Cuello',
+      cardio: 'Cardio',
+      waist: 'Cintura / Core'
+    };
+    return map[key] || (key.charAt(0).toUpperCase() + key.slice(1));
+  }
+
+  translateEquipmentName(raw: string | null | undefined): string {
+    if (!raw) return 'Peso Corporal';
+    return getEquipmentMeta(raw).label;
   }
 
   private initializeForm(l: WorkoutLog): void {
@@ -104,6 +147,9 @@ export class WorkoutLogEditModalComponent {
       media_urls: ex.media_urls || [],
       rest_seconds: ex.rest_seconds || 90,
       notes: ex.notes,
+      image_url: ex.image_url,
+      gif_url: ex.gif_url,
+      instruction_steps: ex.instruction_steps,
       sets: (ex.sets || []).map((s, idx) => ({
         set_number: s.set_number || idx + 1,
         set_type: (s.set_type as WorkoutSetType) || 'WORKING',
@@ -126,6 +172,14 @@ export class WorkoutLogEditModalComponent {
     } catch {
       return new Date().toISOString().substring(0, 10);
     }
+  }
+
+  toggleSetCompleted(exIdx: number, setIdx: number): void {
+    const list = [...this.editExercises()];
+    const ex = list[exIdx];
+    if (!ex || !ex.sets[setIdx]) return;
+    ex.sets[setIdx].is_completed = !ex.sets[setIdx].is_completed;
+    this.editExercises.set(list);
   }
 
   addSetToExercise(exIdx: number): void {
@@ -211,6 +265,9 @@ export class WorkoutLogEditModalComponent {
             media_urls: e.media_urls || [],
             rest_seconds: e.rest_seconds || 90,
             notes: e.notes,
+            image_url: e.image_url,
+            gif_url: e.gif_url,
+            instruction_steps: e.instruction_steps,
             sets: (e.sets || []).map((s, sIdx) => ({
               set_number: s.set_number || sIdx + 1,
               set_type: (s.set_type as WorkoutSetType) || 'WORKING',

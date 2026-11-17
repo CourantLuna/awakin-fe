@@ -70,7 +70,7 @@
           <label class="block text-[10px] font-black uppercase tracking-wider text-stone-500 mb-1">Duración (Minutos)
             *</label>
           <div class="relative">
-            <input type="number" [ngModel]="editDurationMinutes()" (ngModelChange)="editDurationMinutes.set($event)"
+            <input type="number" inputmode="numeric" pattern="[0-9]*" [ngModel]="editDurationMinutes()" (ngModelChange)="editDurationMinutes.set($event)"
               min="1" max="600"
               class="w-full h-10 bg-stone-50 border border-stone-200 focus:border-awakin-sun rounded-xl px-3 text-xs font-bold text-stone-900 outline-hidden" />
             <span class="absolute right-3 top-2.5 text-stone-400 text-xs font-bold">min</span>
@@ -80,7 +80,7 @@
         <!-- Ubicación -->
         <div>
           <label class="block text-[10px] font-black uppercase tracking-wider text-stone-500 mb-1">Ubicación</label>
-          <input type="text" [ngModel]="editLocation()" (ngModelChange)="editLocation.set($event)"
+          <input type="text" inputmode="text" [ngModel]="editLocation()" (ngModelChange)="editLocation.set($event)"
             placeholder="Ej. Gimnasio, Casa"
             class="w-full h-10 bg-stone-50 border border-stone-200 focus:border-awakin-sun rounded-xl px-3 text-xs font-bold text-stone-900 outline-hidden" />
         </div>
@@ -100,7 +100,7 @@
         <div class="sm:col-span-2">
           <label class="block text-[10px] font-black uppercase tracking-wider text-stone-500 mb-1">Notas /
             Sensaciones</label>
-          <textarea [ngModel]="editNotes()" (ngModelChange)="editNotes.set($event)" rows="2"
+          <textarea inputmode="text" [ngModel]="editNotes()" (ngModelChange)="editNotes.set($event)" rows="2"
             placeholder="Sensaciones, RPE general, observaciones..."
             class="w-full p-2.5 bg-stone-50 border border-stone-200 focus:border-awakin-sun rounded-xl text-xs font-medium text-stone-900 outline-hidden resize-none"></textarea>
         </div>
@@ -117,97 +117,136 @@
         </div>
 
         @for (ex of editExercises(); track $index; let exIdx = $index) {
-        <div class="p-3.5 rounded-2xl bg-stone-50 border border-stone-200/90 space-y-3">
-          <!-- Cabecera del ejercicio -->
-          <div class="flex items-center justify-between gap-2">
-            <div class="flex items-center gap-2 flex-1 min-w-0">
-              <span
-                class="w-5 h-5 rounded-full bg-stone-200 text-stone-800 text-[10px] font-black flex items-center justify-center shrink-0">
-                {{ exIdx + 1 }}
-              </span>
-              <input type="text" [(ngModel)]="ex.exercise_name" placeholder="Nombre del ejercicio"
-                class="flex-1 h-8 bg-white border border-stone-200 focus:border-awakin-sun rounded-lg px-2 text-xs font-black text-stone-900 outline-hidden" />
-              <input type="text" [(ngModel)]="ex.target_muscle" placeholder="Músculo"
-                class="w-24 sm:w-32 h-8 bg-white border border-stone-200 focus:border-awakin-sun rounded-lg px-2 text-xs font-bold text-stone-700 outline-hidden" />
+        <div class="bg-white border border-stone-200/90 rounded-3xl p-4 shadow-sm space-y-3">
+          <!-- Cabecera del ejercicio (Miniatura + Título Fijo no editable + Badges) -->
+          <div class="flex items-start gap-3">
+            <button type="button" (click)="inspectedExercise.set(ex)"
+              class="w-16 h-16 rounded-2xl bg-stone-100 border border-stone-200 overflow-hidden shrink-0 flex items-center justify-center relative group cursor-pointer">
+              @if (ex.image_url) {
+              <img [src]="ex.image_url" [alt]="ex.exercise_name" class="w-full h-full object-cover" />
+              <div
+                class="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                <i class="pi pi-play text-white text-xs"></i>
+              </div>
+              } @else {
+              <i class="pi pi-bolt text-awakin-sun text-lg"></i>
+              }
+            </button>
+
+            <div class="flex-1 min-w-0">
+              <div class="flex items-start justify-between gap-2">
+                <h3 (click)="inspectedExercise.set(ex)"
+                  class="text-sm font-black text-stone-900 uppercase tracking-tight leading-snug hover:text-awakin-sun transition-colors cursor-pointer select-none">
+                  {{ exIdx + 1 }}. {{ ex.exercise_name }}
+                </h3>
+                <button type="button" (click)="removeExercise(exIdx)"
+                  class="w-7 h-7 rounded-lg bg-stone-100 hover:bg-rose-50 text-stone-400 hover:text-rose-600 flex items-center justify-center shrink-0 cursor-pointer"
+                  title="Quitar ejercicio">
+                  <i class="pi pi-trash text-[10px]"></i>
+                </button>
+              </div>
+
+              <div class="flex items-center gap-1.5 flex-wrap mt-1">
+                @if (ex.target_muscle) {
+                <span class="px-2 py-0.5 rounded-md bg-amber-500/10 text-amber-700 text-[9px] font-black uppercase tracking-tight">
+                  {{ translateMuscleName(ex.target_muscle) }}
+                </span>
+                }
+                @for (sec of ex.secondary_muscles; track sec) {
+                <span class="px-2 py-0.5 rounded-md bg-stone-100 text-stone-600 text-[9px] font-bold uppercase tracking-tight">
+                  {{ translateMuscleName(sec) }}
+                </span>
+                }
+                @if (ex.equipment) {
+                <span class="px-2 py-0.5 rounded-md bg-stone-100 text-stone-600 text-[9px] font-bold uppercase tracking-tight">
+                  {{ translateEquipmentName(ex.equipment) }}
+                </span>
+                }
+                @if (ex.rest_seconds) {
+                <span class="text-[10px] font-bold text-stone-400 inline-flex items-center gap-1">
+                  <i class="pi pi-clock text-[9px]"></i> {{ ex.rest_seconds }}s descanso
+                </span>
+                }
+              </div>
+            </div>
+          </div>
+
+          <!-- Notas del ejercicio (ocupa todo el ancho con padding) -->
+          @if (ex.notes) {
+          <div class="w-full px-3.5 py-2.5 rounded-xl bg-amber-500/5 border border-amber-500/20 text-xs text-amber-900 flex items-start gap-2">
+            <i class="pi pi-info-circle text-awakin-sun text-sm shrink-0 mt-0.5"></i>
+            <span class="font-medium leading-relaxed">{{ ex.notes }}</span>
+          </div>
+          }
+
+          <!-- Tabla de Series estilo activo -->
+          <div class="space-y-1.5 pt-1">
+            <div
+              class="grid grid-cols-12 gap-1.5 px-2 text-[9px] font-black uppercase tracking-wider text-stone-400 text-center">
+              <div class="col-span-1">#</div>
+              <div class="col-span-3">Tipo</div>
+              <div class="col-span-3">Peso ({{ editVolumeUnit().toUpperCase() }})</div>
+              <div class="col-span-3">Reps</div>
+              <div class="col-span-2">Hecho</div>
             </div>
 
-            <button type="button" (click)="removeExercise(exIdx)"
-              class="w-7 h-7 rounded-lg bg-stone-100 hover:bg-rose-50 text-stone-400 hover:text-rose-600 flex items-center justify-center transition-colors cursor-pointer shrink-0"
-              title="Eliminar ejercicio">
-              <i class="pi pi-trash text-[10px]"></i>
-            </button>
+            @for (set of ex.sets; track set.set_number; let setIdx = $index) {
+            <div class="grid grid-cols-12 gap-1.5 items-center p-1.5 rounded-xl border transition-all" [ngClass]="set.is_completed
+                ? 'bg-emerald-50/70 border-emerald-200'
+                : 'bg-stone-50/70 border-stone-200/70'">
+              <!-- # Serie -->
+              <div class="col-span-1 text-center text-xs font-black text-stone-600">
+                {{ set.set_number }}
+              </div>
+
+              <!-- Tipo Serie -->
+              <div class="col-span-3">
+                <select [(ngModel)]="set.set_type"
+                  class="w-full h-8 bg-white border border-stone-200 rounded-lg text-[10px] font-bold px-1.5 text-stone-700 outline-hidden cursor-pointer">
+                  @for (st of setTypes; track st) {
+                  <option [value]="st">{{ setTypeLabels[st].label }}</option>
+                  }
+                </select>
+              </div>
+
+              <!-- Peso -->
+              <div class="col-span-3">
+                <input type="number" step="any" min="0" inputmode="decimal" [(ngModel)]="set.weight_used"
+                  class="w-full h-8 bg-white border border-stone-200 focus:border-awakin-sun rounded-lg text-xs text-center font-black text-stone-900 outline-hidden" />
+              </div>
+
+              <!-- Reps -->
+              <div class="col-span-3">
+                <input type="number" min="0" inputmode="numeric" pattern="[0-9]*" [(ngModel)]="set.reps_completed"
+                  class="w-full h-8 bg-white border border-stone-200 focus:border-awakin-sun rounded-lg text-xs text-center font-black text-stone-900 outline-hidden" />
+              </div>
+
+              <!-- Check Hecho -->
+              <div class="col-span-2 flex items-center justify-center gap-1">
+                <button type="button" (click)="toggleSetCompleted(exIdx, setIdx)"
+                  class="w-8 h-8 rounded-lg flex items-center justify-center transition-all cursor-pointer active:scale-95"
+                  [ngClass]="set.is_completed
+                    ? 'bg-emerald-500 text-white shadow-xs'
+                    : 'bg-white border border-stone-300 text-stone-400 hover:border-awakin-sun hover:text-awakin-sun'">
+                  <i class="pi pi-check text-xs font-black"></i>
+                </button>
+              </div>
+            </div>
+            }
           </div>
 
-          <!-- Tabla de series del ejercicio -->
-          <div class="overflow-x-auto">
-            <table class="w-full text-left border-collapse text-[11px] whitespace-nowrap">
-              <thead>
-                <tr class="border-b border-stone-200 text-[9px] font-black uppercase tracking-wider text-stone-400">
-                  <th class="py-1 px-1.5 text-center w-8">#</th>
-                  <th class="py-1 px-1.5 text-left w-28">Tipo</th>
-                  <th class="py-1 px-1.5 text-right w-24">Peso ({{ editVolumeUnit() }})</th>
-                  <th class="py-1 px-1.5 text-right w-20">Reps</th>
-                  <th class="py-1 px-1.5 text-center w-14">Hecho</th>
-                  <th class="py-1 px-1.5 text-center w-8"></th>
-                </tr>
-              </thead>
-              <tbody class="divide-y divide-stone-200/60 font-semibold text-stone-700">
-                @for (s of ex.sets; track $index; let sIdx = $index) {
-                <tr class="hover:bg-white/80 transition-colors">
-                  <!-- # Set -->
-                  <td class="py-1 px-1.5 text-center font-black text-stone-500">
-                    {{ s.set_number }}
-                  </td>
-
-                  <!-- Tipo Serie -->
-                  <td class="py-1 px-1.5">
-                    <select [(ngModel)]="s.set_type"
-                      class="w-full h-7 bg-white border border-stone-200 rounded-md text-[10px] font-bold px-1 text-stone-800 outline-hidden cursor-pointer">
-                      @for (st of setTypes; track st) {
-                      <option [value]="st">{{ setTypeLabels[st].label }}</option>
-                      }
-                    </select>
-                  </td>
-
-                  <!-- Peso -->
-                  <td class="py-1 px-1.5 text-right">
-                    <input type="number" [(ngModel)]="s.weight_used" min="0" step="0.5"
-                      class="w-full h-7 bg-white border border-stone-200 focus:border-awakin-sun rounded-md px-1.5 text-right text-xs font-bold text-stone-900 outline-hidden" />
-                  </td>
-
-                  <!-- Repeticiones -->
-                  <td class="py-1 px-1.5 text-right">
-                    <input type="number" [(ngModel)]="s.reps_completed" min="0" max="999"
-                      class="w-full h-7 bg-white border border-stone-200 focus:border-awakin-sun rounded-md px-1.5 text-right text-xs font-black text-stone-900 outline-hidden" />
-                  </td>
-
-                  <!-- Hecho (Checkbox) -->
-                  <td class="py-1 px-1.5 text-center">
-                    <input type="checkbox" [(ngModel)]="s.is_completed"
-                      class="w-4 h-4 accent-amber-500 cursor-pointer rounded" />
-                  </td>
-
-                  <!-- Quitar serie -->
-                  <td class="py-1 px-1.5 text-center">
-                    <button type="button" (click)="removeSetFromExercise(exIdx, sIdx)"
-                      class="w-6 h-6 rounded-md hover:bg-rose-50 text-stone-400 hover:text-rose-600 flex items-center justify-center transition-colors cursor-pointer"
-                      title="Eliminar serie">
-                      <i class="pi pi-times text-[10px]"></i>
-                    </button>
-                  </td>
-                </tr>
-                }
-              </tbody>
-            </table>
-          </div>
-
-          <!-- Botón añadir serie al ejercicio -->
-          <div class="flex justify-end pt-1">
+          <!-- Acciones de series -->
+          <div class="flex items-center justify-between pt-1">
             <button type="button" (click)="addSetToExercise(exIdx)"
-              class="px-2.5 py-1 rounded-lg bg-white border border-stone-200 hover:border-awakin-sun text-stone-700 hover:text-awakin-sun text-[10px] font-black uppercase tracking-wider flex items-center gap-1 transition-all cursor-pointer shadow-2xs">
-              <i class="pi pi-plus text-[9px]"></i>
-              <span>Añadir Serie</span>
+              class="text-[11px] font-black text-awakin-sun hover:underline flex items-center gap-1 cursor-pointer">
+              <i class="pi pi-plus text-[10px]"></i> Añadir serie
             </button>
+            @if (ex.sets.length > 1) {
+            <button type="button" (click)="removeSetFromExercise(exIdx, ex.sets.length - 1)"
+              class="text-[11px] font-bold text-stone-400 hover:text-rose-600 cursor-pointer">
+              Quitar última
+            </button>
+            }
           </div>
         </div>
         }
@@ -249,4 +288,65 @@
     </div>
 
   </div>
+</p-dialog>
+
+<!-- MODAL: INSTRUCCIONES Y GIF DEL EJERCICIO -->
+<p-dialog [visible]="!!inspectedExercise()" (visibleChange)="$event ? null : inspectedExercise.set(null)" [modal]="true"
+  [draggable]="false" [resizable]="false" [closable]="false" [showHeader]="false" [dismissableMask]="true"
+  appendTo="body" [baseZIndex]="11000" [style]="{ width: '92vw', maxWidth: '480px', borderRadius: '24px' }"
+  styleClass="overflow-hidden shadow-2xl border border-stone-200 [&_.p-dialog-content]:!p-0">
+  @if (inspectedExercise(); as ex) {
+  <div class="bg-white flex flex-col max-h-[85vh]">
+    <div class="px-5 py-4 border-b border-stone-100 bg-stone-50/80 flex items-center justify-between">
+      <div class="min-w-0 pr-2">
+        <span class="text-[9px] font-black uppercase tracking-wider text-awakin-sun">{{ translateEquipmentName(ex.equipment) }}</span>
+        <h3 class="text-sm font-black text-stone-900 uppercase truncate">{{ ex.exercise_name }}</h3>
+      </div>
+      <button type="button" (click)="inspectedExercise.set(null)"
+        class="w-8 h-8 rounded-full bg-stone-100 hover:bg-stone-200 text-stone-600 flex items-center justify-center cursor-pointer">
+        <i class="pi pi-times text-xs"></i>
+      </button>
+    </div>
+
+    <div class="p-4 overflow-y-auto space-y-4">
+      @if (ex.gif_url || ex.image_url) {
+      <div
+        class="w-full h-64 rounded-2xl bg-stone-50 border border-stone-200 overflow-hidden flex items-center justify-center">
+        <img [src]="ex.gif_url || ex.image_url" [alt]="ex.exercise_name" class="w-full h-full object-contain" />
+      </div>
+      }
+
+      <div class="grid grid-cols-2 gap-2 bg-stone-50 p-3 rounded-2xl border border-stone-200/70 text-xs">
+        <div>
+          <span class="text-[9px] font-black uppercase text-stone-400 block">Músculo Objetivo</span>
+          <span class="font-bold text-stone-900 capitalize">{{ translateMuscleName(ex.target_muscle) }}</span>
+        </div>
+        <div>
+          <span class="text-[9px] font-black uppercase text-stone-400 block">Secundarios</span>
+          <span class="font-semibold text-stone-600 capitalize">
+            @for (sec of ex.secondary_muscles; track sec; let isLast = $last) {
+              {{ translateMuscleName(sec) }}{{ isLast ? '' : ', ' }}
+            } @empty {
+              --
+            }
+          </span>
+        </div>
+      </div>
+
+      @if (ex.instruction_steps && ex.instruction_steps.length > 0) {
+      <ol class="space-y-2 text-xs text-stone-600">
+        @for (step of ex.instruction_steps; track step; let i = $index) {
+        <li class="flex items-start gap-2">
+          <span
+            class="w-5 h-5 rounded-full bg-awakin-sun/15 text-stone-900 font-black text-[10px] flex items-center justify-center shrink-0">
+            {{ i + 1 }}
+          </span>
+          <span class="leading-relaxed">{{ step }}</span>
+        </li>
+        }
+      </ol>
+      }
+    </div>
+  </div>
+  }
 </p-dialog>
