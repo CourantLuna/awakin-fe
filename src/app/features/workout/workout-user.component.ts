@@ -284,6 +284,17 @@ export class WorkoutUserComponent implements OnInit {
     return jsDay === 0 ? 7 : jsDay;
   });
 
+  // Comprueba si la fecha seleccionada en el calendar header corresponde exactamente a hoy
+  isSelectedDateToday = computed<boolean>(() => {
+    const sel = this.selectedDate();
+    const today = new Date();
+    return (
+      sel.getFullYear() === today.getFullYear() &&
+      sel.getMonth() === today.getMonth() &&
+      sel.getDate() === today.getDate()
+    );
+  });
+
   // Día de hoy según reloj local del sistema (1 = Lun .. 7 = Dom)
   todayDayOfWeek = computed(() => {
     const jsDay = new Date().getDay();
@@ -312,6 +323,25 @@ export class WorkoutUserComponent implements OnInit {
       }
     }
     return map;
+  });
+
+  // Lista ordenada de rutinas programadas en el plan semanal activo para el carrusel
+  scheduledPlanRoutines = computed<WorkoutPlanRoutine[]>(() => {
+    const plan = this.activePlan();
+    if (!plan?.plan_routines) return [];
+    const all = this.availableRoutines();
+    return plan.plan_routines
+      .map((pr) => {
+        if (!pr.routine && pr.routine_id) {
+          const found = all.find((r) => r.id === pr.routine_id);
+          if (found) {
+            return { ...pr, routine: { ...found, day_of_week: pr.day_of_week } };
+          }
+        }
+        return pr;
+      })
+      .filter((pr): pr is WorkoutPlanRoutine & { routine: WorkoutRoutine } => !!pr.routine)
+      .sort((a, b) => a.day_of_week - b.day_of_week);
   });
 
   // Rutina asignada por el calendario para el día seleccionado
