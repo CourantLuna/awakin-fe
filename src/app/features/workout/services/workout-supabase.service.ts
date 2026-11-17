@@ -32,6 +32,38 @@ export interface SaveWorkoutLogInput {
   exercises: ActiveSessionExercise[];
 }
 
+export interface UpdateWorkoutLogInput {
+  logId: string;
+  athleteId: string;
+  routineName: string;
+  routineDescription?: string | null;
+  workoutDate: Date | string;
+  durationMinutes: number;
+  location?: string | null;
+  notes?: string | null;
+  volumeUnit?: 'lb' | 'kg';
+  exercises: Array<{
+    exercise_api_id?: string | null;
+    is_custom?: boolean;
+    exercise_name: string;
+    target_muscle?: string | null;
+    secondary_muscles?: string[];
+    equipment?: string | null;
+    media_urls?: string[];
+    rest_seconds?: number;
+    notes?: string | null;
+    sets: Array<{
+      set_number: number;
+      set_type: WorkoutSetType;
+      reps_completed: number;
+      weight_used: number;
+      weight_unit: 'lb' | 'kg';
+      is_completed: boolean;
+      rpe?: number | null;
+    }>;
+  }>;
+}
+
 export interface CreateRoutineInput {
   athleteId: string;
   name: string;
@@ -339,7 +371,162 @@ export class WorkoutSupabaseService {
     }
 
     await this.loadWorkoutLogs(input.athleteId);
-    return logRow as WorkoutLog;
+    const createdLog = this.workoutLogs().find((l) => l.id === logRow.id);
+    return createdLog || (logRow as WorkoutLog);
+  }
+
+  /**
+   * Actualiza un entrenamiento existente en workout_logs + workout_log_exercises + workout_log_sets
+   * Conserva intacta la imagen/banner original del coach y el nombre de la rutina si viene fijado
+   */
+  public async updateWorkoutLog(input: UpdateWorkoutLogInput): Promise<WorkoutLog> {
+    const volUnit = input.volumeUnit || 'lb';
+    let totalVolume = 0;
+    let totalSets = 0;
+    const setsByMuscle: Record<string, number> = {};
+
+    for (const ex of input.exercises) {
+      const completedSets = (ex.sets || []).filter((s) => s.is_completed !== false);
+      if (completedSets.length === 0) continue;
+
+      totalSets += completedSets.length;
+      const muscleKey = (ex.target_muscle || 'general').toLowerCase().trim();
+      setsByMuscle[muscleKey] = (setsByMuscle[muscleKey] || 0) + completedSets.length;
+
+      for (const s of completedSets) {
+        const w = Number(s.weight_used || 0);
+        const r = Number(s.reps_completed || 0);
+        const weightInUnit =
+          s.weight_unit === volUnit
+            ? w
+            : volUnit === 'kg'
+              ? w * 0.453592
+              : w * 2.20462;
+        totalVolume += weightInUnit * r;
+      }
+    }
+
+    const isoDate = typeof input.workoutDate === 'string'
+      ? (input.workoutDate.includes('T') ? input.workoutDate : new Date(input.workoutDate + 'T12:00:00Z').toISOString())
+      : input.workoutDate.toISOString();
+
+    const { data: logRow, error: logErr } = await this.supabase
+      .from('workout_logs')
+      .update({
+        routine_name: input.routineName,
+        routine_description: input.routineDescription || null,
+        workout_date: isoDate,
+        duration_minutes: Math.max(1, Math.round(input.durationMinutes)),
+        location: input.location?.trim() || null,
+        total_volume: Math.round(totalVolume * 100) / 100,
+        volume_unit: volUnit,
+        total_sets: totalSets,
+        sets_by_muscle: setsByMuscle,
+        notes: input.notes?.trim() || null
+      })
+      .eq('id', input.logId)
+      .select()
+      .single();
+
+    if (logErr || !logRow) {
+      throw new Error(logErr?.message || 'No se pudo actualizar el registro de entrenamiento.');
+    }
+
+    // Limpiar ejercicios y series previos de este log para reemplazarlos limpiamente
+    const { data: existingExs } = await this.supabase
+      .from('workout_log_exercises')
+      .select('id')
+      .eq('log_id', input.logId);
+
+    if (existingExs && existingExs.length > 0) {
+      const exIds = existingExs.map((e: any) => e.id);
+      await this.supabase.from('workout_log_sets').delete().in('log_exercise_id', exIds);
+      await this.supabase.from('workout_log_exercises').delete().eq('log_id', input.logId);
+    }
+
+    // Insertar ejercicios y series actualizados
+    for (let idx = 0; idx < input.exercises.length; idx++) {
+      const ex = input.exercises[idx];
+      const { data: exRow, error: exErr } = await this.supabase
+        .from('workout_log_exercises')
+        .insert({
+          log_id: input.logId,
+          exercise_api_id: ex.exercise_api_id || null,
+          is_custom: ex.is_custom ?? true,
+          exercise_name: ex.exercise_name,
+          target_muscle: ex.target_muscle || null,
+          secondary_muscles: ex.secondary_muscles || [],
+          equipment: ex.equipment || null,
+          media_urls: ex.media_urls || [],
+          rest_seconds: ex.rest_seconds || 90,
+          notes: ex.notes || null,
+          sort_order: idx + 1
+        })
+        .select()
+        .single();
+
+      if (exErr || !exRow) {
+        console.error('Error insertando workout_log_exercise:', exErr);
+        continue;
+      }
+
+      if (ex.sets && ex.sets.length > 0) {
+        const setsPayload = ex.sets.map((s, sIdx) => ({
+          log_exercise_id: exRow.id,
+          set_number: s.set_number || sIdx + 1,
+          set_type: s.set_type || 'WORKING',
+          reps_completed: Math.max(0, Math.round(Number(s.reps_completed || 0))),
+          weight_used: Math.max(0, Number(s.weight_used || 0)),
+          weight_unit: s.weight_unit || volUnit,
+          is_completed: s.is_completed !== false,
+          rpe: s.rpe || null
+        }));
+
+        const { error: setsErr } = await this.supabase.from('workout_log_sets').insert(setsPayload);
+        if (setsErr) {
+          console.error('Error insertando workout_log_sets:', setsErr);
+        }
+      }
+    }
+
+    // Recargar la lista global de workout logs del atleta
+    await this.loadWorkoutLogs(input.athleteId);
+
+    // Obtener y devolver el registro completo con workout_log_exercises y workout_log_sets
+    const { data: fullLogRow, error: fetchErr } = await this.supabase
+      .from('workout_logs')
+      .select(`
+        *,
+        workout_log_exercises (
+          *,
+          workout_log_sets (*)
+        )
+      `)
+      .eq('id', input.logId)
+      .single();
+
+    if (!fetchErr && fullLogRow) {
+      const normalizedLog: WorkoutLog = {
+        ...fullLogRow,
+        sets_by_muscle: fullLogRow.sets_by_muscle || {},
+        exercises: (fullLogRow.workout_log_exercises || [])
+          .map((e: any) => ({
+            ...e,
+            sets: (e.workout_log_sets || []).sort((a: any, b: any) => a.set_number - b.set_number)
+          }))
+          .sort((a: any, b: any) => a.sort_order - b.sort_order)
+      };
+
+      // Sincronizar en el signal workoutLogs
+      this.workoutLogs.update((logs) =>
+        logs.map((l) => (l.id === normalizedLog.id ? normalizedLog : l))
+      );
+
+      return normalizedLog;
+    }
+
+    const reloaded = this.workoutLogs().find((l) => l.id === input.logId);
+    return reloaded || (logRow as WorkoutLog);
   }
 
   /**

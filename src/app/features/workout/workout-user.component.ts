@@ -12,16 +12,47 @@ import { AuthService } from '../../core/services/auth.service';
 import { WorkoutSupabaseService } from './services/workout-supabase.service';
 import { ActiveWorkoutSessionService } from './services/active-workout-session.service';
 import { ExerciseApiService } from './services/exercise-api.service';
-import { ExerciseSummary } from './models/exercises.models';
+import { ExerciseSummary, ExerciseDetail } from './models/exercises.models';
 import {
   ActiveSessionExercise,
   WEEK_DAY_LABELS,
   WorkoutLog,
   WorkoutPlanRoutine,
-  WorkoutRoutine
+  WorkoutRoutine,
+  WorkoutRoutineExercise,
+  WorkoutSetType,
+  WORKOUT_SET_TYPE_LABELS
 } from './models/workout.models';
 import { ExerciseGalleryDrawerComponent } from './components/exercise-gallery-drawer/exercise-gallery-drawer.component';
 import { CustomExerciseModalComponent } from './components/custom-exercise-modal/custom-exercise-modal.component';
+import { getEquipmentMeta } from './components/exercise-gallery-drawer/equipment-icons';
+import { WorkoutMiniBodyMapComponent, WorkoutMuscleLegendItem, getAwakinSunTone } from './components/body-map/workout-mini-body-map.component';
+import { WorkoutLogDetailModalComponent } from './components/workout-log-detail-modal/workout-log-detail-modal.component';
+import { WorkoutLogCardComponent } from './components/workout-log-card/workout-log-card.component';
+import { WorkoutLogEditModalComponent } from './components/workout-log-edit-modal/workout-log-edit-modal.component';
+import { ChartImageExportService } from '../profile/services/chart-image-export.service';
+import { BodyMapGender } from './components/body-map/body-map.component';
+
+const DOMINICAN_MOTIVATIONAL_TEMPLATES: string[] = [
+  '¡Mete mano, {nombre}, que hoy se rompe ese hierro!',
+  '¡Dímelo {nombre}! ¡Hoy no se vino a hacer bulto, a darle con to\' el pie!',
+  '¡Actívate {nombre}, que la disciplina no coge esa!',
+  '¡{nombre}, dale sin miedo que tú \'tá prendío\' en candela!',
+  '¡Con to\' el power, {nombre}! ¡Hoy rompemo\' la liga!',
+  '¡{nombre}, no le baje\' ni un chin, que la para ere\' tú!',
+  '¡Klk {nombre}! ¡Hoy se guaya el hierro con to\' el peso!',
+  '¡Métale candela, {nombre}, que ese cuerpo lo que pide e\' hierro!',
+  '¡{nombre}, suéltate en banda y concéntrate en la meta!',
+  '¡Hoy se entrena como un titán, {nombre}! ¡Cero bulto y to\' peso!',
+  '¡Dando la para en el gym, {nombre}! ¡A sudar con orgullo!',
+  '¡{nombre}, tú ere\' una fiera! ¡Métele con fe y sin frenos!',
+  '¡Tranquilo pero pesado, {nombre}! ¡A meter mano que pa\' luego e\' tarde!',
+  '¡{nombre}, hoy no hay excusas que valgan, e\' pa\' lante que vamo\'!',
+  '¡A romper las barras, {nombre}! ¡Que se sienta la presión!',
+  '¡{nombre}, ponte pa\' tu número y dale con el corazón!',
+  '¡Tú \'tá dur@, {nombre}! ¡Que no te cuenten, sal a demostrarlo!',
+  '¡{nombre}, con Dios y con to\' el peso, hoy no se afloja!'
+];
 
 @Component({
   selector: 'app-workout-user',
@@ -36,7 +67,11 @@ import { CustomExerciseModalComponent } from './components/custom-exercise-modal
     DialogModule,
     WeekCalendarHeaderComponent,
     ExerciseGalleryDrawerComponent,
-    CustomExerciseModalComponent
+    CustomExerciseModalComponent,
+    WorkoutMiniBodyMapComponent,
+    WorkoutLogDetailModalComponent,
+    WorkoutLogCardComponent,
+    WorkoutLogEditModalComponent
   ],
   templateUrl: './workout-user.component.html'
 })
@@ -47,7 +82,7 @@ export class WorkoutUserComponent implements OnInit {
   public authService = inject(AuthService);
   public workoutService = inject(WorkoutSupabaseService);
   public activeSession = inject(ActiveWorkoutSessionService);
-  private exerciseApi = inject(ExerciseApiService);
+  public exerciseApi = inject(ExerciseApiService);
 
   readonly weekDayLabels = WEEK_DAY_LABELS;
   readonly weekDays = [1, 2, 3, 4, 5, 6, 7];
@@ -56,12 +91,47 @@ export class WorkoutUserComponent implements OnInit {
   currentLabel = signal<string>('Hoy');
   selectedDate = signal<Date>(new Date());
 
+  // Mensaje motivacional dominicano aleatorio
+  private readonly motivationQuoteIndex = signal<number>(
+    Math.floor(Math.random() * DOMINICAN_MOTIVATIONAL_TEMPLATES.length)
+  );
+
+  userFirstName = computed<string>(() => {
+    const raw = this.athleteService.currentAthlete()?.first_name ||
+      this.athleteService.currentAthlete()?.username ||
+      this.authService.currentSession()?.avatar?.fullName ||
+      '';
+    if (!raw) return 'Líder';
+    const first = raw.trim().split(/\s+/)[0];
+    return first.charAt(0).toUpperCase() + first.slice(1).toLowerCase();
+  });
+
+  dominicanMotivationMessage = computed<string>(() => {
+    const name = this.userFirstName();
+    const idx = this.motivationQuoteIndex();
+    const template = DOMINICAN_MOTIVATIONAL_TEMPLATES[idx % DOMINICAN_MOTIVATIONAL_TEMPLATES.length];
+    return template.replace(/\{nombre\}/g, name);
+  });
+
+  refreshMotivationMessage(): void {
+    let nextIdx = Math.floor(Math.random() * DOMINICAN_MOTIVATIONAL_TEMPLATES.length);
+    if (nextIdx === this.motivationQuoteIndex() && DOMINICAN_MOTIVATIONAL_TEMPLATES.length > 1) {
+      nextIdx = (nextIdx + 1) % DOMINICAN_MOTIVATIONAL_TEMPLATES.length;
+    }
+    this.motivationQuoteIndex.set(nextIdx);
+  }
+
   // Drawers y modales
   isExerciseGalleryOpen = signal<boolean>(false);
   isWeeklyPlanDrawerOpen = signal<boolean>(false);
   isHistoryDrawerOpen = signal<boolean>(false);
   isCreateRoutineModalOpen = signal<boolean>(false);
   isCustomExForBuilderOpen = signal<boolean>(false);
+  isRoutineDetailModalOpen = signal<boolean>(false);
+  selectedRoutineDetailModal = signal<WorkoutRoutine | null>(null);
+  isExerciseDetailModalOpen = signal<boolean>(false);
+  inspectedExerciseDetail = signal<ExerciseDetail | null>(null);
+  isLoadingExerciseDetail = signal<boolean>(false);
 
   // Override manual de rutina (cuando el usuario elige otra rutina diferente a la del día)
   selectedRoutineOverrideId = signal<string | null>(null);
@@ -94,15 +164,140 @@ export class WorkoutUserComponent implements OnInit {
   streak = computed(() => this.athleteService.currentAthlete()?.streak_days ?? 0);
 
   // Datos reactivos desde WorkoutSupabaseService
+  athlete = this.athleteService.currentAthlete;
   activePlan = this.workoutService.activePlan;
   availableRoutines = this.workoutService.allRoutines;
   workoutLogs = this.workoutService.workoutLogs;
   isLoadingWorkouts = this.workoutService.isLoading;
 
+  // Modal de Detalle de Entrenamiento Estilo HEVY (Historial)
+  selectedWorkoutDetail = signal<WorkoutLog | null>(null);
+  isWorkoutDetailOpen = signal<boolean>(false);
+
+  openWorkoutDetail(log: WorkoutLog): void {
+    this.selectedWorkoutDetail.set(log);
+    this.isWorkoutDetailOpen.set(true);
+  }
+
+  closeWorkoutDetail(): void {
+    this.isWorkoutDetailOpen.set(false);
+    this.selectedWorkoutDetail.set(null);
+  }
+
+  // Servicio de exportación de historias 9:16
+  private readonly chartExportService = inject(ChartImageExportService);
+
+  // Modal de Edición de Entrenamiento
+  isWorkoutEditModalOpen = signal<boolean>(false);
+  logToEdit = signal<WorkoutLog | null>(null);
+
+  openWorkoutEditModal(log: WorkoutLog): void {
+    this.logToEdit.set(log);
+    this.isWorkoutEditModalOpen.set(true);
+  }
+
+  onWorkoutLogSaved(updatedLog: WorkoutLog): void {
+    this.isWorkoutEditModalOpen.set(false);
+    this.logToEdit.set(null);
+    if (this.selectedWorkoutDetail()?.id === updatedLog.id) {
+      this.selectedWorkoutDetail.set(updatedLog);
+    }
+  }
+
+  // Modal de Compartir Historia 9:16
+  isShareWorkoutModalOpen = signal<boolean>(false);
+  isGeneratingWorkoutStory = signal<boolean>(false);
+  shareWorkoutStoryImageUrl = signal<string | null>(null);
+
+  async openWorkoutStoryModal(log: WorkoutLog): Promise<void> {
+    this.shareWorkoutStoryImageUrl.set(null);
+    this.isShareWorkoutModalOpen.set(true);
+    this.isGeneratingWorkoutStory.set(true);
+
+    try {
+      const ath = this.athlete();
+      const fullName = `${ath?.first_name || ''} ${ath?.last_name || ''}`.trim() || null;
+      const url = await this.chartExportService.generateWorkoutStoryImage({
+        log,
+        userName: ath?.username || 'atleta',
+        userFullName: fullName,
+        userImageUrl: ath?.profile_image_url || null,
+        kinLogoUrl: ath?.kin?.team_logo_url || null,
+        kinName: ath?.kin?.team_name || null,
+        streakDays: ath?.streak_days ?? 0
+      });
+      this.shareWorkoutStoryImageUrl.set(url);
+    } catch (err) {
+      console.error('Error generando historia de entrenamiento:', err);
+    } finally {
+      this.isGeneratingWorkoutStory.set(false);
+    }
+  }
+
+  closeWorkoutStoryModal(): void {
+    this.isShareWorkoutModalOpen.set(false);
+    this.shareWorkoutStoryImageUrl.set(null);
+  }
+
+  downloadWorkoutStory(): void {
+    const imgUrl = this.shareWorkoutStoryImageUrl();
+    if (!imgUrl) return;
+    const a = document.createElement('a');
+    a.href = imgUrl;
+    a.download = `Awakin_Workout_${Date.now()}.png`;
+    a.click();
+  }
+
+  async shareWorkoutStory(): Promise<void> {
+    const imgUrl = this.shareWorkoutStoryImageUrl();
+    if (!imgUrl) return;
+
+    if (navigator.share) {
+      try {
+        const blob = await fetch(imgUrl).then((r) => r.blob());
+        const file = new File([blob], 'awakin-workout.png', { type: 'image/png' });
+        await navigator.share({
+          title: 'Mi Entrenamiento Awakin',
+          text: 'Entrenamiento completado en Awakin.',
+          files: [file]
+        });
+        return;
+      } catch (e) {
+        // Fallback si el usuario cancela
+      }
+    }
+    this.downloadWorkoutStory();
+  }
+
+  getInitials(): string {
+    const ath = this.athlete();
+    if (!ath) return 'AW';
+    if (ath.first_name) {
+      return ath.first_name.slice(0, 2).toUpperCase();
+    }
+    return (ath.username || 'AW').slice(0, 2).toUpperCase();
+  }
+
   // Día de la semana (1 = Lunes .. 7 = Domingo) de la fecha seleccionada en el calendario
   selectedDayOfWeek = computed(() => {
     const jsDay = this.selectedDate().getDay(); // 0=Dom, 1=Lun .. 6=Sab
     return jsDay === 0 ? 7 : jsDay;
+  });
+
+  // Día de hoy según reloj local del sistema (1 = Lun .. 7 = Dom)
+  todayDayOfWeek = computed(() => {
+    const jsDay = new Date().getDay();
+    return jsDay === 0 ? 7 : jsDay;
+  });
+
+  // Género del atleta para el Body Map anatómico
+  athleteGender = computed<BodyMapGender>(() => {
+    const a = this.athleteService.currentAthlete();
+    const raw = (a?.gender || a?.sexo || a?.genero || '').toLowerCase().trim();
+    if (raw === 'female' || raw === 'f' || raw === 'mujer' || raw === 'femenino') {
+      return 'female';
+    }
+    return 'male';
   });
 
   // Mapa día (1..7) -> WorkoutPlanRoutine del plan activo
@@ -453,5 +648,312 @@ export class WorkoutUserComponent implements OnInit {
   getMuscleEntries(setsByMuscle: Record<string, number> | undefined): Array<{ muscle: string; sets: number }> {
     if (!setsByMuscle) return [];
     return Object.entries(setsByMuscle).map(([muscle, sets]) => ({ muscle, sets }));
+  }
+
+  // =========================================================================
+  // MODAL DETALLE DE RUTINA DESDE EL PLAN SEMANAL (BODY MAP + SERIES + NOTAS)
+  // =========================================================================
+
+  openRoutineDetailModal(routine: WorkoutRoutine | null | undefined, dayNum?: number): void {
+    if (!routine) return;
+    const routineWithDay = dayNum && !routine.day_of_week
+      ? { ...routine, day_of_week: dayNum }
+      : routine;
+    this.selectedRoutineDetailModal.set(routineWithDay);
+    this.isRoutineDetailModalOpen.set(true);
+
+    // Hidratar apiDetail en segundo plano para asegurar que las miniaturas y nombres se muestren
+    for (const ex of routineWithDay.exercises) {
+      if (!ex.is_custom && ex.exercise_api_id && !ex.apiDetail) {
+        this.workoutService.getCachedExerciseDetail(ex.exercise_api_id).then((detail) => {
+          if (detail) {
+            ex.apiDetail = detail;
+            ex.exercise_name = ex.exercise_name || detail.name;
+            ex.target_muscle = ex.target_muscle || detail.target;
+            if (!ex.secondary_muscles || ex.secondary_muscles.length === 0) {
+              ex.secondary_muscles = detail.secondary_muscles || [];
+            }
+            ex.equipment = ex.equipment || detail.equipment;
+          }
+        });
+      }
+    }
+  }
+
+  getExerciseThumbnail(ex: WorkoutRoutineExercise): string | null {
+    if (ex.apiDetail?.image) {
+      return this.exerciseApi.getMediaUrl(ex.apiDetail.image);
+    }
+    if (ex.media_urls && ex.media_urls.length > 0) {
+      return this.exerciseApi.getMediaUrl(ex.media_urls[0]);
+    }
+    return null;
+  }
+
+  async inspectRoutineExercise(ex: WorkoutRoutineExercise): Promise<void> {
+    if (ex.apiDetail) {
+      this.inspectedExerciseDetail.set(ex.apiDetail);
+      this.isExerciseDetailModalOpen.set(true);
+      return;
+    }
+
+    if (ex.exercise_api_id) {
+      this.isLoadingExerciseDetail.set(true);
+      try {
+        const cached = await this.workoutService.getCachedExerciseDetail(ex.exercise_api_id);
+        if (cached) {
+          ex.apiDetail = cached;
+          this.inspectedExerciseDetail.set(cached);
+          this.isExerciseDetailModalOpen.set(true);
+          return;
+        }
+      } finally {
+        this.isLoadingExerciseDetail.set(false);
+      }
+    }
+
+    this.inspectedExerciseDetail.set({
+      id: ex.id,
+      name: ex.exercise_name || 'Ejercicio',
+      category: 'General',
+      muscle_group: ex.target_muscle || 'General',
+      target: ex.target_muscle || 'General',
+      secondary_muscles: ex.secondary_muscles || [],
+      equipment: ex.equipment || 'General',
+      body_part: 'General',
+      image: ex.media_urls?.[0] || '',
+      gif_url: '',
+      attribution: '',
+      created_at: new Date().toISOString(),
+      instruction: ex.notes || undefined
+    });
+    this.isExerciseDetailModalOpen.set(true);
+  }
+
+  translateEquipmentName(raw: string | null | undefined): string {
+    if (!raw) return 'Peso Corporal';
+    return getEquipmentMeta(raw).label;
+  }
+
+  closeRoutineDetailModal(): void {
+    this.isRoutineDetailModalOpen.set(false);
+    this.selectedRoutineDetailModal.set(null);
+  }
+
+  startWorkoutFromModal(routine: WorkoutRoutine): void {
+    this.closeRoutineDetailModal();
+    this.startWorkout(routine);
+  }
+
+  private muscleTranslations: Record<string, string> = {
+    // Pectoral / Pecho
+    chest: 'Pecho',
+    pectorals: 'Pecho',
+    pectoral: 'Pecho',
+    'upper chest': 'Pecho superior',
+    'mid-lower-pectoralis': 'Pecho medio/bajo',
+    'upper-pectoralis': 'Pecho superior',
+    'pectoralis major': 'Pecho',
+
+    // Deltoides / Hombros
+    delts: 'Hombros',
+    deltoids: 'Hombros',
+    deltoid: 'Hombros',
+    shoulders: 'Hombros',
+    'front-shoulders': 'Hombro anterior',
+    'anterior-deltoid': 'Hombro anterior',
+    'lateral-deltoid': 'Hombro lateral',
+    'posterior-deltoid': 'Hombro posterior',
+    'rear-shoulders': 'Hombro posterior',
+
+    // Espalda y dorsales
+    back: 'Espalda',
+    lats: 'Dorsales',
+    'latissimus dorsi': 'Dorsales',
+    'upper back': 'Espalda alta',
+    'lower back': 'Zona lumbar',
+    lowerback: 'Zona lumbar',
+    'lower-spine': 'Zona lumbar',
+    'upper-spine': 'Columna cervical/torácica',
+    traps: 'Trapecios',
+    trapezius: 'Trapecios',
+    'upper-trapezius': 'Trapecio superior',
+    'upper-trapzeius': 'Trapecio superior',
+    'traps-middle': 'Trapecio medio',
+    'lower-trapezius': 'Trapecio inferior',
+    scapula: 'Escápula',
+    rhomboids: 'Romboides',
+
+    // Brazos
+    biceps: 'Bíceps',
+    'long-head-bicep': 'Bíceps',
+    'short-head-bicep': 'Bíceps',
+    triceps: 'Tríceps',
+    'medial-head-triceps': 'Tríceps',
+    'long-head-triceps': 'Tríceps',
+    'lateral-head-triceps': 'Tríceps',
+    'later-head-triceps': 'Tríceps',
+    forearms: 'Antebrazos',
+    forearm: 'Antebrazos',
+    'wrist-extensors': 'Antebrazos',
+    'wrist-flexors': 'Antebrazos',
+    hands: 'Manos',
+    wrist: 'Muñecas',
+    elbow: 'Codos',
+
+    // Piernas
+    quads: 'Cuádriceps',
+    quadriceps: 'Cuádriceps',
+    'outer-quadricep': 'Cuádriceps',
+    'inner-quadricep': 'Cuádriceps',
+    'rectus-femoris': 'Cuádriceps',
+    hamstrings: 'Isquiotibiales',
+    'medial-hamstrings': 'Isquiotibiales',
+    'lateral-hamstrings': 'Isquiotibiales',
+    glutes: 'Glúteos',
+    gluteus: 'Glúteos',
+    'gluteus-maximus': 'Glúteos',
+    'gluteus-medius': 'Glúteos',
+    calves: 'Pantorrillas',
+    gastrocnemius: 'Pantorrillas',
+    soleus: 'Pantorrillas',
+    tibialis: 'Tibial',
+    'inner-thigh': 'Aductores',
+    adductors: 'Aductores',
+    abductors: 'Abductores',
+    groin: 'Ingle',
+    hips: 'Caderas',
+    knees: 'Rodillas',
+    ankles: 'Tobillos',
+    feet: 'Pies',
+
+    // Core / Abdomen
+    abs: 'Abdomen',
+    abdominals: 'Abdomen',
+    core: 'Core',
+    obliques: 'Oblicuos',
+    'upper-abdominals': 'Abdomen alto',
+    'lower-abdominals': 'Abdomen bajo',
+
+    // General / Otros
+    neck: 'Cuello',
+    cardio: 'Cardio',
+    general: 'General'
+  };
+
+  translateMuscleName(raw: string | null | undefined): string {
+    if (!raw) return 'General';
+    const clean = raw.trim().toLowerCase().replace(/_/g, '-');
+    if (this.muscleTranslations[clean]) {
+      return this.muscleTranslations[clean];
+    }
+    const rawLower = raw.trim().toLowerCase();
+    if (this.muscleTranslations[rawLower]) {
+      return this.muscleTranslations[rawLower];
+    }
+    return raw.charAt(0).toUpperCase() + raw.slice(1);
+  }
+
+  getRoutineMuscleBreakdown(routine: WorkoutRoutine | null | undefined): { muscle: string; sets: number }[] {
+    if (!routine) return [];
+
+    const muscleMap = new Map<string, number>();
+
+    if (routine.exercises && routine.exercises.length > 0) {
+      for (const ex of routine.exercises) {
+        const setsCount = ex.sets?.length || 1;
+        const target = ex.target_muscle || ex.apiDetail?.target || 'General';
+        const muscleKey = this.translateMuscleName(target);
+        muscleMap.set(muscleKey, (muscleMap.get(muscleKey) || 0) + setsCount);
+      }
+    }
+
+    if (muscleMap.size === 0 && routine.focus_muscles && routine.focus_muscles.length > 0) {
+      const perMuscleSets = Math.max(1, Math.round((routine.total_sets || 12) / routine.focus_muscles.length));
+      for (const focus of routine.focus_muscles) {
+        const muscleKey = this.translateMuscleName(focus);
+        muscleMap.set(muscleKey, perMuscleSets);
+      }
+    }
+
+    return Array.from(muscleMap.entries())
+      .map(([muscle, sets]) => ({ muscle, sets }))
+      .sort((a, b) => b.sets - a.sets);
+  }
+
+  getRoutineMuscleBreakdownWithColors(routine: WorkoutRoutine | null | undefined): WorkoutMuscleLegendItem[] {
+    const list = this.getRoutineMuscleBreakdown(routine);
+    if (list.length === 0) return [];
+    const maxSets = Math.max(...list.map((item) => item.sets), 1);
+    return list.map((item) => {
+      const tone = getAwakinSunTone(item.sets, maxSets);
+      return {
+        muscle: item.muscle,
+        sets: item.sets,
+        color: tone.color,
+        levelLabel: tone.levelLabel
+      };
+    });
+  }
+
+  getSetTypeInfo(setType?: string): { label: string; short: string; badgeClass: string } {
+    if (!setType) {
+      return { label: 'Efectiva', short: 'E', badgeClass: 'bg-amber-50 text-amber-800 border-amber-200' };
+    }
+    const key = setType.toUpperCase() as WorkoutSetType;
+    return (
+      WORKOUT_SET_TYPE_LABELS[key] || {
+        label: setType,
+        short: setType.charAt(0).toUpperCase(),
+        badgeClass: 'bg-stone-100 text-stone-700 border-stone-200'
+      }
+    );
+  }
+
+  getExactMuscleBreakdown(log: WorkoutLog | null | undefined): { muscle: string; sets: number }[] {
+    if (!log) return [];
+
+    const muscleMap = new Map<string, number>();
+
+    // 1. Contar directamente desde los ejercicios y series completadas
+    if (log.exercises && log.exercises.length > 0) {
+      for (const ex of log.exercises) {
+        const completedCount = (ex.sets || []).filter((s) => s.is_completed !== false).length;
+        if (completedCount === 0) continue;
+
+        const muscleKey = this.translateMuscleName(ex.target_muscle || 'General');
+        muscleMap.set(muscleKey, (muscleMap.get(muscleKey) || 0) + completedCount);
+      }
+    }
+
+    // 2. Si no había ejercicios cargados o el map quedó vacío, usar sets_by_muscle traduciendo los nombres
+    if (muscleMap.size === 0 && log.sets_by_muscle) {
+      for (const [key, count] of Object.entries(log.sets_by_muscle)) {
+        if (count > 0) {
+          const muscleKey = this.translateMuscleName(key);
+          muscleMap.set(muscleKey, (muscleMap.get(muscleKey) || 0) + count);
+        }
+      }
+    }
+
+    // Retornar ordenado de mayor a menor número de series
+    return Array.from(muscleMap.entries())
+      .map(([muscle, sets]) => ({ muscle, sets }))
+      .sort((a, b) => b.sets - a.sets);
+  }
+
+  getExactMuscleBreakdownWithColors(log: WorkoutLog | null | undefined): WorkoutMuscleLegendItem[] {
+    const list = this.getExactMuscleBreakdown(log);
+    if (list.length === 0) return [];
+    const maxSets = Math.max(...list.map((item) => item.sets), 1);
+    return list.map((item) => {
+      const tone = getAwakinSunTone(item.sets, maxSets);
+      return {
+        muscle: item.muscle,
+        sets: item.sets,
+        color: tone.color,
+        levelLabel: tone.levelLabel
+      };
+    });
   }
 }

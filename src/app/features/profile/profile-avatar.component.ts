@@ -28,13 +28,23 @@ import {
   WorkoutMuscleLegendItem,
   getAwakinSunTone
 } from '../workout/components/body-map/workout-mini-body-map.component';
+import { WorkoutLogDetailModalComponent } from '../workout/components/workout-log-detail-modal/workout-log-detail-modal.component';
+import { WorkoutLogCardComponent } from '../workout/components/workout-log-card/workout-log-card.component';
+import { WorkoutLogEditModalComponent } from '../workout/components/workout-log-edit-modal/workout-log-edit-modal.component';
 
 export type ProfileFeedTab = 'posts' | 'meals' | 'workouts' | 'progress';
 
 @Component({
   selector: 'app-profile-avatar.component',
   standalone: true,
-  imports: [CommonModule, FormsModule, PrimeNGModule, WorkoutMiniBodyMapComponent],
+  imports: [
+    CommonModule,
+    FormsModule,
+    PrimeNGModule,
+    WorkoutLogDetailModalComponent,
+    WorkoutLogCardComponent,
+    WorkoutLogEditModalComponent
+  ],
   templateUrl: './profile-avatar.component.html',
   styleUrl: './profile-avatar.component.css',
 })
@@ -527,6 +537,23 @@ export class ProfileAvatarComponent implements OnInit {
   closeWorkoutDetail() {
     this.isWorkoutDetailOpen.set(false);
     this.selectedWorkoutDetail.set(null);
+  }
+
+  // Modal de Edición de Entrenamiento (WORKOUT LOG)
+  isWorkoutEditModalOpen = signal<boolean>(false);
+  logToEdit = signal<WorkoutLog | null>(null);
+
+  openWorkoutEditModal(log: WorkoutLog): void {
+    this.logToEdit.set(log);
+    this.isWorkoutEditModalOpen.set(true);
+  }
+
+  onWorkoutLogSaved(updatedLog: WorkoutLog): void {
+    this.isWorkoutEditModalOpen.set(false);
+    this.logToEdit.set(null);
+    if (this.selectedWorkoutDetail()?.id === updatedLog.id) {
+      this.selectedWorkoutDetail.set(updatedLog);
+    }
   }
 
   // Diccionario exhaustivo para traducción de grupos musculares a español

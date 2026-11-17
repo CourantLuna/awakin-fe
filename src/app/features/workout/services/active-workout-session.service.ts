@@ -16,6 +16,7 @@ interface PersistedWorkoutSession {
   routineId: string | null;
   routineName: string;
   routineDescription: string | null;
+  bannerUrl?: string | null;
   workoutDateIso: string;
   startedAtMs: number;
   restEndAtMs: number | null;
@@ -40,6 +41,7 @@ export class ActiveWorkoutSessionService {
   public routineId = signal<string | null>(null);
   public sessionName = signal<string>('Entrenamiento');
   public sessionDescription = signal<string | null>(null);
+  public bannerUrl = signal<string | null>(null);
   public workoutDate = signal<Date>(new Date());
   public startedAtMs = signal<number>(Date.now());
   public volumeUnit = signal<'lb' | 'kg'>('lb');
@@ -64,6 +66,7 @@ export class ActiveWorkoutSessionService {
         routineId: this.routineId(),
         routineName: this.sessionName(),
         routineDescription: this.sessionDescription(),
+        bannerUrl: this.bannerUrl(),
         workoutDateIso: this.workoutDate().toISOString(),
         startedAtMs: this.startedAtMs(),
         restEndAtMs: this.restEndAtMs(),
@@ -157,6 +160,7 @@ export class ActiveWorkoutSessionService {
     if (r) {
       this.sessionName.set(r.name);
       this.sessionDescription.set(r.description || null);
+      this.bannerUrl.set(r.banner_url || null);
 
       const mapped: ActiveSessionExercise[] = r.exercises.map((ex, idx) => {
         const detail = ex.apiDetail;
@@ -198,6 +202,7 @@ export class ActiveWorkoutSessionService {
     } else {
       this.sessionName.set('Entrenamiento Libre');
       this.sessionDescription.set('Sesión personalizada sin plantilla');
+      this.bannerUrl.set(null);
       this.sessionExercises.set([]);
     }
 
@@ -403,6 +408,7 @@ export class ActiveWorkoutSessionService {
       this.routineId.set(parsed.routineId || null);
       this.sessionName.set(parsed.routineName || 'Entrenamiento');
       this.sessionDescription.set(parsed.routineDescription || null);
+      this.bannerUrl.set(parsed.bannerUrl || null);
       this.workoutDate.set(parsed.workoutDateIso ? new Date(parsed.workoutDateIso) : new Date());
       this.startedAtMs.set(parsed.startedAtMs);
       this.restEndAtMs.set(parsed.restEndAtMs || null);
@@ -422,6 +428,9 @@ export class ActiveWorkoutSessionService {
     this.stopTicker();
     this.hasActiveSession.set(false);
     this.isDrawerOpen.set(false);
+    this.sessionName.set('Entrenamiento');
+    this.sessionDescription.set(null);
+    this.bannerUrl.set(null);
     this.sessionExercises.set([]);
     this.restEndAtMs.set(null);
     this.restRemaining.set(0);

@@ -12,6 +12,7 @@ import {
   WorkoutSetType
 } from '../../models/workout.models';
 import { CustomExerciseModalComponent } from '../custom-exercise-modal/custom-exercise-modal.component';
+import { getEquipmentMeta } from '../exercise-gallery-drawer/equipment-icons';
 
 @Component({
   selector: 'app-workout-session-drawer',
@@ -34,6 +35,42 @@ export class WorkoutSessionDrawerComponent {
   librarySearchResults = signal<ExerciseSummary[]>([]);
   isSearchingLibrary = signal<boolean>(false);
   private librarySearchTimer: any = null;
+
+  translateMuscleName(raw: string | null | undefined): string {
+    if (!raw) return 'General';
+    const key = raw.toLowerCase().trim();
+    const map: Record<string, string> = {
+      abs: 'Abdominales',
+      'upper back': 'Espalda Superior',
+      'lower back': 'Espalda Baja',
+      biceps: 'Bíceps',
+      triceps: 'Tríceps',
+      chest: 'Pecho',
+      pectorals: 'Pectorales',
+      delts: 'Deltoides',
+      shoulders: 'Hombros',
+      lats: 'Dorsales',
+      quads: 'Cuádriceps',
+      quadriceps: 'Cuádriceps',
+      hamstrings: 'Isquiosurales',
+      calves: 'Pantorrillas',
+      glutes: 'Glúteos',
+      forearms: 'Antebrazos',
+      traps: 'Trapecios',
+      trapezius: 'Trapecios',
+      adductors: 'Aductores',
+      abductors: 'Abductores',
+      neck: 'Cuello',
+      cardio: 'Cardio',
+      waist: 'Cintura / Core'
+    };
+    return map[key] || (key.charAt(0).toUpperCase() + key.slice(1));
+  }
+
+  translateEquipmentName(raw: string | null | undefined): string {
+    if (!raw) return 'Peso Corporal';
+    return getEquipmentMeta(raw).label;
+  }
 
   // Confirmación explícita de cancelar sesión
   isCancelConfirmOpen = signal<boolean>(false);
