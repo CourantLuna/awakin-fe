@@ -34,6 +34,7 @@ import { FormsModule } from '@angular/forms';
 import { IntakeService, determineCoverIcon } from '../../core/services/intake.service';
 import { AthleteService } from '../../core/services/athlete.service';
 import { AuthService } from '../../core/services/auth.service';
+import { StreakService } from '../../core/services/streak.service';
 import { IntakeTopBar } from '../../components/intake-top-bar/intake-top-bar';
 import {
   formatQuantity,
@@ -145,6 +146,7 @@ export class IntakeUserComponent implements OnInit {
   public athleteService = inject(AthleteService);
   public authService = inject(AuthService);
   public intakeService = inject(IntakeService);
+  public streakService = inject(StreakService);
   readonly Math = Math;
 
   currentAthleteId = computed(() => {
@@ -161,7 +163,7 @@ export class IntakeUserComponent implements OnInit {
 
   activeTemplateId = computed(() => this.activeWeeklyPlan()?.id || null);
 
-  streak = signal<number>(12);
+  streak = computed(() => this.streakService.currentStreak());
   weekDays = signal<CalendarDay[]>([]); // Se llenará dinámicamente
   selectedDay = signal<CalendarDay | null>(null);
   selectedDate = signal<Date>(new Date());
@@ -241,6 +243,9 @@ export class IntakeUserComponent implements OnInit {
         const logMap: Record<string, boolean> = { ...this.loggedFoodMap() };
 
         if (Array.isArray(records)) {
+          if (records.length > 0) {
+            this.streakService.addActiveDate(curDateStr);
+          }
           for (const rec of records) {
             const prefix = `${curDateStr}_`;
             let foodId = rec.id_original;

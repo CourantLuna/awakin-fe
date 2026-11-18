@@ -821,8 +821,22 @@
       </div>
       }
 
-      <!-- 4. Barra de Acciones Inferior (Guardar, Social, WhatsApp, Historias, Mensajes) -->
-      <div class="flex items-center justify-center gap-3 sm:gap-5 pt-3 pb-1 border-t border-stone-200">
+      <!-- Mobile: Un solo botón de compartir -->
+      <div class="sm:hidden pt-3 pb-1 border-t border-stone-200">
+        <button type="button" (click)="shareStoryNative('historias')" [disabled]="isGeneratingStory()"
+          class="w-full py-3.5 rounded-2xl bg-awakin-sun hover:bg-awakin-sun-dim text-white font-black text-xs uppercase tracking-wider transition-all shadow-md shadow-awakin-sun/25 active:scale-95 cursor-pointer flex items-center justify-center gap-2 disabled:opacity-50">
+          @if (isGeneratingStory()) {
+          <i class="pi pi-spin pi-spinner text-sm"></i>
+          <span>Preparando Historia...</span>
+          } @else {
+          <i class="pi pi-share-alt text-sm"></i>
+          <span>Compartir Historia</span>
+          }
+        </button>
+      </div>
+
+      <!-- Desktop: Barra de Acciones Completa (Guardar, Social, WhatsApp, Historias, Mensajes) -->
+      <div class="hidden sm:flex items-center justify-center gap-3 sm:gap-5 pt-3 pb-1 border-t border-stone-200">
         <!-- Guardar (Galería iOS / Android / PC) -->
         <button type="button" (click)="saveStoryToGallery()" [disabled]="isGeneratingStory()"
           class="flex flex-col items-center gap-1.5 group cursor-pointer">

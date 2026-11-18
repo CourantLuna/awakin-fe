@@ -9,6 +9,7 @@ import { DialogModule } from 'primeng/dialog';
 import { WeekCalendarHeaderComponent } from '../../components/week-calendar/week-calendar-header.component';
 import { AthleteService } from '../../core/services/athlete.service';
 import { AuthService } from '../../core/services/auth.service';
+import { StreakService } from '../../core/services/streak.service';
 import { WorkoutSupabaseService } from './services/workout-supabase.service';
 import { ActiveWorkoutSessionService } from './services/active-workout-session.service';
 import { ExerciseApiService } from './services/exercise-api.service';
@@ -83,6 +84,7 @@ export class WorkoutUserComponent implements OnInit {
   public athleteService = inject(AthleteService);
   public authService = inject(AuthService);
   public workoutService = inject(WorkoutSupabaseService);
+  public streakService = inject(StreakService);
   public activeSession = inject(ActiveWorkoutSessionService);
   public exerciseApi = inject(ExerciseApiService);
 
@@ -163,7 +165,7 @@ export class WorkoutUserComponent implements OnInit {
     );
   });
 
-  streak = computed(() => this.athleteService.currentAthlete()?.streak_days ?? 0);
+  streak = computed(() => this.streakService.currentStreak());
 
   // Datos reactivos desde WorkoutSupabaseService
   athlete = this.athleteService.currentAthlete;
@@ -203,6 +205,9 @@ export class WorkoutUserComponent implements OnInit {
     this.logToEdit.set(null);
     if (this.selectedWorkoutDetail()?.id === updatedLog.id) {
       this.selectedWorkoutDetail.set(updatedLog);
+    }
+    if (updatedLog.workout_date) {
+      this.streakService.addActiveDate(updatedLog.workout_date);
     }
   }
 

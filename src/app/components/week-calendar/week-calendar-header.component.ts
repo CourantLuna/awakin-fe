@@ -7,8 +7,10 @@ import {
   signal,
   OnInit,
   effect,
+  inject,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { StreakService, formatToDateKey } from '../../core/services/streak.service';
 
 export type DayStatus = 'none' | 'partial' | 'goal' | 'excess' | 'future';
 
@@ -28,9 +30,12 @@ export type CalendarViewMode = 'week' | 'month'; //
   templateUrl: './week-calendar-header.component.html',
 })
 export class WeekCalendarHeaderComponent implements OnInit {
+  public streakService = inject(StreakService);
+
   // Configuración de Protocolo
   @Input() weekStart: number = 1; // 0: Domingo, 1: Lunes (Default AWAKIN)
   @Input() streak: number = 0;
+  @Input() activeDates?: Set<string> | string[];
 
   // Señales de estado
 
@@ -57,6 +62,7 @@ weekDayNames = computed(() => {
 
 // 2. Nueva señal para manejar los huecos del mes
 monthPaddingDays = signal<number[]>([]);
+public activeVersion = signal<number>(0);
 
   // Coordenadas para Swipe
   private touchStartX = 0;
@@ -65,6 +71,12 @@ monthPaddingDays = signal<number[]>([]);
     // Sincroniza el label con el padre automáticamente
     effect(() => {
       this.onLabelChange.emit(this.displayLabel());
+    });
+
+    // Reacciona a cambios en las fechas activas de la racha única
+    effect(() => {
+      this.streakService.activeDates();
+      this.activeVersion.update((v) => v + 1);
     });
   }
 
@@ -260,20 +272,51 @@ private navigateTime(amount: number, unit: 'days' | 'months') {
 
 
 
-  // Estilos (Ya refactorizados para evitar Parser Errors)
+  // Helper de actividad física o nutricional del día
+  hasActivity(day: CalendarDay): boolean {
+    this.activeVersion();
+    const key = formatToDateKey(day.fullDate);
+    if (!key) return false;
+    if (this.activeDates) {
+      if (this.activeDates instanceof Set) return this.activeDates.has(key);
+      if (Array.isArray(this.activeDates)) return this.activeDates.includes(key);
+    }
+    return this.streakService.activeDates().has(key);
+  }
+
+  // Estilos del número del día (Días con entreno o comida sombreados en Awakin Sun con texto blanco)
   getNumberClasses(day: CalendarDay) {
     const today = this.isToday(day.fullDate);
     const selected = this.isSelected(day);
+    const active = this.hasActivity(day);
+
+    if (active) {
+      return {
+        'bg-awakin-sun text-white font-black shadow-xs shadow-awakin-sun/30': true,
+        'ring-2 ring-stone-900 ring-offset-2 scale-110 shadow-md': selected,
+        'scale-100': !selected,
+      };
+    }
+
     return {
-      'text-awakin-sun': today,
-      'text-black': selected && !today,
-      'text-stone-800': !selected && !today,
+      'text-awakin-sun font-bold': today && !selected,
+      'text-stone-900 font-bold': selected,
+      'text-stone-800': !selected && !today && !this.isFuture(day.fullDate),
+      'text-stone-300': this.isFuture(day.fullDate),
       'bg-stone-100 shadow-md scale-110': selected,
       'bg-transparent': !selected,
     };
   }
 
   getStatusClasses(day: CalendarDay) {
+    const active = this.hasActivity(day);
+    if (active) {
+      return {
+        'bg-awakin-sun': true,
+        'opacity-80': true,
+      };
+    }
+
     return {
       'bg-awakin-sun': day.status === 'goal' || this.isToday(day.fullDate),
       'bg-module-intake': day.status === 'partial',

@@ -83,22 +83,22 @@ export class IntakeScaleWidgetComponent {
     return Math.max(...values) * 1.33;
   });
 
-  // Cálculo de stroke-dasharray para las barras
+  // Cálculo de stroke-dasharray para las barras (independiente de ViewChild para evitar NG0100)
   getStrokeDash(value: number) {
-    if (!this.scalePath) return '0, 1000';
-    const pathLength = 320; // Aproximación del path curvo
-    const percentage = Math.min(value / this.scaleMaxLimit(), 1);
-    return `${percentage * pathLength}, 1000`;
+    const pathLength = 325;
+    const max = this.scaleMaxLimit() || 1;
+    const percentage = Math.max(0, Math.min(value / max, 1));
+    return `${(percentage * pathLength).toFixed(1)}, 1000`;
   }
 
-  // Posicionamiento responsive del marcador de Meta
+  // Posicionamiento responsive del marcador de Meta (cálculo paramétrico puro sin NG0100)
   getMarkerTransform(value: number) {
-    if (!this.scalePath) return 'translate(0,0)';
-    const path = this.scalePath.nativeElement;
-    const totalLength = path.getTotalLength();
-    const distance = (value / this.scaleMaxLimit()) * totalLength;
-    const point = path.getPointAtLength(distance);
-    return `translate(${point.x} ${point.y})`;
+    const max = this.scaleMaxLimit() || 1;
+    const ratio = Math.max(0, Math.min(value / max, 1));
+    // Curva paramétrica idéntica al path SVG (width: 320, altura máxima en Y: 40)
+    const x = 3 + 314 * ratio;
+    const y = 10 + 30 * Math.sin(ratio * Math.PI);
+    return `translate(${x.toFixed(2)} ${y.toFixed(2)})`;
   }
 
   // Función para calcular el stroke-dasharray basado en un valor
