@@ -1,9 +1,7 @@
 import { Component, OnInit, signal, computed, inject, effect, untracked, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { ActivatedRoute, Router } from '@angular/router';
 import { PrimeNGModule } from '../../shared/prime-ng.module';
-import { IosWidgetSyncService } from '../../core/services/ios-widget-sync.service';
 import { ChartModule } from 'primeng/chart';
 import { SelectModule } from 'primeng/select';
 import { DrawerModule } from 'primeng/drawer';
@@ -85,15 +83,6 @@ export class WorkoutUserComponent implements OnInit {
   public workoutService = inject(WorkoutSupabaseService);
   public activeSession = inject(ActiveWorkoutSessionService);
   public exerciseApi = inject(ExerciseApiService);
-  public iosWidgetSync = inject(IosWidgetSyncService);
-  private route = inject(ActivatedRoute);
-  private router = inject(Router);
-
-  // Estado del Widget iOS (Opción 1: PWA + Scriptable sin Mac/App Store)
-  isIosWidgetModalOpen = signal<boolean>(false);
-  iosWidgetScriptCode = signal<string>('');
-  isCopiedWidgetScript = signal<boolean>(false);
-  private pendingWidgetDeepLink = signal<{ action: string; routineId?: string | null } | null>(null);
 
   readonly weekDayLabels = WEEK_DAY_LABELS;
   readonly weekDays = [1, 2, 3, 4, 5, 6, 7];
@@ -454,51 +443,12 @@ export class WorkoutUserComponent implements OnInit {
     maintainAspectRatio: false
   };
 
-  // Rutina del día real de hoy (para vista previa del Widget iOS)
-  todayRoutineForWidget = computed<WorkoutRoutine | null>(() => {
-    const link = this.weeklyScheduleMap().get(this.todayDayOfWeek());
-    return link?.routine || this.activeDisplayedRoutine();
-  });
-
   constructor() {
     effect(() => {
       const athleteId = this.currentAthleteId();
       if (!athleteId) return;
       untracked(() => {
         this.workoutService.loadAthleteWorkoutData(athleteId);
-      });
-    });
-
-    // Sincronizar automáticamente el entrenamiento de hoy con el Widget iOS
-    effect(() => {
-      const plan = this.activePlan();
-      const routines = this.availableRoutines();
-      const logs = this.workoutLogs();
-      const loading = this.isLoadingWorkouts();
-      if (loading) return;
-
-      untracked(() => {
-        this.iosWidgetSync.syncTodayWorkout({
-          plan,
-          availableRoutines: routines,
-          workoutLogs: logs,
-          translateMuscleName: (m) => this.translateMuscleName(m)
-        });
-      });
-    });
-
-    // Procesar acción pendiente desde el Widget iOS (?action=start-today o ?action=detail-today)
-    effect(() => {
-      const pending = this.pendingWidgetDeepLink();
-      const loading = this.isLoadingWorkouts();
-      const routines = this.availableRoutines();
-      const plan = this.activePlan();
-      if (!pending || loading) return;
-      if (routines.length === 0 && !plan) return;
-
-      untracked(() => {
-        this.executeWidgetDeepLinkAction(pending.action, pending.routineId);
-        this.pendingWidgetDeepLink.set(null);
       });
     });
   }
@@ -508,96 +458,6 @@ export class WorkoutUserComponent implements OnInit {
     if (athleteId) {
       this.workoutService.loadAthleteWorkoutData(athleteId);
     }
-
-    this.route.queryParamMap.subscribe((params) => {
-      const action = params.get('action');
-      const routineId = params.get('routineId');
-      if (action === 'start-today' || action === 'detail-today') {
-        this.pendingWidgetDeepLink.set({ action, routineId });
-        this.router.navigate([], {
-          relativeTo: this.route,
-          queryParams: {},
-          replaceUrl: true
-        });
-      }
-    });
-  }
-
-  private executeWidgetDeepLinkAction(action: string, routineId?: string | null): void {
-    const today = new Date();
-    this.selectedDate.set(today);
-    this.currentLabel.set('Hoy');
-    this.selectedRoutineOverrideId.set(null);
-
-    const todayDow = this.todayDayOfWeek();
-    let targetRoutine: WorkoutRoutine | null = null;
-
-    if (routineId) {
-      targetRoutine = this.availableRoutines().find((r) => r.id === routineId) || null;
-    }
-    if (!targetRoutine) {
-      const link = this.weeklyScheduleMap().get(todayDow);
-      targetRoutine = link?.routine || null;
-    }
-
-    if (action === 'start-today') {
-      if (targetRoutine) {
-        this.startWorkout(targetRoutine);
-      } else {
-        this.startFreeWorkout();
-      }
-    } else if (action === 'detail-today' && targetRoutine) {
-      this.openRoutineDetailModal(targetRoutine, todayDow);
-    }
-  }
-
-  async openIosWidgetModal(): Promise<void> {
-    this.isIosWidgetModalOpen.set(true);
-    this.isCopiedWidgetScript.set(false);
-    await this.regenerateIosWidgetScript();
-  }
-
-  async regenerateIosWidgetScript(): Promise<void> {
-    const code = await this.iosWidgetSync.generateScriptableWidgetScript({
-      athleteId: this.currentAthleteId(),
-      plan: this.activePlan(),
-      availableRoutines: this.availableRoutines(),
-      workoutLogs: this.workoutLogs(),
-      translateMuscleName: (m) => this.translateMuscleName(m)
-    });
-    this.iosWidgetScriptCode.set(code);
-  }
-
-  async copyIosWidgetScript(): Promise<void> {
-    const code = this.iosWidgetScriptCode();
-    if (!code) return;
-    try {
-      await navigator.clipboard.writeText(code);
-      this.isCopiedWidgetScript.set(true);
-      setTimeout(() => this.isCopiedWidgetScript.set(false), 3000);
-    } catch {
-      // Fallback en caso de restricción de clipboard
-      const ta = document.createElement('textarea');
-      ta.value = code;
-      document.body.appendChild(ta);
-      ta.select();
-      document.execCommand('copy');
-      document.body.removeChild(ta);
-      this.isCopiedWidgetScript.set(true);
-      setTimeout(() => this.isCopiedWidgetScript.set(false), 3000);
-    }
-  }
-
-  downloadIosWidgetScript(): void {
-    const code = this.iosWidgetScriptCode();
-    if (!code) return;
-    const blob = new Blob([code], { type: 'application/javascript;charset=utf-8' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'AwakinWorkoutWidget.js';
-    a.click();
-    setTimeout(() => URL.revokeObjectURL(url), 2000);
   }
 
   // Navegación del calendario
