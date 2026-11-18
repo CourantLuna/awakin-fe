@@ -686,16 +686,16 @@
   <p-drawer [(visible)]="isHistoryDrawerOpen" position="bottom" appendTo="body"
     [style]="{ height: '90dvh', maxHeight: '90dvh', width: '100%', borderTopLeftRadius: '24px', borderTopRightRadius: '24px', backgroundColor: '#FAFAF9' }"
     styleClass="[&_.p-drawer-content]:!p-4 [&_.p-drawer-header]:!px-5 [&_.p-drawer-header]:!py-4 [&_.p-drawer-header]:!border-b [&_.p-drawer-header]:!border-stone-200 [&_.p-drawer-header]:!bg-white"
-    header="Historial de Entrenamientos">
+    [header]="'Entrenamientos (' + currentLabel() + ')'">
     <div class="max-w-3xl mx-auto space-y-3 pb-10">
-      @for (log of workoutLogs(); track log.id) {
+      @for (log of selectedDayLogs(); track log.id) {
       <app-workout-log-card [log]="log" [athlete]="athlete()" (onDetail)="openWorkoutDetail($event)"
         (onShare)="openWorkoutStoryModal($event)" (onEdit)="openWorkoutEditModal($event)">
       </app-workout-log-card>
       } @empty {
       <div class="py-12 text-center bg-white border border-dashed border-stone-300 rounded-3xl">
         <i class="pi pi-history text-stone-300 text-2xl mb-2"></i>
-        <p class="text-xs font-bold text-stone-500">Aún no has registrado entrenamientos.</p>
+        <p class="text-xs font-bold text-stone-500">No hay entrenamientos completados para {{ currentLabel() }}.</p>
       </div>
       }
     </div>
