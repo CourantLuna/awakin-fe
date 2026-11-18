@@ -524,6 +524,7 @@ export class IntakeUserComponent implements OnInit {
             id: fid,
             name: ing.name,
             emoji: determineCoverIcon(ing.name, [ing.mealType]),
+            coverImageUrl: (ing as any).coverImageUrl || (ing as any).imageUrl || (ing as any).foto_url || (ing as any).photo_urls?.[0] || null,
             mealType: (ing.mealType?.toUpperCase() as MealType) || 'SNACK_PM',
             portion: ing.quantity || 1,
             unit: ing.unit || 'g',

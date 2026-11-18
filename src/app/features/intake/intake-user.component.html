@@ -225,13 +225,14 @@
               (click)="food.dishItem ? openRecipeDetails(food.dishItem, $event) : null"
               [title]="food.dishItem ? 'Ver detalles de ' + food.name : ''">
               <div class="flex items-center gap-3 min-w-0 flex-1">
-                <!-- Miniatura / Emoji -->
+                <!-- Miniatura / Icono Intake Active -->
                 <div
-                  class="w-11 h-11 rounded-xl bg-stone-100 border border-stone-200 overflow-hidden flex items-center justify-center text-xl shrink-0 shadow-xs">
+                  class="w-11 h-11 rounded-xl bg-stone-100 border border-stone-200 overflow-hidden flex items-center justify-center shrink-0 shadow-xs">
                   @if (food.coverImageUrl) {
-                  <img loading="lazy" decoding="async" [src]="food.coverImageUrl" [alt]="food.name" class="w-full h-full object-cover" />
+                  <img loading="lazy" decoding="async" [src]="food.coverImageUrl" [alt]="food.name" class="w-full h-full object-cover"
+                    (error)="$any($event.target).src = '/icons/intake-active.png'; $any($event.target).className = 'w-7 h-7 object-contain p-0.5'" />
                   } @else {
-                  <span>{{ food.emoji }}</span>
+                  <img src="/icons/intake-active.png" alt="Awakin Intake" class="w-7 h-7 object-contain p-0.5" />
                   }
                 </div>
 
@@ -360,12 +361,13 @@
               : 'bg-white/60 border-stone-200/70 hover:bg-white hover:border-stone-300 opacity-75'">
             
             <div class="flex items-center gap-2.5 min-w-0 flex-1">
-              <!-- Miniatura / Emoji -->
+              <!-- Miniatura / Icono Intake Active -->
               <div class="w-10 h-10 rounded-xl bg-stone-100 border border-stone-200 overflow-hidden flex items-center justify-center shrink-0">
                 @if (food.coverImageUrl) {
-                <img loading="lazy" decoding="async" [src]="food.coverImageUrl" [alt]="food.name" class="w-full h-full object-cover" />
+                <img loading="lazy" decoding="async" [src]="food.coverImageUrl" [alt]="food.name" class="w-full h-full object-cover"
+                  (error)="$any($event.target).src = '/icons/intake-active.png'; $any($event.target).className = 'w-6 h-6 object-contain p-0.5'" />
                 } @else {
-                <span>{{ food.emoji }}</span>
+                <img src="/icons/intake-active.png" alt="Awakin Intake" class="w-6 h-6 object-contain p-0.5" />
                 }
               </div>
 

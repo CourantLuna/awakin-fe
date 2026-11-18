@@ -281,7 +281,8 @@
                             <img loading="lazy" decoding="async" [src]="menu.coverImageUrl" [alt]="menu.name"
                               class="w-6 h-6 rounded-lg object-cover shrink-0" />
                             } @else {
-                            <span class="text-base shrink-0">{{ menu.coverIcon }}</span>
+                            <img src="/icons/intake-active.png" alt="Awakin Intake"
+                              class="w-5 h-5 object-contain shrink-0" />
                             }
                             <span class="truncate">{{ menu.name }}</span>
                           </span>
@@ -331,11 +332,18 @@
                     <div
                       class="bg-white border border-stone-200/70 rounded-2xl p-3 mb-2.5 shadow-2xs hover:border-stone-300 transition-all">
                       <div class="flex items-start gap-3">
-                        <!-- Foto cuadrada del platillo -->
-                        <img loading="lazy" decoding="async"
-                          [src]="dish.coverImageUrl || 'https://images.unsplash.com/photo-1490645935967-10de6ba17061?auto=format&fit=crop&q=80'"
-                          [alt]="dish.name"
+                        <!-- Foto cuadrada del platillo o icono Intake Active -->
+                        @if (dish.coverImageUrl) {
+                        <img loading="lazy" decoding="async" [src]="dish.coverImageUrl" [alt]="dish.name"
+                          (error)="dish.coverImageUrl = null"
                           class="w-14 h-14 sm:w-16 sm:h-16 rounded-xl object-cover shrink-0 border border-stone-100 shadow-2xs" />
+                        } @else {
+                        <div
+                          class="w-14 h-14 sm:w-16 sm:h-16 rounded-xl bg-stone-100 border border-stone-200/80 flex items-center justify-center shrink-0 shadow-2xs">
+                          <img src="/icons/intake-active.png" alt="Awakin Intake"
+                            class="w-8 h-8 object-contain p-0.5" />
+                        </div>
+                        }
 
                         <!-- Datos del platillo -->
                         <div class="flex-1 min-w-0 pr-1">
@@ -407,8 +415,9 @@
                       class="bg-emerald-50/40 border border-emerald-100/90 rounded-2xl p-2.5 flex items-center justify-between gap-3 shadow-2xs mb-2">
                       <div class="flex items-center gap-2.5 min-w-0 flex-1">
                         <div
-                          class="w-10 h-10 rounded-xl bg-emerald-100/70 text-emerald-600 flex items-center justify-center text-base shrink-0 shadow-2xs">
-                          <i class="pi pi-apple"></i>
+                          class="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-200/40 flex items-center justify-center shrink-0 shadow-2xs">
+                          <img src="/icons/intake-active.png" alt="Awakin Intake"
+                            class="w-6 h-6 object-contain p-0.5" />
                         </div>
                         <div class="min-w-0 flex-1">
                           <h5 class="font-bold text-xs sm:text-sm text-stone-900 truncate leading-tight">

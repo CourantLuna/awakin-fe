@@ -3,12 +3,19 @@
   styleClass="w-[94vw] max-w-lg bg-white rounded-3xl overflow-hidden shadow-2xl p-0">
   @if (activeDish(); as dish) {
   <div class="p-4 sm:p-6 space-y-4 max-h-[80vh] overflow-y-auto awakin-scrollbar">
-    <!-- Banner con imagen de la receta -->
-    <div class="relative w-full h-48 sm:h-56 rounded-2xl overflow-hidden shadow-sm">
+    <!-- Banner con imagen de la receta o icono Intake Active -->
+    <div class="relative w-full h-48 sm:h-56 rounded-2xl overflow-hidden shadow-sm bg-stone-900 flex items-center justify-center">
+      @if (dish.coverImageUrl) {
       <img
-        [src]="dish.coverImageUrl || 'https://images.unsplash.com/photo-1490645935967-10de6ba17061?auto=format&fit=crop&q=80'"
-        [alt]="dish.name" class="w-full h-full object-cover" />
-      <div class="absolute inset-0 bg-gradient-to-t from-black/75 via-black/20 to-transparent"></div>
+        [src]="dish.coverImageUrl"
+        [alt]="dish.name" class="w-full h-full object-cover"
+        (error)="dish.coverImageUrl = null" />
+      } @else {
+      <div class="w-full h-full bg-gradient-to-br from-stone-900 via-stone-850 to-stone-950 flex flex-col items-center justify-center p-4">
+        <img src="/icons/intake-active.png" alt="Awakin Intake" class="w-20 h-20 object-contain drop-shadow-md mb-2" />
+      </div>
+      }
+      <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/25 to-transparent pointer-events-none"></div>
       <div class="absolute bottom-3 left-3 right-3 text-white">
         <div class="flex items-center gap-1.5 mb-1.5 flex-wrap">
           <span

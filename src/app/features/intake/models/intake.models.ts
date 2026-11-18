@@ -30,6 +30,7 @@ export interface DishIngredient {
   micros?: any;
   photo_urls?: string[];
   sourceClassification?: string;
+  coverImageUrl?: string | null;
   serving_size?: number;
   unit_weight_grams?: number;
   rawIngredientObj?: any;
