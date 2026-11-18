@@ -1,11 +1,11 @@
 <p-dialog [(visible)]="visible" [modal]="true" [draggable]="false" [resizable]="false" [closable]="false"
   [showHeader]="false" [dismissableMask]="true" appendTo="body" (onHide)="closeModal()"
-  [style]="{ width: '96vw', maxWidth: '440px', borderRadius: '28px' }"
-  styleClass="overflow-hidden shadow-2xl border border-stone-200 bg-white rounded-3xl [&_.p-dialog-content]:!p-0">
+  [style]="{ width: '96vw', maxWidth: '440px', borderRadius: '14px' }"
+  styleClass="overflow-hidden shadow-2xl border border-stone-200 bg-white rounded-xl [&_.p-dialog-content]:!p-0 [&_.p-dialog-content]:!overflow-hidden">
 
-  <div class="bg-white text-stone-900 flex flex-col max-h-[92vh] overflow-hidden">
-    <!-- Header del Editor (Awakin Light Base) -->
-    <div class="px-5 py-3.5 border-b border-stone-100 bg-stone-50/90 flex items-center justify-between shrink-0">
+  <div class="bg-white text-stone-900 flex flex-col h-[90vh] max-h-[90vh] overflow-hidden rounded-xl">
+    <!-- Header del Editor (Fijo arriba) -->
+    <div class="px-5 py-3.5 border-b border-stone-100 bg-white flex items-center justify-between shrink-0 z-10">
       <div class="flex items-center gap-2.5">
         <div class="w-8 h-8 rounded-xl bg-awakin-sun/10 border border-awakin-sun/25 flex items-center justify-center">
           <img src="/icons/awakin-workout-logo.png" alt="Awakin Workout" class="w-5 h-5 object-contain" />
@@ -22,296 +22,308 @@
     </div>
 
     <!-- Área de Trabajo Scrollable (Preview Canvas + Controles Awakin Light) -->
-    <div class="overflow-y-auto flex-1 p-3.5 sm:p-4 space-y-3.5 bg-stone-100/70 no-scrollbar">
+    <div class="overflow-y-auto flex-1 min-h-0 p-3.5 sm:p-4 space-y-3.5 bg-stone-100/70 no-scrollbar">
 
       <!-- ========================================================================= -->
-      <!-- CANVAS DE CAPTURA VISUAL (Solo Fondo + Gráfico Overlay)                   -->
+      <!-- CANVAS DE CAPTURA VISUAL (Descarga pura rectangular, sin bordes redondos) -->
       <!-- ========================================================================= -->
-      <div class="flex justify-center select-none">
-        <div #storyCaptureArea
-          class="story-preview-container relative overflow-hidden rounded-2xl shadow-xl border border-stone-300/80 bg-stone-950 flex flex-col justify-center items-center w-full max-w-[310px] sm:max-w-[330px] transition-all"
-          [ngClass]="aspectRatioClass()">
+      <div class="flex justify-center select-none p-1">
+        <div class="overflow-hidden rounded-none shadow-md max-w-[310px] sm:max-w-[330px] w-full bg-stone-950">
+          <div #storyCaptureArea
+            class="story-preview-container relative overflow-hidden rounded-none border-0 shadow-none bg-stone-950 flex flex-col justify-center items-center w-full transition-all"
+            style="border-radius: 0px !important; border: 0 !important; box-shadow: none !important;"
+            [ngClass]="aspectRatioClass()">
 
-          <!-- 1. FONDO: FOTO O DEGRADADO DARK AWAKIN -->
-          @if (activeBackgroundUrl(); as bgUrl) {
-          <img [src]="bgUrl" alt="Fondo de entrenamiento"
-            class="absolute inset-0 w-full h-full object-cover select-none pointer-events-none" />
-          <!-- Viñeta y Oscurecimiento para contraste -->
-          <div class="absolute inset-0 pointer-events-none transition-opacity duration-200"
-            [style.background]="'rgba(12, 10, 9, ' + (dimLevel() / 100) + ')'"></div>
-          <div class="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-black/60 pointer-events-none"></div>
-          } @else {
-          <!-- Fondo Dark Ritual Awakin (Obsidiana con resplandor solar) -->
-          <div class="absolute inset-0 bg-[#0C0A09] pointer-events-none">
-            <div class="absolute inset-0 bg-[radial-gradient(circle_at_50%_35%,rgba(254,151,10,0.22)_0%,rgba(12,10,9,0.95)_70%)]"></div>
-            <div class="absolute inset-0 opacity-[0.04]"
-              style="background-image: radial-gradient(#fff 1px, transparent 1px); background-size: 16px 16px;"></div>
-          </div>
-          }
-
-          <!-- 2. CAPA OVERLAY ARRASTRABLE Y ESCALABLE (DRAGGABLE & ZOOMABLE / PINCH ON MOBILE) -->
-          <div
-            class="story-draggable-layer relative z-20 w-full h-full flex items-center justify-center px-3 select-none touch-none"
-            (mousedown)="onDragStart($event)"
-            (touchstart)="onDragStart($event)"
-            (document:mousemove)="onDragMove($event)"
-            (document:touchmove)="onDragMove($event)"
-            (document:mouseup)="onDragEnd()"
-            (document:touchend)="onDragEnd()">
-
+            <!-- 1. FONDO: FOTO O DEGRADADO DARK AWAKIN -->
+            @if (activeBackgroundUrl(); as bgUrl) {
+            <img [src]="bgUrl" alt="Fondo de entrenamiento"
+              class="absolute inset-0 w-full h-full object-cover select-none pointer-events-none rounded-none"
+              style="border-radius: 0px !important;" />
+            <!-- Viñeta y Oscurecimiento para contraste -->
+            <div class="absolute inset-0 pointer-events-none transition-opacity duration-200"
+              [style.background]="'rgba(12, 10, 9, ' + (dimLevel() / 100) + ')'"></div>
             <div
-              class="w-full transition-transform ease-out will-change-transform"
-              [style.transform]="'translate(' + overlayPosition().x + 'px, ' + overlayPosition().y + 'px) scale(' + overlayScale() + ')'"
-              [style.transformOrigin]="'center center'">
+              class="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-black/60 pointer-events-none">
+            </div>
+            } @else {
+            <!-- Fondo Dark Ritual Awakin (Obsidiana con resplandor solar) -->
+            <div class="absolute inset-0 bg-[#0C0A09] pointer-events-none">
+              <div
+                class="absolute inset-0 bg-[radial-gradient(circle_at_50%_35%,rgba(254,151,10,0.22)_0%,rgba(12,10,9,0.95)_70%)]">
+              </div>
+              <div class="absolute inset-0 opacity-[0.04]"
+                style="background-image: radial-gradient(#fff 1px, transparent 1px); background-size: 16px 16px;"></div>
+            </div>
+            }
 
-              <!-- CONTENEDOR DE LA TARJETA (Default: Limpio / Transparent) -->
-              <div class="w-full rounded-2xl p-3 select-none transition-all"
-                [ngClass]="{
-                  'bg-transparent drop-shadow-[0_2px_10px_rgba(0,0,0,0.95)]': cardStyle() === 'transparent',
-                  'backdrop-blur-md bg-stone-950/75 border border-white/15 shadow-2xl': cardStyle() === 'glass',
-                  'bg-stone-950/95 border border-awakin-sun/35 shadow-2xl': cardStyle() === 'dark'
-                }">
+            <!-- 2. CAPA OVERLAY ARRASTRABLE Y ESCALABLE (DRAGGABLE & ZOOMABLE / PINCH ON MOBILE) -->
+            <div
+              class="story-draggable-layer relative z-20 w-full h-full flex items-center justify-center px-3 select-none touch-none"
+              (mousedown)="onDragStart($event)" (touchstart)="onDragStart($event)"
+              (document:mousemove)="onDragMove($event)" (document:touchmove)="onDragMove($event)"
+              (document:mouseup)="onDragEnd()" (document:touchend)="onDragEnd()">
 
-                <!-- ========================================================== -->
-                <!-- VARIANTE 1: BODY MAP FOCUS (FRONTAL Y DORSAL AWAKIN)       -->
-                <!-- ========================================================== -->
-                @if (selectedTemplate() === 'bodymap') {
-                <div class="space-y-1.5 text-center text-white">
-                  @if (currentLog()?.routine_name && !currentLog()?.routine_name?.toLowerCase()?.includes('entrenamiento del d')) {
-                  <div class="text-xs font-black uppercase tracking-tight line-clamp-1 drop-shadow-md">
-                    {{ currentLog()?.routine_name }}
-                  </div>
-                  <div class="text-[9px] font-black uppercase tracking-widest text-stone-300 drop-shadow-sm">
-                    {{ workoutDateFormatted() }}
-                  </div>
-                  } @else {
-                  <div class="text-xs font-black uppercase tracking-widest text-stone-100 drop-shadow-md">
-                    {{ workoutDateFormatted() }}
-                  </div>
-                  }
+              <div class="w-full transition-transform ease-out will-change-transform"
+                [style.transform]="'translate(' + overlayPosition().x + 'px, ' + overlayPosition().y + 'px) scale(' + overlayScale() + ')'"
+                [style.transformOrigin]="'center center'">
 
-                  <!-- Componente Body Map oficial de Awakin -->
-                  <div class="h-44 sm:h-52 w-full flex items-center justify-center py-1">
-                    <app-workout-mini-body-map
-                      [gender]="currentGender()"
-                      variant="transparent"
-                      [showLabels]="false"
-                      [muscleBreakdown]="muscleBreakdown()"
-                      class="h-full w-auto" />
-                  </div>
+                <!-- CONTENEDOR DE LA TARJETA (Default: Limpio / Transparent) -->
+                <div class="w-full rounded-2xl p-3 select-none transition-all" [ngClass]="{
+                    'bg-transparent drop-shadow-[0_2px_10px_rgba(0,0,0,0.95)]': cardStyle() === 'transparent',
+                    'backdrop-blur-md bg-stone-950/75 border border-white/15 shadow-2xl': cardStyle() === 'glass',
+                    'bg-stone-950/95 border border-awakin-sun/35 shadow-2xl': cardStyle() === 'dark'
+                  }">
 
-                  @if (muscleBreakdown().length > 0) {
-                  <!-- Leyenda de músculos trabajados -->
-                  <div class="flex flex-wrap items-center justify-center gap-1.5 py-0.5">
-                    @for (m of muscleBreakdown().slice(0, 4); track m.muscle) {
-                    <span class="inline-flex items-center gap-1 text-[9px] font-black uppercase px-2 py-0.5 rounded-full bg-black/40 text-stone-200 border border-white/15 backdrop-blur-xs">
-                      <span class="w-1.5 h-1.5 rounded-full" [style.backgroundColor]="m.color || '#FE970A'"></span>
-                      <span>{{ m.muscle }}: {{ m.sets }}</span>
-                    </span>
+                  <!-- ========================================================== -->
+                  <!-- VARIANTE 1: BODY MAP FOCUS (FRONTAL Y DORSAL AWAKIN)       -->
+                  <!-- ========================================================== -->
+                  @if (selectedTemplate() === 'bodymap') {
+                  <div class="space-y-1.5 text-center text-white">
+                    @if (currentLog()?.routine_name &&
+                    !currentLog()?.routine_name?.toLowerCase()?.includes('entrenamiento del d')) {
+                    <div
+                      class="text-xs font-black uppercase tracking-tight break-words text-wrap leading-snug drop-shadow-md px-1">
+                      {{ currentLog()?.routine_name }}
+                    </div>
+                    <div class="text-[9px] font-black uppercase tracking-widest text-stone-300 drop-shadow-sm">
+                      {{ workoutDateFormatted() }}
+                    </div>
+                    } @else {
+                    <div class="text-xs font-black uppercase tracking-widest text-stone-100 drop-shadow-md">
+                      {{ workoutDateFormatted() }}
+                    </div>
                     }
-                  </div>
-                  }
 
-                  <!-- Fila de 3 KPIs principales -->
-                  <div class="grid grid-cols-3 gap-1 pt-1.5 border-t border-white/15 text-center">
-                    <div>
-                      <div class="text-[9px] font-bold text-stone-300 uppercase tracking-wider">Duración</div>
-                      <div class="text-xs sm:text-sm font-black text-white">{{ formattedDuration() }}</div>
+                    <!-- Componente Body Map oficial de Awakin -->
+                    <div class="h-44 sm:h-52 w-full flex items-center justify-center py-1">
+                      <app-workout-mini-body-map [gender]="currentGender()" variant="transparent" [showLabels]="false"
+                        [muscleBreakdown]="muscleBreakdown()" class="h-full w-auto" />
                     </div>
-                    <div class="border-x border-white/15">
-                      <div class="text-[9px] font-bold text-stone-300 uppercase tracking-wider">Volumen</div>
-                      <div class="text-xs sm:text-sm font-black text-emerald-400">{{ formattedVolume() }}</div>
-                    </div>
-                    <div>
-                      <div class="text-[9px] font-bold text-stone-300 uppercase tracking-wider">Series</div>
-                      <div class="text-xs sm:text-sm font-black text-awakin-sun">{{ totalSets() }}</div>
-                    </div>
-                  </div>
-                </div>
-                }
 
-                <!-- ========================================================== -->
-                <!-- VARIANTE 2: RADAR MUSCULAR POLAR (CHART DE 6 EJES)         -->
-                <!-- ========================================================== -->
-                @else if (selectedTemplate() === 'radar') {
-                <div class="space-y-2 text-center text-white">
-                  <!-- Fila superior de KPIs -->
-                  <div class="grid grid-cols-3 gap-1 pb-1.5 border-b border-white/15 text-center">
-                    <div>
-                      <div class="text-[9px] font-bold text-stone-300 uppercase tracking-wider">Duración</div>
-                      <div class="text-xs font-black text-white">{{ formattedDuration() }}</div>
-                    </div>
-                    <div class="border-x border-white/15">
-                      <div class="text-[9px] font-bold text-stone-300 uppercase tracking-wider">Volumen</div>
-                      <div class="text-xs font-black text-emerald-400">{{ formattedVolume() }}</div>
-                    </div>
-                    <div>
-                      <div class="text-[9px] font-bold text-stone-300 uppercase tracking-wider">Series</div>
-                      <div class="text-xs font-black text-awakin-sun">{{ totalSets() }}</div>
-                    </div>
-                  </div>
-
-                  <!-- SVG Radar Polar Dinámico -->
-                  @if (radarChartData(); as radar) {
-                  <div class="w-full flex items-center justify-center py-1">
-                    <svg [attr.viewBox]="'0 0 ' + radar.size + ' ' + radar.size" class="w-48 sm:w-52 h-48 sm:h-52 overflow-visible">
-                      @for (ring of radar.rings; track $index) {
-                      <polygon [attr.points]="ring" fill="none" stroke="rgba(255,255,255,0.18)" stroke-width="1" />
-                      }
-                      @for (spoke of radar.spokes; track $index) {
-                      <line [attr.x1]="radar.cx" [attr.y1]="radar.cy" [attr.x2]="spoke.x2" [attr.y2]="spoke.y2"
-                        stroke="rgba(255,255,255,0.20)" stroke-width="1" stroke-dasharray="2,2" />
-                      }
-                      <polygon [attr.points]="radar.polygonPoints" fill="rgba(254, 151, 10, 0.42)" stroke="#FE970A"
-                        stroke-width="2.5" class="drop-shadow-[0_0_8px_rgba(254,151,10,0.6)]" />
-                      @for (pt of radar.points; track pt.label) {
-                      @if (pt.value > 0) {
-                      <circle [attr.cx]="pt.x" [attr.cy]="pt.y" r="3.5" fill="#FE970A" stroke="#FFFFFF" stroke-width="1.5" />
-                      }
-                      <text [attr.x]="pt.labelX" [attr.y]="pt.labelY" [attr.text-anchor]="pt.anchor"
-                        class="text-[10px] font-black uppercase tracking-tight"
-                        [attr.fill]="pt.value > 0 ? '#FE970A' : '#D6D3D1'">
-                        {{ pt.label }}
-                      </text>
-                      }
-                    </svg>
-                  </div>
-                  }
-                </div>
-                }
-
-                <!-- ========================================================== -->
-                <!-- VARIANTE 3: LISTA DE EJERCICIOS Y SERIES                   -->
-                <!-- ========================================================== -->
-                @else if (selectedTemplate() === 'exercises') {
-                <div class="space-y-2 text-white">
-                  <div class="text-center border-b border-white/15 pb-1.5">
-                    <h4 class="text-xs font-black uppercase tracking-tight line-clamp-1">{{ routineTitle() }}</h4>
-                    <div class="flex items-center justify-center gap-3 text-[10px] font-bold text-stone-200 mt-1">
-                      <span>⏱️ {{ formattedDuration() }}</span>
-                      <span>⚡ {{ formattedVolume() }}</span>
-                      <span>🔢 {{ totalSets() }} series</span>
-                    </div>
-                  </div>
-
-                  <div class="space-y-1.5 py-1 text-left">
-                    @for (ex of formattedExercises(); track ex.name) {
-                    <div class="flex items-center justify-between text-[11px] gap-2">
-                      <div class="truncate text-stone-100">
-                        <span class="text-awakin-sun font-black mr-1">{{ ex.setsCount }}x</span>
-                        <span>{{ ex.name }}</span>
+                    @if (muscleBreakdown().length > 0) {
+                    <!-- Leyenda de músculos trabajados organizada en una sola columna limpia -->
+                    <div class="flex flex-col items-center justify-center gap-1.5 py-1">
+                      @for (m of muscleBreakdown().slice(0, 5); track m.muscle) {
+                      <div
+                        class="inline-flex items-center gap-2 text-[10px] font-black uppercase px-3 py-0.5 rounded-full bg-black/60 text-stone-100 border border-white/15 backdrop-blur-xs shadow-xs">
+                        <span class="w-2 h-2 rounded-full shrink-0 shadow-xs"
+                          [style.backgroundColor]="m.color || '#FE970A'"></span>
+                        <span class="tracking-wider">{{ m.muscle }}: <span class="text-awakin-sun font-black">{{ m.sets
+                            }}</span></span>
                       </div>
-                      <span class="text-[9px] font-bold text-stone-300 capitalize shrink-0">{{ ex.targetMuscle || 'General' }}</span>
+                      }
                     </div>
                     }
-                  </div>
-                </div>
-                }
 
-                <!-- ========================================================== -->
-                <!-- VARIANTE 4: GRID 2x2 DE MÉTRICAS                           -->
-                <!-- ========================================================== -->
-                @else if (selectedTemplate() === 'grid2x2') {
-                <div class="space-y-2 text-center text-white">
-                  <h4 class="text-xs font-black uppercase tracking-tight line-clamp-1">{{ routineTitle() }}</h4>
-                  <div class="grid grid-cols-2 gap-2 pt-1">
-                    <div class="p-2.5 rounded-xl bg-black/40 backdrop-blur-xs border border-white/15 text-left">
-                      <div class="text-[9px] font-bold text-stone-300 uppercase">Duración</div>
-                      <div class="text-base font-black text-white mt-0.5">{{ formattedDuration() }}</div>
-                    </div>
-                    <div class="p-2.5 rounded-xl bg-black/40 backdrop-blur-xs border border-white/15 text-left">
-                      <div class="text-[9px] font-bold text-stone-300 uppercase">Volumen</div>
-                      <div class="text-base font-black text-emerald-400 mt-0.5 truncate">{{ formattedVolume() }}</div>
-                    </div>
-                    <div class="p-2.5 rounded-xl bg-black/40 backdrop-blur-xs border border-white/15 text-left">
-                      <div class="text-[9px] font-bold text-stone-300 uppercase">Ejercicios</div>
-                      <div class="text-base font-black text-white mt-0.5">{{ totalExercises() }}</div>
-                    </div>
-                    <div class="p-2.5 rounded-xl bg-black/40 backdrop-blur-xs border border-white/15 text-left">
-                      <div class="text-[9px] font-bold text-stone-300 uppercase">Series</div>
-                      <div class="text-base font-black text-awakin-sun mt-0.5">{{ totalSets() }}</div>
+                    <!-- Fila de 3 KPIs principales -->
+                    <div class="grid grid-cols-3 gap-1 pt-1.5 border-t border-white/15 text-center">
+                      <div>
+                        <div class="text-[9px] font-bold text-stone-300 uppercase tracking-wider">Duración</div>
+                        <div class="text-xs sm:text-sm font-black text-white">{{ formattedDuration() }}</div>
+                      </div>
+                      <div class="border-x border-white/15">
+                        <div class="text-[9px] font-bold text-stone-300 uppercase tracking-wider">Volumen</div>
+                        <div class="text-xs sm:text-sm font-black text-emerald-400">{{ formattedVolume() }}</div>
+                      </div>
+                      <div>
+                        <div class="text-[9px] font-bold text-stone-300 uppercase tracking-wider">Series</div>
+                        <div class="text-xs sm:text-sm font-black text-awakin-sun">{{ totalSets() }}</div>
+                      </div>
                     </div>
                   </div>
-                </div>
-                }
+                  }
 
-                <!-- ========================================================== -->
-                <!-- VARIANTE 5: MINIMAL STATS                                  -->
-                <!-- ========================================================== -->
-                @else if (selectedTemplate() === 'minimal') {
-                <div class="py-3 text-center space-y-3 text-white">
-                  <div>
-                    <div class="text-lg font-black text-white tracking-tight">{{ formattedDuration() }}</div>
-                    <div class="text-[9px] font-bold text-stone-300 uppercase tracking-wider">Duración</div>
-                  </div>
-                  <div>
-                    <div class="text-xl font-black text-emerald-400 tracking-tight">{{ formattedVolume() }}</div>
-                    <div class="text-[9px] font-bold text-stone-300 uppercase tracking-wider">Volumen Total</div>
-                  </div>
-                  <div>
-                    <div class="text-lg font-black text-awakin-sun tracking-tight">{{ totalSets() }} Series</div>
-                    <div class="text-[9px] font-bold text-stone-300 uppercase tracking-wider">Carga Completada</div>
-                  </div>
-                </div>
-                }
-
-                <!-- ========================================================== -->
-                <!-- VARIANTE 6: AWAKIN RITUAL CULT                             -->
-                <!-- ========================================================== -->
-                @else if (selectedTemplate() === 'ritual') {
-                <div class="space-y-2.5 text-center text-white">
-                  <div class="text-[10px] font-black uppercase tracking-widest text-awakin-sun">
-                    NO ES SUERTE. ES DISCIPLINA.
-                  </div>
-                  <h4 class="text-xs font-black uppercase italic tracking-tight line-clamp-1">{{ routineTitle() }}</h4>
-
-                  <div class="grid grid-cols-3 gap-1 py-1.5 border-y border-white/15">
-                    <div>
-                      <div class="text-[8px] font-bold text-stone-300 uppercase">Volumen</div>
-                      <div class="text-xs font-black text-emerald-400">{{ formattedVolume() }}</div>
+                  <!-- ========================================================== -->
+                  <!-- VARIANTE 2: RADAR MUSCULAR POLAR (CHART DE 6 EJES)         -->
+                  <!-- ========================================================== -->
+                  @else if (selectedTemplate() === 'radar') {
+                  <div class="space-y-2 text-center text-white">
+                    <!-- Fila superior de KPIs -->
+                    <div class="grid grid-cols-3 gap-1 pb-1.5 border-b border-white/15 text-center">
+                      <div>
+                        <div class="text-[9px] font-bold text-stone-300 uppercase tracking-wider">Duración</div>
+                        <div class="text-xs font-black text-white">{{ formattedDuration() }}</div>
+                      </div>
+                      <div class="border-x border-white/15">
+                        <div class="text-[9px] font-bold text-stone-300 uppercase tracking-wider">Volumen</div>
+                        <div class="text-xs font-black text-emerald-400">{{ formattedVolume() }}</div>
+                      </div>
+                      <div>
+                        <div class="text-[9px] font-bold text-stone-300 uppercase tracking-wider">Series</div>
+                        <div class="text-xs font-black text-awakin-sun">{{ totalSets() }}</div>
+                      </div>
                     </div>
-                    <div class="border-x border-white/15">
-                      <div class="text-[8px] font-bold text-stone-300 uppercase">Series</div>
-                      <div class="text-xs font-black text-awakin-sun">{{ totalSets() }}</div>
-                    </div>
-                    <div>
-                      <div class="text-[8px] font-bold text-stone-300 uppercase">Tiempo</div>
-                      <div class="text-xs font-black text-white">{{ formattedDuration() }}</div>
-                    </div>
-                  </div>
 
-                  @if (muscleBreakdown().length > 0) {
-                  <div class="flex flex-wrap items-center justify-center gap-1">
-                    @for (m of muscleBreakdown().slice(0, 4); track m.muscle) {
-                    <span class="text-[9px] font-black uppercase px-2 py-0.5 rounded-full bg-black/40 text-stone-200 border border-white/15">
-                      {{ m.muscle }} • {{ m.sets }}S
-                    </span>
+                    <!-- SVG Radar Polar Dinámico -->
+                    @if (radarChartData(); as radar) {
+                    <div class="w-full flex items-center justify-center py-1">
+                      <svg [attr.viewBox]="'0 0 ' + radar.size + ' ' + radar.size"
+                        class="w-48 sm:w-52 h-48 sm:h-52 overflow-visible">
+                        @for (ring of radar.rings; track $index) {
+                        <polygon [attr.points]="ring" fill="none" stroke="rgba(255,255,255,0.18)" stroke-width="1" />
+                        }
+                        @for (spoke of radar.spokes; track $index) {
+                        <line [attr.x1]="radar.cx" [attr.y1]="radar.cy" [attr.x2]="spoke.x2" [attr.y2]="spoke.y2"
+                          stroke="rgba(255,255,255,0.20)" stroke-width="1" stroke-dasharray="2,2" />
+                        }
+                        <polygon [attr.points]="radar.polygonPoints" fill="rgba(254, 151, 10, 0.42)" stroke="#FE970A"
+                          stroke-width="2.5" class="drop-shadow-[0_0_8px_rgba(254,151,10,0.6)]" />
+                        @for (pt of radar.points; track pt.label) {
+                        @if (pt.value > 0) {
+                        <circle [attr.cx]="pt.x" [attr.cy]="pt.y" r="3.5" fill="#FE970A" stroke="#FFFFFF"
+                          stroke-width="1.5" />
+                        }
+                        <text [attr.x]="pt.labelX" [attr.y]="pt.labelY" [attr.text-anchor]="pt.anchor"
+                          class="text-[10px] font-black uppercase tracking-tight"
+                          [attr.fill]="pt.value > 0 ? '#FE970A' : '#D6D3D1'">
+                          {{ pt.label }}
+                        </text>
+                        }
+                      </svg>
+                    </div>
                     }
                   </div>
                   }
-                </div>
-                }
 
-                <!-- ========================================================== -->
-                <!-- BRANDING FOOTER EN CADA PLANTILLA (AWAKIN WORKOUT + KIN)  -->
-                <!-- ========================================================== -->
-                <div class="pt-2 mt-2 border-t border-white/15 flex items-center justify-between text-left">
-                  <div class="flex items-center gap-1.5">
-                    <img src="/icons/awakin-workout-logo.png" alt="Awakin Workout" class="w-4 h-4 object-contain" />
-                    @if (currentAthlete()?.kin?.team_logo_url; as kinLogo) {
-                    <span class="text-[9px] text-stone-400 font-bold">×</span>
-                    <img [src]="kinLogo" alt="Kin logo" class="w-3.5 h-3.5 object-contain rounded-full" />
+                  <!-- ========================================================== -->
+                  <!-- VARIANTE 3: LISTA DE EJERCICIOS Y SERIES                   -->
+                  <!-- ========================================================== -->
+                  @else if (selectedTemplate() === 'exercises') {
+                  <div class="space-y-2 text-white">
+                    <div class="text-center border-b border-white/15 pb-1.5">
+                      <h4 class="text-xs font-black uppercase tracking-tight break-words text-wrap leading-snug">{{
+                        routineTitle() }}</h4>
+                      <div class="flex items-center justify-center gap-3 text-[10px] font-bold text-stone-200 mt-1">
+                        <span class="items-center flex"><i class="pi pi-clock pr-1"></i> {{ formattedDuration()
+                          }}</span>
+                        <span class="items-center flex"><i class="pi pi-gauge pr-1"></i> {{ formattedVolume() }}</span>
+                        <span class="items-center flex"><i class="pi pi-sync pr-1"></i> {{ totalSets() }} series</span>
+                      </div>
+                    </div>
+
+                    <div class="space-y-1.5 py-1 text-left">
+                      @for (ex of formattedExercises(); track ex.name) {
+                      <div class="flex items-center justify-between text-[11px] gap-2">
+                        <div class="truncate text-stone-100">
+                          <span class="text-awakin-sun font-black mr-1">{{ ex.setsCount }}x</span>
+                          <span>{{ ex.name }}</span>
+                        </div>
+                        <span class="text-[9px] font-bold text-stone-300 capitalize shrink-0">{{ ex.targetMuscle ||
+                          'General' }}</span>
+                      </div>
+                      }
+                    </div>
+                  </div>
+                  }
+
+                  <!-- ========================================================== -->
+                  <!-- VARIANTE 4: GRID 2x2 DE MÉTRICAS                           -->
+                  <!-- ========================================================== -->
+                  @else if (selectedTemplate() === 'grid2x2') {
+                  <div class="space-y-2 text-center text-white">
+                    <h4 class="text-xs font-black uppercase tracking-tight break-words text-wrap leading-snug">{{
+                      routineTitle() }}</h4>
+                    <div class="grid grid-cols-2 gap-2 pt-1">
+                      <div class="p-2.5 rounded-xl bg-black/40 backdrop-blur-xs border border-white/15 text-left">
+                        <div class="text-[9px] font-bold text-stone-300 uppercase">Duración</div>
+                        <div class="text-base font-black text-white mt-0.5">{{ formattedDuration() }}</div>
+                      </div>
+                      <div class="p-2.5 rounded-xl bg-black/40 backdrop-blur-xs border border-white/15 text-left">
+                        <div class="text-[9px] font-bold text-stone-300 uppercase">Volumen</div>
+                        <div class="text-base font-black text-emerald-400 mt-0.5 truncate">{{ formattedVolume() }}</div>
+                      </div>
+                      <div class="p-2.5 rounded-xl bg-black/40 backdrop-blur-xs border border-white/15 text-left">
+                        <div class="text-[9px] font-bold text-stone-300 uppercase">Ejercicios</div>
+                        <div class="text-base font-black text-white mt-0.5">{{ totalExercises() }}</div>
+                      </div>
+                      <div class="p-2.5 rounded-xl bg-black/40 backdrop-blur-xs border border-white/15 text-left">
+                        <div class="text-[9px] font-bold text-stone-300 uppercase">Series</div>
+                        <div class="text-base font-black text-awakin-sun mt-0.5">{{ totalSets() }}</div>
+                      </div>
+                    </div>
+                  </div>
+                  }
+
+                  <!-- ========================================================== -->
+                  <!-- VARIANTE 5: MINIMAL STATS                                  -->
+                  <!-- ========================================================== -->
+                  @else if (selectedTemplate() === 'minimal') {
+                  <div class="py-3 text-center space-y-3 text-white">
+                    <div>
+                      <div class="text-lg font-black text-white tracking-tight">{{ formattedDuration() }}</div>
+                      <div class="text-[9px] font-bold text-stone-300 uppercase tracking-wider">Duración</div>
+                    </div>
+                    <div>
+                      <div class="text-xl font-black text-emerald-400 tracking-tight">{{ formattedVolume() }}</div>
+                      <div class="text-[9px] font-bold text-stone-300 uppercase tracking-wider">Volumen Total</div>
+                    </div>
+                    <div>
+                      <div class="text-lg font-black text-awakin-sun tracking-tight">{{ totalSets() }} Series</div>
+                      <div class="text-[9px] font-bold text-stone-300 uppercase tracking-wider">Carga Completada</div>
+                    </div>
+                  </div>
+                  }
+
+                  <!-- ========================================================== -->
+                  <!-- VARIANTE 6: AWAKIN RITUAL CULT                             -->
+                  <!-- ========================================================== -->
+                  @else if (selectedTemplate() === 'ritual') {
+                  <div class="space-y-2.5 text-center text-white">
+                    <div class="text-[10px] font-black uppercase tracking-widest text-awakin-sun">
+                      NO ES SUERTE. ES DISCIPLINA.
+                    </div>
+                    <h4 class="text-xs font-black uppercase italic tracking-tight break-words text-wrap leading-snug">{{
+                      routineTitle() }}</h4>
+
+                    <div class="grid grid-cols-3 gap-1 py-1.5 border-y border-white/15">
+                      <div>
+                        <div class="text-[8px] font-bold text-stone-300 uppercase">Volumen</div>
+                        <div class="text-xs font-black text-emerald-400">{{ formattedVolume() }}</div>
+                      </div>
+                      <div class="border-x border-white/15">
+                        <div class="text-[8px] font-bold text-stone-300 uppercase">Series</div>
+                        <div class="text-xs font-black text-awakin-sun">{{ totalSets() }}</div>
+                      </div>
+                      <div>
+                        <div class="text-[8px] font-bold text-stone-300 uppercase">Tiempo</div>
+                        <div class="text-xs font-black text-white">{{ formattedDuration() }}</div>
+                      </div>
+                    </div>
+
+                    @if (muscleBreakdown().length > 0) {
+                    <div class="flex flex-wrap items-center justify-center gap-1">
+                      @for (m of muscleBreakdown().slice(0, 4); track m.muscle) {
+                      <span
+                        class="text-[9px] font-black uppercase px-2 py-0.5 rounded-full bg-black/40 text-stone-200 border border-white/15">
+                        {{ m.muscle }} • {{ m.sets }}S
+                      </span>
+                      }
+                    </div>
                     }
                   </div>
-                  <div class="text-[10px] font-bold text-stone-300 tracking-tight">
-                    {{ athleteHandle() }}
-                  </div>
-                </div>
+                  }
 
+                  <!-- ========================================================== -->
+                  <!-- BRANDING FOOTER EN CADA PLANTILLA (AWAKIN WORKOUT + KIN)  -->
+                  <!-- ========================================================== -->
+                  <div class="pt-2 mt-2 border-t border-white/15 flex items-center justify-between text-left">
+                    <div class="flex items-center gap-1.5">
+                      <img src="/icons/awakin-workout-logo.png" alt="Awakin Workout" class="w-4 h-4 object-contain" />
+                      @if (currentAthlete()?.kin?.team_logo_url; as kinLogo) {
+                      <span class="text-[9px] text-stone-400 font-bold">×</span>
+                      <img [src]="kinLogo" alt="Kin logo" class="w-3.5 h-3.5 object-contain rounded-full" />
+                      }
+                    </div>
+                    <div class="text-[10px] font-bold text-stone-300 tracking-tight">
+                      {{ athleteHandle() }}
+                    </div>
+                  </div>
+
+                </div>
               </div>
             </div>
-          </div>
 
+          </div>
         </div>
       </div>
 
@@ -353,8 +365,8 @@
           </button>
 
           <!-- Slider de Escala (30% a 100%) -->
-          <input type="range" min="0.30" max="1.00" step="0.05"
-            [ngModel]="overlayScale()" (ngModelChange)="setZoom($event)"
+          <input type="range" min="0.30" max="1.00" step="0.05" [ngModel]="overlayScale()"
+            (ngModelChange)="setZoom($event)"
             class="flex-1 h-2 bg-stone-200 rounded-lg appearance-none cursor-pointer accent-awakin-sun" />
 
           <!-- Zoom In -->
@@ -412,7 +424,8 @@
         </div>
 
         <div class="grid grid-cols-3 gap-2">
-          <input #customPhotoFileInput type="file" accept="image/*" (change)="onCustomPhotoSelected($event)" class="hidden" />
+          <input #customPhotoFileInput type="file" accept="image/*" (change)="onCustomPhotoSelected($event)"
+            class="hidden" />
 
           <!-- Subir Foto -->
           <button type="button" (click)="onSelectPhotoClick()"
@@ -488,9 +501,9 @@
     </div>
 
     <!-- ========================================================================= -->
-    <!-- BARRA DE ACCIONES INFERIOR (Awakin Light Base)                            -->
+    <!-- BARRA DE ACCIONES INFERIOR (Awakin Light Base - Fijo abajo)            -->
     <!-- ========================================================================= -->
-    <div class="p-3.5 sm:p-4 border-t border-stone-100 bg-white flex items-center gap-2.5 shrink-0">
+    <div class="p-3.5 sm:p-4 border-t border-stone-100 bg-white flex items-center gap-2.5 shrink-0 z-10">
       <button type="button" (click)="exportStory('download')" [disabled]="isExporting()"
         class="px-4 py-3 rounded-xl bg-stone-900 hover:bg-stone-800 text-white font-black text-xs uppercase tracking-wider transition-all active:scale-95 cursor-pointer flex items-center justify-center gap-2 disabled:opacity-50 shadow-sm">
         @if (isExporting() && exportAction() === 'download') {
