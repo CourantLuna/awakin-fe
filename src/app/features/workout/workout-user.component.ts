@@ -93,9 +93,6 @@ export class WorkoutUserComponent implements OnInit {
   isIosWidgetModalOpen = signal<boolean>(false);
   iosWidgetScriptCode = signal<string>('');
   isCopiedWidgetScript = signal<boolean>(false);
-  widgetPwaBaseUrl = signal<string>(
-    typeof window !== 'undefined' ? window.location.origin : 'https://awakin.app'
-  );
   private pendingWidgetDeepLink = signal<{ action: string; routineId?: string | null } | null>(null);
 
   readonly weekDayLabels = WEEK_DAY_LABELS;
@@ -563,7 +560,6 @@ export class WorkoutUserComponent implements OnInit {
   async regenerateIosWidgetScript(): Promise<void> {
     const code = await this.iosWidgetSync.generateScriptableWidgetScript({
       athleteId: this.currentAthleteId(),
-      pwaBaseUrl: this.widgetPwaBaseUrl(),
       plan: this.activePlan(),
       availableRoutines: this.availableRoutines(),
       workoutLogs: this.workoutLogs(),
