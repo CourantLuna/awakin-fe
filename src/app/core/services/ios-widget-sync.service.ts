@@ -58,8 +58,8 @@ export const AWAKIN_APP_GROUP_ID = 'group.com.awakin.app';
 export class IosWidgetSyncService {
   /**
    * Sincroniza los datos del entrenamiento de hoy con:
-   * 1. localStorage (para la PWA y el generador de Widget iOS sin App Store)
-   * 2. El plugin nativo de Capacitor (AwakinWidgetBridge) si corre en contenedor nativo
+   * 1. localStorage (para inspección local)
+   * 2. El plugin nativo de Capacitor (AwakinWidgetBridge) si corre como app nativa iOS
    */
   async syncTodayWorkout(params: {
     plan: WorkoutPlan | null;
@@ -72,7 +72,6 @@ export class IosWidgetSyncService {
     const jsDay = now.getDay();
     const dayOfWeek = jsDay === 0 ? 7 : jsDay;
 
-    // Buscar si hoy ya hay un entrenamiento registrado
     const todayLog =
       params.workoutLogs.find((log) => {
         const d = new Date(log.workout_date);
@@ -80,7 +79,6 @@ export class IosWidgetSyncService {
         return logYmd === dateYMD;
       }) || null;
 
-    // Buscar la rutina asignada al día de hoy en el plan semanal activo
     let todayRoutine: WorkoutRoutine | null = null;
     if (params.plan?.plan_routines) {
       const link = params.plan.plan_routines.find((pr) => pr.day_of_week === dayOfWeek);
@@ -100,14 +98,12 @@ export class IosWidgetSyncService {
       translateMuscleName: params.translateMuscleName
     });
 
-    // 1. Guardar en localStorage
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
     } catch {
       // Ignorar si storage está restringido
     }
 
-    // 2. Enviar al contenedor nativo iOS (Capacitor Plugin AwakinWidgetBridge) si existe
     try {
       const cap = (window as any).Capacitor;
       if (cap?.Plugins?.AwakinWidgetBridge?.syncTodayWorkout) {
@@ -134,92 +130,45 @@ export class IosWidgetSyncService {
   }
 
   /**
-   * Construye el mapa semanal (días 1..7) con el payload pre-calculado de cada día
-   * para que el Widget de Scriptable en iOS cambie automáticamente de rutina cada día
-   * de la semana incluso sin conexión a internet.
-   */
-  buildWeeklyPayloadsMap(params: {
-    plan: WorkoutPlan | null;
-    availableRoutines: WorkoutRoutine[];
-    workoutLogs: WorkoutLog[];
-    translateMuscleName: (raw: string | null | undefined) => string;
-  }): Record<number, AwakinTodayWorkoutWidgetPayload> {
-    const now = new Date();
-    const dateYMD = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
-    const jsDay = now.getDay();
-    const todayDow = jsDay === 0 ? 7 : jsDay;
-
-    const todayLog =
-      params.workoutLogs.find((log) => {
-        const d = new Date(log.workout_date);
-        const logYmd = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-        return logYmd === dateYMD;
-      }) || null;
-
-    const weeklyMap: Record<number, AwakinTodayWorkoutWidgetPayload> = {};
-    for (let day = 1; day <= 7; day++) {
-      let routineForDay: WorkoutRoutine | null = null;
-      if (params.plan?.plan_routines) {
-        const link = params.plan.plan_routines.find((pr) => pr.day_of_week === day);
-        if (link) {
-          routineForDay =
-            link.routine ||
-            params.availableRoutines.find((r) => r.id === link.routine_id) ||
-            null;
-        }
-      }
-      weeklyMap[day] = this.buildPayload({
-        dateYMD,
-        dayOfWeek: day,
-        routine: routineForDay,
-        todayLog: day === todayDow ? todayLog : null,
-        translateMuscleName: params.translateMuscleName
-      });
-    }
-    return weeklyMap;
-  }
-
-  /**
-   * OPCIÓN 1 (PWA + Scriptable en iOS sin App Store ni Mac):
-   * Genera el script completo de iOS Scriptable (.js) que dibuja en la pantalla de inicio
-   * del iPhone exactamente el mismo card de entrenamiento de hoy y abre la PWA directo
-   * en /workout?action=start-today (para el botón INICIAR SESIÓN) o /workout?action=detail-today.
+   * OPCIÓN 1 — 100% DINÁMICO EN TIEMPO REAL CONTRA SUPABASE:
+   * El script NO guarda rutinas estáticas. Cada vez que iOS refresca el widget
+   * (o cuando el atleta cambia de rutina, edita ejercicios o asigna otro plan en AWAKIN),
+   * el widget consulta directamente en vivo las tablas de Supabase:
+   * - workout_plan_athletes -> workout_plans -> workout_plan_routines -> workout_routines
+   * - workout_routine_exercises -> workout_routine_sets
+   * - workout_logs (para saber si ya completó el entreno de hoy)
    */
   async generateScriptableWidgetScript(params: {
     athleteId: string;
     pwaBaseUrl?: string;
-    plan: WorkoutPlan | null;
-    availableRoutines: WorkoutRoutine[];
-    workoutLogs: WorkoutLog[];
-    translateMuscleName: (raw: string | null | undefined) => string;
+    plan?: WorkoutPlan | null;
+    availableRoutines?: WorkoutRoutine[];
+    workoutLogs?: WorkoutLog[];
+    translateMuscleName?: (raw: string | null | undefined) => string;
   }): Promise<string> {
     const baseUrl = (
       params.pwaBaseUrl ||
       (typeof window !== 'undefined' ? window.location.origin : 'https://awakin.app')
     ).replace(/\/+$/, '');
 
-    const weeklyMap = this.buildWeeklyPayloadsMap({
-      plan: params.plan,
-      availableRoutines: params.availableRoutines,
-      workoutLogs: params.workoutLogs,
-      translateMuscleName: params.translateMuscleName
-    });
-
     let accessToken = '';
+    let refreshToken = '';
     try {
       const { data } = await supabaseClient.auth.getSession();
       accessToken = data?.session?.access_token || '';
+      refreshToken = data?.session?.refresh_token || '';
     } catch {
       accessToken = '';
+      refreshToken = '';
     }
 
-    const configObj = {
+    const connectionConfig = {
       pwaBaseUrl: baseUrl,
       athleteId: params.athleteId,
       supabaseUrl: environment.SUPABASE_URL,
       supabaseKey: environment.SUPABASE_KEY,
-      accessToken,
-      weeklySchedule: weeklyMap
+      initialAccessToken: accessToken,
+      initialRefreshToken: refreshToken
     };
 
     return `// Variables used by Scriptable.
@@ -228,26 +177,278 @@ export class IosWidgetSyncService {
 
 /**
  * ============================================================================
- * AWAKIN — WIDGET DE ENTRENAMIENTO DEL DÍA PARA IPHONE (iOS Scriptable)
+ * AWAKIN — WIDGET DINÁMICO EN TIEMPO REAL PARA IPHONE (iOS Scriptable)
  * ============================================================================
- * - Toca "▶ INICIAR SESIÓN" para abrir AWAKIN e iniciar la sesión activa de hoy.
- * - Toca el resto del card para abrir el modal con el detalle de la rutina.
+ * 100% DINÁMICO: Consulta directamente tu Supabase en vivo cada vez que se
+ * actualiza. Si cambias tu rutina del día, editas ejercicios o completas tu
+ * entrenamiento en AWAKIN, el widget se actualiza solo sin tocar este script.
  */
 
-const AWAKIN_CONFIG = ${JSON.stringify(configObj, null, 2)};
+const AWAKIN_CONN = ${JSON.stringify(connectionConfig, null, 2)};
+
+const MUSCLE_TRANSLATIONS = {
+  "chest": "PECHO", "pectorals": "PECHO", "pectoral": "PECHO", "upper chest": "PECHO SUP.",
+  "mid-lower-pectoralis": "PECHO", "upper-pectoralis": "PECHO SUP.",
+  "delts": "HOMBROS", "deltoids": "HOMBROS", "shoulders": "HOMBROS",
+  "front-shoulders": "HOMBRO ANT.", "anterior-deltoid": "HOMBRO ANT.",
+  "lateral-deltoid": "HOMBRO LAT.", "posterior-deltoid": "HOMBRO POST.",
+  "back": "ESPALDA", "lats": "DORSALES", "latissimus dorsi": "DORSALES",
+  "upper back": "ESPALDA ALTA", "lower back": "ZONA LUMBAR", "traps": "TRAPECIOS",
+  "trapezius": "TRAPECIOS", "rhomboids": "ROMBOIDES",
+  "biceps": "BÍCEPS", "long-head-bicep": "BÍCEPS", "short-head-bicep": "BÍCEPS",
+  "triceps": "TRÍCEPS", "medial-head-triceps": "TRÍCEPS", "long-head-triceps": "TRÍCEPS",
+  "lateral-head-triceps": "TRÍCEPS", "forearms": "ANTEBRAZOS", "forearm": "ANTEBRAZOS",
+  "quads": "CUÁDRICEPS", "quadriceps": "CUÁDRICEPS", "outer-quadricep": "CUÁDRICEPS",
+  "inner-quadricep": "CUÁDRICEPS", "rectus-femoris": "CUÁDRICEPS",
+  "hamstrings": "ISQUIOTIBIALES", "medial-hamstrings": "ISQUIOTIBIALES", "lateral-hamstrings": "ISQUIOTIBIALES",
+  "glutes": "GLÚTEOS", "gluteus": "GLÚTEOS", "gluteus-maximus": "GLÚTEOS", "gluteus-medius": "GLÚTEOS",
+  "calves": "PANTORRILLAS", "gastrocnemius": "PANTORRILLAS", "soleus": "PANTORRILLAS",
+  "adductors": "ADUCTORES", "abductors": "ABDUCTORES",
+  "abs": "ABDOMEN", "abdominals": "ABDOMEN", "core": "CORE", "obliques": "OBLICUOS"
+};
+
+function translateMuscle(raw) {
+  if (!raw) return "GENERAL";
+  const clean = String(raw).trim().toLowerCase().replace(/_/g, "-");
+  if (MUSCLE_TRANSLATIONS[clean]) return MUSCLE_TRANSLATIONS[clean];
+  const rawLower = String(raw).trim().toLowerCase();
+  if (MUSCLE_TRANSLATIONS[rawLower]) return MUSCLE_TRANSLATIONS[rawLower];
+  return String(raw).toUpperCase();
+}
+
+function mapMuscleToRegion(raw) {
+  const m = String(raw || "").toLowerCase();
+  if (m.includes("pec") || m.includes("chest") || m.includes("pecho")) return "chest";
+  if (m.includes("delt") || m.includes("shoulder") || m.includes("hombro")) return "shoulders";
+  if (m.includes("lat") || m.includes("dorsal")) return "lats";
+  if (m.includes("trap") || m.includes("rhomb") || m.includes("back") || m.includes("espalda")) return "upper_back";
+  if (m.includes("bicep") || m.includes("bíceps")) return "biceps";
+  if (m.includes("tricep") || m.includes("tríceps")) return "triceps";
+  if (m.includes("forearm") || m.includes("antebrazo")) return "forearms";
+  if (m.includes("ab") || m.includes("core") || m.includes("obliq")) return "abs";
+  if (m.includes("quad") || m.includes("cuádriceps") || m.includes("femoris")) return "quads";
+  if (m.includes("glute") || m.includes("glúteo")) return "glutes";
+  if (m.includes("ham") || m.includes("isquio")) return "hamstrings";
+  if (m.includes("calv") || m.includes("gastro") || m.includes("soleus") || m.includes("pantorrilla") || m.includes("gemelo")) return "calves";
+  return null;
+}
+
+async function getValidAuthToken() {
+  const fm = FileManager.local();
+  const authPath = fm.joinPath(fm.documentsDirectory(), "awakin_widget_auth.json");
+  let token = AWAKIN_CONN.initialAccessToken || AWAKIN_CONN.supabaseKey;
+  let refresh = AWAKIN_CONN.initialRefreshToken || "";
+
+  if (fm.fileExists(authPath)) {
+    try {
+      const saved = JSON.parse(fm.readString(authPath));
+      if (saved.accessToken) token = saved.accessToken;
+      if (saved.refreshToken) refresh = saved.refreshToken;
+    } catch (e) {}
+  }
+
+  // Si tenemos refreshToken, intentar renovar sesión silenciosamente si fuera necesario
+  if (refresh) {
+    try {
+      const req = new Request(AWAKIN_CONN.supabaseUrl + "/auth/v1/token?grant_type=refresh_token");
+      req.method = "POST";
+      req.timeoutInterval = 4;
+      req.headers = {
+        "apikey": AWAKIN_CONN.supabaseKey,
+        "Content-Type": "application/json"
+      };
+      req.body = JSON.stringify({ refresh_token: refresh });
+      const res = await req.loadJSON();
+      if (res && res.access_token) {
+        token = res.access_token;
+        refresh = res.refresh_token || refresh;
+        fm.writeString(authPath, JSON.stringify({ accessToken: token, refreshToken: refresh }));
+      }
+    } catch (e) {}
+  }
+
+  return token || AWAKIN_CONN.supabaseKey;
+}
+
+async function supabaseGet(endpoint, bearerToken) {
+  const req = new Request(AWAKIN_CONN.supabaseUrl + "/rest/v1/" + endpoint);
+  req.timeoutInterval = 6;
+  req.headers = {
+    "apikey": AWAKIN_CONN.supabaseKey,
+    "Authorization": "Bearer " + (bearerToken || AWAKIN_CONN.supabaseKey)
+  };
+  return await req.loadJSON();
+}
+
+async function fetchLiveTodayWorkoutFromSupabase() {
+  const fm = FileManager.local();
+  const cachePath = fm.joinPath(fm.documentsDirectory(), "awakin_widget_live_cache.json");
+
+  const now = new Date();
+  const ymd = now.getFullYear() + "-" + String(now.getMonth() + 1).padStart(2, "0") + "-" + String(now.getDate()).padStart(2, "0");
+  const jsDay = now.getDay();
+  const dow = jsDay === 0 ? 7 : jsDay;
+
+  try {
+    const bearer = await getValidAuthToken();
+    const athleteId = encodeURIComponent(AWAKIN_CONN.athleteId);
+
+    // 1. Consultar planes activos asignados al atleta en vivo
+    const planLinks = await supabaseGet(
+      "workout_plan_athletes?select=plan_id&athlete_id=eq." + athleteId + "&is_active=eq.true",
+      bearer
+    );
+
+    const planIds = Array.isArray(planLinks)
+      ? planLinks.map(l => l.plan_id).filter(Boolean)
+      : [];
+
+    let liveRoutine = null;
+
+    if (planIds.length > 0) {
+      const inList = planIds.map(id => '"' + id + '"').join(",");
+      const selectQuery =
+        "id,name,workout_plan_routines(" +
+          "day_of_week,sort_order,routine_id," +
+          "workout_routines(" +
+            "id,name,description,banner_url,estimated_minutes,total_sets,focus_muscles," +
+            "workout_routine_exercises(" +
+              "id,exercise_api_id,exercise_name,target_muscle,secondary_muscles,sort_order," +
+              "workout_routine_sets(id,set_number)" +
+            ")" +
+          ")" +
+        ")";
+
+      const plansData = await supabaseGet(
+        "workout_plans?select=" + encodeURIComponent(selectQuery) +
+        "&id=in.(" + encodeURIComponent(inList) + ")&is_active=eq.true&order=created_at.desc&limit=1",
+        bearer
+      );
+
+      if (Array.isArray(plansData) && plansData.length > 0) {
+        const links = plansData[0].workout_plan_routines || [];
+        const todayLink = links.find(l => Number(l.day_of_week) === dow);
+        if (todayLink && todayLink.workout_routines) {
+          liveRoutine = todayLink.workout_routines;
+        }
+      }
+    }
+
+    // 2. Consultar si ya existe un workout_log registrado hoy
+    const startOfDayIso = ymd + "T00:00:00.000Z";
+    const logs = await supabaseGet(
+      "workout_logs?select=id,duration_minutes,total_volume,volume_unit,workout_date" +
+      "&athlete_id=eq." + athleteId +
+      "&workout_date=gte." + encodeURIComponent(startOfDayIso) +
+      "&limit=1",
+      bearer
+    );
+    const isCompletedToday = Array.isArray(logs) && logs.length > 0;
+
+    // 3. Construir payload dinámico desde la rutina viva
+    const payload = buildDynamicPayload(liveRoutine, isCompletedToday);
+    fm.writeString(cachePath, JSON.stringify(payload));
+    return payload;
+  } catch (err) {
+    // Si no hay conexión en ese segundo, usar la última respuesta guardada en caché
+    if (fm.fileExists(cachePath)) {
+      try {
+        return JSON.parse(fm.readString(cachePath));
+      } catch (e) {}
+    }
+    return buildDynamicPayload(null, false);
+  }
+}
+
+function buildDynamicPayload(rawRoutine, isCompletedToday) {
+  const baseUrl = AWAKIN_CONN.pwaBaseUrl;
+
+  if (!rawRoutine) {
+    return {
+      hasWorkoutToday: false,
+      isCompletedToday: isCompletedToday,
+      routineId: null,
+      badgeText: "DÍA DE DESCANSO",
+      name: "RECUPERACIÓN ACTIVA O ENTRENO LIBRE",
+      description: "Hoy no tienes rutina asignada en tu plan semanal. Descansa o inicia un entreno libre.",
+      bannerUrl: null,
+      estimatedMinutes: 45,
+      exerciseCount: 0,
+      totalSets: 0,
+      exercises: [],
+      remainingExercisesCount: 0,
+      muscles: ["GENERAL"],
+      muscleHighlights: [],
+      pwaStartUrl: baseUrl + "/workout?action=start-today",
+      pwaDetailUrl: baseUrl + "/workout?action=detail-today"
+    };
+  }
+
+  const rawExercises = Array.isArray(rawRoutine.workout_routine_exercises)
+    ? rawRoutine.workout_routine_exercises.slice().sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0))
+    : [];
+
+  let computedTotalSets = 0;
+  const regionSets = {};
+
+  for (const ex of rawExercises) {
+    const setsCount = Array.isArray(ex.workout_routine_sets) ? ex.workout_routine_sets.length : 3;
+    computedTotalSets += setsCount;
+    const reg = mapMuscleToRegion(ex.target_muscle);
+    if (reg) {
+      regionSets[reg] = (regionSets[reg] || 0) + setsCount;
+    }
+  }
+
+  const totalSets = rawRoutine.total_sets || computedTotalSets || 0;
+  const estimatedMinutes = rawRoutine.estimated_minutes || Math.max(25, Math.round(totalSets * 2.5));
+
+  const topExercises = rawExercises.slice(0, 4).map((ex, i) => ({
+    order: i + 1,
+    name: ex.exercise_name || ("Ejercicio #" + (i + 1)),
+    sets: Array.isArray(ex.workout_routine_sets) ? ex.workout_routine_sets.length : 3
+  }));
+
+  const focusList = Array.isArray(rawRoutine.focus_muscles) && rawRoutine.focus_muscles.length > 0
+    ? rawRoutine.focus_muscles
+    : rawExercises.map(e => e.target_muscle).filter(Boolean);
+
+  const muscles = Array.from(new Set(focusList.map(m => translateMuscle(m)))).slice(0, 4);
+  const routineQuery = "&routineId=" + encodeURIComponent(rawRoutine.id);
+
+  return {
+    hasWorkoutToday: true,
+    isCompletedToday: isCompletedToday,
+    routineId: rawRoutine.id,
+    badgeText: "ASIGNADO HOY",
+    name: String(rawRoutine.name || "RUTINA DE HOY").toUpperCase(),
+    description: rawRoutine.description || "Entrenamiento enfocado en fuerza e hipertrofia.",
+    bannerUrl: rawRoutine.banner_url || null,
+    estimatedMinutes: estimatedMinutes,
+    exerciseCount: rawExercises.length,
+    totalSets: totalSets,
+    exercises: topExercises,
+    remainingExercisesCount: Math.max(0, rawExercises.length - 4),
+    muscles: muscles.length > 0 ? muscles : ["GENERAL"],
+    muscleHighlights: [],
+    pwaStartUrl: baseUrl + "/workout?action=start-today" + routineQuery,
+    pwaDetailUrl: baseUrl + "/workout?action=detail-today" + routineQuery
+  };
+}
 
 async function main() {
-  const payload = await resolveTodayWorkoutPayload();
+  const payload = await fetchLiveTodayWorkoutFromSupabase();
   const widget = await createAwakinWorkoutWidget(payload);
+  // Indicar a iOS que refresque el widget frecuentemente para reflejar cambios de rutina
+  widget.refreshAfterDate = new Date(Date.now() + 5 * 60 * 1000);
 
   if (config.runsInWidget) {
     Script.setWidget(widget);
   } else {
-    // Si el usuario abre el script dentro de la app Scriptable, muestra vista previa y opción de iniciar
     await widget.presentLarge();
     const alert = new Alert();
     alert.title = payload.name;
-    alert.message = "¿Qué deseas hacer en AWAKIN?";
+    alert.message = "¿Qué deseas abrir en AWAKIN?";
     alert.addAction("▶ Iniciar Sesión de Hoy");
     alert.addAction("Ver Detalle de la Rutina");
     alert.addCancelAction("Cerrar");
@@ -261,53 +462,6 @@ async function main() {
   Script.complete();
 }
 
-async function resolveTodayWorkoutPayload() {
-  const now = new Date();
-  const ymd = now.getFullYear() + "-" + String(now.getMonth() + 1).padStart(2, "0") + "-" + String(now.getDate()).padStart(2, "0");
-  const jsDay = now.getDay();
-  const dow = jsDay === 0 ? 7 : jsDay;
-
-  // 1. Tomar la rutina del día desde el plan semanal sincronizado
-  const basePayload = (AWAKIN_CONFIG.weeklySchedule && AWAKIN_CONFIG.weeklySchedule[dow])
-    ? JSON.parse(JSON.stringify(AWAKIN_CONFIG.weeklySchedule[dow]))
-    : AWAKIN_CONFIG.weeklySchedule[1];
-
-  const routineQuery = basePayload && basePayload.routineId
-    ? "&routineId=" + encodeURIComponent(basePayload.routineId)
-    : "";
-
-  basePayload.pwaStartUrl = AWAKIN_CONFIG.pwaBaseUrl + "/workout?action=start-today" + routineQuery;
-  basePayload.pwaDetailUrl = AWAKIN_CONFIG.pwaBaseUrl + "/workout?action=detail-today" + routineQuery;
-
-  // 2. Consultar en vivo a Supabase si hoy ya se completó el entrenamiento
-  if (AWAKIN_CONFIG.athleteId && AWAKIN_CONFIG.supabaseUrl && AWAKIN_CONFIG.supabaseKey) {
-    try {
-      const startOfDayIso = ymd + "T00:00:00.000Z";
-      const url = AWAKIN_CONFIG.supabaseUrl +
-        "/rest/v1/workout_logs?select=id,duration_minutes,total_volume,volume_unit,workout_date" +
-        "&athlete_id=eq." + encodeURIComponent(AWAKIN_CONFIG.athleteId) +
-        "&workout_date=gte." + encodeURIComponent(startOfDayIso) +
-        "&limit=1";
-      const req = new Request(url);
-      req.timeoutInterval = 5;
-      const bearer = AWAKIN_CONFIG.accessToken || AWAKIN_CONFIG.supabaseKey;
-      req.headers = {
-        "apikey": AWAKIN_CONFIG.supabaseKey,
-        "Authorization": "Bearer " + bearer
-      };
-      const logs = await req.loadJSON();
-      if (Array.isArray(logs) && logs.length > 0) {
-        basePayload.isCompletedToday = true;
-        basePayload.completedDurationMin = logs[0].duration_minutes || null;
-      }
-    } catch (e) {
-      // Fallback silencioso a caché local si no hay red
-    }
-  }
-
-  return basePayload;
-}
-
 async function loadBannerWithDarkOverlay(bannerUrl) {
   const width = 720;
   const height = 760;
@@ -315,7 +469,6 @@ async function loadBannerWithDarkOverlay(bannerUrl) {
   ctx.size = new Size(width, height);
   ctx.opaque = true;
 
-  // Fondo base oscuro #0C0A09
   ctx.setFillColor(new Color("#0C0A09"));
   ctx.fillRect(new Rect(0, 0, width, height));
 
@@ -327,73 +480,11 @@ async function loadBannerWithDarkOverlay(bannerUrl) {
       if (img) {
         ctx.drawImageInRect(img, new Rect(0, 0, width, height));
       }
-    } catch (e) {
-      // Si falla la descarga, usar fondo oscuro Awakin
-    }
+    } catch (e) {}
   }
 
-  // Capa de oscurecimiento para contraste perfecto del texto igual al Hero Card
   ctx.setFillColor(new Color("#0C0A09", bannerUrl ? 0.76 : 0.95));
   ctx.fillRect(new Rect(0, 0, width, height));
-
-  return ctx.getImage();
-}
-
-function drawMiniBodyMapImage(highlights) {
-  const w = 150;
-  const h = 135;
-  const ctx = new DrawContext();
-  ctx.size = new Size(w, h);
-  ctx.opaque = false;
-
-  const colorMap = {};
-  if (Array.isArray(highlights)) {
-    for (const item of highlights) {
-      colorMap[item.region] = item.colorHex;
-    }
-  }
-
-  function getColor(region) {
-    return colorMap[region] ? new Color(colorMap[region]) : new Color("#57534E", 0.55);
-  }
-
-  function fillRoundRect(x, y, rw, rh, radius, color) {
-    const path = new Path();
-    path.addRoundedRect(new Rect(x, y, rw, rh), radius, radius);
-    ctx.addPath(path);
-    ctx.setFillColor(color);
-    ctx.fillPath();
-  }
-
-  const headColor = new Color("#78716C", 0.75);
-
-  // --- SILUETA FRONTAL (Izquierda) ---
-  const fx = 14;
-  fillRoundRect(fx + 16, 4, 16, 16, 8, headColor); // Cabeza
-  fillRoundRect(fx + 3, 23, 10, 8, 4, getColor("shoulders")); // Hombro Izq
-  fillRoundRect(fx + 35, 23, 10, 8, 4, getColor("shoulders")); // Hombro Der
-  fillRoundRect(fx + 11, 24, 26, 16, 4, getColor("chest")); // Pecho
-  fillRoundRect(fx + 13, 42, 22, 22, 4, getColor("abs")); // Abdomen
-  fillRoundRect(fx + 2, 33, 8, 26, 4, getColor("biceps")); // Brazo Izq
-  fillRoundRect(fx + 38, 33, 8, 26, 4, getColor("biceps")); // Brazo Der
-  fillRoundRect(fx + 11, 67, 11, 32, 4, getColor("quads")); // Cuádriceps Izq
-  fillRoundRect(fx + 26, 67, 11, 32, 4, getColor("quads")); // Cuádriceps Der
-  fillRoundRect(fx + 12, 102, 9, 24, 3, getColor("calves")); // Pantorrilla Izq
-  fillRoundRect(fx + 27, 102, 9, 24, 3, getColor("calves")); // Pantorrilla Der
-
-  // --- SILUETA POSTERIOR (Derecha) ---
-  const bx = 84;
-  fillRoundRect(bx + 16, 4, 16, 16, 8, headColor); // Cabeza
-  fillRoundRect(bx + 3, 23, 10, 8, 4, getColor("shoulders")); // Deltoide Post Izq
-  fillRoundRect(bx + 35, 23, 10, 8, 4, getColor("shoulders")); // Deltoide Post Der
-  fillRoundRect(bx + 11, 24, 26, 20, 4, getColor("upper_back")); // Espalda / Dorsales
-  fillRoundRect(bx + 11, 46, 26, 18, 5, getColor("glutes")); // Glúteos
-  fillRoundRect(bx + 2, 33, 8, 26, 4, getColor("triceps")); // Tríceps Izq
-  fillRoundRect(bx + 38, 33, 8, 26, 4, getColor("triceps")); // Tríceps Der
-  fillRoundRect(bx + 11, 67, 11, 32, 4, getColor("hamstrings")); // Isquio Izq
-  fillRoundRect(bx + 26, 67, 11, 32, 4, getColor("hamstrings")); // Isquio Der
-  fillRoundRect(bx + 12, 102, 9, 24, 3, getColor("calves")); // Gemelo Izq
-  fillRoundRect(bx + 27, 102, 9, 24, 3, getColor("calves")); // Gemelo Der
 
   return ctx.getImage();
 }
@@ -402,12 +493,11 @@ async function createAwakinWorkoutWidget(p) {
   const widget = new ListWidget();
   widget.backgroundColor = new Color("#0C0A09");
   widget.backgroundImage = await loadBannerWithDarkOverlay(p.bannerUrl);
-  widget.setPadding(14, 15, 14, 15);
+  widget.setPadding(15, 16, 15, 16);
   widget.url = p.pwaDetailUrl;
 
   const isMedium = config.widgetFamily === "medium";
 
-  // 1. FILA SUPERIOR: Badge Naranja + Duración / Ejercicios / Series + Botón ↗
   const topRow = widget.addStack();
   topRow.layoutHorizontally();
   topRow.centerAlignContent();
@@ -440,17 +530,15 @@ async function createAwakinWorkoutWidget(p) {
   arrowTxt.font = Font.boldSystemFont(11);
   arrowTxt.textColor = Color.white();
 
-  widget.addSpacer(7);
+  widget.addSpacer(8);
 
-  // 2. TÍTULO DE LA RUTINA
   const titleTxt = widget.addText((p.name || "ENTRENAMIENTO DE HOY").toUpperCase());
-  titleTxt.font = Font.blackSystemFont(isMedium ? 14 : 16);
+  titleTxt.font = Font.blackSystemFont(isMedium ? 14 : 17);
   titleTxt.textColor = Color.white();
   titleTxt.lineLimit = isMedium ? 2 : 3;
 
-  // 3. DESCRIPCIÓN
   if (!isMedium && p.description) {
-    widget.addSpacer(3);
+    widget.addSpacer(4);
     const descTxt = widget.addText(p.description);
     descTxt.font = Font.mediumSystemFont(10.5);
     descTxt.textColor = new Color("#A8A29E");
@@ -460,101 +548,74 @@ async function createAwakinWorkoutWidget(p) {
   if (!isMedium && p.hasWorkoutToday) {
     widget.addSpacer(8);
 
-    // 4. LISTA DE EJERCICIOS DE LA RUTINA
+    // Músculos a trabajar (Pills limpias sin silueta deformada)
+    const pillsRow = widget.addStack();
+    pillsRow.layoutHorizontally();
+    pillsRow.spacing = 5;
+
+    const musclesList = Array.isArray(p.muscles) ? p.muscles.slice(0, 4) : ["GENERAL"];
+    for (const mName of musclesList) {
+      const pill = pillsRow.addStack();
+      pill.backgroundColor = new Color("#FFFFFF", 0.12);
+      pill.borderColor = new Color("#FFFFFF", 0.22);
+      pill.borderWidth = 1;
+      pill.cornerRadius = 8;
+      pill.setPadding(3, 8, 3, 8);
+      const pillTxt = pill.addText(mName);
+      pillTxt.font = Font.boldSystemFont(8);
+      pillTxt.textColor = new Color("#E7E5E4");
+      pillTxt.lineLimit = 1;
+    }
+
+    widget.addSpacer(10);
+
     const exHeader = widget.addText("EJERCICIOS DE LA RUTINA (" + p.exerciseCount + ")");
     exHeader.font = Font.blackSystemFont(8.5);
     exHeader.textColor = new Color("#FBBF24");
-    widget.addSpacer(4);
+    widget.addSpacer(5);
 
-    const exercises = Array.isArray(p.exercises) ? p.exercises.slice(0, 3) : [];
+    const exercises = Array.isArray(p.exercises) ? p.exercises.slice(0, 4) : [];
     for (const ex of exercises) {
       const exRow = widget.addStack();
       exRow.layoutHorizontally();
       exRow.centerAlignContent();
 
       const numTxt = exRow.addText(ex.order + ". ");
-      numTxt.font = Font.blackSystemFont(10.5);
+      numTxt.font = Font.blackSystemFont(11);
       numTxt.textColor = new Color("#FE970A");
 
       const nameTxt = exRow.addText(ex.name + " ");
-      nameTxt.font = Font.semiboldSystemFont(10.5);
+      nameTxt.font = Font.semiboldSystemFont(11);
       nameTxt.textColor = new Color("#F5F5F4");
       nameTxt.lineLimit = 1;
 
       const setsTxt = exRow.addText("(" + ex.sets + "s)");
-      setsTxt.font = Font.mediumSystemFont(9.5);
+      setsTxt.font = Font.mediumSystemFont(10);
       setsTxt.textColor = new Color("#A8A29E");
 
-      widget.addSpacer(2.5);
+      widget.addSpacer(3.5);
     }
 
     if (p.remainingExercisesCount > 0) {
       const moreTxt = widget.addText("+" + p.remainingExercisesCount + " ejercicios más");
-      moreTxt.font = Font.boldSystemFont(9.5);
+      moreTxt.font = Font.boldSystemFont(10);
       moreTxt.textColor = new Color("#FBBF24", 0.9);
     }
-
-    widget.addSpacer(8);
-
-    // 5. CAJA DE MÚSCULOS A TRABAJAR + MINI BODY MAP
-    const muscleBox = widget.addStack();
-    muscleBox.layoutHorizontally();
-    muscleBox.centerAlignContent();
-    muscleBox.backgroundColor = new Color("#000000", 0.5);
-    muscleBox.borderColor = new Color("#FFFFFF", 0.12);
-    muscleBox.borderWidth = 1;
-    muscleBox.cornerRadius = 14;
-    muscleBox.setPadding(7, 9, 7, 9);
-
-    const bodyMapImg = drawMiniBodyMapImage(p.muscleHighlights || []);
-    const mapImgWidget = muscleBox.addImage(bodyMapImg);
-    mapImgWidget.imageSize = new Size(64, 58);
-    mapImgWidget.resizable = true;
-
-    muscleBox.addSpacer(10);
-
-    const muscleRight = muscleBox.addStack();
-    muscleRight.layoutVertically();
-
-    const mTitle = muscleRight.addText("MÚSCULOS A TRABAJAR");
-    mTitle.font = Font.blackSystemFont(8);
-    mTitle.textColor = new Color("#FBBF24");
-
-    muscleRight.addSpacer(5);
-
-    const pillsRow = muscleRight.addStack();
-    pillsRow.layoutHorizontally();
-    pillsRow.spacing = 4;
-
-    const musclesList = Array.isArray(p.muscles) ? p.muscles.slice(0, 3) : ["GENERAL"];
-    for (const mName of musclesList) {
-      const pill = pillsRow.addStack();
-      pill.backgroundColor = new Color("#FFFFFF", 0.15);
-      pill.cornerRadius = 5;
-      pill.setPadding(3, 6, 3, 6);
-      const pillTxt = pill.addText(mName);
-      pillTxt.font = Font.boldSystemFont(7.5);
-      pillTxt.textColor = Color.white();
-      pillTxt.lineLimit = 1;
-    }
-
-    muscleBox.addSpacer();
   }
 
   widget.addSpacer();
 
-  // 6. BOTÓN INFERIOR: INICIAR SESIÓN (Abre directo la sesión activa en AWAKIN)
   const ctaBtn = widget.addStack();
   ctaBtn.layoutHorizontally();
   ctaBtn.centerAlignContent();
   ctaBtn.backgroundColor = p.isCompletedToday ? new Color("#059669") : new Color("#FE970A");
-  ctaBtn.cornerRadius = 13;
-  ctaBtn.setPadding(10, 12, 10, 12);
+  ctaBtn.cornerRadius = 14;
+  ctaBtn.setPadding(11, 14, 11, 14);
   ctaBtn.url = p.pwaStartUrl;
 
   ctaBtn.addSpacer();
   const ctaTxt = ctaBtn.addText(p.isCompletedToday ? "✔ COMPLETADO HOY" : "▶ INICIAR SESIÓN");
-  ctaTxt.font = Font.blackSystemFont(12);
+  ctaTxt.font = Font.blackSystemFont(12.5);
   ctaTxt.textColor = Color.white();
   ctaBtn.addSpacer();
 
