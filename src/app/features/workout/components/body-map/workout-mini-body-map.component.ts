@@ -1,4 +1,12 @@
-import { Component, Input, OnChanges, SimpleChanges, ViewEncapsulation } from '@angular/core';
+import {
+  AfterViewInit,
+  Component,
+  ElementRef,
+  Input,
+  OnChanges,
+  SimpleChanges,
+  ViewEncapsulation
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { BodyMapGender } from './body-map.component';
 import { BodyMapModelSvgComponent } from './svg/body-map-model-svg.component';
@@ -335,7 +343,7 @@ export function getAwakinSunTone(sets: number, maxSets: number): { color: string
   `],
   encapsulation: ViewEncapsulation.None
 })
-export class WorkoutMiniBodyMapComponent implements OnChanges {
+export class WorkoutMiniBodyMapComponent implements OnChanges, AfterViewInit {
   @Input() gender: BodyMapGender = 'male';
   @Input() variant: 'transparent' | 'light' | 'dark' = 'light';
   @Input() showLabels: boolean = true;
@@ -343,8 +351,77 @@ export class WorkoutMiniBodyMapComponent implements OnChanges {
 
   cssVariables: Record<string, string> = {};
 
+  constructor(private elementRef: ElementRef<HTMLElement>) {}
+
+  ngAfterViewInit(): void {
+    this.syncSvgVisuals();
+  }
+
   ngOnChanges(changes: SimpleChanges): void {
     this.updateCssVariables();
+    setTimeout(() => this.syncSvgVisuals(), 0);
+  }
+
+  public syncSvgVisuals(): void {
+    const root = this.elementRef?.nativeElement;
+    if (!root) return;
+
+    // 1. Ocultar todas las articulaciones (joints) forzosamente con atributos nativos SVG
+    const joints = root.querySelectorAll<SVGGraphicsElement>(
+      '.joints, [data-muscle-id="shoulders"], [data-muscle-id="hips"], [data-muscle-id="knees"], [data-muscle-id="ankles"], [data-muscle-id="wrist"], [data-muscle-id="elbow"], [data-muscle-id="upper-spine"], [data-muscle-id="scapula"], [data-muscle-id="lower-spine"]'
+    );
+    joints.forEach((el) => {
+      el.style.display = 'none';
+      el.setAttribute('display', 'none');
+    });
+
+    // 2. Mapear colores de los músculos estimulados
+    const breakdown = this.muscleBreakdown || [];
+    const maxSets = Math.max(...breakdown.map((m) => m.sets), 1);
+    const muscleColorMap = new Map<string, string>();
+
+    for (const item of breakdown) {
+      const color = item.color || getAwakinSunTone(item.sets, maxSets).color;
+      const varNames = getMuscleCssVariableNames(item.muscle);
+      for (const vName of varNames) {
+        const id = vName.replace('--muscle-', '');
+        muscleColorMap.set(id, color);
+      }
+    }
+
+    const defaultMuscleFill = this.variant === 'light'
+      ? '#cbd5e1'
+      : 'rgba(255, 255, 255, 0.35)';
+
+    // 3. Pintar cada región muscular directamente con atributo fill y style.fill nativos
+    const regions = root.querySelectorAll<SVGGraphicsElement>('.body-map__region:not(.joints)');
+    regions.forEach((region) => {
+      const id = region.getAttribute('data-muscle-id') || region.id;
+      const fill = (id && muscleColorMap.get(id)) || defaultMuscleFill;
+
+      region.setAttribute('fill', fill);
+      region.style.fill = fill;
+      region.style.color = fill;
+
+      const paths = region.querySelectorAll<SVGPathElement>('path');
+      paths.forEach((p) => {
+        p.setAttribute('fill', fill);
+        p.style.fill = fill;
+      });
+    });
+
+    // 4. Silueta del cuerpo (#body)
+    const bodyOutlines = root.querySelectorAll<SVGGraphicsElement>('.body-map__model, #body, #body-2');
+    bodyOutlines.forEach((b) => {
+      const paths = b.querySelectorAll<SVGPathElement>('path');
+      paths.forEach((p) => {
+        p.setAttribute('fill', 'none');
+        p.style.fill = 'none';
+        const strokeColor = this.variant === 'light' ? '#94a3b8' : 'rgba(255, 255, 255, 0.85)';
+        p.setAttribute('stroke', strokeColor);
+        p.style.stroke = strokeColor;
+      });
+    });
   }
 
   private updateCssVariables(): void {

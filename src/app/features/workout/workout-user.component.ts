@@ -30,6 +30,7 @@ import { WorkoutMiniBodyMapComponent, WorkoutMuscleLegendItem, getAwakinSunTone 
 import { WorkoutLogDetailModalComponent } from './components/workout-log-detail-modal/workout-log-detail-modal.component';
 import { WorkoutLogCardComponent } from './components/workout-log-card/workout-log-card.component';
 import { WorkoutLogEditModalComponent } from './components/workout-log-edit-modal/workout-log-edit-modal.component';
+import { WorkoutStoryModalComponent } from './components/workout-story-modal/workout-story-modal.component';
 import { ChartImageExportService } from '../profile/services/chart-image-export.service';
 import { BodyMapGender } from './components/body-map/body-map.component';
 
@@ -71,7 +72,8 @@ const DOMINICAN_MOTIVATIONAL_TEMPLATES: string[] = [
     WorkoutMiniBodyMapComponent,
     WorkoutLogDetailModalComponent,
     WorkoutLogCardComponent,
-    WorkoutLogEditModalComponent
+    WorkoutLogEditModalComponent,
+    WorkoutStoryModalComponent
   ],
   templateUrl: './workout-user.component.html'
 })
@@ -204,69 +206,18 @@ export class WorkoutUserComponent implements OnInit {
     }
   }
 
-  // Modal de Compartir Historia 9:16
+  // Modal de Compartir Historia de Entrenamiento
   isShareWorkoutModalOpen = signal<boolean>(false);
-  isGeneratingWorkoutStory = signal<boolean>(false);
-  shareWorkoutStoryImageUrl = signal<string | null>(null);
+  shareWorkoutTargetLog = signal<WorkoutLog | null>(null);
 
-  async openWorkoutStoryModal(log: WorkoutLog): Promise<void> {
-    this.shareWorkoutStoryImageUrl.set(null);
+  openWorkoutStoryModal(log: WorkoutLog): void {
+    this.shareWorkoutTargetLog.set(log);
     this.isShareWorkoutModalOpen.set(true);
-    this.isGeneratingWorkoutStory.set(true);
-
-    try {
-      const ath = this.athlete();
-      const fullName = `${ath?.first_name || ''} ${ath?.last_name || ''}`.trim() || null;
-      const url = await this.chartExportService.generateWorkoutStoryImage({
-        log,
-        userName: ath?.username || 'atleta',
-        userFullName: fullName,
-        userImageUrl: ath?.profile_image_url || null,
-        kinLogoUrl: ath?.kin?.team_logo_url || null,
-        kinName: ath?.kin?.team_name || null,
-        streakDays: ath?.streak_days ?? 0
-      });
-      this.shareWorkoutStoryImageUrl.set(url);
-    } catch (err) {
-      console.error('Error generando historia de entrenamiento:', err);
-    } finally {
-      this.isGeneratingWorkoutStory.set(false);
-    }
   }
 
   closeWorkoutStoryModal(): void {
     this.isShareWorkoutModalOpen.set(false);
-    this.shareWorkoutStoryImageUrl.set(null);
-  }
-
-  downloadWorkoutStory(): void {
-    const imgUrl = this.shareWorkoutStoryImageUrl();
-    if (!imgUrl) return;
-    const a = document.createElement('a');
-    a.href = imgUrl;
-    a.download = `Awakin_Workout_${Date.now()}.png`;
-    a.click();
-  }
-
-  async shareWorkoutStory(): Promise<void> {
-    const imgUrl = this.shareWorkoutStoryImageUrl();
-    if (!imgUrl) return;
-
-    if (navigator.share) {
-      try {
-        const blob = await fetch(imgUrl).then((r) => r.blob());
-        const file = new File([blob], 'awakin-workout.png', { type: 'image/png' });
-        await navigator.share({
-          title: 'Mi Entrenamiento Awakin',
-          text: 'Entrenamiento completado en Awakin.',
-          files: [file]
-        });
-        return;
-      } catch (e) {
-        // Fallback si el usuario cancela
-      }
-    }
-    this.downloadWorkoutStory();
+    this.shareWorkoutTargetLog.set(null);
   }
 
   getInitials(): string {

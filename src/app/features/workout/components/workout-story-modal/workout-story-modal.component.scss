@@ -1,0 +1,23 @@
+.story-preview-container {
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.story-draggable-layer {
+  touch-action: none;
+  cursor: grab;
+
+  &:active {
+    cursor: grabbing;
+  }
+}
+
+/* Scrollbar estilizada para carruseles horizontales de opciones */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}

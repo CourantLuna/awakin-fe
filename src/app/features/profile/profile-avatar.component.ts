@@ -31,6 +31,7 @@ import {
 import { WorkoutLogDetailModalComponent } from '../workout/components/workout-log-detail-modal/workout-log-detail-modal.component';
 import { WorkoutLogCardComponent } from '../workout/components/workout-log-card/workout-log-card.component';
 import { WorkoutLogEditModalComponent } from '../workout/components/workout-log-edit-modal/workout-log-edit-modal.component';
+import { WorkoutStoryModalComponent } from '../workout/components/workout-story-modal/workout-story-modal.component';
 
 export type ProfileFeedTab = 'posts' | 'meals' | 'workouts' | 'progress';
 
@@ -43,7 +44,8 @@ export type ProfileFeedTab = 'posts' | 'meals' | 'workouts' | 'progress';
     PrimeNGModule,
     WorkoutLogDetailModalComponent,
     WorkoutLogCardComponent,
-    WorkoutLogEditModalComponent
+    WorkoutLogEditModalComponent,
+    WorkoutStoryModalComponent
   ],
   templateUrl: './profile-avatar.component.html',
   styleUrl: './profile-avatar.component.css',
@@ -454,8 +456,9 @@ export class ProfileAvatarComponent implements OnInit {
     };
   });
 
-  // Modal de Nuevo Registro de Progreso
+  // Modal de Nuevo / Edición Registro de Progreso
   isNewProgressModalOpen = signal<boolean>(false);
+  editingProgressId = signal<string | null>(null);
   progressDate = signal<string>(new Date().toISOString().split('T')[0]);
   progressWeight = signal<number | null>(null);
   progressWeightUnit = signal<'kg' | 'lb'>('lb');
@@ -1309,6 +1312,7 @@ export class ProfileAvatarComponent implements OnInit {
 
   // Abrir modal de nuevo registro
   openNewProgressModal() {
+    this.editingProgressId.set(null);
     this.progressDate.set(new Date().toISOString().split('T')[0]);
     this.progressWeight.set(null);
     this.progressWeightUnit.set(this.preferredWeightUnit());
@@ -1328,6 +1332,39 @@ export class ProfileAvatarComponent implements OnInit {
     this.photoSidePreview.set(null);
     this.photoBackFile.set(null);
     this.photoBackPreview.set(null);
+
+    this.isSavingProgress.set(false);
+    this.saveProgressSuccess.set(false);
+    this.saveProgressError.set(null);
+    this.savingStepText.set('');
+
+    this.isNewProgressModalOpen.set(true);
+  }
+
+  // Abrir modal para editar registro existente
+  openEditProgressModal(rec: ProgressMetricRecord) {
+    this.editingProgressId.set(rec.id);
+    this.progressDate.set(rec.timestamp ? rec.timestamp.split('T')[0] : new Date().toISOString().split('T')[0]);
+    this.progressWeight.set(rec.peso != null ? rec.peso : null);
+    this.progressWeightUnit.set((rec.unidad_peso as 'kg' | 'lb') || this.preferredWeightUnit());
+    this.progressWaist.set(rec.cintura != null ? rec.cintura : null);
+    this.progressHip.set(rec.cadera != null ? rec.cadera : null);
+    this.progressChest.set(rec.pecho != null ? rec.pecho : null);
+
+    const hasAdvanced = !!(rec.cuello || rec.biceps || rec.muslo || rec.porcentaje_grasa || rec.masa_muscular);
+    this.showAdvancedMetrics.set(hasAdvanced);
+    this.progressNeck.set(rec.cuello != null ? rec.cuello : null);
+    this.progressBiceps.set(rec.biceps != null ? rec.biceps : null);
+    this.progressThigh.set(rec.muslo != null ? rec.muslo : null);
+    this.progressBodyFat.set(rec.porcentaje_grasa != null ? rec.porcentaje_grasa : null);
+    this.progressMuscleMass.set(rec.masa_muscular != null ? rec.masa_muscular : null);
+
+    this.photoFrontFile.set(null);
+    this.photoFrontPreview.set(rec.foto_frontal_url || null);
+    this.photoSideFile.set(null);
+    this.photoSidePreview.set(rec.foto_lateral_url || null);
+    this.photoBackFile.set(null);
+    this.photoBackPreview.set(rec.foto_espalda_url || null);
 
     this.isSavingProgress.set(false);
     this.saveProgressSuccess.set(false);
@@ -1379,7 +1416,7 @@ export class ProfileAvatarComponent implements OnInit {
     }
   }
 
-  // Guardar nuevo registro en BD Supabase
+  // Guardar nuevo registro o cambios en BD Supabase
   async saveProgress() {
     const ath = this.athlete();
     if (!ath) {
@@ -1387,7 +1424,16 @@ export class ProfileAvatarComponent implements OnInit {
       return;
     }
 
-    if (this.progressWeight() == null && !this.progressWaist() && !this.photoFrontFile()) {
+    if (
+      this.progressWeight() == null &&
+      !this.progressWaist() &&
+      !this.photoFrontFile() &&
+      !this.photoFrontPreview() &&
+      !this.photoSideFile() &&
+      !this.photoSidePreview() &&
+      !this.photoBackFile() &&
+      !this.photoBackPreview()
+    ) {
       this.saveProgressError.set('Por favor ingresa al menos el peso, una medida o una foto.');
       return;
     }
@@ -1397,15 +1443,15 @@ export class ProfileAvatarComponent implements OnInit {
     this.saveProgressSuccess.set(false);
 
     try {
-      let fotoFrontUrl: string | undefined;
-      let fotoSideUrl: string | undefined;
-      let fotoBackUrl: string | undefined;
+      let fotoFrontUrl: string | null | undefined = this.photoFrontPreview() || null;
+      let fotoSideUrl: string | null | undefined = this.photoSidePreview() || null;
+      let fotoBackUrl: string | null | undefined = this.photoBackPreview() || null;
 
-      // 1. Subir fotos si se seleccionaron
+      // 1. Subir fotos si se seleccionaron archivos nuevos
       if (this.photoFrontFile()) {
         this.savingStepText.set('Subiendo foto frontal...');
         const res = await firstValueFrom(
-          this.athleteService.uploadMedia(this.photoFrontFile()!, 'progress_photos', `front_${Date.now()}.jpg`)
+          this.athleteService.uploadMedia(this.photoFrontFile()!, 'fotos_progreso', `front_${Date.now()}.jpg`)
         );
         fotoFrontUrl = res.public_url;
       }
@@ -1413,7 +1459,7 @@ export class ProfileAvatarComponent implements OnInit {
       if (this.photoSideFile()) {
         this.savingStepText.set('Subiendo foto lateral...');
         const res = await firstValueFrom(
-          this.athleteService.uploadMedia(this.photoSideFile()!, 'progress_photos', `side_${Date.now()}.jpg`)
+          this.athleteService.uploadMedia(this.photoSideFile()!, 'fotos_progreso', `side_${Date.now()}.jpg`)
         );
         fotoSideUrl = res.public_url;
       }
@@ -1421,7 +1467,7 @@ export class ProfileAvatarComponent implements OnInit {
       if (this.photoBackFile()) {
         this.savingStepText.set('Subiendo foto espalda...');
         const res = await firstValueFrom(
-          this.athleteService.uploadMedia(this.photoBackFile()!, 'progress_photos', `back_${Date.now()}.jpg`)
+          this.athleteService.uploadMedia(this.photoBackFile()!, 'fotos_progreso', `back_${Date.now()}.jpg`)
         );
         fotoBackUrl = res.public_url;
       }
@@ -1447,12 +1493,17 @@ export class ProfileAvatarComponent implements OnInit {
         masa_muscular: this.progressMuscleMass() != null ? Number(this.progressMuscleMass()) : null
       };
 
-      await firstValueFrom(this.athleteService.createProgressRecord(ath.id, payload));
+      if (this.editingProgressId()) {
+        await firstValueFrom(this.athleteService.updateProgressRecord(ath.id, this.editingProgressId()!, payload));
+      } else {
+        await firstValueFrom(this.athleteService.createProgressRecord(ath.id, payload));
+      }
 
       this.isSavingProgress.set(false);
       this.saveProgressSuccess.set(true);
       setTimeout(() => {
         this.isNewProgressModalOpen.set(false);
+        this.editingProgressId.set(null);
         this.saveProgressSuccess.set(false);
       }, 700);
     } catch (err: any) {
@@ -1816,66 +1867,9 @@ export class ProfileAvatarComponent implements OnInit {
   shareWorkoutStoryImageUrl = signal<string | null>(null);
   shareWorkoutTargetLog = signal<WorkoutLog | null>(null);
 
-  async openWorkoutStoryModal(log: WorkoutLog): Promise<void> {
+  openWorkoutStoryModal(log: WorkoutLog): void {
     this.shareWorkoutTargetLog.set(log);
-    this.shareWorkoutStoryImageUrl.set(null);
     this.isShareWorkoutModalOpen.set(true);
-    this.isGeneratingWorkoutStory.set(true);
-
-    try {
-      const ath = this.athlete();
-      const fullName = `${ath?.first_name || ''} ${ath?.last_name || ''}`.trim() || null;
-      const url = await this.chartExportService.generateWorkoutStoryImage({
-        log,
-        userName: ath?.username || 'atleta',
-        userFullName: fullName,
-        userImageUrl: ath?.profile_image_url || null,
-        kinLogoUrl: ath?.kin?.team_logo_url || null,
-        kinName: ath?.kin?.team_name || null,
-        streakDays: ath?.streak_days ?? 0
-      });
-      this.shareWorkoutStoryImageUrl.set(url);
-    } catch (err) {
-      console.error('Error generando historia 9:16 de workout:', err);
-    } finally {
-      this.isGeneratingWorkoutStory.set(false);
-    }
-  }
-
-  async shareWorkoutStory(): Promise<void> {
-    const imgUrl = this.shareWorkoutStoryImageUrl();
-    const log = this.shareWorkoutTargetLog();
-    if (!imgUrl || !log) return;
-
-    try {
-      const response = await fetch(imgUrl);
-      const blob = await response.blob();
-      const username = this.athlete()?.username || 'atleta';
-      const file = new File([blob], `awakin-workout-${username}.png`, { type: 'image/png' });
-
-      if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
-        await navigator.share({
-          title: `${log.routine_name} — Awakin`,
-          text: `Entrenamiento completado con Awakin: ${log.routine_name}`,
-          files: [file]
-        });
-      } else {
-        this.downloadWorkoutStory();
-      }
-    } catch (err) {
-      console.error('Error compartiendo historia de workout:', err);
-    }
-  }
-
-  downloadWorkoutStory(): void {
-    const imgUrl = this.shareWorkoutStoryImageUrl();
-    const log = this.shareWorkoutTargetLog();
-    if (!imgUrl) return;
-    const link = document.createElement('a');
-    link.href = imgUrl;
-    const datePart = (log?.workout_date || '').split('T')[0] || new Date().toISOString().split('T')[0];
-    link.download = `awakin-story-${this.athlete()?.username || 'atleta'}-${datePart}.png`;
-    link.click();
   }
 
   closeWorkoutStoryModal(): void {

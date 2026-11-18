@@ -495,7 +495,7 @@ export class AthleteService {
    */
   public uploadMedia(
     file: File | Blob,
-    bucket: 'avatars' | 'feed_posts' | 'progress_photos' | 'fotos_comidas' = 'feed_posts',
+    bucket: 'avatars' | 'feed_posts' | 'fotos_progreso' | 'progress_photos' | 'fotos_comidas' = 'feed_posts',
     filename: string = 'media.jpg'
   ): Observable<{ status: string; bucket: string; filename: string; public_url: string }> {
     return from(compressImage(file, 1200, 0.82)).pipe(
@@ -526,6 +526,27 @@ export class AthleteService {
           return {
             ...curr,
             progress: [newRecord, ...curr.progress.filter((p) => p.id !== newRecord.id)]
+          };
+        });
+      })
+    );
+  }
+
+  /**
+   * Actualiza un registro existente de medidas/progreso corporal del atleta en la BD
+   */
+  public updateProgressRecord(
+    athleteId: string,
+    progressId: string,
+    record: Partial<ProgressMetricRecord>
+  ): Observable<ProgressMetricRecord> {
+    return this.http.put<ProgressMetricRecord>(`${this.baseUrl}/${athleteId}/progress/${progressId}`, record).pipe(
+      tap((updated) => {
+        this.currentRecords.update((curr) => {
+          if (!curr) return null;
+          return {
+            ...curr,
+            progress: curr.progress.map((p) => (p.id === progressId ? { ...p, ...updated } : p))
           };
         });
       })

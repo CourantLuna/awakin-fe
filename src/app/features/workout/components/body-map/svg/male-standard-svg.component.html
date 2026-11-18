@@ -257,7 +257,7 @@
                     fill="none" stroke="rgb(var(--bodymap-stroke))" stroke-linecap="round" stroke-linejoin="round"
                     stroke-width="3.46"></path>
             </g>
-            <g id="shoulders" data-muscle-id="shoulders" class="joints body-map__region" [class.hidden]="!isJointsMode" role="button" tabindex="0" >
+            <g id="shoulders" data-muscle-id="shoulders" class="joints body-map__region" [class.hidden]="!isJointsMode" [attr.display]="isJointsMode ? 'inline' : 'none'" [style.display]="isJointsMode ? 'inline' : 'none'" role="button" tabindex="0" >
                 <ellipse id="hover-2" data-name="hover" cx="441.13" cy="261.13" rx="24.71" ry="25.24"
                     fill="url(#jointradial)" opacity="1" stroke-width="0"></ellipse>
                 <ellipse id="hover" cx="219.33" cy="261.13" rx="24.71" ry="25.24" fill="url(#jointradial)" opacity="1"
@@ -267,7 +267,7 @@
                 <ellipse cx="219.33" cy="261.13" rx="12.04" ry="12.3" fill="currentColor" stroke-linecap="round"
                     stroke-linejoin="round" stroke-width="3.46"></ellipse>
             </g>
-            <g id="elbow" data-muscle-id="elbow" class="joints body-map__region" [class.hidden]="!isJointsMode" role="button" tabindex="0" >
+            <g id="elbow" data-muscle-id="elbow" class="joints body-map__region" [class.hidden]="!isJointsMode" [attr.display]="isJointsMode ? 'inline' : 'none'" [style.display]="isJointsMode ? 'inline' : 'none'" role="button" tabindex="0" >
                 <ellipse id="hover-3" data-name="hover" cx="118.6" cy="412.77" rx="24.71" ry="25.24"
                     fill="url(#jointradial)" opacity="1" stroke-width="0"></ellipse>
                 <ellipse id="hover-7" data-name="hover" cx="541.86" cy="412.77" rx="24.71" ry="25.24"
@@ -277,7 +277,7 @@
                 <ellipse cx="118.6" cy="412.77" rx="12.04" ry="12.3" fill="currentColor" stroke-linecap="round"
                     stroke-linejoin="round" stroke-width="3.46"></ellipse>
             </g>
-            <g id="wrist" data-muscle-id="wrist" class="joints body-map__region" [class.hidden]="!isJointsMode" role="button" tabindex="0" >
+            <g id="wrist" data-muscle-id="wrist" class="joints body-map__region" [class.hidden]="!isJointsMode" [attr.display]="isJointsMode ? 'inline' : 'none'" [style.display]="isJointsMode ? 'inline' : 'none'" role="button" tabindex="0" >
                 <ellipse id="hover-4" data-name="hover" cx="42.41" cy="531.02" rx="24.71" ry="25.24"
                     fill="url(#jointradial)" opacity="1" stroke-width="0"></ellipse>
                 <ellipse id="hover-8" data-name="hover" cx="618.05" cy="531.02" rx="24.71" ry="25.24"
@@ -287,7 +287,7 @@
                 <ellipse cx="42.41" cy="531.02" rx="12.04" ry="12.3" fill="currentColor" stroke-linecap="round"
                     stroke-linejoin="round" stroke-width="3.46"></ellipse>
             </g>
-            <g id="hips" data-muscle-id="hips" class="joints body-map__region" [class.hidden]="!isJointsMode" role="button" tabindex="0" >
+            <g id="hips" data-muscle-id="hips" class="joints body-map__region" [class.hidden]="!isJointsMode" [attr.display]="isJointsMode ? 'inline' : 'none'" [style.display]="isJointsMode ? 'inline' : 'none'" role="button" tabindex="0" >
                 <ellipse id="hover-6" data-name="hover" cx="412.75" cy="523.37" rx="24.71" ry="25.24"
                     fill="url(#jointradial)" opacity="1" stroke-width="0"></ellipse>
                 <ellipse id="hover-5" data-name="hover" cx="247.71" cy="523.37" rx="24.71" ry="25.24"
@@ -297,7 +297,7 @@
                 <ellipse cx="247.71" cy="523.37" rx="12.04" ry="12.3" fill="currentColor" stroke-linecap="round"
                     stroke-linejoin="round" stroke-width="3.46"></ellipse>
             </g>
-            <g id="knees" data-muscle-id="knees" class="joints body-map__region" [class.hidden]="!isJointsMode" role="button" tabindex="0" >
+            <g id="knees" data-muscle-id="knees" class="joints body-map__region" [class.hidden]="!isJointsMode" [attr.display]="isJointsMode ? 'inline' : 'none'" [style.display]="isJointsMode ? 'inline' : 'none'" role="button" tabindex="0" >
                 <ellipse id="hover-10" data-name="hover" cx="419.37" cy="874.7" rx="24.71" ry="25.24"
                     fill="url(#jointradial)" opacity="1" stroke-width="0"></ellipse>
                 <ellipse id="hover-9" data-name="hover" cx="241.09" cy="874.7" rx="24.71" ry="25.24"
@@ -307,7 +307,7 @@
                 <ellipse cx="241.09" cy="874.7" rx="12.04" ry="12.3" fill="currentColor" stroke-linecap="round"
                     stroke-linejoin="round" stroke-width="3.46"></ellipse>
             </g>
-            <g id="ankles" data-muscle-id="ankles" class="joints body-map__region" [class.hidden]="!isJointsMode" role="button" tabindex="0" >
+            <g id="ankles" data-muscle-id="ankles" class="joints body-map__region" [class.hidden]="!isJointsMode" [attr.display]="isJointsMode ? 'inline' : 'none'" [style.display]="isJointsMode ? 'inline' : 'none'" role="button" tabindex="0" >
                 <ellipse id="hover-11" data-name="hover" cx="221.14" cy="1105.65" rx="24.71" ry="25.24"
                     fill="url(#jointradial)" opacity="1" stroke-width="0"></ellipse>
                 <ellipse id="hover-12" data-name="hover" cx="439.32" cy="1105.65" rx="24.71" ry="25.24"
@@ -526,7 +526,7 @@
                     fill="none" stroke="rgb(var(--bodymap-stroke))" stroke-linecap="round" stroke-linejoin="round"
                     stroke-width="3.52"></path>
             </g>
-            <g id="ankles" data-muscle-id="ankles" class="joints body-map__region" [class.hidden]="!isJointsMode" role="button" tabindex="0" >
+            <g id="ankles" data-muscle-id="ankles" class="joints body-map__region" [class.hidden]="!isJointsMode" [attr.display]="isJointsMode ? 'inline' : 'none'" [style.display]="isJointsMode ? 'inline' : 'none'" role="button" tabindex="0" >
                 <ellipse id="hover-9" data-name="hover" cx="445.81" cy="1119.64" rx="25.53" ry="25.24"
                     fill="url(#jointradial)" opacity="1" stroke-width="0"></ellipse>
                 <ellipse id="hover-8" data-name="hover" cx="214.71" cy="1119.64" rx="25.53" ry="25.24"
@@ -536,7 +536,7 @@
                 <ellipse cx="445.81" cy="1119.64" rx="12.44" ry="12.3" fill="currentColor" stroke-linecap="round"
                     stroke-linejoin="round" stroke-width="3.52"></ellipse>
             </g>
-            <g id="knees" data-muscle-id="knees" class="joints body-map__region" [class.hidden]="!isJointsMode" role="button" tabindex="0" >
+            <g id="knees" data-muscle-id="knees" class="joints body-map__region" [class.hidden]="!isJointsMode" [attr.display]="isJointsMode ? 'inline' : 'none'" [style.display]="isJointsMode ? 'inline' : 'none'" role="button" tabindex="0" >
                 <ellipse id="hover-7" data-name="hover" cx="237.16" cy="879.63" rx="25.53" ry="25.24"
                     fill="url(#jointradial)" opacity="1" stroke-width="0"></ellipse>
                 <ellipse id="hover-10" data-name="hover" cx="423.36" cy="879.63" rx="25.53" ry="25.24"
@@ -546,7 +546,7 @@
                 <ellipse cx="237.16" cy="879.63" rx="12.44" ry="12.3" fill="currentColor" stroke-linecap="round"
                     stroke-linejoin="round" stroke-width="3.52"></ellipse>
             </g>
-            <g id="wrist" data-muscle-id="wrist" class="joints body-map__region" [class.hidden]="!isJointsMode" role="button" tabindex="0" >
+            <g id="wrist" data-muscle-id="wrist" class="joints body-map__region" [class.hidden]="!isJointsMode" [attr.display]="isJointsMode ? 'inline' : 'none'" [style.display]="isJointsMode ? 'inline' : 'none'" role="button" tabindex="0" >
                 <ellipse id="hover-6" data-name="hover" cx="30.54" cy="548.63" rx="25.53" ry="25.24"
                     fill="url(#jointradial)" opacity="1" stroke-width="0"></ellipse>
                 <ellipse id="hover-11" data-name="hover" cx="629.98" cy="548.63" rx="25.53" ry="25.24"
@@ -556,7 +556,7 @@
                 <ellipse cx="30.54" cy="548.63" rx="12.44" ry="12.3" fill="currentColor" stroke-linecap="round"
                     stroke-linejoin="round" stroke-width="3.52"></ellipse>
             </g>
-            <g id="elbow" data-muscle-id="elbow" class="joints body-map__region" [class.hidden]="!isJointsMode" role="button" tabindex="0" >
+            <g id="elbow" data-muscle-id="elbow" class="joints body-map__region" [class.hidden]="!isJointsMode" [attr.display]="isJointsMode ? 'inline' : 'none'" [style.display]="isJointsMode ? 'inline' : 'none'" role="button" tabindex="0" >
                 <ellipse id="hover-5" data-name="hover" cx="119.84" cy="396.23" rx="25.53" y="25.24"
                     fill="url(#jointradial)" opacity="1" stroke-width="0"></ellipse>
                 <ellipse id="hover-12" data-name="hover" cx="540.68" cy="396.23" rx="25.53" ry="25.24"
@@ -566,13 +566,13 @@
                 <ellipse cx="119.84" cy="396.23" rx="12.44" ry="12.3" fill="currentColor" stroke-linecap="round"
                     stroke-linejoin="round" stroke-width="3.52"></ellipse>
             </g>
-            <g id="upper-spine" data-muscle-id="upper-spine" class="joints body-map__region" [class.hidden]="!isJointsMode" role="button" tabindex="0" >
+            <g id="upper-spine" data-muscle-id="upper-spine" class="joints body-map__region" [class.hidden]="!isJointsMode" [attr.display]="isJointsMode ? 'inline' : 'none'" [style.display]="isJointsMode ? 'inline' : 'none'" role="button" tabindex="0" >
                 <ellipse id="hover" cx="330.26" cy="209.3" rx="25.53" ry="25.24" fill="url(#jointradial)" opacity="1"
                     stroke-width="0"></ellipse>
                 <ellipse cx="330.26" cy="209.3" rx="12.44" ry="12.3" fill="currentColor" stroke-linecap="round"
                     stroke-linejoin="round" stroke-width="3.52"></ellipse>
             </g>
-            <g id="scapula" data-muscle-id="scapula" class="joints body-map__region" [class.hidden]="!isJointsMode" role="button" tabindex="0" >
+            <g id="scapula" data-muscle-id="scapula" class="joints body-map__region" [class.hidden]="!isJointsMode" [attr.display]="isJointsMode ? 'inline' : 'none'" [style.display]="isJointsMode ? 'inline' : 'none'" role="button" tabindex="0" >
                 <ellipse id="hover-2" data-name="hover" cx="240.12" cy="271.32" rx="25.53" ry="25.24"
                     fill="url(#jointradial)" opacity="1" stroke-width="0"></ellipse>
                 <ellipse id="hover-3" data-name="hover" cx="420.4" cy="271.32" rx="25.53" ry="25.24"
@@ -582,7 +582,7 @@
                 <ellipse cx="240.12" cy="271.32" rx="12.44" ry="12.3" fill="currentColor" stroke-linecap="round"
                     stroke-linejoin="round" stroke-width="3.52"></ellipse>
             </g>
-            <g id="lower-spine" data-muscle-id="lower-spine" class="joints body-map__region" [class.hidden]="!isJointsMode" role="button" tabindex="0" >
+            <g id="lower-spine" data-muscle-id="lower-spine" class="joints body-map__region" [class.hidden]="!isJointsMode" [attr.display]="isJointsMode ? 'inline' : 'none'" [style.display]="isJointsMode ? 'inline' : 'none'" role="button" tabindex="0" >
                 <ellipse id="hover-4" data-name="hover" cx="330.26" cy="491.77" rx="25.53" ry="25.24"
                     fill="url(#jointradial)" opacity="1" stroke-width="0"></ellipse>
                 <ellipse cx="330.26" cy="491.77" rx="12.44" ry="12.3" fill="currentColor" stroke-linecap="round"

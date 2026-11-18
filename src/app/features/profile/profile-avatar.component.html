@@ -899,8 +899,13 @@
                 }
               </div>
 
-              <!-- BOTONES DE ACCIÓN: COMPARTIR Y ELIMINAR -->
+              <!-- BOTONES DE ACCIÓN: EDITAR, COMPARTIR Y ELIMINAR -->
               <div class="flex items-center gap-1.5 shrink-0">
+                <button (click)="openEditProgressModal(rec)"
+                  class="w-7 h-7 rounded-lg bg-stone-100 hover:bg-stone-200 text-stone-600 hover:text-stone-900 flex items-center justify-center text-xs transition-all cursor-pointer"
+                  title="Editar este check-in">
+                  <i class="pi pi-pencil text-[10px]"></i>
+                </button>
                 <button (click)="shareProgressRecord(rec)"
                   class="w-7 h-7 rounded-lg bg-stone-100 hover:bg-stone-200 text-stone-600 hover:text-stone-900 flex items-center justify-center text-xs transition-all cursor-pointer"
                   title="Compartir este check-in">
@@ -1466,10 +1471,12 @@
       <div class="flex items-center gap-3">
         <div
           class="w-9 h-9 rounded-2xl bg-awakin-sun/15 border border-awakin-sun/25 flex items-center justify-center text-awakin-sun shrink-0">
-          <i class="pi pi-plus-circle text-base"></i>
+          <i [class]="editingProgressId() ? 'pi pi-pencil text-base' : 'pi pi-plus-circle text-base'"></i>
         </div>
         <div>
-          <h3 class="text-base font-black text-stone-900 tracking-tight leading-tight">Nuevo Registro</h3>
+          <h3 class="text-base font-black text-stone-900 tracking-tight leading-tight">
+            {{ editingProgressId() ? 'Editar Registro' : 'Nuevo Registro' }}
+          </h3>
           <p class="text-[11px] text-stone-500 font-medium">Peso, medidas corporales y fotos</p>
         </div>
       </div>
@@ -1722,8 +1729,8 @@
         <i class="pi pi-check text-xs"></i>
         <span>¡Guardado!</span>
         } @else {
-        <i class="pi pi-save text-xs"></i>
-        <span>Guardar Progreso</span>
+        <i [class]="editingProgressId() ? 'pi pi-check text-xs' : 'pi pi-save text-xs'"></i>
+        <span>{{ editingProgressId() ? 'Guardar Cambios' : 'Guardar Progreso' }}</span>
         }
       </button>
     </div>
@@ -2078,49 +2085,11 @@
 }
 
 <!-- ========================================================================= -->
-<!-- MODAL: COMPARTIR HISTORIA 9:16 DE ENTRENAMIENTO (AWAKIN × KIN)           -->
+<!-- MODAL: COMPARTIR HISTORIA DE ENTRENAMIENTO (AWAKIN × KIN)                 -->
 <!-- ========================================================================= -->
-<p-dialog [(visible)]="isShareWorkoutModalOpen" [modal]="true" [draggable]="false" [resizable]="false"
-  [closable]="false" [showHeader]="false" [dismissableMask]="true" appendTo="body"
-  [style]="{ width: '92vw', maxWidth: '420px', borderRadius: '24px' }"
-  styleClass="overflow-hidden shadow-2xl border border-stone-200 [&_.p-dialog-content]:!p-0">
-  <div class="bg-white flex flex-col max-h-[90vh]">
-    <div class="px-5 py-4 border-b border-stone-100 bg-stone-50/80 flex items-center justify-between">
-      <div>
-        <h3 class="text-sm font-black text-stone-900 uppercase tracking-tight">Historia 9:16 Awakin</h3>
-        <p class="text-[11px] text-stone-500 font-medium">Comparte tu ritual de entrenamiento</p>
-      </div>
-      <button type="button" (click)="closeWorkoutStoryModal()"
-        class="w-8 h-8 rounded-full bg-stone-100 hover:bg-stone-200 text-stone-600 flex items-center justify-center cursor-pointer">
-        <i class="pi pi-times text-xs"></i>
-      </button>
-    </div>
-
-    <div class="p-4 overflow-y-auto flex-1 flex items-center justify-center bg-stone-100/80">
-      @if (isGeneratingWorkoutStory()) {
-      <div class="py-16 text-center space-y-2">
-        <i class="pi pi-spin pi-spinner text-awakin-sun text-2xl"></i>
-        <p class="text-xs font-bold text-stone-500">Generando historia 9:16...</p>
-      </div>
-      } @else if (shareWorkoutStoryImageUrl(); as storyUrl) {
-      <img [src]="storyUrl" alt="Historia 9:16 Awakin"
-        class="w-full max-w-[280px] aspect-[9/16] rounded-2xl shadow-xl border border-stone-200 object-cover" />
-      }
-    </div>
-
-    <div class="p-4 border-t border-stone-100 bg-white flex items-center gap-2">
-      <button type="button" (click)="downloadWorkoutStory()"
-        [disabled]="isGeneratingWorkoutStory() || !shareWorkoutStoryImageUrl()"
-        class="px-4 py-3 rounded-xl bg-stone-900 hover:bg-stone-800 text-white font-black text-xs uppercase tracking-wider transition-all active:scale-95 cursor-pointer flex items-center justify-center gap-1.5 disabled:opacity-50">
-        <i class="pi pi-download text-xs"></i>
-        <span>9:16 PNG</span>
-      </button>
-      <button type="button" (click)="shareWorkoutStory()"
-        [disabled]="isGeneratingWorkoutStory() || !shareWorkoutStoryImageUrl()"
-        class="flex-1 py-3 rounded-xl bg-awakin-sun hover:bg-awakin-sun-dim text-white font-black text-xs uppercase tracking-wider transition-all shadow-lg shadow-awakin-sun/25 active:scale-95 cursor-pointer flex items-center justify-center gap-2 disabled:opacity-50">
-        <i class="pi pi-share-alt text-xs"></i>
-        <span>Compartir</span>
-      </button>
-    </div>
-  </div>
-</p-dialog>
+<app-workout-story-modal
+  [(visible)]="isShareWorkoutModalOpen"
+  [log]="shareWorkoutTargetLog()"
+  [athlete]="athlete()"
+  [gender]="athleteGender()"
+  (closed)="closeWorkoutStoryModal()" />
