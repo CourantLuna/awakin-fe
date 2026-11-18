@@ -319,17 +319,32 @@ export class WorkoutUserComponent implements OnInit {
   // ID enlazado al dropdown p-select
   selectedRoutineId = computed(() => this.activeDisplayedRoutine()?.id || null);
 
-  // Log de entrenamiento registrado en la fecha seleccionada
-  logForSelectedDate = computed<WorkoutLog | null>(() => {
+  // Todos los logs de entrenamiento completados en la fecha seleccionada del header calendar
+  selectedDayLogs = computed<WorkoutLog[]>(() => {
     const sel = this.selectedDate();
     const ymd = `${sel.getFullYear()}-${String(sel.getMonth() + 1).padStart(2, '0')}-${String(sel.getDate()).padStart(2, '0')}`;
-    return (
-      this.workoutLogs().find((log) => {
-        const d = new Date(log.workout_date);
-        const logYmd = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-        return logYmd === ymd;
-      }) || null
-    );
+    return this.workoutLogs().filter((log) => {
+      const d = new Date(log.workout_date);
+      const logYmd = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+      return logYmd === ymd;
+    });
+  });
+
+  // Log de entrenamiento registrado en la fecha seleccionada
+  logForSelectedDate = computed<WorkoutLog | null>(() => {
+    const logs = this.selectedDayLogs();
+    return logs.length > 0 ? logs[0] : null;
+  });
+
+  // Label dinámico para el banner completado según el día seleccionado
+  completedBannerLabel = computed<string>(() => {
+    const raw = (this.currentLabel() || '').trim().toUpperCase();
+    if (raw === 'HOY') return 'COMPLETADO HOY';
+    if (raw === 'AYER') return 'COMPLETADO AYER';
+    if (['LUNES', 'MARTES', 'MIÉRCOLES', 'MIERCOLES', 'JUEVES', 'VIERNES', 'SÁBADO', 'SABADO', 'DOMINGO'].includes(raw)) {
+      return `COMPLETADO EL ${raw}`;
+    }
+    return `COMPLETADO (${raw})`;
   });
 
   // Radar Chart dinámico de Carga Muscular Semanal (últimos 7 días de workout_logs)
