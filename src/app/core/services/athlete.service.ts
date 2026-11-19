@@ -87,12 +87,21 @@ export interface AthleteProfile {
 
 export interface NutritionMealRecord {
   id: string;
+  id_original?: string;
   foto_url?: string;
   tipo_comida?: string;
   timestamp?: string;
   nombre?: string;
+  plato_estimado?: string;
   adherencia?: string;
   notas?: string;
+  is_active?: boolean;
+  calorias?: number;
+  proteinas?: number;
+  carbohidratos?: number;
+  grasas?: number;
+  dishes?: string[];
+  items_count?: number;
 }
 
 export interface ProgressMetricRecord {

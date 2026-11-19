@@ -34,7 +34,7 @@ import { FormsModule } from '@angular/forms';
 import { IntakeService, determineCoverIcon } from '../../core/services/intake.service';
 import { AthleteService } from '../../core/services/athlete.service';
 import { AuthService } from '../../core/services/auth.service';
-import { StreakService } from '../../core/services/streak.service';
+import { StreakService, formatToDateKey } from '../../core/services/streak.service';
 import { IntakeTopBar } from '../../components/intake-top-bar/intake-top-bar';
 import {
   formatQuantity,
@@ -302,6 +302,123 @@ export class IntakeUserComponent implements OnInit {
     });
   }
 
+  // Historial completo de registros nutricionales del atleta
+  nutritionHistoryRecords = signal<any[]>([]);
+
+  loadNutritionHistory() {
+    const athlete = this.athleteService.currentAthlete();
+    const email = athlete?.email || this.authService.currentSession()?.avatar?.email || 'heydi0811@gmail.com';
+    this.intakeService.loadFoodRecords(email).subscribe({
+      next: (records) => {
+        if (Array.isArray(records)) {
+          this.nutritionHistoryRecords.set(records);
+        }
+      },
+      error: (err) => console.error('Error cargando historial nutricional:', err),
+    });
+  }
+
+  // Días que tienen registros nutricionales (solo sombreado nutricional para Intake)
+  intakeActiveDates = computed<Set<string>>(() => {
+    const dates = new Set<string>();
+    for (const r of this.nutritionHistoryRecords()) {
+      if (r.is_active === false) continue;
+      let key = '';
+      if (r.id_original) {
+        const match = r.id_original.match(/^(\d{4}-\d{2}-\d{2})/);
+        if (match) key = match[1];
+      }
+      if (!key && r.timestamp) {
+        key = formatToDateKey(r.timestamp);
+      }
+      if (key) dates.add(key);
+    }
+    // Optimistic: si para el día seleccionado hay al menos una comida activa en el mapa local
+    const curDateStr = this.formatDateYMD(this.selectedDate());
+    const regRecords = Object.values(this.registeredRecords());
+    if (regRecords.some((r: any) => r && r.is_active !== false)) {
+      dates.add(curDateStr);
+    }
+    return dates;
+  });
+
+  // Días en que se completó todo el plan al 100% sin salirse (verde esmeralda en Intake)
+  intakePerfectDates = computed<Set<string>>(() => {
+    const perfectDates = new Set<string>();
+    const records = this.nutritionHistoryRecords();
+
+    // Agrupar registros activos por fecha (YYYY-MM-DD)
+    const dayMap = new Map<string, any[]>();
+    for (const r of records) {
+      if (r.is_active === false) continue;
+      let key = '';
+      if (r.id_original) {
+        const match = r.id_original.match(/^(\d{4}-\d{2}-\d{2})/);
+        if (match) key = match[1];
+      }
+      if (!key && r.timestamp) {
+        key = formatToDateKey(r.timestamp);
+      }
+      if (!key) continue;
+      if (!dayMap.has(key)) {
+        dayMap.set(key, []);
+      }
+      dayMap.get(key)!.push(r);
+    }
+
+    // Integrar registros del día seleccionado si existen
+    const curDateStr = this.formatDateYMD(this.selectedDate());
+    const curDayRegs = Object.values(this.registeredRecords()).filter((r: any) => r && r.is_active !== false);
+    if (curDayRegs.length > 0 && !dayMap.has(curDateStr)) {
+      dayMap.set(curDateStr, curDayRegs);
+    }
+
+    const templates = this.weeklyTemplates();
+    const menus = this.availableMenus();
+
+    for (const [dateKey, dayRecords] of dayMap.entries()) {
+      if (dayRecords.length === 0) continue;
+
+      // 1. Debe haber cumplido todas las comidas al 100% sin salirse
+      const hasCheatsOrAdaptation = dayRecords.some(
+        (r) => r.adherencia === 'FREE' || r.adherencia === 'ADAPTATION'
+      );
+      if (hasCheatsOrAdaptation) continue;
+
+      const all100 = dayRecords.every((r) => r.adherencia === '100' || r.adherencia === 100);
+      if (!all100) continue;
+
+      // 2. Si hay plan semanal configurado para este día con platillos, verificar que se haya completado el plan
+      let plan = templates.find((p) => p.startDate && p.endDate && dateKey >= p.startDate && dateKey <= p.endDate);
+      if (!plan) {
+        plan = templates.find((p) => p.isActive) || templates[0];
+      }
+
+      let plannedDishesCount = 0;
+      if (plan && plan.assignments) {
+        const parts = dateKey.split('-').map(Number);
+        const d = new Date(parts[0], parts[1] - 1, parts[2]);
+        const dayIdx = (d.getDay() + 6) % 7;
+        const assignment = plan.assignments[dayIdx];
+        if (assignment) {
+          const menu = assignment.menu || (assignment.menuId ? menus.find((m) => String(m.id) === String(assignment.menuId)) : null);
+          if (menu) {
+            plannedDishesCount = (menu.dishes?.length || 0) + (menu.looseIngredients?.length || 0);
+          }
+        }
+      }
+
+      // Si hay alimentos planificados para el día, el usuario debió completar al menos el número de alimentos planificados
+      if (plannedDishesCount > 0 && dayRecords.length < plannedDishesCount) {
+        continue;
+      }
+
+      perfectDates.add(dateKey);
+    }
+
+    return perfectDates;
+  });
+
   private lastLoadedAthleteId: string | null = null;
 
   constructor() {
@@ -322,6 +439,7 @@ export class IntakeUserComponent implements OnInit {
             this.athleteService.loadNutritionProtocol(athleteId);
           }
           this.loadDayRecords();
+          this.loadNutritionHistory();
         });
       }
     });
@@ -895,6 +1013,7 @@ export class IntakeUserComponent implements OnInit {
             ...map,
             [logKey]: nextActive,
           }));
+          this.loadNutritionHistory();
         },
         error: (err) => {
           console.error('Error actualizando is_active en registros_nutricionales_pruebas:', err);
@@ -906,6 +1025,7 @@ export class IntakeUserComponent implements OnInit {
             ...map,
             [logKey]: nextActive,
           }));
+          this.loadNutritionHistory();
         },
       });
     }
@@ -1168,6 +1288,8 @@ export class IntakeUserComponent implements OnInit {
         this.selectedAdherence.set(null);
         this.notesText.set('');
 
+        this.loadNutritionHistory();
+
         const dishes =
           selectedItems.length > 1
             ? selectedItems.map((f) => ({
@@ -1268,6 +1390,8 @@ export class IntakeUserComponent implements OnInit {
         this.uploadedPhotoUrl.set(null);
         this.selectedAdherence.set(null);
         this.notesText.set('');
+
+        this.loadNutritionHistory();
 
         this.openStoryShareModal({
           photoUrl: localPhotoData,

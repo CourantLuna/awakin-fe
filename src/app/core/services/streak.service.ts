@@ -146,12 +146,20 @@ export class StreakService {
       if (email) {
         const { data: meals } = await this.supabase
           .from('registros_nutricionales_pruebas')
-          .select('timestamp')
+          .select('timestamp, id_original, is_active')
           .eq('email', email);
 
         if (meals) {
           for (const m of meals) {
-            const key = formatToDateKey(m.timestamp);
+            if (m.is_active === false) continue;
+            let key = '';
+            if (m.id_original) {
+              const match = m.id_original.match(/^(\d{4}-\d{2}-\d{2})/);
+              if (match) key = match[1];
+            }
+            if (!key && m.timestamp) {
+              key = formatToDateKey(m.timestamp);
+            }
             if (key) dates.add(key);
           }
         }

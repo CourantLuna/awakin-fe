@@ -393,11 +393,18 @@
   <div class="mt-0.5 animate-fade-in">
     @if (mealPhotos().length > 0) {
     <div class="grid grid-cols-3 gap-0.5">
-      @for (meal of mealPhotos(); track meal.id) {
+      @for (meal of mealPhotos(); track meal.foto_url || meal.id) {
       <div (click)="selectedMeal.set(meal)"
         class="aspect-square bg-stone-100 relative group overflow-hidden cursor-pointer">
         <img loading="lazy" decoding="async" [src]="meal.foto_url" [alt]="meal.nombre || 'Plato'"
           class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" />
+
+        @if (meal.items_count && meal.items_count > 1) {
+        <span class="absolute top-1.5 right-1.5 bg-stone-900/75 backdrop-blur-xs text-white text-[9px] font-black px-1.5 py-0.5 rounded-full shadow-xs flex items-center gap-1 z-10">
+          <i class="pi pi-clone text-[8px]"></i> {{ meal.items_count }}
+        </span>
+        }
+
         <div
           class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-end p-2 text-white">
           <span
@@ -1437,17 +1444,58 @@
         class="w-full h-full object-cover" />
     </div>
     <div>
-      <span
-        class="text-[9px] font-bold uppercase tracking-widest bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full">
-        {{ selectedMeal()?.tipo_comida || 'Comida' }}
-      </span>
-      <h4 class="font-black text-sm text-stone-900 mt-1">
-        {{ selectedMeal()?.nombre || 'Plato Registrado' }}
+      <div class="flex items-center justify-between">
+        <span
+          class="text-[9px] font-bold uppercase tracking-widest bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full">
+          {{ selectedMeal()?.tipo_comida || 'Comida' }}
+        </span>
+        @if (selectedMeal()?.items_count && selectedMeal()!.items_count! > 1) {
+        <span class="text-[9px] font-bold text-stone-500 bg-stone-100 px-2 py-0.5 rounded-full">
+          {{ selectedMeal()?.items_count }} alimentos registrados
+        </span>
+        }
+      </div>
+
+      <h4 class="font-black text-sm text-stone-900 mt-1.5">
+        {{ selectedMeal()?.nombre || selectedMeal()?.plato_estimado || 'Plato Registrado' }}
       </h4>
-      <p class="text-[10px] text-stone-500 font-mono mt-0.5">
+
+      @if (selectedMeal()?.dishes && selectedMeal()!.dishes!.length > 1) {
+      <div class="mt-2 flex flex-wrap gap-1">
+        @for (d of selectedMeal()!.dishes; track d) {
+        <span class="text-[10px] font-medium bg-stone-100 text-stone-700 px-2 py-0.5 rounded-md border border-stone-200/50">
+          {{ d }}
+        </span>
+        }
+      </div>
+      }
+
+      <p class="text-[10px] text-stone-500 font-mono mt-1.5">
         {{ selectedMeal()?.timestamp | date:'medium' }}
       </p>
     </div>
+
+    @if (selectedMeal()?.calorias) {
+    <div class="grid grid-cols-4 gap-1.5 p-2 bg-stone-50 rounded-xl border border-stone-100 text-center">
+      <div>
+        <p class="text-[9px] text-stone-400 font-bold uppercase">Kcal</p>
+        <p class="text-xs font-black text-stone-900">{{ selectedMeal()?.calorias | number:'1.0-0' }}</p>
+      </div>
+      <div>
+        <p class="text-[9px] text-stone-400 font-bold uppercase">Prot</p>
+        <p class="text-xs font-black text-emerald-600">{{ selectedMeal()?.proteinas || 0 | number:'1.0-0' }}g</p>
+      </div>
+      <div>
+        <p class="text-[9px] text-stone-400 font-bold uppercase">Carbs</p>
+        <p class="text-xs font-black text-amber-600">{{ selectedMeal()?.carbohidratos || 0 | number:'1.0-0' }}g</p>
+      </div>
+      <div>
+        <p class="text-[9px] text-stone-400 font-bold uppercase">Grasas</p>
+        <p class="text-xs font-black text-rose-500">{{ selectedMeal()?.grasas || 0 | number:'1.0-0' }}g</p>
+      </div>
+    </div>
+    }
+
     @if (selectedMeal()?.notas) {
     <p class="text-xs text-stone-600 bg-stone-50 p-2 rounded-xl border border-stone-100">
       {{ selectedMeal()?.notas }}

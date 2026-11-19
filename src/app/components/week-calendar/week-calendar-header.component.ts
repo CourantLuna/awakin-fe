@@ -38,6 +38,7 @@ export class WeekCalendarHeaderComponent implements OnInit, OnChanges {
   @Input() weekStart: number = 1; // 0: Domingo, 1: Lunes (Default AWAKIN)
   @Input() streak: number = 0;
   @Input() activeDates?: Set<string> | string[];
+  @Input() perfectDates?: Set<string> | string[]; // Días 100% en el plan (sombreados en verde)
 
   // Señales de estado
 
@@ -87,7 +88,7 @@ public activeVersion = signal<number>(0);
   }
 
   ngOnChanges(changes: SimpleChanges) {
-    if (changes['activeDates']) {
+    if (changes['activeDates'] || changes['perfectDates']) {
       this.activeVersion.update((v) => v + 1);
     }
   }
@@ -280,6 +281,18 @@ private navigateTime(amount: number, unit: 'days' | 'months') {
 
 
 
+  // Helper para saber si el día cumplió el 100% del plan sin salirse
+  hasPerfectPlan(day: CalendarDay): boolean {
+    this.activeVersion();
+    const key = formatToDateKey(day.fullDate);
+    if (!key) return false;
+    if (this.perfectDates) {
+      if (this.perfectDates instanceof Set) return this.perfectDates.has(key);
+      if (Array.isArray(this.perfectDates)) return this.perfectDates.includes(key);
+    }
+    return false;
+  }
+
   // Helper de actividad física o nutricional del día
   hasActivity(day: CalendarDay): boolean {
     this.activeVersion();
@@ -296,7 +309,16 @@ private navigateTime(amount: number, unit: 'days' | 'months') {
   getNumberClasses(day: CalendarDay) {
     const today = this.isToday(day.fullDate);
     const selected = this.isSelected(day);
+    const isPerfect = this.hasPerfectPlan(day);
     const active = this.hasActivity(day);
+
+    if (isPerfect) {
+      return {
+        'bg-emerald-500 text-white font-black shadow-xs shadow-emerald-500/30': true,
+        'ring-2 ring-stone-900 ring-offset-2 scale-110 shadow-md': selected,
+        'scale-100': !selected,
+      };
+    }
 
     if (active) {
       return {
@@ -317,6 +339,14 @@ private navigateTime(amount: number, unit: 'days' | 'months') {
   }
 
   getStatusClasses(day: CalendarDay) {
+    const isPerfect = this.hasPerfectPlan(day);
+    if (isPerfect) {
+      return {
+        'bg-emerald-500': true,
+        'opacity-90': true,
+      };
+    }
+
     const active = this.hasActivity(day);
     if (active) {
       return {

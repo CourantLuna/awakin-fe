@@ -176,10 +176,44 @@ export class ProfileAvatarComponent implements OnInit {
   usernameFeedbackMessage = signal<string>('');
   private usernameCheckTimer: any = null;
 
-  // Comidas con foto
-  mealPhotos = computed(() => {
+  // Comidas con foto (deduplicadas por foto: 1 sola foto por registro múltiple y solo activos)
+  mealPhotos = computed<NutritionMealRecord[]>(() => {
     const list = this.records()?.meals || [];
-    return list.filter((m) => !!m.foto_url);
+    // 1. Filtrar solo registros que tengan foto_url y que estén activos (is_active !== false)
+    const activeWithPhoto = list.filter((m) => !!m.foto_url && m.is_active !== false);
+
+    // 2. Si hay más de un registro nutricional por foto, debe ser 1 sola foto en la galería
+    const photoMap = new Map<string, NutritionMealRecord>();
+    for (const m of activeWithPhoto) {
+      const url = m.foto_url!.trim();
+      const dishName = m.plato_estimado || m.nombre || 'Plato';
+      if (!photoMap.has(url)) {
+        photoMap.set(url, {
+          ...m,
+          nombre: dishName,
+          plato_estimado: dishName,
+          dishes: dishName ? [dishName] : [],
+          items_count: 1,
+        });
+      } else {
+        const existing = photoMap.get(url)!;
+        if (dishName && !existing.dishes?.includes(dishName)) {
+          existing.dishes = [...(existing.dishes || []), dishName];
+          existing.nombre = existing.dishes.join(' + ');
+          existing.plato_estimado = existing.nombre;
+        }
+        if (m.calorias) existing.calorias = (existing.calorias || 0) + Number(m.calorias);
+        if (m.proteinas) existing.proteinas = (existing.proteinas || 0) + Number(m.proteinas);
+        if (m.carbohidratos) existing.carbohidratos = (existing.carbohidratos || 0) + Number(m.carbohidratos);
+        if (m.grasas) existing.grasas = (existing.grasas || 0) + Number(m.grasas);
+        if (m.notas && !existing.notas?.includes(m.notas)) {
+          existing.notas = existing.notas ? `${existing.notas} | ${m.notas}` : m.notas;
+        }
+        existing.items_count = (existing.items_count || 1) + 1;
+      }
+    }
+
+    return Array.from(photoMap.values());
   });
 
   // ==========================================

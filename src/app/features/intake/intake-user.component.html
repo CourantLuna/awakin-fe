@@ -10,7 +10,7 @@
 
   <!-- 2. Header selector de días (se ancla al top al hacer scroll) -->
   <div class="sticky top-0 z-30 w-full">
-    <app-week-calendar-header #calendar [streak]="streak()" [weekStart]="1" (onLabelChange)="updateLabel($event)"
+    <app-week-calendar-header #calendar [streak]="streak()" [activeDates]="intakeActiveDates()" [perfectDates]="intakePerfectDates()" [weekStart]="1" (onLabelChange)="updateLabel($event)"
       (onDateChange)="onDateSelected($event)">
     </app-week-calendar-header>
   </div>
