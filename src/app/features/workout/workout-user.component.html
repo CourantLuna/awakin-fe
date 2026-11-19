@@ -1,9 +1,12 @@
 <div class="w-full bg-white">
   <p-toolbar styleClass="bg-transparent border-none p-0 mb-3">
     <ng-template pTemplate="start">
-      <button (click)="calendar.onMenuClick.emit()"
-        class="w-10 h-10 flex items-center justify-center text-black active:opacity-40 transition-all cursor-pointer">
-        <i class="pi pi-ellipsis-h text-xl"></i>
+      <button type="button" (click)="themeService.toggleTheme()"
+        class="w-10 h-10 flex items-center justify-center rounded-full hover:bg-stone-100 active:scale-90 transition-all text-stone-700 cursor-pointer"
+        [title]="themeService.isDarkMode() ? 'Cambiar a Modo Día' : 'Cambiar a Modo Noche'"
+        [attr.aria-label]="themeService.isDarkMode() ? 'Cambiar a Modo Día' : 'Cambiar a Modo Noche'">
+        <i class="pi text-lg transition-transform duration-300"
+          [ngClass]="themeService.isDarkMode() ? 'pi-sun text-amber-400' : 'pi-moon text-stone-700'"></i>
       </button>
     </ng-template>
 
@@ -17,7 +20,7 @@
         <div class="flex items-center rounded-full border border-stone-200 bg-stone-50 shadow-sm transition-all">
           <button (click)="handleTopBtnAction()"
             class="flex items-center gap-1 pl-5 pe-2 py-2 active:bg-stone-100 transition-colors group border-r border-stone-200 cursor-pointer">
-            <i class="pi pi-calendar text-sm text-awakin-sun group-hover:rotate-12 transition-transform"></i>
+            <i class="pi pi-calendar text-sm text-kin-primary group-hover:rotate-12 transition-transform"></i>
             <span class="text-sm font-bold tracking-wide capitalize text-gray-800 min-w-[60px] text-center">
               {{ currentLabel() }}
             </span>
@@ -26,7 +29,7 @@
           @if (calendar) {
           <button (click)="toggleCalendarViewMode()"
             class="px-4 py-2 hover:bg-stone-100 active:bg-stone-200 transition-colors flex items-center justify-center group cursor-pointer">
-            <i class="pi pi-chevron-down inline-block transform 0.3s ease-in-out text-[10px] text-stone-400 group-hover:text-awakin-sun transition-all"
+            <i class="pi pi-chevron-down inline-block transform 0.3s ease-in-out text-[10px] text-stone-400 group-hover:text-kin-primary transition-all"
               [ngClass]="{ 'rotate-180': calendar.viewMode() === 'month' }"></i>
           </button>
           }
@@ -41,7 +44,7 @@
 
     <ng-template pTemplate="end">
       <div class="flex items-center gap-1.5 pr-2">
-        <i class="pi pi-bolt text-xl" [ngClass]="streak() > 0 ? 'text-awakin-sun animate-pulse' : 'text-stone-300'"></i>
+        <i class="pi pi-bolt text-xl" [ngClass]="streak() > 0 ? 'text-kin-primary animate-pulse' : 'text-stone-300'"></i>
         <span class="text-xl font-bold font-mono" [ngClass]="streak() > 0 ? 'text-black' : 'text-stone-400'">
           {{ streak() }}
         </span>
@@ -69,9 +72,9 @@
         WORKOUT
       </h1>
       <p (click)="refreshMotivationMessage()"
-        class="text-xs sm:text-sm font-semibold text-stone-600 mt-1.5 flex items-center gap-1.5 cursor-pointer hover:text-awakin-sun transition-colors select-none group"
+        class="text-xs sm:text-sm font-semibold text-stone-600 mt-1.5 flex items-center gap-1.5 cursor-pointer hover:text-kin-primary transition-colors select-none group"
         title="Toca para otro mensaje motivacional">
-        <span class="text-awakin-sun inline-block transition-transform group-hover:scale-125">
+        <span class="text-kin-primary inline-block transition-transform group-hover:scale-125">
           <i class="pi pi-bolt text-xs"></i>
         </span>
         <span class="leading-snug">{{ dominicanMotivationMessage() }}</span>
@@ -79,9 +82,9 @@
     </div>
     <div class="flex gap-2">
       <button type="button" (click)="isHistoryDrawerOpen.set(true)"
-        class="h-10 px-3 bg-white border border-stone-200 rounded-full flex items-center justify-center gap-1.5 text-stone-700 hover:border-awakin-sun shadow-xs active:scale-95 transition-all cursor-pointer"
+        class="h-10 px-3 bg-white border border-stone-200 rounded-full flex items-center justify-center gap-1.5 text-stone-700 hover:border-kin-primary shadow-xs active:scale-95 transition-all cursor-pointer"
         [title]="'Entrenamientos completados: ' + currentLabel()">
-        <i class="pi pi-history text-sm text-awakin-sun"></i>
+        <i class="pi pi-history text-sm text-kin-primary"></i>
         @if (selectedDayLogs().length > 0) {
         <span class="text-xs font-black">{{ selectedDayLogs().length }}</span>
         }
@@ -110,7 +113,7 @@
       class="absolute inset-0 bg-gradient-to-t from-stone-950/95 via-stone-950/75 to-stone-900/55 backdrop-blur-[1.5px] pointer-events-none">
     </div>
     } @else {
-    <div class="absolute -right-10 -top-10 w-48 h-48 bg-awakin-sun/20 rounded-full blur-3xl pointer-events-none">
+    <div class="absolute -right-10 -top-10 w-48 h-48 bg-kin-primary/25 rounded-full blur-3xl pointer-events-none">
     </div>
     <i
       class="pi pi-bolt absolute right-[-20px] bottom-[-20px] text-[120px] text-white/5 pointer-events-none rotate-12"></i>
@@ -120,7 +123,7 @@
       <div class="flex items-center justify-between gap-2 mb-3 flex-wrap">
         <div class="flex items-center gap-2 flex-wrap">
           <span
-            class="bg-awakin-sun text-white text-[9px] font-black uppercase tracking-widest px-2.5 py-1 rounded-md shadow-xs">
+            class="bg-kin-primary text-white text-[9px] font-black uppercase tracking-widest px-2.5 py-1 rounded-md shadow-xs">
             {{ selectedRoutineOverrideId() ? 'Rutina Seleccionada' : 'Asignado ' + currentLabel() }}
           </span>
           <span class="text-stone-300 text-[10px] font-bold uppercase tracking-wider flex items-center gap-1">
@@ -155,7 +158,7 @@
 
       <div class="flex items-start justify-between gap-3">
         <h2
-          class="text-2xl sm:text-3xl font-black text-white uppercase italic leading-tight group-hover:text-amber-300 transition-colors">
+          class="text-2xl sm:text-3xl font-black text-white uppercase italic leading-tight group-hover:text-kin-primary transition-colors">
           {{ routine.name }}
         </h2>
         <div
@@ -171,19 +174,19 @@
       <div class="mt-4 pt-3 border-t border-white/15 grid grid-cols-1 sm:grid-cols-12 gap-3 items-center">
         <!-- Columna Izquierda: Ejercicios Clave -->
         <div class="sm:col-span-7 space-y-1.5">
-          <span class="text-[9px] font-black uppercase tracking-wider text-amber-400 block">
+          <span class="text-[9px] font-black uppercase tracking-wider text-kin-secondary block">
             Ejercicios de la Rutina ({{ routine.exercises.length }})
           </span>
           <div class="space-y-1">
             @for (ex of routine.exercises.slice(0, 3); track ex.id; let i = $index) {
             <div class="flex items-center gap-2 text-[11px] text-stone-200 truncate">
-              <span class="text-awakin-sun font-black text-[10px]">{{ i + 1 }}.</span>
+              <span class="text-kin-primary font-black text-[10px]">{{ i + 1 }}.</span>
               <span class="truncate font-semibold">{{ ex.exercise_name || 'Ejercicio #' + ex.exercise_api_id }}</span>
               <span class="text-stone-400 text-[10px] shrink-0">({{ ex.sets.length }}s)</span>
             </div>
             }
             @if (routine.exercises.length > 3) {
-            <div class="text-[10px] text-amber-300/80 font-bold">+{{ routine.exercises.length - 3 }} ejercicios más
+            <div class="text-[10px] text-kin-secondary font-bold">+{{ routine.exercises.length - 3 }} ejercicios más
             </div>
             }
           </div>
@@ -197,7 +200,7 @@
               [muscleBreakdown]="getRoutineMuscleBreakdownWithColors(routine)" />
           </div>
           <div class="flex-1 min-w-0">
-            <span class="text-[8px] font-black uppercase tracking-wider text-amber-400 block mb-1">
+            <span class="text-[8px] font-black uppercase tracking-wider text-kin-secondary block mb-1">
               Músculos a Trabajar
             </span>
             <div class="flex flex-wrap gap-1 max-h-16 overflow-hidden">
@@ -238,11 +241,11 @@
   <!-- DÍA DE DESCANSO / SIN RUTINA ASIGNADA PARA ESTE DÍA -->
   <div class="w-full bg-white border border-stone-200 rounded-[2rem] p-6 mb-6 shadow-sm text-center space-y-3">
     <div
-      class="w-12 h-12 mx-auto rounded-2xl bg-awakin-sun/10 border border-awakin-sun/20 flex items-center justify-center text-awakin-sun">
+      class="w-12 h-12 mx-auto rounded-2xl bg-kin-primary/10 border border-kin-primary/20 flex items-center justify-center text-kin-primary">
       <i class="pi pi-sun text-xl"></i>
     </div>
     <div>
-      <span class="text-[10px] font-black uppercase tracking-widest text-awakin-sun">
+      <span class="text-[10px] font-black uppercase tracking-widest text-kin-primary">
         {{ weekDayLabels[selectedDayOfWeek()].name }}
       </span>
       <h3 class="text-lg font-black text-stone-900 uppercase tracking-tight mt-0.5">
@@ -324,7 +327,7 @@
     <div class="flex items-center justify-between">
       <div>
         <h3 class="text-xs font-black text-stone-900 uppercase tracking-widest flex items-center gap-1.5">
-          <i class="pi pi-calendar text-awakin-sun"></i>
+          <i class="pi pi-calendar text-kin-primary"></i>
           <span>Plan Semanal</span>
         </h3>
         <p class="text-[10px] text-stone-500 font-medium mt-0.5">
@@ -332,7 +335,7 @@
         </p>
       </div>
       <button type="button" (click)="isWeeklyPlanDrawerOpen.set(true)"
-        class="text-[10px] font-black text-awakin-sun hover:underline uppercase tracking-wider cursor-pointer">
+        class="text-[10px] font-black text-kin-primary hover:underline uppercase tracking-wider cursor-pointer">
         Ver Todo
       </button>
     </div>
@@ -355,7 +358,7 @@
         } @else {
         <div class="absolute inset-0 bg-gradient-to-br from-stone-900 via-stone-950 to-stone-900 pointer-events-none">
         </div>
-        <div class="absolute -right-8 -top-8 w-44 h-44 bg-awakin-sun/20 rounded-full blur-3xl pointer-events-none">
+        <div class="absolute -right-8 -top-8 w-44 h-44 bg-kin-primary/20 rounded-full blur-3xl pointer-events-none">
         </div>
         <i
           class="pi pi-bolt absolute right-[-15px] top-[-15px] text-[100px] text-white/5 pointer-events-none rotate-12"></i>
@@ -369,7 +372,7 @@
             <div class="flex items-center justify-between gap-2 mb-2.5">
               <span
                 class="px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider backdrop-blur-md flex items-center gap-1 shadow-xs"
-                [ngClass]="selectedDayOfWeek() === pr.day_of_week ? 'bg-awakin-sun text-white font-black ring-1 ring-white/30' : 'bg-white/20 text-white border border-white/20'">
+                [ngClass]="selectedDayOfWeek() === pr.day_of_week ? 'bg-kin-primary text-white font-black ring-1 ring-white/30' : 'bg-white/20 text-white border border-white/20'">
                 <i class="pi pi-calendar text-[9px]"></i>
                 {{ weekDayLabels[pr.day_of_week].name }}
               </span>
@@ -377,26 +380,26 @@
               <!-- 2. DURACIÓN ESTIMADA -->
               <span
                 class="px-2.5 py-0.5 rounded-full text-[10px] font-bold text-stone-200 bg-black/45 border border-white/10 backdrop-blur-md flex items-center gap-1">
-                <i class="pi pi-clock text-[9px] text-awakin-sun"></i>
+                <i class="pi pi-clock text-[9px] text-kin-primary"></i>
                 ~{{ routine.estimated_minutes || 45 }} min
               </span>
             </div>
 
             <!-- 1. TÍTULO DE LA RUTINA -->
             <h4
-              class="text-base sm:text-lg font-black text-white uppercase italic tracking-tight leading-tight line-clamp-2 drop-shadow-md group-hover:text-amber-300 transition-colors">
+              class="text-base sm:text-lg font-black text-white uppercase italic tracking-tight leading-tight line-clamp-2 drop-shadow-md group-hover:text-kin-primary transition-colors">
               {{ routine.name }}
             </h4>
 
             <!-- 3. # EJERCICIOS Y 4. # SERIES -->
             <div class="flex items-center gap-2 mt-1.5 text-[11px] font-bold text-stone-300 flex-wrap">
               <span class="flex items-center gap-1">
-                <i class="pi pi-list text-[10px] text-awakin-sun"></i>
+                <i class="pi pi-list text-[10px] text-kin-primary"></i>
                 {{ routine.exercises.length }} ejercicios
               </span>
               <span class="text-stone-500">•</span>
               <span class="flex items-center gap-1">
-                <i class="pi pi-sync text-[10px] text-awakin-sun"></i>
+                <i class="pi pi-sync text-[10px] text-kin-primary"></i>
                 {{ routine.total_sets || 0 }} series
               </span>
             </div>
@@ -419,7 +422,7 @@
 
             <div class="flex-1 min-w-0 flex flex-col justify-between py-1 h-28 sm:h-32">
               <div class="space-y-1">
-                <span class="text-[9px] font-black uppercase tracking-wider text-amber-400 block">
+                <span class="text-[9px] font-black uppercase tracking-wider text-kin-secondary block">
                   Enfoque Muscular
                 </span>
                 <div class="flex flex-wrap gap-1 max-h-16 overflow-hidden">
@@ -435,7 +438,7 @@
               </div>
 
               <div
-                class="flex items-center gap-1 text-[10px] font-black text-amber-300 uppercase tracking-wider group-hover:translate-x-1 transition-transform">
+                class="flex items-center gap-1 text-[10px] font-black text-kin-secondary uppercase tracking-wider group-hover:translate-x-1 transition-transform">
                 <span>Ver Rutina</span>
                 <i class="pi pi-arrow-right text-[9px]"></i>
               </div>
@@ -487,7 +490,7 @@
       </div>
       <div class="bg-stone-50 border border-stone-200/70 rounded-2xl px-2.5 py-2 text-center">
         <span class="text-[9px] font-black uppercase text-stone-400 block">Series</span>
-        <span class="text-sm font-black text-awakin-sun">{{ summary.totalSets }}</span>
+        <span class="text-sm font-black text-kin-primary">{{ summary.totalSets }}</span>
       </div>
       <div class="bg-stone-50 border border-stone-200/70 rounded-2xl px-2.5 py-2 text-center">
         <span class="text-[9px] font-black uppercase text-stone-400 block">Volumen</span>
@@ -508,7 +511,7 @@
         [ngClass]="activeChartType() === ct.key
             ? 'bg-white text-stone-900 shadow-xs border border-stone-200/80'
             : 'text-stone-500 hover:text-stone-800'">
-        <i class="pi text-[11px]" [ngClass]="[ct.icon, activeChartType() === ct.key ? 'text-awakin-sun' : '']"></i>
+        <i class="pi text-[11px]" [ngClass]="[ct.icon, activeChartType() === ct.key ? 'text-kin-primary' : '']"></i>
         <span class="truncate">{{ ct.label }}</span>
       </button>
       }
@@ -580,7 +583,7 @@
     <div class="flex justify-between items-center mb-4">
       <h3 class="text-xs font-bold text-stone-800 uppercase tracking-widest">Librería Awakin</h3>
       <button (click)="openExerciseGallery()"
-        class="text-[10px] font-bold text-awakin-sun hover:underline uppercase tracking-wider cursor-pointer">
+        class="text-[10px] font-bold text-kin-primary hover:underline uppercase tracking-wider cursor-pointer">
         Ver Todo
       </button>
     </div>
@@ -589,17 +592,17 @@
       <button (click)="openExerciseGallery()"
         class="w-full bg-white border border-stone-200 rounded-2xl p-4 flex items-center gap-4 shadow-sm active:scale-[0.98] transition-all group cursor-pointer">
         <div
-          class="w-12 h-12 rounded-xl bg-stone-50 flex items-center justify-center text-stone-400 group-hover:text-awakin-sun group-hover:bg-awakin-sun/10 transition-colors">
+          class="w-12 h-12 rounded-xl bg-stone-50 flex items-center justify-center text-stone-400 group-hover:text-kin-primary group-hover:bg-kin-primary/10 transition-colors">
           <i class="pi pi-images text-xl"></i>
         </div>
         <div class="flex-1 text-left">
           <h4
-            class="text-sm font-bold text-stone-800 uppercase tracking-wider group-hover:text-awakin-sun transition-colors">
+            class="text-sm font-bold text-stone-800 uppercase tracking-wider group-hover:text-kin-primary transition-colors">
             Ejercicios
           </h4>
           <p class="text-[10px] font-medium text-stone-500 mt-0.5">Mapa anatómico + catálogo completo en HD</p>
         </div>
-        <i class="pi pi-angle-right text-stone-300 group-hover:text-awakin-sun"></i>
+        <i class="pi pi-angle-right text-stone-300 group-hover:text-kin-primary"></i>
       </button>
     </div>
   </div>
@@ -609,7 +612,7 @@
 <!-- DRAWER: PLAN DE ENTRENAMIENTO SEMANAL (PERMITIR INICIAR CUALQUIER DÍA)    -->
 <!-- ========================================================================= -->
 <p-drawer [(visible)]="isWeeklyPlanDrawerOpen" position="bottom" appendTo="body"
-  [style]="{ height: '90dvh', maxHeight: '90dvh', width: '100%', borderTopLeftRadius: '24px', borderTopRightRadius: '24px', backgroundColor: '#FAFAF9' }"
+  [style]="{ height: '90dvh', maxHeight: '90dvh', width: '100%', borderTopLeftRadius: '24px', borderTopRightRadius: '24px', backgroundColor: 'var(--app-bg)' }"
   styleClass="[&_.p-drawer-content]:!p-4 [&_.p-drawer-header]:!px-5 [&_.p-drawer-header]:!py-4 [&_.p-drawer-header]:!border-b [&_.p-drawer-header]:!border-stone-200 [&_.p-drawer-header]:!bg-white"
   header="Plan Semanal de Entrenamientos">
   <div class="max-w-4xl mx-auto space-y-4 pb-12">
@@ -620,7 +623,7 @@
       <div>
         <div class="flex items-center gap-2">
           <span
-            class="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-awakin-sun/15 text-amber-900 border border-awakin-sun/30">
+            class="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-kin-primary/15 text-kin-primary border border-kin-primary/30">
             Plan Activo
           </span>
           <span class="text-[11px] font-bold text-stone-500">
@@ -648,7 +651,7 @@
       @if (r) {
       <div (click)="openRoutineDetailModal(r, dayNum)"
         class="relative w-full rounded-3xl overflow-hidden shadow-md hover:shadow-xl border border-stone-200/90 bg-stone-950 text-white cursor-pointer group active:scale-[0.99] transition-all duration-300 flex flex-col justify-between min-h-[350px]"
-        [ngClass]="selectedDayOfWeek() === dayNum ? 'ring-2 ring-awakin-sun shadow-awakin-sun/20' : ''">
+        [ngClass]="selectedDayOfWeek() === dayNum ? 'ring-2 ring-kin-primary shadow-kin-primary/20' : ''">
 
         <!-- FONDO DE LA RUTINA URL O DEGRADADO AWAKIN -->
         @if (r.banner_url) {
@@ -660,7 +663,7 @@
         } @else {
         <div class="absolute inset-0 bg-gradient-to-br from-stone-900 via-stone-950 to-stone-900 pointer-events-none">
         </div>
-        <div class="absolute -right-8 -top-8 w-44 h-44 bg-awakin-sun/20 rounded-full blur-3xl pointer-events-none">
+        <div class="absolute -right-8 -top-8 w-44 h-44 bg-kin-primary/20 rounded-full blur-3xl pointer-events-none">
         </div>
         <i
           class="pi pi-bolt absolute right-[-15px] top-[-15px] text-[100px] text-white/5 pointer-events-none rotate-12"></i>
@@ -674,13 +677,13 @@
               <div class="flex items-center gap-1.5 flex-wrap">
                 <span
                   class="px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider backdrop-blur-md flex items-center gap-1 shadow-xs"
-                  [ngClass]="selectedDayOfWeek() === dayNum ? 'bg-awakin-sun text-white font-black ring-1 ring-white/30' : 'bg-white/20 text-white border border-white/20'">
+                  [ngClass]="selectedDayOfWeek() === dayNum ? 'bg-kin-primary text-white font-black ring-1 ring-white/30' : 'bg-white/20 text-white border border-white/20'">
                   <i class="pi pi-calendar text-[9px]"></i>
                   {{ weekDayLabels[dayNum].name }}
                 </span>
                 @if (selectedDayOfWeek() === dayNum) {
                 <span
-                  class="text-[9px] font-black text-amber-300 uppercase tracking-wider bg-black/45 px-2 py-0.5 rounded-full border border-amber-400/30 backdrop-blur-xs">
+                  class="text-[9px] font-black text-kin-secondary uppercase tracking-wider bg-black/45 px-2 py-0.5 rounded-full border border-kin-secondary/40 backdrop-blur-xs">
                   Día Seleccionado
                 </span>
                 }
@@ -688,26 +691,26 @@
 
               <span
                 class="px-2.5 py-0.5 rounded-full text-[10px] font-bold text-stone-200 bg-black/45 border border-white/10 backdrop-blur-md flex items-center gap-1">
-                <i class="pi pi-clock text-[9px] text-awakin-sun"></i>
+                <i class="pi pi-clock text-[9px] text-kin-primary"></i>
                 ~{{ r.estimated_minutes || 45 }} min
               </span>
             </div>
 
             <!-- TÍTULO DE LA RUTINA -->
             <h4
-              class="text-base sm:text-lg font-black text-white uppercase italic tracking-tight leading-tight line-clamp-2 drop-shadow-md group-hover:text-amber-300 transition-colors">
+              class="text-base sm:text-lg font-black text-white uppercase italic tracking-tight leading-tight line-clamp-2 drop-shadow-md group-hover:text-kin-primary transition-colors">
               {{ r.name }}
             </h4>
 
             <!-- # EJERCICIOS Y # SERIES -->
             <div class="flex items-center gap-2 mt-1.5 text-[11px] font-bold text-stone-300 flex-wrap">
               <span class="flex items-center gap-1">
-                <i class="pi pi-list text-[10px] text-awakin-sun"></i>
+                <i class="pi pi-list text-[10px] text-kin-primary"></i>
                 {{ r.exercises.length }} ejercicios
               </span>
               <span class="text-stone-500">•</span>
               <span class="flex items-center gap-1">
-                <i class="pi pi-sync text-[10px] text-awakin-sun"></i>
+                <i class="pi pi-sync text-[10px] text-kin-primary"></i>
                 {{ r.total_sets || 0 }} series
               </span>
             </div>
@@ -732,7 +735,7 @@
             <!-- Músculos foco + Botones -->
             <div class="flex-1 min-w-0 flex flex-col justify-between py-1 h-28 sm:h-32">
               <div class="space-y-1">
-                <span class="text-[9px] font-black uppercase tracking-wider text-amber-400 block">
+                <span class="text-[9px] font-black uppercase tracking-wider text-kin-secondary block">
                   Enfoque Muscular
                 </span>
                 <div class="flex flex-wrap gap-1 max-h-14 overflow-hidden">
@@ -768,7 +771,7 @@
       <div
         class="bg-white border border-stone-200/90 rounded-3xl p-5 shadow-2xs flex items-center justify-between gap-3">
         <div class="flex items-center gap-3">
-          <div class="w-10 h-10 rounded-2xl bg-amber-500/10 text-awakin-sun flex items-center justify-center">
+          <div class="w-10 h-10 rounded-2xl bg-kin-primary/10 text-kin-primary flex items-center justify-center">
             <i class="pi pi-sun text-lg"></i>
           </div>
           <div>
@@ -798,7 +801,7 @@
 <!-- DRAWER: HISTORIAL DE ENTRENAMIENTOS (WORKOUT LOGS)                        -->
 <!-- ========================================================================= -->
 <p-drawer [(visible)]="isHistoryDrawerOpen" position="bottom" appendTo="body"
-  [style]="{ height: '90dvh', maxHeight: '90dvh', width: '100%', borderTopLeftRadius: '24px', borderTopRightRadius: '24px', backgroundColor: '#FAFAF9' }"
+  [style]="{ height: '90dvh', maxHeight: '90dvh', width: '100%', borderTopLeftRadius: '24px', borderTopRightRadius: '24px', backgroundColor: 'var(--app-bg)' }"
   styleClass="[&_.p-drawer-content]:!p-4 [&_.p-drawer-header]:!px-5 [&_.p-drawer-header]:!py-4 [&_.p-drawer-header]:!border-b [&_.p-drawer-header]:!border-stone-200 [&_.p-drawer-header]:!bg-white"
   [header]="'Entrenamientos (' + currentLabel() + ')'">
   <div class="max-w-3xl mx-auto space-y-3 pb-10">

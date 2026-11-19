@@ -1,10 +1,16 @@
 <p-toolbar styleClass="bg-transparent border-none p-0 mb-1.5">
   <ng-template pTemplate="start">
     <button
-      (click)="onMenuClick.emit()"
-      class="w-10 h-10 flex items-center justify-center text-black active:opacity-40 transition-all"
+      type="button"
+      (click)="themeService.toggleTheme()"
+      class="w-10 h-10 flex items-center justify-center rounded-full hover:bg-stone-100 active:scale-90 transition-all text-stone-700 cursor-pointer"
+      [title]="themeService.isDarkMode() ? 'Cambiar a Modo Día' : 'Cambiar a Modo Noche'"
+      [attr.aria-label]="themeService.isDarkMode() ? 'Cambiar a Modo Día' : 'Cambiar a Modo Noche'"
     >
-      <i class="pi pi-ellipsis-h text-xl"></i>
+      <i
+        class="pi text-lg transition-transform duration-300"
+        [ngClass]="themeService.isDarkMode() ? 'pi-sun text-amber-400' : 'pi-moon text-stone-700'"
+      ></i>
     </button>
   </ng-template>
 
@@ -25,7 +31,7 @@
           class="flex items-center gap-1 pl-5 pe-2 py-2 active:bg-stone-100 transition-colors group border-r border-stone-200"
         >
           <i
-            class="pi pi-calendar text-sm text-awakin-sun group-hover:rotate-12 transition-transform"
+            class="pi pi-calendar text-sm text-kin-primary group-hover:rotate-12 transition-transform"
           ></i>
           <span
             class="text-sm font-bold tracking-wide capitalize text-gray-800 min-w-[60px] text-center"
@@ -39,7 +45,7 @@
           class="px-4 py-2 hover:bg-stone-100 active:bg-stone-200 transition-colors flex items-center justify-center group"
         >
           <i
-            class="pi pi-chevron-down inline-block transform transition-all duration-300 text-[10px] text-stone-400 group-hover:text-awakin-sun"
+            class="pi pi-chevron-down inline-block transform transition-all duration-300 text-[10px] text-stone-400 group-hover:text-kin-primary"
             [ngClass]="{ 'rotate-180': isMonthView() }"
           ></i>
         </button>
@@ -58,7 +64,7 @@
     <div class="flex items-center gap-1.5 pr-2">
       <i
         class="pi pi-bolt text-xl"
-        [ngClass]="streak() > 0 ? 'text-awakin-sun animate-pulse' : 'text-stone-300'"
+        [ngClass]="streak() > 0 ? 'text-kin-primary animate-pulse' : 'text-stone-300'"
       ></i>
       <span
         class="text-xl font-bold font-mono"

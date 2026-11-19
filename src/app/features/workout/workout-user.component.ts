@@ -10,6 +10,7 @@ import { WeekCalendarHeaderComponent } from '../../components/week-calendar/week
 import { AthleteService } from '../../core/services/athlete.service';
 import { AuthService } from '../../core/services/auth.service';
 import { StreakService, formatToDateKey } from '../../core/services/streak.service';
+import { ThemeService } from '../../core/services/theme.service';
 import { WorkoutSupabaseService } from './services/workout-supabase.service';
 import { ActiveWorkoutSessionService } from './services/active-workout-session.service';
 import { ExerciseApiService } from './services/exercise-api.service';
@@ -87,6 +88,7 @@ export class WorkoutUserComponent implements OnInit {
   public authService = inject(AuthService);
   public workoutService = inject(WorkoutSupabaseService);
   public streakService = inject(StreakService);
+  public themeService = inject(ThemeService);
   public activeSession = inject(ActiveWorkoutSessionService);
   public exerciseApi = inject(ExerciseApiService);
 
@@ -485,20 +487,21 @@ export class WorkoutUserComponent implements OnInit {
 
     const values = Object.values(buckets);
     const hasAnyData = values.some((v) => v > 0);
-    const colorSun = '#FE970A';
-    const colorSunLight = 'rgba(254, 151, 10, 0.22)';
+    const colorPrimary = this.themeService.kinPrimaryColor();
+    const colorSecondary = this.themeService.kinSecondaryColor();
+    const colorPrimaryLight = this.themeService.withAlpha(colorPrimary, 0.22);
 
     return {
       labels: Object.keys(buckets),
       datasets: [
         {
           label: `Series (${this.analyticsRangeTitle()})`,
-          backgroundColor: colorSunLight,
-          borderColor: colorSun,
-          pointBackgroundColor: colorSun,
+          backgroundColor: colorPrimaryLight,
+          borderColor: colorPrimary,
+          pointBackgroundColor: colorSecondary,
           pointBorderColor: '#fff',
           pointHoverBackgroundColor: '#fff',
-          pointHoverBorderColor: colorSun,
+          pointHoverBorderColor: colorPrimary,
           data: hasAnyData ? values : [0, 0, 0, 0, 0, 0]
         }
       ]
@@ -508,14 +511,16 @@ export class WorkoutUserComponent implements OnInit {
   // Gráfico de Barras: Volumen levantado por sesión en el rango
   volumeChartData = computed(() => {
     const logs = this.filteredAnalyticsLogs();
+    const colorPrimary = this.themeService.kinPrimaryColor();
+    const colorSecondary = this.themeService.kinSecondaryColor();
     return {
       labels: logs.map((l) => this.formatShortChartDate(l.workout_date)),
       datasets: [
         {
           label: `Volumen (${this.analyticsSummary().unit})`,
           data: logs.map((l) => Math.round(Number(l.total_volume || 0))),
-          backgroundColor: 'rgba(254, 151, 10, 0.85)',
-          hoverBackgroundColor: '#FE970A',
+          backgroundColor: this.themeService.withAlpha(colorPrimary, 0.85),
+          hoverBackgroundColor: colorSecondary,
           borderRadius: 8,
           barThickness: logs.length > 10 ? 12 : 22
         }

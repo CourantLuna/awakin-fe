@@ -34,17 +34,17 @@
           <svg viewBox="0 0 320 60" class="overflow-visible w-full h-auto drop-shadow-md" xmlns="http://www.w3.org/2000/svg">
               <path #scalePath id="mainCurve" d="M3 10C3 10 78 40 160 40C242 40 317 10 317 10" fill="none"
                   stroke="transparent" />
-              <path d="M3 10C3 10 78 40 160 40C242 40 317 10 317 10" fill="none" stroke="#F5F5F4" stroke-width="8"
+              <path d="M3 10C3 10 78 40 160 40C242 40 317 10 317 10" fill="none" stroke="var(--app-surface-elevated)" stroke-width="8"
                   stroke-linecap="round" />
-              <path d="M3 10C3 10 78 40 160 40C242 40 317 10 317 10" fill="none" stroke="#FE970A" stroke-width="8"
+              <path d="M3 10C3 10 78 40 160 40C242 40 317 10 317 10" fill="none" stroke="var(--kin-primary)" stroke-width="8"
                   stroke-linecap="round" [attr.stroke-dasharray]="getStrokeDash(totalEated())"
                   class="transition-all duration-1000 ease-out" />
               <path d="M3 10C3 10 78 40 160 40C242 40 317 10 317 10" fill="none" stroke="#F51212" stroke-width="4"
                   stroke-linecap="round" [attr.stroke-dasharray]="getStrokeDash(burnedKcals())"
                   class="transition-all duration-1000 ease-out delay-200" />
               <g [attr.transform]="getMarkerTransform(targetGoal())" class="transition-all duration-700">
-                  <line x1="0" y1="-12" x2="0" y2="12" stroke="var(--color-awakin-sun)" stroke-width="2" stroke-dasharray="3 2" />
-                  <text x="0" y="24" text-anchor="middle" fill="var(--color-awakin-sun)"
+                  <line x1="0" y1="-12" x2="0" y2="12" stroke="var(--kin-secondary)" stroke-width="2" stroke-dasharray="3 2" />
+                  <text x="0" y="24" text-anchor="middle" fill="var(--kin-secondary)"
                       class="text-[8px] font-black uppercase tracking-tighter">Goal</text>
               </g>
           </svg>

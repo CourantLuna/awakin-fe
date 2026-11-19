@@ -1,68 +1,367 @@
 /* 1. Importación del Core de Tailwind v4 */
 @import "tailwindcss";
 @import "primeicons/primeicons.css";
-/* 2. Definición del TEMA AWAKIN (Sunrise Tech) */
+
+/* 2. Definición del TEMA AWAKIN (Sunrise Tech) + Tokens Kin */
 @theme {
-  /* El Sol (Sistema / Core) */
-  /* Tu Naranja Principal */
-  --color-awakin-sun: #fe970a;  
-  /* Hover más oscuro */
-    
-  --color-awakin-sun-dim: #E58500;  
-  /* La Base (Texto / UI Neutra) */
-  --color-awakin-stone: #93918B;    /* Gris Muted */
-  --color-awakin-base: #FAFAF9;     /* Fondo Blanco Hueso */
-  --color-awakin-surface: #F3F4F6;  /* Gris Nube (Tarjetas) */
+  /* El Sol (Sistema / Core - Fijo Awakin para CTAs e iconos de marca) */
+  --color-awakin-sun: #fe970a;
+  --color-awakin-sun-dim: #e58500;
+
+  /* Colores Dinámicos del Kin (fallback automático al tema Awakin si no hay Kin) */
+  --color-kin-primary: var(--kin-primary);
+  --color-kin-secondary: var(--kin-secondary);
+
+  /* La Base (Conectada a las 4 Variables Maestras Modo Día/Noche) */
+  --color-awakin-base: var(--app-bg);
+  --color-awakin-surface: var(--app-surface);
+  --color-awakin-stone: var(--app-muted);
+  --color-awakin-text: var(--app-text);
 
   /* Los Módulos (Semánticos) */
-  --color-module-intake: #3E9F31;   /* Verde Naturaleza */
-  --color-module-workout: #1E74B2;  /* Azul Oxígeno */
-  --color-module-kin: #8E44AD;      /* Violeta Tribu */
-  --color-module-avatar: #C0392B;   /* Terracota Identidad */
-}
-
-/* 3. Mapeo de PrimeNG a tu Paleta */
-/* Esto engaña a PrimeNG para que crea que sus colores por defecto son los tuyos */
-:root {
-    /* Mapeo del Color Primario (Naranja Awakin) */
-    --p-primary-50: #fff7ed;
-    --p-primary-100: #ffedd5;
-    --p-primary-200: #fed7aa;
-    --p-primary-300: #fdba74;
-    --p-primary-400: #fb923c;
-    --p-primary-500: #FE970A; /* <--- TU COLOR BASE (El Sol) */
-    --p-primary-600: #ea580c;
-    --p-primary-700: #c2410c;
-    --p-primary-800: #9a3412;
-    --p-primary-900: #7c2d12;
-    --p-primary-950: #431407;
-
-    /* Fondo y Texto Base */
-    --p-content-background: #FAFAF9; /* Tu blanco hueso */
-    --p-text-color: #1f2937;         /* Gris muy oscuro para lectura */
-    --p-text-muted-color: #93918B;   /* Tu gris piedra */
-}
-
-/* Opcional: Ajustes finos para que se sienta más "App Nativa" */
-html,
-body {
-    background-color: var(--color-awakin-base);
-    color: #1f2937;
-    -webkit-font-smoothing: antialiased;
-    touch-action: manipulation;
+  --color-module-intake: #3e9f31;   /* Verde Naturaleza */
+  --color-module-workout: #1e74b2;  /* Azul Oxígeno */
+  --color-module-kin: #8e44ad;      /* Violeta Tribu */
+  --color-module-avatar: #c0392b;   /* Terracota Identidad */
 }
 
 /* ==========================================================================
-   4. PREVENCIÓN DE AUTO-ZOOM EN DISPOSITIVOS MÓVILES (iOS / Android)
+   3. LAS 4 VARIABLES MAESTRAS DE TEMA (Modo Día / Modo Noche) + VARIACIONES
+   Todas las superficies, bordes, textos y tonos de la app derivan de estas 4.
+   ========================================================================== */
+:root {
+  /* 4 Variables Maestras Modo Día */
+  --app-bg: #fafaf9;
+  --app-surface: #ffffff;
+  --app-text: #1c1917;
+  --app-muted: #78716c;
+
+  /* Colores del Kin (por defecto Tema Awakin; actualizados dinámicamente por ThemeService) */
+  --kin-primary: #fe970a;
+  --kin-secondary: #e58500;
+
+  /* Mapeo del Color Primario PrimeNG (Naranja Awakin) */
+  --p-primary-50: #fff7ed;
+  --p-primary-100: #ffedd5;
+  --p-primary-200: #fed7aa;
+  --p-primary-300: #fdba74;
+  --p-primary-400: #fb923c;
+  --p-primary-500: #fe970a;
+  --p-primary-600: #ea580c;
+  --p-primary-700: #c2410c;
+  --p-primary-800: #9a3412;
+  --p-primary-900: #7c2d12;
+  --p-primary-950: #431407;
+}
+
+html.dark {
+  /* 4 Variables Maestras Modo Noche */
+  --app-bg: #0c0a09;
+  --app-surface: #171412;
+  --app-text: #f5f5f4;
+  --app-muted: #a8a29e;
+  color-scheme: dark;
+}
+
+:root,
+html.dark {
+  /* Tonos y variaciones derivados automáticamente de las 4 variables maestras */
+  --app-surface-subtle: color-mix(in srgb, var(--app-surface) 93%, var(--app-text) 7%);
+  --app-surface-elevated: color-mix(in srgb, var(--app-surface) 86%, var(--app-text) 14%);
+  --app-surface-hover: color-mix(in srgb, var(--app-surface) 78%, var(--app-text) 22%);
+  --app-border-subtle: color-mix(in srgb, var(--app-muted) 16%, var(--app-surface) 84%);
+  --app-border: color-mix(in srgb, var(--app-muted) 26%, var(--app-surface) 74%);
+  --app-border-strong: color-mix(in srgb, var(--app-muted) 40%, var(--app-surface) 60%);
+  --app-text-secondary: color-mix(in srgb, var(--app-text) 82%, var(--app-muted) 18%);
+  --app-text-subtle: color-mix(in srgb, var(--app-muted) 65%, var(--app-surface) 35%);
+
+  /* Mapeo PrimeNG a las variables derivadas */
+  --p-content-background: var(--app-surface);
+  --p-text-color: var(--app-text);
+  --p-text-muted-color: var(--app-muted);
+}
+
+/* Ajustes base globales */
+html,
+body {
+  background-color: var(--app-bg);
+  color: var(--app-text);
+  -webkit-font-smoothing: antialiased;
+  touch-action: manipulation;
+  transition: background-color 0.25s ease, color 0.25s ease;
+}
+
+/* ==========================================================================
+   4. ADAPTACIÓN AUTOMÁTICA DE SUPERFICIES, TEXTOS, BORDES Y PRIMENG EN MODO NOCHE
+   ========================================================================== */
+html.dark .bg-\[\#FAFAF9\],
+html.dark .bg-awakin-base {
+  background-color: var(--app-bg);
+}
+
+html.dark .bg-white {
+  background-color: var(--app-surface);
+}
+
+html.dark .bg-white\/95 {
+  background-color: color-mix(in srgb, var(--app-surface) 95%, transparent);
+}
+
+html.dark .bg-white\/90 {
+  background-color: color-mix(in srgb, var(--app-surface) 90%, transparent);
+}
+
+html.dark .bg-white\/80 {
+  background-color: color-mix(in srgb, var(--app-surface) 80%, transparent);
+}
+
+html.dark .bg-white\/60 {
+  background-color: color-mix(in srgb, var(--app-surface) 65%, transparent);
+}
+
+html.dark .bg-stone-50 {
+  background-color: var(--app-surface-subtle);
+}
+
+html.dark .bg-stone-50\/50,
+html.dark .bg-stone-50\/60,
+html.dark .bg-stone-50\/70,
+html.dark .bg-stone-50\/80 {
+  background-color: color-mix(in srgb, var(--app-surface-subtle) 80%, transparent);
+}
+
+html.dark .bg-stone-100,
+html.dark .bg-stone-100\/50,
+html.dark .bg-stone-100\/60,
+html.dark .bg-stone-100\/70,
+html.dark .bg-stone-100\/80,
+html.dark .bg-stone-100\/90 {
+  background-color: var(--app-surface-elevated);
+}
+
+html.dark .bg-stone-200,
+html.dark .bg-stone-200\/60,
+html.dark .bg-stone-200\/70,
+html.dark .bg-stone-200\/80,
+html.dark .bg-stone-200\/90 {
+  background-color: var(--app-surface-hover);
+}
+
+html.dark .bg-stone-900 {
+  background-color: var(--app-surface-elevated);
+  border-color: var(--app-border-strong);
+}
+
+html.dark .hover\:bg-white:hover,
+html.dark .focus\:bg-white:focus {
+  background-color: var(--app-surface);
+}
+
+html.dark .hover\:bg-stone-50:hover,
+html.dark .hover\:bg-stone-100:hover,
+html.dark .hover\:bg-stone-100\/60:hover,
+html.dark .hover\:bg-stone-100\/70:hover,
+html.dark .hover\:bg-stone-200:hover,
+html.dark .hover\:bg-stone-200\/80:hover,
+html.dark .hover\:bg-stone-300:hover {
+  background-color: var(--app-surface-hover);
+}
+
+html.dark .hover\:bg-stone-800:hover {
+  background-color: var(--app-surface-hover);
+}
+
+/* Bordes en Modo Noche */
+html.dark .border-stone-50,
+html.dark .border-stone-100,
+html.dark .border-stone-100\/60 {
+  border-color: var(--app-border-subtle);
+}
+
+html.dark .border-stone-200,
+html.dark .border-stone-200\/40,
+html.dark .border-stone-200\/50,
+html.dark .border-stone-200\/60,
+html.dark .border-stone-200\/70,
+html.dark .border-stone-200\/80,
+html.dark .border-stone-200\/90 {
+  border-color: var(--app-border);
+}
+
+html.dark .border-stone-300 {
+  border-color: var(--app-border-strong);
+}
+
+html.dark .ring-stone-900 {
+  --tw-ring-color: var(--app-text);
+}
+
+html.dark .ring-offset-2 {
+  --tw-ring-offset-color: var(--app-surface);
+}
+
+/* Textos en Modo Noche */
+html.dark .text-black,
+html.dark .text-gray-900,
+html.dark .text-stone-900 {
+  color: var(--app-text);
+}
+
+html.dark .text-gray-800,
+html.dark .text-stone-800,
+html.dark .text-stone-700 {
+  color: var(--app-text-secondary);
+}
+
+html.dark .text-gray-600,
+html.dark .text-stone-600,
+html.dark .text-stone-500,
+html.dark .text-stone-400 {
+  color: var(--app-muted);
+}
+
+html.dark .hover\:text-black:hover,
+html.dark .hover\:text-stone-900:hover,
+html.dark .hover\:text-stone-800:hover,
+html.dark .hover\:text-stone-700:hover {
+  color: var(--app-text);
+}
+
+html.dark input::placeholder,
+html.dark textarea::placeholder {
+  color: var(--app-muted);
+}
+
+/* Contraste de texto oscuro sobre botones Awakin Sun o Kin Primary */
+html.dark .bg-awakin-sun.text-stone-950,
+html.dark .bg-awakin-sun.text-stone-900,
+html.dark .from-awakin-sun.text-stone-950,
+html.dark .bg-kin-primary.text-stone-950 {
+  color: #0c0a09;
+}
+
+/* Badges semánticos suaves en Modo Noche */
+html.dark .bg-emerald-50 {
+  background-color: color-mix(in srgb, #10b981 14%, var(--app-surface));
+}
+html.dark .border-emerald-100,
+html.dark .border-emerald-200,
+html.dark .border-emerald-200\/70 {
+  border-color: color-mix(in srgb, #10b981 32%, var(--app-surface));
+}
+html.dark .text-emerald-700,
+html.dark .text-emerald-800 {
+  color: #6ee7b7;
+}
+
+html.dark .bg-amber-50,
+html.dark .bg-amber-50\/70,
+html.dark .bg-amber-50\/80 {
+  background-color: color-mix(in srgb, #f59e0b 14%, var(--app-surface));
+}
+html.dark .border-amber-100,
+html.dark .border-amber-200,
+html.dark .border-amber-200\/70,
+html.dark .border-amber-200\/80 {
+  border-color: color-mix(in srgb, #f59e0b 32%, var(--app-surface));
+}
+html.dark .text-amber-700,
+html.dark .text-amber-800,
+html.dark .text-amber-900 {
+  color: #fcd34d;
+}
+
+html.dark .bg-sky-50 {
+  background-color: color-mix(in srgb, #0ea5e9 14%, var(--app-surface));
+}
+html.dark .border-sky-100,
+html.dark .border-sky-200 {
+  border-color: color-mix(in srgb, #0ea5e9 32%, var(--app-surface));
+}
+html.dark .text-sky-700 {
+  color: #7dd3fc;
+}
+
+html.dark .bg-orange-50,
+html.dark .bg-orange-50\/80 {
+  background-color: color-mix(in srgb, #f97316 14%, var(--app-surface));
+}
+html.dark .border-orange-100,
+html.dark .border-orange-200,
+html.dark .border-orange-200\/80 {
+  border-color: color-mix(in srgb, #f97316 32%, var(--app-surface));
+}
+
+html.dark .bg-red-50,
+html.dark .bg-rose-50 {
+  background-color: color-mix(in srgb, #ef4444 14%, var(--app-surface));
+}
+html.dark .border-red-200,
+html.dark .border-red-200\/80,
+html.dark .border-rose-200 {
+  border-color: color-mix(in srgb, #ef4444 32%, var(--app-surface));
+}
+html.dark .text-red-700,
+html.dark .text-red-900 {
+  color: #fca5a5;
+}
+
+/* Componentes PrimeNG en Modo Noche */
+html.dark .p-dialog,
+html.dark .p-dialog-header,
+html.dark .p-dialog-content,
+html.dark .p-dialog-footer,
+html.dark .p-drawer,
+html.dark .p-drawer-header,
+html.dark .p-drawer-content,
+html.dark .p-drawer-footer {
+  background-color: var(--app-surface);
+  color: var(--app-text);
+  border-color: var(--app-border);
+}
+
+html.dark .p-accordionpanel,
+html.dark .p-accordionheader,
+html.dark .p-accordioncontent-content {
+  background-color: var(--app-surface);
+  color: var(--app-text);
+  border-color: var(--app-border);
+}
+
+html.dark .p-select,
+html.dark .p-inputtext {
+  background-color: var(--app-surface-subtle);
+  color: var(--app-text);
+  border-color: var(--app-border);
+}
+
+/* Loaders en Modo Noche */
+html.dark .intake-loader--overlay,
+html.dark .intake-loader--overlay .intake-loader__backdrop,
+html.dark .workout-loader--overlay,
+html.dark .workout-loader--overlay .workout-loader__backdrop {
+  background-color: var(--app-bg);
+  background: var(--app-bg);
+}
+
+html.dark .intake-loader--inline,
+html.dark .intake-loader--inline .intake-loader__backdrop-inline,
+html.dark .workout-loader--inline,
+html.dark .workout-loader--inline .workout-loader__backdrop-inline {
+  background-color: color-mix(in srgb, var(--app-bg) 96%, transparent);
+}
+
+/* ==========================================================================
+   5. PREVENCIÓN DE AUTO-ZOOM EN DISPOSITIVOS MÓVILES (iOS / Android)
    En iOS Safari / WebKit PWA, cualquier input/select/textarea con font-size < 16px
    activa un zoom de cámara automático y forzado al recibir foco.
    Fijar un tamaño base mínimo de 16px en pantallas móviles previene el auto-zoom
    de raíz sin alterar la legibilidad ni el diseño desktop.
    ========================================================================== */
 @media screen and (max-width: 768px) {
-    input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]),
-    select,
-    textarea {
-        font-size: 16px !important;
-    }
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]),
+  select,
+  textarea {
+    font-size: 16px !important;
+  }
 }

@@ -364,14 +364,14 @@ private navigateTime(amount: number, unit: 'days' | 'months') {
 
     if (active) {
       return {
-        'bg-awakin-sun text-white font-black shadow-xs shadow-awakin-sun/30': true,
+        'bg-kin-primary text-white font-black shadow-xs shadow-kin-primary/30': true,
         'ring-2 ring-stone-900 ring-offset-2 scale-110 shadow-md': selected,
         'scale-100': !selected,
       };
     }
 
     return {
-      'text-awakin-sun font-bold': today && !selected,
+      'text-kin-primary font-bold': today && !selected,
       'text-stone-900 font-bold': selected,
       'text-stone-800': !selected && !today && !this.isFuture(day.fullDate),
       'text-stone-300': this.isFuture(day.fullDate),
@@ -392,13 +392,13 @@ private navigateTime(amount: number, unit: 'days' | 'months') {
     const active = this.hasActivity(day);
     if (active) {
       return {
-        'bg-awakin-sun': true,
+        'bg-kin-primary': true,
         'opacity-80': true,
       };
     }
 
     return {
-      'bg-awakin-sun': day.status === 'goal' || this.isToday(day.fullDate),
+      'bg-kin-secondary': day.status === 'goal' || this.isToday(day.fullDate),
       'bg-module-intake': day.status === 'partial',
       'bg-module-avatar': day.status === 'excess',
       'border-b-2 border-stone-800': this.isSelected(day),

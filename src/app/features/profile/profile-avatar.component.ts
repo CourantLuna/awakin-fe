@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { firstValueFrom } from 'rxjs';
 import { PrimeNGModule } from '../../shared/prime-ng.module';
 import { AuthService } from '../../core/services/auth.service';
+import { ThemeService } from '../../core/services/theme.service';
 import {
   AthleteService,
   AthleteProfile,
@@ -56,6 +57,7 @@ export class ProfileAvatarComponent implements OnInit {
   public authService = inject(AuthService);
   public athleteService = inject(AthleteService);
   public workoutService = inject(WorkoutSupabaseService);
+  public themeService = inject(ThemeService);
 
   // Estado del perfil del atleta activo (conectado a la BD Supabase)
   athlete = this.athleteService.currentAthlete;

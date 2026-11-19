@@ -33,16 +33,16 @@
 
     <div class="px-4 mt-2 relative z-10">
       <button (click)="openFuelMatrix()"
-        class="w-full relative overflow-hidden bg-white border border-stone-200 rounded-2xl p-4 flex items-center justify-between group transition-all active:scale-[0.98] shadow-[0_4px_20px_rgb(0,0,0,0.03)] hover:shadow-[0_4px_20px_rgb(0,0,0,0.06)] hover:border-awakin-sun/30">
+        class="w-full relative overflow-hidden bg-white border border-stone-200 rounded-2xl p-4 flex items-center justify-between group transition-all active:scale-[0.98] shadow-[0_4px_20px_rgb(0,0,0,0.03)] hover:shadow-[0_4px_20px_rgb(0,0,0,0.06)] hover:border-kin-primary/30">
         <div class="absolute inset-0 bg-gradient-to-r from-stone-50 to-white"></div>
 
         <div
-          class="absolute inset-0 bg-gradient-to-r from-awakin-sun/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500">
+          class="absolute inset-0 bg-gradient-to-r from-kin-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500">
         </div>
 
         <div class="flex items-center gap-3 relative z-10">
           <div
-            class="w-10 h-10 rounded-xl bg-awakin-sun/10 border border-awakin-sun/20 flex items-center justify-center text-awakin-sun group-hover:scale-105 transition-transform duration-300">
+            class="w-10 h-10 rounded-xl bg-kin-primary/10 border border-kin-primary/20 flex items-center justify-center text-kin-primary group-hover:scale-105 transition-transform duration-300">
             <i class="pi pi-map text-lg"></i>
           </div>
 
@@ -57,7 +57,7 @@
         </div>
 
         <div
-          class="relative z-10 w-8 h-8 rounded-full bg-stone-100 flex items-center justify-center text-stone-400 group-hover:text-awakin-sun group-hover:bg-awakin-sun/10 transition-all">
+          class="relative z-10 w-8 h-8 rounded-full bg-stone-100 flex items-center justify-center text-stone-400 group-hover:text-kin-primary group-hover:bg-kin-primary/10 transition-all">
           <i class="pi pi-arrow-right text-xs"></i>
         </div>
       </button>
@@ -72,7 +72,7 @@
             </h3>
             @if (currentDayMenu(); as menu) {
             <span
-              class="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-awakin-sun/10 text-awakin-sun border border-awakin-sun/20 truncate">
+              class="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-kin-primary/10 text-kin-primary border border-kin-primary/20 truncate">
               {{ menu.name }}
             </span>
             }
@@ -135,7 +135,7 @@
               </h3>
               <div class="flex items-center gap-1.5 text-[11px] font-bold text-stone-400 mt-1">
                 <span class="text-stone-700 font-extrabold flex items-center gap-1">
-                  <i class="pi pi-bolt text-awakin-sun text-[10px]"></i>
+                  <i class="pi pi-bolt text-kin-primary text-[10px]"></i>
                   {{ totals.kcal }} kcal
                 </span>
                 <span class="text-stone-300">•</span>
@@ -183,13 +183,13 @@
               <button type="button" (click)="openStoryForMeal(mealType, $event)"
                 class="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-black bg-stone-900 hover:bg-stone-800 text-white shadow-xs transition-all active:scale-95 cursor-pointer"
                 title="Compartir historia completa de {{ def.title }}">
-                <i class="pi pi-share-alt text-xs text-awakin-sun"></i>
+                <i class="pi pi-share-alt text-xs text-kin-primary"></i>
                 <span>Compartir todo</span>
               </button>
               } @else if (canLogForSelectedDate()) {
               <!-- Parcial en día activo: Icono circular junto al botón de registro restante -->
               <button type="button" (click)="openStoryForMeal(mealType, $event)"
-                class="w-7 h-7 rounded-full bg-stone-100 hover:bg-stone-200 text-stone-600 hover:text-awakin-sun flex items-center justify-center transition-all cursor-pointer shadow-2xs"
+                class="w-7 h-7 rounded-full bg-stone-100 hover:bg-stone-200 text-stone-600 hover:text-kin-primary flex items-center justify-center transition-all cursor-pointer shadow-2xs"
                 title="Compartir historia de los alimentos registrados de {{ def.title }}">
                 <i class="pi pi-share-alt text-[10px]"></i>
               </button>
@@ -198,7 +198,7 @@
               <button type="button" (click)="openStoryForMeal(mealType, $event)"
                 class="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-black bg-stone-900 hover:bg-stone-800 text-white shadow-xs transition-all active:scale-95 cursor-pointer"
                 title="Compartir historia de los {{ loggedCount }} alimentos registrados de {{ def.title }}">
-                <i class="pi pi-share-alt text-xs text-awakin-sun"></i>
+                <i class="pi pi-share-alt text-xs text-kin-primary"></i>
                 <span>Compartir ({{ loggedCount }})</span>
               </button>
               }
@@ -258,7 +258,7 @@
 
                 @if (food.isLogged) {
                 <button type="button" (click)="openStoryForFood(food, $event)" title="Compartir Historia"
-                  class="w-6 h-6 rounded-full bg-stone-100 hover:bg-stone-200 text-stone-500 hover:text-awakin-sun flex items-center justify-center transition-all cursor-pointer">
+                  class="w-6 h-6 rounded-full bg-stone-100 hover:bg-stone-200 text-stone-500 hover:text-kin-primary flex items-center justify-center transition-all cursor-pointer">
                   <i class="pi pi-share-alt text-[10px]"></i>
                 </button>
                 }
@@ -333,11 +333,11 @@
         <div class="flex items-center justify-between">
           <div class="flex items-center gap-1.5">
             <span
-              class="text-[10px] font-black uppercase tracking-wider text-awakin-sun bg-awakin-sun/10 px-2 py-0.5 rounded">
+              class="text-[10px] font-black uppercase tracking-wider text-kin-primary bg-kin-primary/10 px-2 py-0.5 rounded">
               {{ mealDefinitions[selectedMealType()].title }}
             </span>
             <label class="text-[10px] font-bold uppercase tracking-wider text-stone-500">
-              Alimentos a registrar <span class="text-awakin-sun">*</span>
+              Alimentos a registrar <span class="text-kin-primary">*</span>
             </label>
           </div>
 
@@ -346,7 +346,7 @@
           <div class="flex items-center gap-2">
             @if (selectedFoodItemsForLog().length < mealFoods.length) { <button type="button"
               (click)="selectAllFoodsForCurrentMeal()"
-              class="text-[10px] font-bold text-awakin-sun hover:underline cursor-pointer">
+              class="text-[10px] font-bold text-kin-primary hover:underline cursor-pointer">
               Marcar todos ({{ mealFoods.length }})
               </button>
               } @else {
@@ -366,7 +366,7 @@
           <div (click)="toggleFoodSelectionForLog(food)"
             class="flex items-center justify-between p-2.5 rounded-xl border cursor-pointer transition-all active:scale-[0.99]"
             [ngClass]="isSelected
-              ? 'bg-white border-awakin-sun/80 shadow-xs ring-1 ring-awakin-sun/40'
+              ? 'bg-white border-kin-primary/80 shadow-xs ring-1 ring-kin-primary/40'
               : 'bg-white/60 border-stone-200/70 hover:bg-white hover:border-stone-300 opacity-75'">
 
             <div class="flex items-center gap-2.5 min-w-0 flex-1">
@@ -397,7 +397,7 @@
 
             <!-- Checkbox estilizado -->
             <div class="w-5 h-5 rounded-lg flex items-center justify-center shrink-0 transition-all"
-              [ngClass]="isSelected ? 'bg-awakin-sun text-white shadow-2xs' : 'border border-stone-300 bg-white'">
+              [ngClass]="isSelected ? 'bg-kin-primary text-white shadow-2xs' : 'border border-stone-300 bg-white'">
               <i class="pi pi-check text-[10px] font-black"
                 [ngClass]="{'opacity-100': isSelected, 'opacity-0': !isSelected}"></i>
             </div>
@@ -413,7 +413,7 @@
             <span class="font-bold text-stone-600">
               Total Seleccionado ({{ totals.count }} {{ totals.count === 1 ? 'alimento' : 'alimentos' }}):
             </span>
-            <span class="font-black text-awakin-sun bg-awakin-sun/10 px-2 py-0.5 rounded-lg tabular-nums">
+            <span class="font-black text-kin-primary bg-kin-primary/10 px-2 py-0.5 rounded-lg tabular-nums">
               {{ totals.kcal }} kcal
             </span>
           </div>
@@ -451,7 +451,7 @@
       <!-- Modo Fuera del Plan: no obliga a asociar platillos/recetas -->
       <div
         class="p-3 bg-amber-50/70 border border-amber-200/70 rounded-2xl flex items-center gap-2.5 text-amber-900 text-xs font-medium">
-        <i class="pi pi-info-circle text-awakin-sun shrink-0"></i>
+        <i class="pi pi-info-circle text-kin-primary shrink-0"></i>
         <span>Registro libre fuera del plan: no necesitas asociar platillos ni recetas de {{
           mealDefinitions[selectedMealType()].title }}.</span>
       </div>
@@ -461,7 +461,7 @@
       <div>
         <div class="flex items-center justify-between mb-1.5">
           <label class="block text-[10px] font-bold uppercase tracking-wider text-stone-500">
-            Foto del Plato o Bebida <span class="text-awakin-sun">*</span>
+            Foto del Plato o Bebida <span class="text-kin-primary">*</span>
           </label>
           @if (uploadedPhotoUrl()) {
           <span class="text-[10px] font-bold text-emerald-600 flex items-center gap-1">
@@ -485,7 +485,7 @@
           </div>
           <button type="button" (click)="useExistingMealPhoto()"
             class="px-2.5 py-1.5 rounded-xl text-xs font-black transition-all shrink-0 cursor-pointer flex items-center gap-1 shadow-2xs"
-            [ngClass]="uploadedPhotoUrl() === existingMealPhotoUrl() ? 'bg-awakin-sun text-stone-950 font-black' : 'bg-white hover:bg-stone-50 text-stone-700 border border-stone-200'">
+            [ngClass]="uploadedPhotoUrl() === existingMealPhotoUrl() ? 'bg-kin-primary text-white font-black' : 'bg-white hover:bg-stone-50 text-stone-700 border border-stone-200'">
             <i class="pi" [ngClass]="uploadedPhotoUrl() === existingMealPhotoUrl() ? 'pi-check' : 'pi-clone'"></i>
             <span>{{ uploadedPhotoUrl() === existingMealPhotoUrl() ? 'Foto aplicada' : 'Usar esta foto' }}</span>
           </button>
@@ -497,14 +497,14 @@
 
         @if (!uploadedPhotoUrl()) {
         <div (click)="fileInput.click()"
-          class="flex flex-col items-center justify-center p-5 bg-stone-50 hover:bg-stone-100/70 border-2 border-dashed border-stone-200 hover:border-awakin-sun/50 rounded-2xl cursor-pointer transition-all">
-          <div class="w-12 h-12 rounded-xl bg-awakin-sun/10 text-awakin-sun flex items-center justify-center mb-2">
+          class="flex flex-col items-center justify-center p-5 bg-stone-50 hover:bg-stone-100/70 border-2 border-dashed border-stone-200 hover:border-kin-primary/50 rounded-2xl cursor-pointer transition-all">
+          <div class="w-12 h-12 rounded-xl bg-kin-primary/10 text-kin-primary flex items-center justify-center mb-2">
             <i class="pi pi-camera text-xl"></i>
           </div>
           <span class="text-xs font-bold text-stone-800">Tomar foto o subir imagen</span>
           <span class="text-[11px] text-stone-400 font-medium mt-0.5">Cámara o desde tu galería (JPG, PNG)</span>
           <button type="button" (click)="$event.stopPropagation(); useDemoPhoto()"
-            class="text-[11px] font-bold text-awakin-sun hover:underline mt-2.5 cursor-pointer">
+            class="text-[11px] font-bold text-kin-primary hover:underline mt-2.5 cursor-pointer">
             Usar foto de demostración
           </button>
         </div>
@@ -516,7 +516,7 @@
             class="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent flex items-end justify-between p-3">
             <button type="button" (click)="fileInput.click()"
               class="px-3 py-1.5 rounded-xl bg-white/95 hover:bg-white text-stone-800 text-[11px] font-bold flex items-center gap-1.5 shadow-md border border-stone-200/80 cursor-pointer transition-all active:scale-95">
-              <i class="pi pi-camera text-xs text-awakin-sun"></i> Cambiar
+              <i class="pi pi-camera text-xs text-kin-primary"></i> Cambiar
             </button>
             <button type="button" (click)="removePhoto()"
               class="w-8 h-8 rounded-xl bg-red-500 hover:bg-red-600 text-white flex items-center justify-center shadow-md cursor-pointer transition-all active:scale-95"
@@ -531,7 +531,7 @@
       <!-- 2. Tipo de Comida o Bebida (Distribución Chips) -->
       <div>
         <label class="block text-[10px] font-bold uppercase tracking-wider text-stone-500 mb-2">
-          Tipo de Comida o Bebida <span class="text-awakin-sun">*</span>
+          Tipo de Comida o Bebida <span class="text-kin-primary">*</span>
         </label>
         <div class="grid grid-cols-6 gap-2">
           @for (opt of modalMealOptions; track opt.type; let idx = $index) {
@@ -540,7 +540,7 @@
             [ngClass]="[
                 idx < 3 ? 'col-span-2' : 'col-span-3',
                 selectedMealType() === opt.type
-                  ? 'bg-awakin-sun text-white border-awakin-sun shadow-sm'
+                  ? 'bg-kin-primary text-white border-kin-primary shadow-sm'
                   : 'bg-stone-50 hover:bg-stone-100 text-stone-600 border-stone-200 hover:text-stone-900'
               ]">
             <i [class]="opt.icon" class="text-xs"></i>
@@ -554,9 +554,9 @@
       <div>
         <div class="flex items-center justify-between mb-1.5">
           <label class="block text-[10px] font-bold uppercase tracking-wider text-stone-500">
-            Evaluación de Adherencia <span class="text-awakin-sun">*</span>
+            Evaluación de Adherencia <span class="text-kin-primary">*</span>
           </label>
-          <span class="text-[10px] font-bold text-awakin-sun bg-awakin-sun/10 px-2 py-0.5 rounded-full">
+          <span class="text-[10px] font-bold text-kin-secondary bg-kin-secondary/10 px-2 py-0.5 rounded-full">
             {{ selectedAdherence() === '100' ? '+10 pts' : selectedAdherence() === 'ADAPTATION' ? '+5 pts' : '+2 pts' }}
           </span>
         </div>
@@ -564,13 +564,13 @@
           @for (adh of adherenceOptions; track adh.id) {
           <label
             class="flex items-center gap-3 p-3 bg-stone-50 hover:bg-stone-100/70 border rounded-2xl cursor-pointer transition-all"
-            [ngClass]="selectedAdherence() === adh.id ? 'border-awakin-sun bg-awakin-sun/5' : 'border-stone-200'">
+            [ngClass]="selectedAdherence() === adh.id ? 'border-kin-primary bg-kin-primary/5' : 'border-stone-200'">
             <p-radioButton name="adherenceGroup" [value]="adh.id" [ngModel]="selectedAdherence()"
               (ngModelChange)="onAdherenceChange($event)"></p-radioButton>
             <div class="flex-1 min-w-0">
               <div class="flex items-center justify-between">
                 <span class="text-xs sm:text-sm font-bold text-stone-800">{{ adh.title }}</span>
-                <span class="text-[10px] font-black text-awakin-sun bg-awakin-sun/10 px-2 py-0.5 rounded-md">
+                <span class="text-[10px] font-black text-kin-secondary bg-kin-secondary/10 px-2 py-0.5 rounded-md">
                   +{{ adh.pts }} pts
                 </span>
               </div>
@@ -588,7 +588,7 @@
         </label>
         <textarea rows="2" [ngModel]="notesText()" (ngModelChange)="notesText.set($event)"
           placeholder="Ej: Pollo a la plancha 150g, arroz 100g, ensalada..."
-          class="w-full bg-stone-50 border border-stone-200 rounded-xl p-3 text-xs sm:text-sm text-stone-900 placeholder-stone-400 focus:outline-none focus:border-awakin-sun resize-none"></textarea>
+          class="w-full bg-stone-50 border border-stone-200 rounded-xl p-3 text-xs sm:text-sm text-stone-900 placeholder-stone-400 focus:outline-none focus:border-kin-primary resize-none"></textarea>
       </div>
 
       <!-- Mensaje de error si falla la subida o el registro -->
@@ -656,7 +656,7 @@
         </label>
         <textarea rows="3" [ngModel]="feedPostCaption()" (ngModelChange)="feedPostCaption.set($event)"
           placeholder="Escribe un mensaje o reflexión sobre tu plato..."
-          class="w-full bg-stone-50 border border-stone-300 rounded-xl p-3 text-xs sm:text-sm text-stone-900 placeholder-stone-400 focus:outline-none focus:border-awakin-sun focus:bg-white resize-none transition-all"></textarea>
+          class="w-full bg-stone-50 border border-stone-300 rounded-xl p-3 text-xs sm:text-sm text-stone-900 placeholder-stone-400 focus:outline-none focus:border-kin-primary focus:bg-white resize-none transition-all"></textarea>
       </div>
 
       <!-- Botones de Acción -->

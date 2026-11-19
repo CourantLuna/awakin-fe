@@ -3,15 +3,15 @@
     @if (hasKin()) {
     <div class="flex items-center gap-3">
       <div
-        class="w-12 h-12 p-1 rounded-xl bg-stone-100 border border-stone-200 flex items-center justify-center overflow-hidden shadow-sm relative">
+        class="w-12 h-12 p-1 rounded-xl bg-stone-100 border-2 border-kin-primary/40 flex items-center justify-center overflow-hidden shadow-sm relative">
         @if (hasValidLogo()) {
         <img [src]="kinLogoUrl()" [alt]="kinTeamName()" class="w-full h-full object-cover" (error)="onLogoError()" />
         } @else {
-        <span class="text-stone-400 font-black text-xs tracking-wider">{{ kinInitials() }}</span>
+        <span class="text-kin-primary font-black text-xs tracking-wider">{{ kinInitials() }}</span>
         }
       </div>
       <div class="flex flex-col">
-        <span class="text-[8px] font-black tracking-[0.2em] text-stone-400 uppercase leading-none mb-1">Tu Tribu</span>
+        <span class="text-[8px] font-black tracking-[0.2em] text-kin-primary uppercase leading-none mb-1">Tu Tribu</span>
         <h3 class="text-sm font-black text-gray-900 uppercase tracking-tight">{{ kinTeamName() }}</h3>
       </div>
     </div>
@@ -43,7 +43,7 @@
       <div class="flex items-baseline gap-1 h-10">
         @if (!showTotalMode()) {
         <span class="text-3xl font-black tracking-tighter tabular-nums drop-shadow-[0_1px_2px_rgba(254,151,10,0.1)]"
-          [class]="isOverGoal() ? 'text-red-600 animate-pulse' : 'text-[var(--color-awakin-sun)]'">
+          [class]="isOverGoal() ? 'text-red-600 animate-pulse' : 'text-kin-primary'">
           {{ remainingKcal() }}
         </span>
         } @else {
@@ -62,10 +62,10 @@
 
       <div class="flex gap-1 mt-2">
         <div class="w-1.5 h-1 rounded-full transition-all duration-300"
-          [class]="!showTotalMode() ? (isOverGoal() ? 'bg-red-500 w-3' : 'bg-[var(--color-awakin-sun)] w-3') : 'bg-stone-200'">
+          [class]="!showTotalMode() ? (isOverGoal() ? 'bg-red-500 w-3' : 'bg-kin-primary w-3') : 'bg-stone-200'">
         </div>
         <div class="w-1.5 h-1 rounded-full transition-all duration-300"
-          [class]="showTotalMode() ? 'bg-[var(--color-awakin-sun)] w-3' : 'bg-stone-200'"></div>
+          [class]="showTotalMode() ? 'bg-kin-secondary w-3' : 'bg-stone-200'"></div>
       </div>
     </div>
   </div>
@@ -79,11 +79,11 @@
 
       <path #trackPath
         d="M2.50049 29.5002C2.50049 29.5002 67.8684 7.08312 138.5 7.00023C209.511 6.91689 274.5 29.5002 274.5 29.5002"
-        fill="none" stroke="#F5F5F4" stroke-width="5" stroke-linecap="round" />
+        fill="none" stroke="var(--app-surface-elevated)" stroke-width="5" stroke-linecap="round" />
 
       <path
         d="M2.50049 29.5002C2.50049 29.5002 67.8684 7.08312 138.5 7.00023C209.511 6.91689 274.5 29.5002 274.5 29.5002"
-        fill="none" stroke="var(--color-awakin-sun)" stroke-width="6" stroke-linecap="round"
+        fill="none" stroke="var(--kin-primary)" stroke-width="6" stroke-linecap="round"
         [attr.stroke-dasharray]="progressStroke()" class="transition-all duration-1000 ease-out" />
 
       <g [attr.transform]="getMarkerTransform(minA())" class="transition-all duration-700">
@@ -93,8 +93,8 @@
       </g>
 
       <g [attr.transform]="getMarkerTransform(goalB())" class="transition-all duration-700">
-        <rect x="-1" y="-5" width="2" height="14" rx="1" fill="var(--color-awakin-sun)" />
-        <text x="0" y="20" text-anchor="middle" fill="var(--color-awakin-sun)"
+        <rect x="-1" y="-5" width="2" height="14" rx="1" fill="var(--kin-secondary)" />
+        <text x="0" y="20" text-anchor="middle" fill="var(--kin-secondary)"
           class="text-[7px] font-black uppercase tracking-tighter">Goal</text>
       </g>
 

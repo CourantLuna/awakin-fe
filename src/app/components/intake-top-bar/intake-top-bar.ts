@@ -1,6 +1,7 @@
-import { Component, input, output } from '@angular/core';
+import { Component, inject, input, output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { PrimeNGModule } from '../../shared/prime-ng.module';
+import { ThemeService } from '../../core/services/theme.service';
 
 @Component({
   selector: 'app-intake-top-bar',
@@ -10,6 +11,8 @@ import { PrimeNGModule } from '../../shared/prime-ng.module';
   styleUrl: './intake-top-bar.css',
 })
 export class IntakeTopBar {
+  public themeService = inject(ThemeService);
+
   // Inputs (Datos que vienen del padre)
   streak = input.required<number>();
   currentLabel = input.required<string>();
