@@ -1,8 +1,8 @@
 <p-dialog [(visible)]="isOpen" [modal]="true" [draggable]="false" [resizable]="false"
-  [dismissableMask]="true" header="Detalles de la Receta"
+  [dismissableMask]="true" [focusOnShow]="false" (onShow)="scrollToTop()" appendTo="body" header="Detalles de la Receta"
   styleClass="w-[94vw] max-w-lg bg-white rounded-3xl overflow-hidden shadow-2xl p-0">
   @if (activeDish(); as dish) {
-  <div class="p-4 sm:p-6 space-y-4 max-h-[80vh] overflow-y-auto awakin-scrollbar">
+  <div #scrollContainer class="p-4 sm:p-6 space-y-4 max-h-[80vh] overflow-y-auto awakin-scrollbar">
     <!-- Banner con imagen de la receta o icono Intake Active -->
     <div class="relative w-full h-48 sm:h-56 rounded-2xl overflow-hidden shadow-sm bg-stone-900 flex items-center justify-center">
       @if (dish.coverImageUrl) {

@@ -1,4 +1,4 @@
-import { Component, input, model, computed, output } from '@angular/core';
+import { Component, input, model, computed, output, ViewChild, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { PrimeNGModule } from '../../../../shared/prime-ng.module';
 import { DishItem } from '../../models/intake.models';
@@ -12,6 +12,7 @@ import { formatQuantity, toFraction, applyOptimizationToDish } from '../../../..
   styleUrl: './recipe-details-modal.css',
 })
 export class RecipeDetailsModal {
+  @ViewChild('scrollContainer') scrollContainer?: ElementRef<HTMLDivElement>;
   isOpen = model<boolean>(false);
   dish = input<DishItem | null>(null);
   onOpenShoppingList = output<DishItem>();
@@ -45,6 +46,13 @@ export class RecipeDetailsModal {
     if (d) {
       this.isOpen.set(false);
       this.onOpenShoppingList.emit(d);
+    }
+  }
+
+  scrollToTop(): void {
+    const el = this.scrollContainer?.nativeElement;
+    if (el) {
+      el.scrollTop = 0;
     }
   }
 

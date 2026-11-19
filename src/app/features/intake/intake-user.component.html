@@ -31,20 +31,6 @@
       [fatsEated]="totalLoggedFat()" [fatsGoal]="dailyGoalFats()" [burnedKcals]="0" [kinData]="athleteKin()">
     </app-intake-scale-widget>
 
-    <app-protocol-matrix-drawer [(isOpen)]="isMatrixOpen" [(weeklyTemplates)]="weeklyTemplates"
-      [activeTemplateId]="activeTemplateId()" [athleteId]="currentAthleteId()" [availableMenus]="availableMenus()"
-      (onOpenShoppingList)="openShoppingListModal($event)">
-    </app-protocol-matrix-drawer>
-
-    <app-shopping-list-drawer [(isOpen)]="isShoppingListModalOpen" [weekAssignments]="weeklyTemplates()"
-      [availableMenus]="availableMenus()" [athleteId]="currentAthleteId()"
-      [initialDish]="selectedDishForShoppingList()">
-    </app-shopping-list-drawer>
-
-    <app-recipe-details-modal [(isOpen)]="isRecipeDetailsOpen" [dish]="selectedDishForDetails()"
-      (onOpenShoppingList)="openShoppingListModal($event)">
-    </app-recipe-details-modal>
-
     <div class="px-4 mt-2 relative z-10">
       <button (click)="openFuelMatrix()"
         class="w-full relative overflow-hidden bg-white border border-stone-200 rounded-2xl p-4 flex items-center justify-between group transition-all active:scale-[0.98] shadow-[0_4px_20px_rgb(0,0,0,0.03)] hover:shadow-[0_4px_20px_rgb(0,0,0,0.06)] hover:border-awakin-sun/30">
@@ -319,9 +305,24 @@
     </div>
   </div>
 
+  <!-- DRAWERS Y MODALES DEL MÓDULO INTAKE (Fuera del stacking context z-10 del contenido) -->
+  <app-protocol-matrix-drawer [(isOpen)]="isMatrixOpen" [(weeklyTemplates)]="weeklyTemplates"
+    [activeTemplateId]="activeTemplateId()" [athleteId]="currentAthleteId()" [availableMenus]="availableMenus()"
+    (onOpenShoppingList)="openShoppingListModal($event)">
+  </app-protocol-matrix-drawer>
+
+  <app-shopping-list-drawer [(isOpen)]="isShoppingListModalOpen" [weekAssignments]="weeklyTemplates()"
+    [availableMenus]="availableMenus()" [athleteId]="currentAthleteId()"
+    [initialDish]="selectedDishForShoppingList()">
+  </app-shopping-list-drawer>
+
+  <app-recipe-details-modal [(isOpen)]="isRecipeDetailsOpen" [dish]="selectedDishForDetails()"
+    (onOpenShoppingList)="openShoppingListModal($event)">
+  </app-recipe-details-modal>
+
   <!-- MODAL DE REGISTRO DE COMIDA (Estilo y componentes estándar Awakin) -->
   <p-dialog [(visible)]="isRegisterModalOpen" [modal]="true" [draggable]="false" [resizable]="false"
-    [dismissableMask]="true" header="Registrar Comida"
+    [dismissableMask]="true" [focusOnShow]="false" appendTo="body" header="Registrar Comida"
     styleClass="w-[92vw] max-w-lg bg-white rounded-3xl overflow-hidden shadow-2xl p-0">
     <div class="p-5 sm:p-6 space-y-4 text-stone-800">
       <!-- 1. Alimentos incluidos en este registro (solo cuando es 100% en el plan o Adaptación) -->
@@ -636,7 +637,7 @@
 
   <!-- MODAL PARA COMPARTIR EN AWAKIN FEED -->
   <p-dialog [(visible)]="isShareFeedModalOpen" [modal]="true" [draggable]="false" [resizable]="false"
-    [dismissableMask]="true" header="Compartir en Feed de Awakin"
+    [dismissableMask]="true" [focusOnShow]="false" appendTo="body" header="Compartir en Feed de Awakin"
     styleClass="w-[94vw] max-w-md bg-white rounded-3xl overflow-hidden shadow-2xl p-0 border border-stone-200">
     <div class="p-5 space-y-4 text-stone-800">
       <!-- Preview de la Imagen Generada -->
