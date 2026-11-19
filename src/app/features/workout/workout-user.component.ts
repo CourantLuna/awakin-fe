@@ -9,7 +9,7 @@ import { DialogModule } from 'primeng/dialog';
 import { WeekCalendarHeaderComponent } from '../../components/week-calendar/week-calendar-header.component';
 import { AthleteService } from '../../core/services/athlete.service';
 import { AuthService } from '../../core/services/auth.service';
-import { StreakService } from '../../core/services/streak.service';
+import { StreakService, formatToDateKey } from '../../core/services/streak.service';
 import { WorkoutSupabaseService } from './services/workout-supabase.service';
 import { ActiveWorkoutSessionService } from './services/active-workout-session.service';
 import { ExerciseApiService } from './services/exercise-api.service';
@@ -173,6 +173,16 @@ export class WorkoutUserComponent implements OnInit {
   availableRoutines = this.workoutService.allRoutines;
   workoutLogs = this.workoutService.workoutLogs;
   isLoadingWorkouts = this.workoutService.isLoading;
+
+  // Fechas con al menos un entrenamiento completado (solo para sombrear el calendario de Workout)
+  workoutActiveDates = computed<Set<string>>(() => {
+    const dates = new Set<string>();
+    for (const log of this.workoutLogs()) {
+      const key = formatToDateKey(log.workout_date);
+      if (key) dates.add(key);
+    }
+    return dates;
+  });
 
   // Modal de Detalle de Entrenamiento Estilo HEVY (Historial)
   selectedWorkoutDetail = signal<WorkoutLog | null>(null);
@@ -473,7 +483,7 @@ export class WorkoutUserComponent implements OnInit {
       athleteId: this.currentAthleteId(),
       planId: this.activePlan()?.id || null,
       routine: target,
-      workoutDate: this.selectedDate()
+      workoutDate: new Date()
     });
   }
 
@@ -486,7 +496,7 @@ export class WorkoutUserComponent implements OnInit {
       athleteId: this.currentAthleteId(),
       planId: this.activePlan()?.id || null,
       routine: null,
-      workoutDate: this.selectedDate()
+      workoutDate: new Date()
     });
   }
 

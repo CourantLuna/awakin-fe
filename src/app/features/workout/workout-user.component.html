@@ -49,7 +49,7 @@
     </ng-template>
   </p-toolbar>
 
-  <app-week-calendar-header #calendar [streak]="streak()" [weekStart]="1" (onLabelChange)="updateLabel($event)"
+  <app-week-calendar-header #calendar [streak]="streak()" [activeDates]="workoutActiveDates()" [weekStart]="1" (onLabelChange)="updateLabel($event)"
     (onDateChange)="onDateSelected($event)">
   </app-week-calendar-header>
 
@@ -95,7 +95,7 @@
       <div class="h-12 w-full bg-stone-800 rounded-2xl mt-6"></div>
     </div>
     } @else if (activeDisplayedRoutine(); as routine) {
-    <div (click)="openRoutineDetailModal(routine, selectedDayOfWeek())"
+    <div (click)="logForSelectedDate() ? openWorkoutDetail(logForSelectedDate()!) : openRoutineDetailModal(routine, selectedDayOfWeek())"
       class="relative w-full bg-stone-900 rounded-[2rem] p-6 mb-6 overflow-hidden shadow-2xl shadow-stone-900/20 flex flex-col justify-between min-h-[220px] cursor-pointer group transition-all duration-300 hover:shadow-stone-900/30">
       @if (routine.banner_url) {
       <img [src]="routine.banner_url" [alt]="routine.name"
@@ -127,11 +127,11 @@
 
           <div class="flex items-center gap-1.5" (click)="$event.stopPropagation()">
             @if (logForSelectedDate(); as dayLog) {
-            <span
-              class="px-2.5 py-1 rounded-full bg-emerald-500/20 border border-emerald-400/40 text-emerald-300 text-[10px] font-black flex items-center gap-1">
+            <button type="button" (click)="openWorkoutDetail(dayLog)"
+              class="px-2.5 py-1 rounded-full bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-400/40 text-emerald-300 text-[10px] font-black flex items-center gap-1 cursor-pointer transition-all">
               <i class="pi pi-check-circle text-[10px]"></i>
               {{ dayLog.duration_minutes }}m • {{ dayLog.total_volume | number:'1.0-0' }} {{ dayLog.volume_unit }}
-            </span>
+            </button>
             }
 
             <input #routineBannerInput type="file" accept="image/*" (change)="onRoutineBannerSelected($event, routine)"
@@ -210,13 +210,13 @@
       </div>
 
       <!-- BOTÓN INFERIOR: COMPLETADO EN CUALQUIER DÍA O INICIAR SESIÓN SI ES HOY -->
-      @if (logForSelectedDate()) {
+      @if (logForSelectedDate(); as dayLog) {
       <div class="mt-6 relative z-10 flex items-center gap-2" (click)="$event.stopPropagation()">
-        <div
-          class="w-full bg-emerald-600/90 border border-emerald-400/40 text-white font-black text-sm tracking-widest py-3.5 rounded-2xl shadow-lg flex items-center justify-center gap-2">
+        <button type="button" (click)="openWorkoutDetail(dayLog)"
+          class="w-full bg-emerald-600/90 hover:bg-emerald-600 border border-emerald-400/40 text-white font-black text-sm tracking-widest py-3.5 rounded-2xl shadow-lg flex items-center justify-center gap-2 cursor-pointer active:scale-[0.98] transition-all">
           <i class="pi pi-check-circle text-lg"></i>
           <span>{{ completedBannerLabel() }}</span>
-        </div>
+        </button>
       </div>
       } @else if (isSelectedDateToday()) {
       <div class="mt-6 relative z-10 flex items-center gap-2" (click)="$event.stopPropagation()">
@@ -247,13 +247,13 @@
         </p>
       </div>
 
-      @if (logForSelectedDate()) {
+      @if (logForSelectedDate(); as dayLog) {
       <div class="pt-2">
-        <div
-          class="w-full bg-emerald-600/90 border border-emerald-400/40 text-white font-black text-sm tracking-widest py-3.5 rounded-2xl shadow-lg flex items-center justify-center gap-2">
+        <button type="button" (click)="openWorkoutDetail(dayLog)"
+          class="w-full bg-emerald-600/90 hover:bg-emerald-600 border border-emerald-400/40 text-white font-black text-sm tracking-widest py-3.5 rounded-2xl shadow-lg flex items-center justify-center gap-2 cursor-pointer active:scale-[0.98] transition-all">
           <i class="pi pi-check-circle text-lg"></i>
           <span>{{ completedBannerLabel() }}</span>
-        </div>
+        </button>
       </div>
       }
 

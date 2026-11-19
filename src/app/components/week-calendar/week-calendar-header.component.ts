@@ -6,6 +6,8 @@ import {
   computed,
   signal,
   OnInit,
+  OnChanges,
+  SimpleChanges,
   effect,
   inject,
 } from '@angular/core';
@@ -29,7 +31,7 @@ export type CalendarViewMode = 'week' | 'month'; //
   imports: [CommonModule],
   templateUrl: './week-calendar-header.component.html',
 })
-export class WeekCalendarHeaderComponent implements OnInit {
+export class WeekCalendarHeaderComponent implements OnInit, OnChanges {
   public streakService = inject(StreakService);
 
   // Configuración de Protocolo
@@ -82,6 +84,12 @@ public activeVersion = signal<number>(0);
 
   ngOnInit() {
     this.generateCalendar();
+  }
+
+  ngOnChanges(changes: SimpleChanges) {
+    if (changes['activeDates']) {
+      this.activeVersion.update((v) => v + 1);
+    }
   }
 
   // Helpers de comparación (Protocolo de Tiempo)
