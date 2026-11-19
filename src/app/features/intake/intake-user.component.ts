@@ -241,6 +241,7 @@ export class IntakeUserComponent implements OnInit {
       next: (records) => {
         const regMap: Record<string, any> = {};
         const logMap: Record<string, boolean> = { ...this.loggedFoodMap() };
+        const fetchedCustomFoods: Array<FoodItem & { targetDate: string }> = [];
 
         if (Array.isArray(records)) {
           if (records.length > 0) {
@@ -256,11 +257,46 @@ export class IntakeUserComponent implements OnInit {
               regMap[foodId] = rec;
               const logKey = `${curDateStr}_${foodId}`;
               logMap[logKey] = !!rec.is_active;
+
+              // Si es un registro libre/custom (fuera de platillos del plan), reconstruir FoodItem
+              if (foodId.startsWith('custom_') || rec.adherencia === 'FREE' || (!foodId.startsWith('dish_') && !foodId.startsWith('loose_'))) {
+                const mt: MealType = (rec.tipo_comida?.toUpperCase() as MealType) || 'SNACK_PM';
+                fetchedCustomFoods.push({
+                  id: foodId,
+                  targetDate: curDateStr,
+                  name: rec.plato_estimado || rec.notas || `Registro de ${mt}`,
+                  emoji:
+                    mt === 'BREAKFAST'
+                      ? '🍳'
+                      : mt === 'LUNCH'
+                        ? '🍲'
+                        : mt === 'DINNER'
+                          ? '🥗'
+                          : mt === 'DRINK'
+                            ? '🥤'
+                            : '🥪',
+                  mealType: mt,
+                  portion: 1,
+                  unit: 'porción',
+                  kcal: Math.round(Number(rec.calorias || 0)),
+                  protein: Math.round(Number(rec.proteinas || 0)),
+                  carbs: Math.round(Number(rec.carbohidratos || 0)),
+                  fat: Math.round(Number(rec.grasas || 0)),
+                  isLogged: !!rec.is_active,
+                });
+              }
             }
           }
         }
         this.registeredRecords.set(regMap);
         this.loggedFoodMap.set(logMap);
+
+        if (fetchedCustomFoods.length > 0) {
+          this.additionalMockFoods.update((existing) => {
+            const others = existing.filter((f) => f.targetDate !== curDateStr);
+            return [...others, ...fetchedCustomFoods];
+          });
+        }
       },
       error: (err) => console.error('Error cargando registros nutricionales:', err),
     });

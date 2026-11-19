@@ -357,10 +357,104 @@ export class WorkoutUserComponent implements OnInit {
     return `COMPLETADO (${raw})`;
   });
 
-  // Radar Chart dinámico de Carga Muscular Semanal (últimos 7 días de workout_logs)
-  radarData = computed(() => {
+  // Analytics / Gráficos con rango temporal seleccionable
+  analyticsRange = signal<'7d' | '14d' | '30d' | 'year'>('7d');
+  activeChartType = signal<'heatmap' | 'radar' | 'volume' | 'trend'>('heatmap');
+
+  readonly analyticsRangeOptions: Array<{ key: '7d' | '14d' | '30d' | 'year'; label: string; title: string }> = [
+    { key: '7d', label: '7D', title: 'Últimos 7 días' },
+    { key: '14d', label: '14D', title: 'Últimos 14 días' },
+    { key: '30d', label: '30D', title: 'Últimos 30 días' },
+    { key: 'year', label: 'Año', title: 'Este año' }
+  ];
+
+  readonly chartTypeOptions: Array<{ key: 'heatmap' | 'radar' | 'volume' | 'trend'; label: string; icon: string }> = [
+    { key: 'heatmap', label: 'Mapa', icon: 'pi-user' },
+    { key: 'radar', label: 'Radar', icon: 'pi-chart-pie' },
+    { key: 'volume', label: 'Volumen', icon: 'pi-chart-bar' },
+    { key: 'trend', label: 'Series', icon: 'pi-chart-line' }
+  ];
+
+  analyticsRangeTitle = computed(() => {
+    const found = this.analyticsRangeOptions.find((o) => o.key === this.analyticsRange());
+    return found?.title || 'Últimos 7 días';
+  });
+
+  filteredAnalyticsLogs = computed<WorkoutLog[]>(() => {
     const logs = this.workoutLogs();
-    const sevenDaysAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
+    const range = this.analyticsRange();
+    const now = new Date();
+    let cutoffMs: number;
+
+    if (range === 'year') {
+      cutoffMs = new Date(now.getFullYear(), 0, 1).getTime();
+    } else {
+      const days = range === '7d' ? 7 : range === '14d' ? 14 : 30;
+      cutoffMs = now.getTime() - days * 24 * 60 * 60 * 1000;
+    }
+
+    return logs
+      .filter((log) => new Date(log.workout_date).getTime() >= cutoffMs)
+      .sort((a, b) => new Date(a.workout_date).getTime() - new Date(b.workout_date).getTime());
+  });
+
+  analyticsSummary = computed(() => {
+    const logs = this.filteredAnalyticsLogs();
+    let totalVolume = 0;
+    let totalSets = 0;
+    let totalMinutes = 0;
+    const unit = logs[logs.length - 1]?.volume_unit || 'lb';
+
+    for (const log of logs) {
+      totalVolume += Number(log.total_volume || 0);
+      totalSets += Number(log.total_sets || 0);
+      totalMinutes += Number(log.duration_minutes || 0);
+    }
+
+    return {
+      sessions: logs.length,
+      totalVolume: Math.round(totalVolume),
+      totalSets,
+      totalMinutes,
+      unit
+    };
+  });
+
+  // Mapa de calor muscular agregado en el rango seleccionado (Body Map + Leyenda)
+  rangeMuscleBreakdownWithColors = computed<WorkoutMuscleLegendItem[]>(() => {
+    const logs = this.filteredAnalyticsLogs();
+    const muscleMap = new Map<string, number>();
+
+    for (const log of logs) {
+      const byMuscle = log.sets_by_muscle || {};
+      let usedSetsByMuscle = false;
+      for (const [rawMuscle, sets] of Object.entries(byMuscle)) {
+        const count = Number(sets || 0);
+        if (count <= 0) continue;
+        usedSetsByMuscle = true;
+        const translated = this.translateMuscleName(rawMuscle);
+        muscleMap.set(translated, (muscleMap.get(translated) || 0) + count);
+      }
+      if (!usedSetsByMuscle && log.exercises) {
+        for (const ex of log.exercises) {
+          const completed = (ex.sets || []).filter((s) => s.is_completed !== false).length;
+          if (completed <= 0) continue;
+          const translated = this.translateMuscleName(ex.target_muscle || 'General');
+          muscleMap.set(translated, (muscleMap.get(translated) || 0) + completed);
+        }
+      }
+    }
+
+    const sorted = Array.from(muscleMap.entries())
+      .map(([muscle, sets]) => ({ muscle, sets }))
+      .sort((a, b) => b.sets - a.sets);
+
+    return this.buildMuscleBreakdownWithColors(sorted);
+  });
+
+  // Radar Chart dinámico de Carga Muscular según el rango seleccionado
+  radarData = computed(() => {
+    const logs = this.filteredAnalyticsLogs();
     const buckets: Record<string, number> = {
       Pecho: 0,
       Espalda: 0,
@@ -371,16 +465,15 @@ export class WorkoutUserComponent implements OnInit {
     };
 
     for (const log of logs) {
-      if (new Date(log.workout_date).getTime() < sevenDaysAgo) continue;
       const byMuscle = log.sets_by_muscle || {};
       for (const [rawMuscle, sets] of Object.entries(byMuscle)) {
         const m = rawMuscle.toLowerCase();
         const val = Number(sets || 0);
         if (m.includes('pec') || m.includes('chest') || m.includes('pecho')) buckets['Pecho'] += val;
         else if (m.includes('lat') || m.includes('back') || m.includes('espalda') || m.includes('trap') || m.includes('rhomb')) buckets['Espalda'] += val;
-        else if (m.includes('glute') || m.includes('quad') || m.includes('ham') || m.includes('calv') || m.includes('pierna') || m.includes('cuádriceps') || m.includes('glúteo')) buckets['Piernas'] += val;
+        else if (m.includes('glute') || m.includes('quad') || m.includes('ham') || m.includes('calv') || m.includes('pierna') || m.includes('cuádriceps') || m.includes('glúteo') || m.includes('isquio') || m.includes('pantorrilla')) buckets['Piernas'] += val;
         else if (m.includes('delt') || m.includes('shoulder') || m.includes('hombro')) buckets['Hombros'] += val;
-        else if (m.includes('bicep') || m.includes('tricep') || m.includes('forearm') || m.includes('brazo')) buckets['Brazos'] += val;
+        else if (m.includes('bicep') || m.includes('tricep') || m.includes('forearm') || m.includes('brazo') || m.includes('bícep') || m.includes('trícep')) buckets['Brazos'] += val;
         else if (m.includes('core') || m.includes('ab') || m.includes('waist')) buckets['Core'] += val;
       }
     }
@@ -394,7 +487,7 @@ export class WorkoutUserComponent implements OnInit {
       labels: Object.keys(buckets),
       datasets: [
         {
-          label: 'Series (últimos 7 días)',
+          label: `Series (${this.analyticsRangeTitle()})`,
           backgroundColor: colorSunLight,
           borderColor: colorSun,
           pointBackgroundColor: colorSun,
@@ -406,6 +499,64 @@ export class WorkoutUserComponent implements OnInit {
       ]
     };
   });
+
+  // Gráfico de Barras: Volumen levantado por sesión en el rango
+  volumeChartData = computed(() => {
+    const logs = this.filteredAnalyticsLogs();
+    return {
+      labels: logs.map((l) => this.formatShortChartDate(l.workout_date)),
+      datasets: [
+        {
+          label: `Volumen (${this.analyticsSummary().unit})`,
+          data: logs.map((l) => Math.round(Number(l.total_volume || 0))),
+          backgroundColor: 'rgba(254, 151, 10, 0.85)',
+          hoverBackgroundColor: '#FE970A',
+          borderRadius: 8,
+          barThickness: logs.length > 10 ? 12 : 22
+        }
+      ]
+    };
+  });
+
+  // Gráfico de Línea: Series completadas por sesión en el rango
+  setsTrendChartData = computed(() => {
+    const logs = this.filteredAnalyticsLogs();
+    return {
+      labels: logs.map((l) => this.formatShortChartDate(l.workout_date)),
+      datasets: [
+        {
+          label: 'Series totales',
+          data: logs.map((l) => Number(l.total_sets || 0)),
+          borderColor: '#10B981',
+          backgroundColor: 'rgba(16, 185, 129, 0.14)',
+          pointBackgroundColor: '#10B981',
+          pointBorderColor: '#fff',
+          pointRadius: 4,
+          tension: 0.35,
+          fill: true
+        }
+      ]
+    };
+  });
+
+  cartesianChartOptions = {
+    plugins: {
+      legend: { display: false }
+    },
+    scales: {
+      x: {
+        grid: { display: false },
+        ticks: { color: '#78716c', font: { size: 10, weight: 'bold' } }
+      },
+      y: {
+        beginAtZero: true,
+        grid: { color: '#f5f5f4' },
+        ticks: { color: '#a8a29e', font: { size: 10 } }
+      }
+    },
+    responsive: true,
+    maintainAspectRatio: false
+  };
 
   radarOptions = {
     plugins: { legend: { display: false } },
@@ -893,7 +1044,10 @@ export class WorkoutUserComponent implements OnInit {
   }
 
   getRoutineMuscleBreakdownWithColors(routine: WorkoutRoutine | null | undefined): WorkoutMuscleLegendItem[] {
-    const list = this.getRoutineMuscleBreakdown(routine);
+    return this.buildMuscleBreakdownWithColors(this.getRoutineMuscleBreakdown(routine));
+  }
+
+  private buildMuscleBreakdownWithColors(list: { muscle: string; sets: number }[]): WorkoutMuscleLegendItem[] {
     if (list.length === 0) return [];
     const maxSets = Math.max(...list.map((item) => item.sets), 1);
     return list.map((item) => {
@@ -905,6 +1059,15 @@ export class WorkoutUserComponent implements OnInit {
         levelLabel: tone.levelLabel
       };
     });
+  }
+
+  private formatShortChartDate(dateStr: string): string {
+    try {
+      const d = new Date(dateStr);
+      return `${d.getDate()}/${d.getMonth() + 1}`;
+    } catch {
+      return dateStr;
+    }
   }
 
   getSetTypeInfo(setType?: string): { label: string; short: string; badgeClass: string } {

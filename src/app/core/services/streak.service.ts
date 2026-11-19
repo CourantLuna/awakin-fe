@@ -145,7 +145,7 @@ export class StreakService {
       // 2. Fechas de comidas registradas
       if (email) {
         const { data: meals } = await this.supabase
-          .from('registros_nutricionales')
+          .from('registros_nutricionales_pruebas')
           .select('timestamp')
           .eq('email', email);
 
