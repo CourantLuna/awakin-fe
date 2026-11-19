@@ -34,7 +34,7 @@
     <div class="px-4 mt-2 relative z-10">
       <button (click)="openFuelMatrix()"
         class="w-full relative overflow-hidden bg-white border border-stone-200 rounded-2xl p-4 flex items-center justify-between group transition-all active:scale-[0.98] shadow-[0_4px_20px_rgb(0,0,0,0.03)] hover:shadow-[0_4px_20px_rgb(0,0,0,0.06)] hover:border-kin-primary/30">
-        <div class="absolute inset-0 bg-gradient-to-r from-stone-50 to-white"></div>
+        <div class="absolute inset-0 bg-gradient-to-r from-stone-50/70 to-transparent"></div>
 
         <div
           class="absolute inset-0 bg-gradient-to-r from-kin-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500">
@@ -312,8 +312,7 @@
   </app-protocol-matrix-drawer>
 
   <app-shopping-list-drawer [(isOpen)]="isShoppingListModalOpen" [weekAssignments]="weeklyTemplates()"
-    [availableMenus]="availableMenus()" [athleteId]="currentAthleteId()"
-    [initialDish]="selectedDishForShoppingList()">
+    [availableMenus]="availableMenus()" [athleteId]="currentAthleteId()" [initialDish]="selectedDishForShoppingList()">
   </app-shopping-list-drawer>
 
   <app-recipe-details-modal [(isOpen)]="isRecipeDetailsOpen" [dish]="selectedDishForDetails()"
@@ -322,14 +321,14 @@
 
   <!-- MODAL DE REGISTRO DE COMIDA (Estilo y componentes estándar Awakin) -->
   <p-dialog [(visible)]="isRegisterModalOpen" [modal]="true" [draggable]="false" [resizable]="false"
-    [dismissableMask]="true" [focusOnShow]="false" appendTo="body" header="Registrar Comida"
-    styleClass="w-[92vw] max-w-lg bg-white rounded-3xl overflow-hidden shadow-2xl p-0">
-    <div class="p-5 sm:p-6 space-y-4 text-stone-800">
+    [dismissableMask]="true" [focusOnShow]="false" (onHide)="onRegisterModalHide()" appendTo="body"
+    header="Registrar Comida" styleClass="w-[92vw] max-w-lg bg-white rounded-3xl overflow-hidden shadow-2xl p-0">
+    <div class="p-1 sm:p-6 space-y-4 text-stone-800">
       <!-- 1. Alimentos incluidos en este registro (solo cuando es 100% en el plan o Adaptación) -->
       @if (selectedAdherence() !== 'FREE') {
       @let mealFoods = getFoodsForMeal(selectedMealType());
       @if (mealFoods.length > 0) {
-      <div class="p-3.5 bg-stone-50 border border-stone-200/80 rounded-2xl space-y-3 shadow-xs">
+      <div class="p-2 bg-stone-50 border border-stone-200/80 rounded-2xl space-y-3 shadow-xs">
         <div class="flex items-center justify-between">
           <div class="flex items-center gap-1.5">
             <span
@@ -581,9 +580,19 @@
         </div>
       </div>
 
+      <!-- 3.5 Estimación Nutricional por IA o Ingreso Manual (Vía A: Macros / Vía B: Ingredientes) -->
+      @if (isRegisterModalOpen() && requiresCustomNutrition()) {
+      <app-food-estimation-panel [catalogIngredients]="catalogIngredients()" [isAnalyzing]="isAnalyzingPhoto()"
+        [aiError]="photoAnalysisError()" [aiResult]="photoEstimationResult()" [hasPhoto]="!!uploadedPhotoUrl()"
+        [plannedFoods]="selectedFoodItemsForLog()"
+        [defaultDishName]="selectedFoodItemsForLog().length === 1 ? selectedFoodItemsForLog()[0].name : mealDefinitions[selectedMealType()].title"
+        (nutritionChange)="resolvedCustomNutrition.set($event)" (retryAiAnalysis)="triggerPhotoAnalysisIfNeeded(true)">
+      </app-food-estimation-panel>
+      }
+
       <!-- 4. Notas o Ingredientes (Opcional con textarea estándar) -->
       <div>
-        <label class="block text-[10px] font-bold uppercase tracking-wider text-stone-500 mb-1.5">
+        <label class="pt-2 block text-[10px] font-bold uppercase tracking-wider text-stone-500 mb-1.5">
           Notas o Ingredientes <span class="text-stone-400 font-normal lowercase">(opcional)</span>
         </label>
         <textarea rows="2" [ngModel]="notesText()" (ngModelChange)="notesText.set($event)"
@@ -619,6 +628,9 @@
           @if (isSubmittingFood()) {
           <i class="pi pi-spin pi-spinner text-xs"></i>
           <span>Guardando Registro...</span>
+          } @else if (isAnalyzingPhoto()) {
+          <i class="pi pi-spin pi-spinner text-xs"></i>
+          <span>Analizando Fotografía...</span>
           } @else {
           <i class="pi pi-check text-xs font-bold"></i>
           <span>Registrar Comida/Bebida</span>

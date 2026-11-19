@@ -123,6 +123,33 @@ export function formatQuantity(quantity: number, unit?: string, mode?: string): 
   return `${frac} ${displayUnit}`;
 }
 
+const isGramUnitType = (unit?: string): boolean => {
+  const cleanUnit = String(unit || '').toLowerCase().trim();
+  return (
+    cleanUnit === 'g' ||
+    cleanUnit === 'gramos' ||
+    cleanUnit === 'ml' ||
+    cleanUnit === 'mililitros'
+  );
+};
+
+const getEffectiveUnitWeight = (ingredient: Ingredient): number => {
+  const rawUnitWeight = Number(ingredient.unit_weight_grams);
+  if (rawUnitWeight > 1 || (rawUnitWeight > 0 && Number(ingredient.calories || 0) <= 15)) {
+    return rawUnitWeight;
+  }
+  return 100;
+};
+
+const getGramsPerServing = (ingredient: Ingredient): number => {
+  const isGramUnit = isGramUnitType(ingredient.unit);
+  const servingSize = Number(ingredient.serving_size);
+  if (isGramUnit) {
+    return servingSize > 0 ? servingSize : 100;
+  }
+  return getEffectiveUnitWeight(ingredient) * (servingSize > 0 ? servingSize : 1);
+};
+
 export const getGramsForQuantity = (
   ingredient: Ingredient | undefined,
   quantity: number,
@@ -130,8 +157,7 @@ export const getGramsForQuantity = (
 ): number => {
   if (!ingredient) return 0;
   const qty = Number(quantity) || 0;
-  const cleanUnit = String(ingredient.unit || '').toLowerCase().trim();
-  const isGramUnit = cleanUnit === 'g' || cleanUnit === 'gramos' || cleanUnit === 'ml';
+  const isGramUnit = isGramUnitType(ingredient.unit);
 
   if (mode === 'g') {
     return qty;
@@ -144,9 +170,7 @@ export const getGramsForQuantity = (
       return qty * servingSize;
     }
     // Para unidades discretas (porcion, unidad, huevo, etc.), unit_weight_grams es el peso en gramos de 1 porcion/unidad
-    const unitWeight = Number(ingredient.unit_weight_grams);
-    const gramsPerPortion = unitWeight && unitWeight > 0 ? unitWeight : 100;
-    return qty * gramsPerPortion;
+    return qty * getEffectiveUnitWeight(ingredient);
   }
 
   return qty;
@@ -157,19 +181,10 @@ export const calculateIngredientMacros = (
   quantity: number,
   mode: string | undefined
 ): Macros => {
-  const cleanUnit = String(ingredient.unit || '').toLowerCase().trim();
-  const isGramUnit = cleanUnit === 'g' || cleanUnit === 'gramos' || cleanUnit === 'ml';
-
   // Gramos totales que representa la cantidad solicitada
   const grams = getGramsForQuantity(ingredient, quantity, mode);
-
-  // unit_weight_grams representa los gramos de 1 porción/serving_size
-  let gramsPerServing = Number(ingredient.unit_weight_grams);
-  if (!gramsPerServing || gramsPerServing <= 0) {
-    gramsPerServing = isGramUnit ? (Number(ingredient.serving_size) || 100) : 100;
-  }
-
-  const multiplier = gramsPerServing > 0 ? (grams / gramsPerServing) : (grams / 100);
+  const gramsPerServing = getGramsPerServing(ingredient);
+  const multiplier = gramsPerServing > 0 ? grams / gramsPerServing : grams / 100;
 
   return {
     protein: (ingredient.protein || 0) * multiplier,
@@ -210,12 +225,7 @@ const getItemKey = (req: any, fallbackIdx?: number): string => {
 };
 
 export const getMacrosPer100g = (ingredient: Ingredient): Macros => {
-  let gramsPerServing = Number(ingredient.unit_weight_grams);
-  if (!gramsPerServing || gramsPerServing <= 0) {
-    const cleanUnit = String(ingredient.unit || '').toLowerCase().trim();
-    const isGramUnit = cleanUnit === 'g' || cleanUnit === 'gramos' || cleanUnit === 'ml';
-    gramsPerServing = isGramUnit ? (Number(ingredient.serving_size) || 100) : 100;
-  }
+  const gramsPerServing = getGramsPerServing(ingredient);
   const factor = 100 / (gramsPerServing > 0 ? gramsPerServing : 100);
   return {
     protein: (ingredient.protein || 0) * factor,

@@ -171,6 +171,49 @@ html.dark .hover\:bg-stone-800:hover {
   background-color: var(--app-surface-hover);
 }
 
+/* Paradas de gradiente claras en Modo Noche */
+html.dark .from-stone-50 {
+  --tw-gradient-from: var(--app-surface-subtle);
+}
+html.dark .from-stone-50\/70 {
+  --tw-gradient-from: color-mix(in srgb, var(--app-surface-subtle) 70%, transparent);
+}
+html.dark .via-stone-50 {
+  --tw-gradient-via: var(--app-surface-subtle);
+}
+html.dark .to-stone-50 {
+  --tw-gradient-to: var(--app-surface-subtle);
+}
+html.dark .from-white {
+  --tw-gradient-from: var(--app-surface);
+}
+html.dark .via-white {
+  --tw-gradient-via: var(--app-surface);
+}
+html.dark .to-white {
+  --tw-gradient-to: var(--app-surface);
+}
+
+/* Utilidades con !important usadas en componentes PrimeNG */
+html.dark .\!bg-white {
+  background-color: var(--app-surface) !important;
+}
+html.dark .\!bg-stone-50 {
+  background-color: var(--app-surface-subtle) !important;
+}
+html.dark .\!bg-stone-100 {
+  background-color: var(--app-surface-elevated) !important;
+}
+html.dark .\!border-stone-100,
+html.dark .\!border-stone-200 {
+  border-color: var(--app-border) !important;
+}
+html.dark .p-drawer .p-drawer-header {
+  background-color: var(--app-surface) !important;
+  border-color: var(--app-border) !important;
+  color: var(--app-text) !important;
+}
+
 /* Bordes en Modo Noche */
 html.dark .border-stone-50,
 html.dark .border-stone-100,

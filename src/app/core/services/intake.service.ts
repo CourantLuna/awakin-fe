@@ -4,7 +4,17 @@ import { Observable, from, of, catchError, map, switchMap, timeout } from 'rxjs'
 import { SupabaseClient } from '@supabase/supabase-js';
 import { supabaseClient } from './supabase.service';
 import { environment } from '../../../environments/environment';
-import { MenuPlan, WeeklyTemplate, DayAssignment, DishItem, DishIngredient, LooseIngredientItem } from '../../features/intake/models/intake.models';
+import {
+  MenuPlan,
+  WeeklyTemplate,
+  DayAssignment,
+  DishItem,
+  DishIngredient,
+  LooseIngredientItem,
+  CatalogIngredient,
+  FoodPhotoEstimationResult,
+  FormattedRecordIngredient,
+} from '../../features/intake/models/intake.models';
 import { applyOptimizationToMenu } from '../helpers/nutrition-optimizer';
 import { compressImage } from '../helpers/image-compressor.helper';
 
@@ -31,6 +41,7 @@ export class IntakeService {
   private readonly baseUrl = `${environment.apiUrl}/intake`;
 
   public availableMenus = signal<MenuPlan[]>([]);
+  public availableIngredients = signal<CatalogIngredient[]>([]);
   public weeklyPlans = signal<WeeklyTemplate[]>([]);
   public isLoading = signal<boolean>(false);
   public currentAthleteId = signal<string | null>(null);
@@ -49,6 +60,13 @@ export class IntakeService {
         const parsed = JSON.parse(cachedMenus);
         if (Array.isArray(parsed) && parsed.length > 0) {
           this.availableMenus.set(parsed);
+        }
+      }
+      const cachedIngredients = localStorage.getItem('awakin_cached_ingredients');
+      if (cachedIngredients) {
+        const parsedIngredients = JSON.parse(cachedIngredients);
+        if (Array.isArray(parsedIngredients) && parsedIngredients.length > 0) {
+          this.availableIngredients.set(parsedIngredients);
         }
       }
       const athId = localStorage.getItem('awakin_active_athlete_id');
@@ -854,5 +872,179 @@ export class IntakeService {
         }
       })
     );
+  }
+
+  /**
+   * Carga el catálogo completo de ingredientes de `intake_ingredients` para
+   * la selección manual (Vía B) y anclaje nutricional.
+   */
+  public loadCatalogIngredients(): Observable<CatalogIngredient[]> {
+    return this.http.get<Record<string, unknown>[]>(`${this.baseUrl}/ingredients`).pipe(
+      timeout(3500),
+      map((rows) => this.mapCatalogIngredients(rows)),
+      catchError((err) => {
+        console.warn('Backend unavailable for ingredients, falling back to Supabase client directly:', err);
+        return from(
+          this.supabase
+            .from('intake_ingredients')
+            .select('*')
+            .order('name')
+        ).pipe(
+          map(({ data, error }) => {
+            if (error || !data || data.length === 0) {
+              return this.extractIngredientsFromMenus();
+            }
+            return this.mapCatalogIngredients(data as Record<string, unknown>[]);
+          }),
+          catchError(() => of(this.extractIngredientsFromMenus()))
+        );
+      }),
+      map((ingredients) => {
+        const resolved = ingredients.length > 0 ? ingredients : this.extractIngredientsFromMenus();
+        if (resolved.length > 0) {
+          this.availableIngredients.set(resolved);
+          try {
+            localStorage.setItem('awakin_cached_ingredients', JSON.stringify(resolved));
+          } catch {}
+        }
+        return resolved;
+      })
+    );
+  }
+
+  /**
+   * Envía la fotografía de la comida al endpoint de visión IA para estimar
+   * ingredientes, cantidades, macros y kcal.
+   */
+  public analyzeFoodPhoto(source: {
+    file?: File | null;
+    imageUrl?: string | null;
+    mealType?: string;
+    notes?: string;
+  }): Observable<FoodPhotoEstimationResult> {
+    const buildRequest$: Observable<FormData> = source.file
+      ? from(compressImage(source.file, 1024, 0.8)).pipe(
+          map((blob) => {
+            const formData = new FormData();
+            formData.append('file', blob, source.file?.name || 'meal.jpg');
+            if (source.mealType) formData.append('meal_type', source.mealType);
+            if (source.notes?.trim()) formData.append('notes', source.notes.trim());
+            return formData;
+          })
+        )
+      : of(null).pipe(
+          map(() => {
+            const formData = new FormData();
+            if (source.imageUrl) formData.append('image_url', source.imageUrl);
+            if (source.mealType) formData.append('meal_type', source.mealType);
+            if (source.notes?.trim()) formData.append('notes', source.notes.trim());
+            return formData;
+          })
+        );
+
+    return buildRequest$.pipe(
+      switchMap((formData) =>
+        this.http.post<Record<string, unknown>>(`${this.baseUrl}/analyze-food-photo`, formData).pipe(
+          timeout(25000)
+        )
+      ),
+      map((res) => {
+        if (res['success'] === false) {
+          throw new Error(String(res['message'] || 'No se pudo estimar la comida desde la fotografía.'));
+        }
+        const rawIngredients = Array.isArray(res['ingredients']) ? res['ingredients'] : [];
+        const mappedIngredients: FormattedRecordIngredient[] = rawIngredients.map((item) => {
+          const row = item as Record<string, unknown>;
+          const modo = row['modo'] === 'portions' ? 'portions' : 'g';
+          return {
+            ingredient_id: row['ingredient_id'] ? String(row['ingredient_id']) : null,
+            nombre: String(row['nombre'] || 'Ingrediente'),
+            cantidad_display: String(row['cantidad_display'] || `${Math.round(Number(row['cantidad_g'] || 0))} g`),
+            cantidad_original: Number(row['cantidad_original'] || 0),
+            unidad_original: String(row['unidad_original'] || 'g'),
+            modo,
+            cantidad_g: Number(row['cantidad_g'] || 0),
+            kcals: Math.round(Number(row['kcals'] || 0)),
+            proteinas_g: Math.round(Number(row['proteinas_g'] || 0) * 10) / 10,
+            carbohidratos_g: Math.round(Number(row['carbohidratos_g'] || 0) * 10) / 10,
+            grasas_g: Math.round(Number(row['grasas_g'] || 0) * 10) / 10,
+          };
+        });
+
+        return {
+          dishName: String(res['dish_name'] || 'Plato estimado'),
+          kcal: Math.round(Number(res['kcal'] || 0)),
+          protein: Math.round(Number(res['protein'] || 0) * 10) / 10,
+          carbs: Math.round(Number(res['carbs'] || 0) * 10) / 10,
+          fat: Math.round(Number(res['fat'] || 0) * 10) / 10,
+          ingredients: mappedIngredients,
+          provider: res['provider'] ? String(res['provider']) : null,
+        };
+      })
+    );
+  }
+
+  private mapCatalogIngredients(rows: Record<string, unknown>[]): CatalogIngredient[] {
+    return (rows || [])
+      .filter((r) => r && r['id'] && r['name'])
+      .map((r) => ({
+        id: String(r['id']),
+        name: String(r['name']),
+        unit: String(r['unit'] || 'g'),
+        serving_size: Number(r['serving_size'] || 100),
+        calories: Number(r['calories'] || 0),
+        protein: Number(r['protein'] || 0),
+        carbs: Number(r['carbs'] || 0),
+        fats: Number(r['fats'] || 0),
+        fiber: r['fiber'] !== undefined && r['fiber'] !== null ? Number(r['fiber']) : undefined,
+        unit_weight_grams:
+          r['unit_weight_grams'] !== undefined && r['unit_weight_grams'] !== null
+            ? Number(r['unit_weight_grams'])
+            : undefined,
+        source_classification: r['source_classification'] ? String(r['source_classification']) : undefined,
+        photo_urls: Array.isArray(r['photo_urls']) ? (r['photo_urls'] as string[]) : [],
+      }));
+  }
+
+  private extractIngredientsFromMenus(): CatalogIngredient[] {
+    const byId = new Map<string, CatalogIngredient>();
+    for (const menu of this.availableMenus()) {
+      for (const dish of menu.dishes || []) {
+        for (const di of dish.ingredients || []) {
+          const id = String(di.ingredient_id || di.id || di.name);
+          if (!id || byId.has(id)) continue;
+          const raw = di.rawIngredientObj || {};
+          byId.set(id, {
+            id,
+            name: di.name || raw.name || 'Ingrediente',
+            unit: di.unit || raw.unit || 'g',
+            serving_size: Number(di.serving_size ?? raw.serving_size ?? 100),
+            calories: Number(di.calories ?? raw.calories ?? 0),
+            protein: Number(di.protein ?? raw.protein ?? 0),
+            carbs: Number(di.carbs ?? raw.carbs ?? 0),
+            fats: Number(di.fats ?? raw.fats ?? 0),
+            unit_weight_grams: di.unit_weight_grams ?? raw.unit_weight_grams,
+            source_classification: di.sourceClassification ?? raw.source_classification,
+            photo_urls: di.photo_urls ?? raw.photo_urls ?? [],
+          });
+        }
+      }
+      for (const li of menu.looseIngredients || []) {
+        const id = String(li.ingredientId || li.id || li.name);
+        if (!id || byId.has(id)) continue;
+        byId.set(id, {
+          id,
+          name: li.name,
+          unit: li.unit || 'g',
+          serving_size: 100,
+          calories: Number(li.calories || 0),
+          protein: Number(li.protein || 0),
+          carbs: Number(li.carbs || 0),
+          fats: Number(li.fats || 0),
+          source_classification: li.sourceClassification,
+        });
+      }
+    }
+    return Array.from(byId.values()).sort((a, b) => a.name.localeCompare(b.name));
   }
 }

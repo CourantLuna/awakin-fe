@@ -1,0 +1,342 @@
+<div class=" rounded-2xl space-y-3 shadow-xs">
+  <!-- Encabezado -->
+  <div class="flex items-center justify-between gap-2">
+    <div class="flex items-center gap-1.5 min-w-0">
+      <span class="w-6 h-6 rounded-lg bg-awakin-sun/15 text-awakin-sun flex items-center justify-center shrink-0">
+        <i class="pi pi-sparkles text-xs"></i>
+      </span>
+      <div class="min-w-0">
+        <h4 class="text-[11px] font-black uppercase tracking-wider text-stone-800 truncate">
+          Estimación Nutricional del Plato
+        </h4>
+        <p class="text-[10px] text-stone-500 font-medium truncate">
+          IA automática desde foto o registro manual (Vía A / Vía B)
+        </p>
+      </div>
+    </div>
+
+    @if (hasPhoto() && !isAnalyzing()) {
+    <button type="button" (click)="retryAiAnalysis.emit()"
+      class="px-2.5 py-1 rounded-xl bg-white hover:bg-stone-100 border border-stone-200 text-[10px] font-bold text-stone-700 flex items-center gap-1 shrink-0 cursor-pointer transition-all active:scale-95"
+      title="Volver a analizar la fotografía con IA">
+      <i class="pi pi-refresh text-[10px] text-awakin-sun"></i>
+      <span>Reanalizar</span>
+    </button>
+    }
+  </div>
+
+  <!-- Estado 1: Analizando fotografía -->
+  @if (isAnalyzing()) {
+  <div class="p-4 rounded-xl bg-white border border-awakin-sun/30 flex items-center gap-3 shadow-2xs">
+    <div class="w-9 h-9 rounded-xl bg-awakin-sun/15 text-awakin-sun flex items-center justify-center shrink-0">
+      <i class="pi pi-spin pi-spinner text-base"></i>
+    </div>
+    <div class="min-w-0 flex-1">
+      <p class="text-xs font-black text-stone-900">Leyendo fotografía del plato...</p>
+      <p class="text-[11px] text-stone-500 font-medium mt-0.5">
+        Estimando ingredientes, porciones, macros y calorías automáticamente.
+      </p>
+    </div>
+  </div>
+  }
+
+  <!-- Estado 2: Error / Fallback del modelo -->
+  @if (!isAnalyzing() && aiError()) {
+  <div class="p-3 rounded-xl bg-amber-50 border border-amber-200 flex items-start gap-2.5 text-amber-900">
+    <i class="pi pi-exclamation-circle text-sm text-amber-600 mt-0.5 shrink-0"></i>
+    <div class="min-w-0 flex-1">
+      <p class="text-xs font-black text-amber-950">No se pudo estimar automáticamente con IA</p>
+      <p class="text-[11px] text-amber-800 font-medium mt-0.5 leading-snug">
+        {{ aiError() }} Ingresa los datos usando cualquiera de las dos vías manuales abajo.
+      </p>
+    </div>
+  </div>
+  }
+
+  <!-- Selector de Modo / Vías -->
+  @if (!isAnalyzing()) {
+  <div class="grid gap-1.5 p-1 bg-stone-200/70 rounded-xl" [class]="aiResult() ? 'grid-cols-3' : 'grid-cols-2'">
+    @if (aiResult()) {
+    <button type="button" (click)="selectMode('AI')"
+      class="py-1.5 px-2 rounded-lg text-[11px] font-black transition-all cursor-pointer flex items-center justify-center gap-1"
+      [class]="activeMode() === 'AI'
+        ? 'bg-white text-stone-900 shadow-xs'
+        : 'text-stone-600 hover:text-stone-900'">
+      <i class="pi pi-sparkles text-[10px] text-awakin-sun"></i>
+      <span class="truncate">Estimado IA</span>
+    </button>
+    }
+
+    <button type="button" (click)="selectMode('MACROS')"
+      class="py-1.5 px-2 rounded-lg text-[11px] font-black transition-all cursor-pointer flex items-center justify-center gap-1"
+      [class]="activeMode() === 'MACROS'
+        ? 'bg-white text-stone-900 shadow-xs'
+        : 'text-stone-600 hover:text-stone-900'">
+      <i class="pi pi-sliders-h text-[10px] text-awakin-sun"></i>
+      <span class="truncate">Vía A: Macros (g)</span>
+    </button>
+
+    <button type="button" (click)="selectMode('INGREDIENTS')"
+      class="py-1.5 px-2 rounded-lg text-[11px] font-black transition-all cursor-pointer flex items-center justify-center gap-1"
+      [class]="activeMode() === 'INGREDIENTS'
+        ? 'bg-white text-stone-900 shadow-xs'
+        : 'text-stone-600 hover:text-stone-900'">
+      <i class="pi pi-list text-[10px] text-awakin-sun"></i>
+      <span class="truncate">Vía B: Ingredientes</span>
+    </button>
+  </div>
+  }
+
+  <!-- Nombre del plato (editable en cualquier vía) -->
+  @if (!isAnalyzing()) {
+  <div>
+    <label for="estimated-dish-name" class="block text-[10px] font-bold uppercase tracking-wider text-stone-600 mb-1">
+      Nombre del Plato <span class="text-stone-400 font-normal lowercase">(opcional)</span>
+    </label>
+    <input id="estimated-dish-name" type="text" [ngModel]="dishNameInput()" (ngModelChange)="dishNameInput.set($event)"
+      [placeholder]="defaultDishName() || 'Ej: Bowl de pollo con arroz y aguacate'"
+      class="w-full bg-white border border-stone-200 rounded-xl px-3 py-2 text-xs text-stone-900 placeholder-stone-400 focus:outline-none focus:border-awakin-sun" />
+  </div>
+  }
+
+  <!-- VISTA IA: Resultado estimado por visión artificial -->
+  @if (!isAnalyzing() && activeMode() === 'AI' && aiResult(); as ai) {
+  <div class="space-y-3 bg-white border border-emerald-200/80 rounded-2xl p-3 shadow-2xs">
+    <div class="flex items-center justify-between gap-2">
+      <div class="min-w-0">
+        <span
+          class="text-[9px] font-black uppercase tracking-wider text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full">
+          Lectura automática completada
+        </span>
+        <h5 class="text-xs sm:text-sm font-black text-stone-900 mt-1 truncate">
+          {{ dishNameInput() || ai.dishName }}
+        </h5>
+      </div>
+      <div class="text-right shrink-0">
+        <span class="text-base font-black text-awakin-sun tabular-nums">{{ ai.kcal }}</span>
+        <span class="text-[10px] font-bold text-stone-400 block uppercase">kcal</span>
+      </div>
+    </div>
+
+    <!-- Macros estimados -->
+    <div class="grid grid-cols-3 gap-2 text-center">
+      <div class="bg-sky-50/70 border border-sky-100 rounded-xl py-1.5 px-2">
+        <span class="text-[9px] font-bold text-sky-700 uppercase block">Proteína</span>
+        <span class="text-xs font-black text-stone-900 tabular-nums">{{ ai.protein }} g</span>
+      </div>
+      <div class="bg-amber-50/70 border border-amber-100 rounded-xl py-1.5 px-2">
+        <span class="text-[9px] font-bold text-amber-700 uppercase block">Carbos</span>
+        <span class="text-xs font-black text-stone-900 tabular-nums">{{ ai.carbs }} g</span>
+      </div>
+      <div class="bg-rose-50/70 border border-rose-100 rounded-xl py-1.5 px-2">
+        <span class="text-[9px] font-bold text-rose-700 uppercase block">Grasas</span>
+        <span class="text-xs font-black text-stone-900 tabular-nums">{{ ai.fat }} g</span>
+      </div>
+    </div>
+
+    <!-- Ingredientes estimados -->
+    @if (ai.ingredients.length > 0) {
+    <div class="space-y-1.5 pt-1 border-t border-stone-100">
+      <span class="text-[10px] font-bold uppercase tracking-wider text-stone-500 block">
+        Ingredientes detectados ({{ ai.ingredients.length }})
+      </span>
+      <div class="max-h-36 overflow-y-auto space-y-1 pr-1 awakin-scrollbar">
+        @for (ing of ai.ingredients; track $index) {
+        <div
+          class="flex items-center justify-between text-[11px] py-1 px-2 rounded-lg bg-stone-50 border border-stone-100 gap-2">
+          <div class="min-w-0 flex-1">
+            <span class="font-bold text-stone-800 truncate block">{{ ing.nombre }}</span>
+            <span class="text-[10px] text-stone-500">
+              {{ ing.proteinas_g }}P · {{ ing.carbohidratos_g }}C · {{ ing.grasas_g }}G
+            </span>
+          </div>
+          <div class="text-right shrink-0">
+            <span class="font-black text-stone-800 block tabular-nums">{{ ing.cantidad_display }}</span>
+            <span class="text-[10px] text-stone-500 tabular-nums">{{ ing.kcals }} kcal</span>
+          </div>
+        </div>
+        }
+      </div>
+    </div>
+    }
+
+    <!-- Botones rápidos de ajuste -->
+    <div class="flex items-center gap-2 pt-1">
+      <button type="button" (click)="switchToMacrosFromAi()"
+        class="flex-1 py-1.5 px-2 rounded-xl bg-stone-100 hover:bg-stone-200 text-stone-700 text-[10px] font-bold cursor-pointer transition-all">
+        Ajustar macros (Vía A)
+      </button>
+      <button type="button" (click)="switchToIngredientsFromAi()"
+        class="flex-1 py-1.5 px-2 rounded-xl bg-stone-100 hover:bg-stone-200 text-stone-700 text-[10px] font-bold cursor-pointer transition-all">
+        Editar ingredientes (Vía B)
+      </button>
+    </div>
+  </div>
+  }
+
+  <!-- VÍA A: Ingreso manual directo de macros en gramos -->
+  @if (!isAnalyzing() && activeMode() === 'MACROS') {
+  <div class="space-y-3 bg-white border border-stone-200 rounded-2xl p-3 shadow-2xs">
+    <div class="flex items-center justify-between">
+      <span class="text-[10px] font-black uppercase tracking-wider text-stone-700">
+        Vía A · Macros Manuales (gramos)
+      </span>
+      <span class="text-[11px] font-black text-awakin-sun bg-awakin-sun/10 px-2.5 py-0.5 rounded-full tabular-nums">
+        {{ manualKcal() }} kcal calculadas
+      </span>
+    </div>
+
+    <div class="grid grid-cols-3 gap-2">
+      <div>
+        <label for="manual-protein-input" class="block text-[10px] font-bold text-sky-700 uppercase mb-1">
+          Proteína (g) *
+        </label>
+        <input id="manual-protein-input" type="number" min="0" step="1" inputmode="decimal" [ngModel]="manualProtein()"
+          (ngModelChange)="manualProtein.set($event)" placeholder="0"
+          class="w-full bg-stone-50 border border-stone-200 rounded-xl px-2.5 py-2 text-xs font-bold text-stone-900 tabular-nums focus:outline-none focus:border-awakin-sun focus:bg-white" />
+      </div>
+
+      <div>
+        <label for="manual-carbs-input" class="block text-[10px] font-bold text-amber-700 uppercase mb-1">
+          Carbos (g) *
+        </label>
+        <input id="manual-carbs-input" type="number" min="0" step="1" inputmode="decimal" [ngModel]="manualCarbs()"
+          (ngModelChange)="manualCarbs.set($event)" placeholder="0"
+          class="w-full bg-stone-50 border border-stone-200 rounded-xl px-2.5 py-2 text-xs font-bold text-stone-900 tabular-nums focus:outline-none focus:border-awakin-sun focus:bg-white" />
+      </div>
+
+      <div>
+        <label for="manual-fat-input" class="block text-[10px] font-bold text-rose-700 uppercase mb-1">
+          Grasas (g) *
+        </label>
+        <input id="manual-fat-input" type="number" min="0" step="1" inputmode="decimal" [ngModel]="manualFat()"
+          (ngModelChange)="manualFat.set($event)" placeholder="0"
+          class="w-full bg-stone-50 border border-stone-200 rounded-xl px-2.5 py-2 text-xs font-bold text-stone-900 tabular-nums focus:outline-none focus:border-awakin-sun focus:bg-white" />
+      </div>
+    </div>
+
+    @if (!isMacrosValid()) {
+    <p class="text-[10px] text-amber-700 font-medium">
+      Ingresa al menos un macronutriente mayor a 0 g para calcular las calorías del plato.
+    </p>
+    }
+  </div>
+  }
+
+  <!-- VÍA B: Ingreso ingrediente por ingrediente desde la base de datos Intake -->
+  @if (!isAnalyzing() && activeMode() === 'INGREDIENTS') {
+  <div class="space-y-3 bg-white border border-stone-200 rounded-2xl p-3 shadow-2xs">
+    <div class="flex items-center justify-between gap-2 flex-wrap">
+      <span class="text-[10px] font-black uppercase tracking-wider text-stone-700">
+        Vía B · Ingredientes Base de Datos Intake
+      </span>
+
+      @if (hasPlannedIngredientsAvailable()) {
+      <button type="button" (click)="loadIngredientsFromPlan()"
+        class="text-[10px] font-bold text-awakin-sun hover:underline cursor-pointer flex items-center gap-1">
+        <i class="pi pi-copy text-[10px]"></i>
+        <span>Cargar del plan</span>
+      </button>
+      }
+    </div>
+
+    <!-- Selector buscable de ingredientes (p-select) -->
+    <div>
+      <label for="ingredient-catalog-select" class="block text-[10px] font-bold text-stone-600 uppercase mb-1">
+        Añadir ingrediente de Intake
+      </label>
+      <p-select inputId="ingredient-catalog-select" [options]="catalogIngredients()"
+        [ngModel]="selectedCatalogIngredientId()" (ngModelChange)="onCatalogIngredientSelected($event)"
+        optionLabel="name" optionValue="id" [filter]="true" filterBy="name" [showClear]="false" appendTo="body"
+        placeholder="Buscar y seleccionar ingrediente..." emptyFilterMessage="No se encontraron ingredientes"
+        emptyMessage="Cargando catálogo de ingredientes..."
+        styleClass="w-full !rounded-xl !border-stone-200 !bg-stone-50 !text-xs"
+        panelStyleClass="bg-white rounded-xl shadow-2xl border border-stone-200 text-xs max-w-[340px]">
+        <ng-template pTemplate="item" let-ing>
+          <div class="flex items-center justify-between gap-2 py-0.5 w-full min-w-0">
+            <span class="font-bold text-stone-800 truncate flex-1">{{ ing.name }}</span>
+            <span class="text-[10px] text-stone-500 shrink-0 tabular-nums">
+              {{ ing.calories | number:'1.0-0' }} kcal / {{ ing.serving_size }}{{ ing.unit }}
+            </span>
+          </div>
+        </ng-template>
+      </p-select>
+    </div>
+
+    <!-- Lista de ingredientes agregados con input number de cantidad -->
+    @if (ingredientRows().length > 0) {
+    <div class="space-y-2 max-h-56 overflow-y-auto pr-1 awakin-scrollbar">
+      @for (row of ingredientRows(); track row.rowId) {
+      @let summary = getRowSummary(row.rowId);
+      <div class="p-2.5 rounded-xl bg-stone-50 border border-stone-200/80 space-y-2">
+        <div class="flex items-start justify-between gap-2">
+          <div class="min-w-0 flex-1">
+            <span class="text-xs font-bold text-stone-900 block truncate">{{ row.ingredient.name }}</span>
+            <span class="text-[10px] text-stone-500 font-medium tabular-nums">
+              {{ summary.kcal }} kcal · {{ summary.protein }}P · {{ summary.carbs }}C · {{ summary.fat }}G
+            </span>
+          </div>
+          <button type="button" (click)="removeIngredientRow(row.rowId)" aria-label="Eliminar ingrediente"
+            class="w-6 h-6 rounded-lg bg-white hover:bg-red-50 border border-stone-200 text-stone-500 hover:text-red-600 flex items-center justify-center shrink-0 cursor-pointer transition-colors">
+            <i class="pi pi-trash text-[10px]"></i>
+          </button>
+        </div>
+
+        <div class="flex items-center gap-2">
+          <div class="flex-1">
+            <label [for]="'qty-' + row.rowId" class="sr-only">Cantidad de {{ row.ingredient.name }}</label>
+            <input [id]="'qty-' + row.rowId" type="number" min="0.1" step="any" inputmode="decimal"
+              [ngModel]="row.quantity" (ngModelChange)="updateRowQuantity(row.rowId, $event)"
+              class="w-full bg-white border border-stone-200 rounded-lg px-2.5 py-1.5 text-xs font-bold text-stone-900 tabular-nums focus:outline-none focus:border-awakin-sun" />
+          </div>
+
+          <div class="flex items-center bg-stone-200/70 rounded-lg p-0.5 shrink-0">
+            <button type="button" (click)="updateRowMode(row.rowId, 'g')"
+              class="px-2 py-1 rounded-md text-[10px] font-bold cursor-pointer transition-all"
+              [class]="row.mode === 'g' ? 'bg-white text-stone-900 shadow-2xs' : 'text-stone-600'">
+              g/ml
+            </button>
+            <button type="button" (click)="updateRowMode(row.rowId, 'portions')"
+              class="px-2 py-1 rounded-md text-[10px] font-bold cursor-pointer transition-all"
+              [class]="row.mode === 'portions' ? 'bg-white text-stone-900 shadow-2xs' : 'text-stone-600'">
+              {{ hasDiscreteUnit(row.ingredient) ? row.ingredient.unit : 'porc' }}
+            </button>
+          </div>
+        </div>
+      </div>
+      }
+    </div>
+
+    <!-- Totales calculados de ingredientes -->
+    @let totals = ingredientTotals();
+    <div class="pt-2 border-t border-stone-200/70 space-y-1.5">
+      <div class="flex items-center justify-between text-[11px]">
+        <span class="font-bold text-stone-600">Total por ingredientes:</span>
+        <span class="font-black text-awakin-sun bg-awakin-sun/10 px-2 py-0.5 rounded-lg tabular-nums">
+          {{ totals.kcal }} kcal
+        </span>
+      </div>
+      <div class="grid grid-cols-3 gap-2 text-center">
+        <div class="bg-stone-50 border border-stone-200/70 rounded-lg py-1 px-2">
+          <span class="text-[9px] font-bold text-stone-500 uppercase block">Proteína</span>
+          <span class="text-xs font-black text-stone-900 tabular-nums">{{ totals.protein }} g</span>
+        </div>
+        <div class="bg-stone-50 border border-stone-200/70 rounded-lg py-1 px-2">
+          <span class="text-[9px] font-bold text-stone-500 uppercase block">Carbos</span>
+          <span class="text-xs font-black text-stone-900 tabular-nums">{{ totals.carbs }} g</span>
+        </div>
+        <div class="bg-stone-50 border border-stone-200/70 rounded-lg py-1 px-2">
+          <span class="text-[9px] font-bold text-stone-500 uppercase block">Grasas</span>
+          <span class="text-xs font-black text-stone-900 tabular-nums">{{ totals.fat }} g</span>
+        </div>
+      </div>
+    </div>
+    } @else {
+    <div
+      class="py-4 px-3 rounded-xl bg-stone-50 border border-dashed border-stone-200 text-center text-[11px] text-stone-500">
+      Selecciona uno o más ingredientes del catálogo arriba para calcular macros y calorías automáticamente.
+    </div>
+    }
+  </div>
+  }
+</div>

@@ -12,6 +12,7 @@ export interface FoodItem {
   fat: number;
   isLogged: boolean;
   coverImageUrl?: string | null;
+  dishItem?: DishItem;
 }
 
 export interface DishIngredient {
@@ -119,5 +120,65 @@ export interface WeeklyTemplate {
   endDate?: string;
   isActive?: boolean;
   assignments: DayAssignment[];
+}
+
+export interface CatalogIngredient {
+  id: string;
+  name: string;
+  unit: string;
+  serving_size: number;
+  calories: number;
+  protein: number;
+  carbs: number;
+  fats: number;
+  fiber?: number;
+  unit_weight_grams?: number;
+  source_classification?: string;
+  photo_urls?: string[];
+}
+
+export interface FormattedRecordIngredient {
+  ingredient_id?: string | null;
+  nombre: string;
+  cantidad_display: string;
+  cantidad_original: number;
+  unidad_original: string;
+  modo: 'g' | 'portions';
+  cantidad_g: number;
+  kcals: number;
+  proteinas_g: number;
+  carbohidratos_g: number;
+  grasas_g: number;
+}
+
+export interface FoodPhotoEstimationResult {
+  dishName: string;
+  kcal: number;
+  protein: number;
+  carbs: number;
+  fat: number;
+  ingredients: FormattedRecordIngredient[];
+  provider?: string | null;
+}
+
+export interface ManualIngredientRow {
+  rowId: string;
+  ingredientId: string;
+  ingredient: CatalogIngredient;
+  quantity: number;
+  mode: 'g' | 'portions';
+}
+
+export type NutritionEntryMode = 'AI' | 'MACROS' | 'INGREDIENTS';
+
+export interface ResolvedCustomNutrition {
+  mode: NutritionEntryMode;
+  dishName: string;
+  kcal: number;
+  protein: number;
+  carbs: number;
+  fat: number;
+  ingredients: FormattedRecordIngredient[];
+  isValid: boolean;
 }
 
