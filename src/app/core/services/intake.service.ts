@@ -470,6 +470,8 @@ export class IntakeService {
           dishId: String(d.dish_id || dishObj.id),
           name: dishObj.name || 'Platillo',
           mealType: d.meal_type || dishObj.meal_type || 'BREAKFAST',
+          meal_types: Array.isArray(dishObj.meal_types) ? dishObj.meal_types : (Array.isArray(dishObj.type) ? dishObj.type : []),
+          type: Array.isArray(dishObj.type) ? dishObj.type : (Array.isArray(dishObj.meal_types) ? dishObj.meal_types : []),
           prepTimeMinutes: Number(dishObj.prep_time_minutes || 15),
           coverImageUrl: dishObj.cover_image_url || null,
           authorName: dishObj.author_name || 'Awakin Protocol',

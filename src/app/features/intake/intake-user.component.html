@@ -10,18 +10,25 @@
 
   <!-- 2. Header selector de días (se ancla al top al hacer scroll) -->
   <div class="sticky top-0 z-30 w-full">
-    <app-week-calendar-header #calendar [streak]="streak()" [activeDates]="intakeActiveDates()" [perfectDates]="intakePerfectDates()" [weekStart]="1" (onLabelChange)="updateLabel($event)"
+    <app-week-calendar-header #calendar [streak]="streak()" [activeDates]="intakeActiveDates()"
+      [perfectDates]="intakePerfectDates()" [weekStart]="1" (onLabelChange)="updateLabel($event)"
       (onDateChange)="onDateSelected($event)">
     </app-week-calendar-header>
   </div>
 
+
+
   <!-- 2. CONTENIDO PRINCIPAL (Dashboard de Comida) -->
-  <div class="px-4 z-10 py-5">
+  <div class="px-4 z-10 py-5 relative">
+
+    @if (isLoading()) {
+    <app-intake-loader mode="inline" class="overflow-hidden sticky" label="Cargando tus macros..."
+      [active]="isLoading()" />
+    }
     <app-intake-scale-widget [minA]="minBasal()" [maintC]="maintenanceLevel()" [goalKcals]="dailyGoalCalories()"
-      [protocol]="currentProtocolType()"
-      [caloriesEated]="totalLoggedCalories()" [proteinEated]="totalLoggedProtein()" [proteinGoal]="dailyGoalProtein()"
-      [carbsEated]="totalLoggedCarbs()" [carbsGoal]="dailyGoalCarbs()" [fatsEated]="totalLoggedFat()"
-      [fatsGoal]="dailyGoalFats()" [burnedKcals]="0" [kinData]="athleteKin()">
+      [protocol]="currentProtocolType()" [caloriesEated]="totalLoggedCalories()" [proteinEated]="totalLoggedProtein()"
+      [proteinGoal]="dailyGoalProtein()" [carbsEated]="totalLoggedCarbs()" [carbsGoal]="dailyGoalCarbs()"
+      [fatsEated]="totalLoggedFat()" [fatsGoal]="dailyGoalFats()" [burnedKcals]="0" [kinData]="athleteKin()">
     </app-intake-scale-widget>
 
     <app-protocol-matrix-drawer [(isOpen)]="isMatrixOpen" [(weeklyTemplates)]="weeklyTemplates"
@@ -30,7 +37,8 @@
     </app-protocol-matrix-drawer>
 
     <app-shopping-list-drawer [(isOpen)]="isShoppingListModalOpen" [weekAssignments]="weeklyTemplates()"
-      [availableMenus]="availableMenus()" [athleteId]="currentAthleteId()" [initialDish]="selectedDishForShoppingList()">
+      [availableMenus]="availableMenus()" [athleteId]="currentAthleteId()"
+      [initialDish]="selectedDishForShoppingList()">
     </app-shopping-list-drawer>
 
     <app-recipe-details-modal [(isOpen)]="isRecipeDetailsOpen" [dish]="selectedDishForDetails()"
@@ -161,53 +169,53 @@
             <div class="flex items-center gap-1.5 shrink-0">
               <!-- Botones de Registro (solo disponibles dentro de plazo) -->
               @if (canLogForSelectedDate()) {
-                <!-- Caso 1: Todos pendientes -> Registrar todo -->
-                @if (unloggedCount > 0 && loggedCount === 0) {
-                <button type="button" (click)="openRegisterModal(mealType)"
-                  class="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-black bg-awakin-sun hover:bg-amber-400 text-stone-950 shadow-xs transition-all active:scale-95 cursor-pointer"
-                  [title]="foods.length > 1 ? 'Registrar los ' + foods.length + ' alimentos juntos' : 'Registrar comida'">
-                  <i class="pi pi-camera text-xs"></i>
-                  <span>{{ foods.length > 1 ? 'Registrar todo' : 'Registrar' }}</span>
-                </button>
-                }
+              <!-- Caso 1: Todos pendientes -> Registrar todo -->
+              @if (unloggedCount > 0 && loggedCount === 0) {
+              <button type="button" (click)="openRegisterModal(mealType)"
+                class="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-black bg-awakin-sun hover:bg-amber-400 text-stone-950 shadow-xs transition-all active:scale-95 cursor-pointer"
+                [title]="foods.length > 1 ? 'Registrar los ' + foods.length + ' alimentos juntos' : 'Registrar comida'">
+                <i class="pi pi-camera text-xs"></i>
+                <span>{{ foods.length > 1 ? 'Registrar todo' : 'Registrar' }}</span>
+              </button>
+              }
 
-                <!-- Caso 2: Algunos registrados y algunos pendientes -> Registrar restantes -->
-                @if (unloggedCount > 0 && loggedCount > 0) {
-                <button type="button" (click)="openRegisterModal(mealType)"
-                  class="flex items-center gap-1 px-2.5 py-1.5 rounded-full text-[11px] font-black bg-awakin-sun/15 hover:bg-awakin-sun text-stone-900 border border-awakin-sun/30 transition-all active:scale-95 cursor-pointer"
-                  title="Registrar los {{ unloggedCount }} alimentos restantes de esta comida">
-                  <i class="pi pi-camera text-[10px]"></i>
-                  <span>Registrar ({{ unloggedCount }})</span>
-                </button>
-                }
+              <!-- Caso 2: Algunos registrados y algunos pendientes -> Registrar restantes -->
+              @if (unloggedCount > 0 && loggedCount > 0) {
+              <button type="button" (click)="openRegisterModal(mealType)"
+                class="flex items-center gap-1 px-2.5 py-1.5 rounded-full text-[11px] font-black bg-awakin-sun/15 hover:bg-awakin-sun text-stone-900 border border-awakin-sun/30 transition-all active:scale-95 cursor-pointer"
+                title="Registrar los {{ unloggedCount }} alimentos restantes de esta comida">
+                <i class="pi pi-camera text-[10px]"></i>
+                <span>Registrar ({{ unloggedCount }})</span>
+              </button>
+              }
               }
 
               <!-- Botones de Compartir (disponibles siempre que haya alimentos registrados, dentro o fuera de plazo) -->
               @if (loggedCount > 0) {
-                <!-- Si todos los alimentos de la comida están registrados -> Compartir todo -->
-                @if (unloggedCount === 0) {
-                <button type="button" (click)="openStoryForMeal(mealType, $event)"
-                  class="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-black bg-stone-900 hover:bg-stone-800 text-white shadow-xs transition-all active:scale-95 cursor-pointer"
-                  title="Compartir historia completa de {{ def.title }}">
-                  <i class="pi pi-share-alt text-xs text-awakin-sun"></i>
-                  <span>Compartir todo</span>
-                </button>
-                } @else if (canLogForSelectedDate()) {
-                <!-- Parcial en día activo: Icono circular junto al botón de registro restante -->
-                <button type="button" (click)="openStoryForMeal(mealType, $event)"
-                  class="w-7 h-7 rounded-full bg-stone-100 hover:bg-stone-200 text-stone-600 hover:text-awakin-sun flex items-center justify-center transition-all cursor-pointer shadow-2xs"
-                  title="Compartir historia de los alimentos registrados de {{ def.title }}">
-                  <i class="pi pi-share-alt text-[10px]"></i>
-                </button>
-                } @else {
-                <!-- Parcial en día fuera de plazo: Botón Compartir indicando la cantidad registrada -->
-                <button type="button" (click)="openStoryForMeal(mealType, $event)"
-                  class="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-black bg-stone-900 hover:bg-stone-800 text-white shadow-xs transition-all active:scale-95 cursor-pointer"
-                  title="Compartir historia de los {{ loggedCount }} alimentos registrados de {{ def.title }}">
-                  <i class="pi pi-share-alt text-xs text-awakin-sun"></i>
-                  <span>Compartir ({{ loggedCount }})</span>
-                </button>
-                }
+              <!-- Si todos los alimentos de la comida están registrados -> Compartir todo -->
+              @if (unloggedCount === 0) {
+              <button type="button" (click)="openStoryForMeal(mealType, $event)"
+                class="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-black bg-stone-900 hover:bg-stone-800 text-white shadow-xs transition-all active:scale-95 cursor-pointer"
+                title="Compartir historia completa de {{ def.title }}">
+                <i class="pi pi-share-alt text-xs text-awakin-sun"></i>
+                <span>Compartir todo</span>
+              </button>
+              } @else if (canLogForSelectedDate()) {
+              <!-- Parcial en día activo: Icono circular junto al botón de registro restante -->
+              <button type="button" (click)="openStoryForMeal(mealType, $event)"
+                class="w-7 h-7 rounded-full bg-stone-100 hover:bg-stone-200 text-stone-600 hover:text-awakin-sun flex items-center justify-center transition-all cursor-pointer shadow-2xs"
+                title="Compartir historia de los alimentos registrados de {{ def.title }}">
+                <i class="pi pi-share-alt text-[10px]"></i>
+              </button>
+              } @else {
+              <!-- Parcial en día fuera de plazo: Botón Compartir indicando la cantidad registrada -->
+              <button type="button" (click)="openStoryForMeal(mealType, $event)"
+                class="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-black bg-stone-900 hover:bg-stone-800 text-white shadow-xs transition-all active:scale-95 cursor-pointer"
+                title="Compartir historia de los {{ loggedCount }} alimentos registrados de {{ def.title }}">
+                <i class="pi pi-share-alt text-xs text-awakin-sun"></i>
+                <span>Compartir ({{ loggedCount }})</span>
+              </button>
+              }
               }
             </div>
             }
@@ -217,19 +225,18 @@
           @if (foods.length > 0) {
           <div class="space-y-2 mb-3">
             @for (food of foods; track food.id) {
-            <div class="flex items-center justify-between p-2.5 sm:p-3 rounded-2xl border transition-all"
-              [ngClass]="[
+            <div class="flex items-center justify-between p-2.5 sm:p-3 rounded-2xl border transition-all" [ngClass]="[
                 food.isLogged ? 'bg-stone-50/70 border-stone-200/60' : 'bg-white border-stone-200/40 opacity-80',
                 food.dishItem ? 'cursor-pointer hover:bg-stone-50 hover:border-stone-300 active:scale-[0.99]' : ''
-              ]"
-              (click)="food.dishItem ? openRecipeDetails(food.dishItem, $event) : null"
+              ]" (click)="food.dishItem ? openRecipeDetails(food.dishItem, $event) : null"
               [title]="food.dishItem ? 'Ver detalles de ' + food.name : ''">
               <div class="flex items-center gap-3 min-w-0 flex-1">
                 <!-- Miniatura / Icono Intake Active -->
                 <div
                   class="w-11 h-11 rounded-xl bg-stone-100 border border-stone-200 overflow-hidden flex items-center justify-center shrink-0 shadow-xs">
                   @if (food.coverImageUrl) {
-                  <img loading="lazy" decoding="async" [src]="food.coverImageUrl" [alt]="food.name" class="w-full h-full object-cover"
+                  <img loading="lazy" decoding="async" [src]="food.coverImageUrl" [alt]="food.name"
+                    class="w-full h-full object-cover"
                     (error)="$any($event.target).src = '/icons/intake-active.png'; $any($event.target).className = 'w-7 h-7 object-contain p-0.5'" />
                   } @else {
                   <img src="/icons/intake-active.png" alt="Awakin Intake" class="w-7 h-7 object-contain p-0.5" />
@@ -324,7 +331,8 @@
       <div class="p-3.5 bg-stone-50 border border-stone-200/80 rounded-2xl space-y-3 shadow-xs">
         <div class="flex items-center justify-between">
           <div class="flex items-center gap-1.5">
-            <span class="text-[10px] font-black uppercase tracking-wider text-awakin-sun bg-awakin-sun/10 px-2 py-0.5 rounded">
+            <span
+              class="text-[10px] font-black uppercase tracking-wider text-awakin-sun bg-awakin-sun/10 px-2 py-0.5 rounded">
               {{ mealDefinitions[selectedMealType()].title }}
             </span>
             <label class="text-[10px] font-bold uppercase tracking-wider text-stone-500">
@@ -335,17 +343,17 @@
           <!-- Acciones rápidas: Marcar todos / Desmarcar todos -->
           @if (mealFoods.length > 1) {
           <div class="flex items-center gap-2">
-            @if (selectedFoodItemsForLog().length < mealFoods.length) {
-            <button type="button" (click)="selectAllFoodsForCurrentMeal()"
+            @if (selectedFoodItemsForLog().length < mealFoods.length) { <button type="button"
+              (click)="selectAllFoodsForCurrentMeal()"
               class="text-[10px] font-bold text-awakin-sun hover:underline cursor-pointer">
               Marcar todos ({{ mealFoods.length }})
-            </button>
-            } @else {
-            <button type="button" (click)="deselectAllFoodsForCurrentMeal()"
-              class="text-[10px] font-bold text-stone-400 hover:text-stone-600 cursor-pointer">
-              Desmarcar todos
-            </button>
-            }
+              </button>
+              } @else {
+              <button type="button" (click)="deselectAllFoodsForCurrentMeal()"
+                class="text-[10px] font-bold text-stone-400 hover:text-stone-600 cursor-pointer">
+                Desmarcar todos
+              </button>
+              }
           </div>
           }
         </div>
@@ -359,12 +367,14 @@
             [ngClass]="isSelected
               ? 'bg-white border-awakin-sun/80 shadow-xs ring-1 ring-awakin-sun/40'
               : 'bg-white/60 border-stone-200/70 hover:bg-white hover:border-stone-300 opacity-75'">
-            
+
             <div class="flex items-center gap-2.5 min-w-0 flex-1">
               <!-- Miniatura / Icono Intake Active -->
-              <div class="w-10 h-10 rounded-xl bg-stone-100 border border-stone-200 overflow-hidden flex items-center justify-center shrink-0">
+              <div
+                class="w-10 h-10 rounded-xl bg-stone-100 border border-stone-200 overflow-hidden flex items-center justify-center shrink-0">
                 @if (food.coverImageUrl) {
-                <img loading="lazy" decoding="async" [src]="food.coverImageUrl" [alt]="food.name" class="w-full h-full object-cover"
+                <img loading="lazy" decoding="async" [src]="food.coverImageUrl" [alt]="food.name"
+                  class="w-full h-full object-cover"
                   (error)="$any($event.target).src = '/icons/intake-active.png'; $any($event.target).className = 'w-6 h-6 object-contain p-0.5'" />
                 } @else {
                 <img src="/icons/intake-active.png" alt="Awakin Intake" class="w-6 h-6 object-contain p-0.5" />
@@ -387,7 +397,8 @@
             <!-- Checkbox estilizado -->
             <div class="w-5 h-5 rounded-lg flex items-center justify-center shrink-0 transition-all"
               [ngClass]="isSelected ? 'bg-awakin-sun text-white shadow-2xs' : 'border border-stone-300 bg-white'">
-              <i class="pi pi-check text-[10px] font-black" [ngClass]="{'opacity-100': isSelected, 'opacity-0': !isSelected}"></i>
+              <i class="pi pi-check text-[10px] font-black"
+                [ngClass]="{'opacity-100': isSelected, 'opacity-0': !isSelected}"></i>
             </div>
           </div>
           }
@@ -421,7 +432,8 @@
           </div>
         </div>
         } @else {
-        <div class="py-2 text-center text-amber-600 bg-amber-50 rounded-xl border border-amber-200/60 text-xs font-medium">
+        <div
+          class="py-2 text-center text-amber-600 bg-amber-50 rounded-xl border border-amber-200/60 text-xs font-medium">
           <i class="pi pi-exclamation-triangle mr-1"></i> Selecciona al menos un alimento para este registro.
         </div>
         }
@@ -430,14 +442,17 @@
       } @else {
       <!-- Sin alimentos planificados en este horario -->
       <div class="p-3.5 bg-stone-50 border border-stone-200/70 rounded-2xl text-center text-stone-500 text-xs italic">
-        Sin alimentos planificados en {{ mealDefinitions[selectedMealType()].title }}. Tu registro se guardará como comida libre/adicional.
+        Sin alimentos planificados en {{ mealDefinitions[selectedMealType()].title }}. Tu registro se guardará como
+        comida libre/adicional.
       </div>
       }
       } @else {
       <!-- Modo Fuera del Plan: no obliga a asociar platillos/recetas -->
-      <div class="p-3 bg-amber-50/70 border border-amber-200/70 rounded-2xl flex items-center gap-2.5 text-amber-900 text-xs font-medium">
+      <div
+        class="p-3 bg-amber-50/70 border border-amber-200/70 rounded-2xl flex items-center gap-2.5 text-amber-900 text-xs font-medium">
         <i class="pi pi-info-circle text-awakin-sun shrink-0"></i>
-        <span>Registro libre fuera del plan: no necesitas asociar platillos ni recetas de {{ mealDefinitions[selectedMealType()].title }}.</span>
+        <span>Registro libre fuera del plan: no necesitas asociar platillos ni recetas de {{
+          mealDefinitions[selectedMealType()].title }}.</span>
       </div>
       }
 
@@ -456,11 +471,14 @@
 
         <!-- Banner de Reutilización de Foto previa de la misma comida -->
         @if (existingMealPhotoUrl()) {
-        <div class="mb-2.5 p-2.5 rounded-2xl bg-amber-500/10 border border-amber-500/25 flex items-center justify-between gap-3">
+        <div
+          class="mb-2.5 p-2.5 rounded-2xl bg-amber-500/10 border border-amber-500/25 flex items-center justify-between gap-3">
           <div class="flex items-center gap-2.5 min-w-0">
-            <img loading="lazy" decoding="async" [src]="existingMealPhotoUrl()" alt="Foto previa" class="w-10 h-10 rounded-xl object-cover border border-amber-500/30 shrink-0 shadow-2xs" />
+            <img loading="lazy" decoding="async" [src]="existingMealPhotoUrl()" alt="Foto previa"
+              class="w-10 h-10 rounded-xl object-cover border border-amber-500/30 shrink-0 shadow-2xs" />
             <div class="min-w-0">
-              <p class="text-xs font-black text-stone-800 truncate">Foto previa en {{ mealDefinitions[selectedMealType()].title }}</p>
+              <p class="text-xs font-black text-stone-800 truncate">Foto previa en {{
+                mealDefinitions[selectedMealType()].title }}</p>
               <p class="text-[10px] text-stone-500 truncate">Reutilizar para estos alimentos</p>
             </div>
           </div>
@@ -491,7 +509,8 @@
         </div>
         } @else {
         <div class="relative rounded-2xl overflow-hidden border border-stone-200 bg-stone-100 shadow-sm group">
-          <img loading="lazy" decoding="async" [src]="uploadedPhotoUrl()" alt="Foto del plato" class="w-full h-44 object-cover object-center" />
+          <img loading="lazy" decoding="async" [src]="uploadedPhotoUrl()" alt="Foto del plato"
+            class="w-full h-44 object-cover object-center" />
           <div
             class="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent flex items-end justify-between p-3">
             <button type="button" (click)="fileInput.click()"
@@ -611,11 +630,8 @@
   <!-- ========================================================= -->
   <!-- MODAL DE HISTORIA INTERACTIVA DE COMIDA (Estilo Workout / Tribu) -->
   <!-- ========================================================= -->
-  <app-food-story-modal
-    [(visible)]="isStoryModalOpen"
-    [storyData]="storyData()"
-    [athlete]="athleteService.currentAthlete()"
-    [athleteKin]="athleteKin()"
+  <app-food-story-modal [(visible)]="isStoryModalOpen" [storyData]="storyData()"
+    [athlete]="athleteService.currentAthlete()" [athleteKin]="athleteKin()"
     (shareFeed)="openSocialFeedModalWithBlob($event)" />
 
   <!-- MODAL PARA COMPARTIR EN AWAKIN FEED -->
@@ -627,7 +643,8 @@
       @if (feedPostPreviewUrl()) {
       <div
         class="relative w-full aspect-[9/16] max-h-64 rounded-2xl overflow-hidden border border-stone-200 bg-stone-900 mx-auto flex items-center justify-center shadow-inner">
-        <img loading="lazy" decoding="async" [src]="feedPostPreviewUrl()" alt="Preview del post" class="h-full w-auto object-contain" />
+        <img loading="lazy" decoding="async" [src]="feedPostPreviewUrl()" alt="Preview del post"
+          class="h-full w-auto object-contain" />
       </div>
       }
 

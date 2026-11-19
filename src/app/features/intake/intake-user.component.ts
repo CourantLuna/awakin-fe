@@ -44,6 +44,7 @@ import {
   getGramsForQuantity,
   calculateIngredientMacros,
 } from '../../core/helpers/nutrition-optimizer';
+import { IntakeLoaderComponent } from '../../components/intake-loader/intake-loader-component';
 
 // 1. Tipos de comida del protocolo
 export type MealType =
@@ -53,7 +54,8 @@ export type MealType =
   | 'SNACK_AM'
   | 'SNACK_PM'
   | 'SNACK_EXTRA'
-  | 'DRINK';
+  | 'DRINK'
+  | 'OTHER';
 
 export interface MealConfig {
   type: MealType;
@@ -105,6 +107,12 @@ export const MEAL_DEFINITIONS: Record<MealType, MealConfig> = {
     icon: 'pi pi-filter',
     badgeBg: 'bg-cyan-500/10 text-cyan-600 border-cyan-200/50',
   },
+  OTHER: {
+    type: 'OTHER',
+    title: 'Otro',
+    icon: 'pi pi-ellipsis-h',
+    badgeBg: 'bg-slate-500/10 text-slate-600 border-slate-200/50',
+  },
 };
 
 // Modelo de alimento
@@ -141,6 +149,7 @@ export interface FoodItem {
     FoodStoryModalComponent,
     FormsModule,
     IntakeTopBar,
+    IntakeLoaderComponent
   ],
   templateUrl: './intake-user.component.html',
 })
@@ -149,6 +158,27 @@ export class IntakeUserComponent implements OnInit {
   public authService = inject(AuthService);
   public intakeService = inject(IntakeService);
   public streakService = inject(StreakService);
+  isLoading = signal(true);
+  private loadingStartTime = Date.now();
+  private loadingTimer: any = null;
+
+  public startLoading() {
+    clearTimeout(this.loadingTimer);
+    this.loadingStartTime = Date.now();
+    this.isLoading.set(true);
+  }
+
+  public stopLoading(minDurationMs: number = 1000) {
+    clearTimeout(this.loadingTimer);
+    const elapsed = Date.now() - this.loadingStartTime;
+    const remaining = Math.max(0, minDurationMs - elapsed);
+
+    this.loadingTimer = setTimeout(() => {
+      this.isLoading.set(false);
+    }, remaining);
+  }
+
+
   readonly Math = Math;
 
   currentAthleteId = computed(() => {
@@ -231,6 +261,7 @@ export class IntakeUserComponent implements OnInit {
       dayName: new Intl.DateTimeFormat('es-ES', { weekday: 'narrow' }).format(date).toUpperCase(),
       status: 'none',
     });
+    this.startLoading();
     this.loadDayRecords();
   }
 
@@ -299,8 +330,12 @@ export class IntakeUserComponent implements OnInit {
             return [...others, ...fetchedCustomFoods];
           });
         }
+        this.stopLoading(2000);
       },
-      error: (err) => console.error('Error cargando registros nutricionales:', err),
+      error: (err) => {
+        console.error('Error cargando registros nutricionales:', err);
+        this.stopLoading(2000);
+      },
     });
   }
 
@@ -432,8 +467,12 @@ export class IntakeUserComponent implements OnInit {
       if (athleteId !== this.lastLoadedAthleteId) {
         this.lastLoadedAthleteId = athleteId;
         untracked(() => {
+          this.startLoading();
           this.intakeService.loadAvailableMenus(athleteId).subscribe();
-          this.intakeService.loadWeeklyPlansForAthlete(athleteId).subscribe();
+          this.intakeService.loadWeeklyPlansForAthlete(athleteId).subscribe({
+            next: () => this.stopLoading(2000),
+            error: () => this.stopLoading(2000),
+          });
           if (!this.athleteService.currentRecords()) {
             this.athleteService.loadAthleteRecords(athleteId);
           }
@@ -1295,10 +1334,10 @@ export class IntakeUserComponent implements OnInit {
         const dishes =
           selectedItems.length > 1
             ? selectedItems.map((f) => ({
-                name: f.name,
-                portionText: `${f.portion} ${f.unit}`,
-                kcal: f.kcal,
-              }))
+              name: f.name,
+              portionText: `${f.portion} ${f.unit}`,
+              kcal: f.kcal,
+            }))
             : undefined;
 
         // 6. Abrir automáticamente la vista de Historia para compartir
@@ -1693,10 +1732,10 @@ export class IntakeUserComponent implements OnInit {
     const dishes =
       isMultiSibling && siblingLogged.length > 1
         ? siblingLogged.map((f) => ({
-            name: f.name,
-            portionText: `${f.portion} ${f.unit}`,
-            kcal: f.kcal,
-          }))
+          name: f.name,
+          portionText: `${f.portion} ${f.unit}`,
+          kcal: f.kcal,
+        }))
         : undefined;
 
     this.openStoryShareModal({
@@ -1895,7 +1934,7 @@ export class IntakeUserComponent implements OnInit {
                 setTimeout(() => res(), 1200);
               });
             }
-          } catch {}
+          } catch { }
         })
       );
 
@@ -1910,7 +1949,7 @@ export class IntakeUserComponent implements OnInit {
       if (isWebKit) {
         try {
           await htmlToImage.toPng(element, renderOptions);
-        } catch {}
+        } catch { }
       }
 
       const dataUrl = await htmlToImage.toPng(element, renderOptions);
@@ -2114,10 +2153,17 @@ export class IntakeUserComponent implements OnInit {
         this.intakeService.loadAvailableMenus(athleteId).subscribe();
       }
       if (this.intakeService.weeklyPlans().length === 0) {
-        this.intakeService.loadWeeklyPlansForAthlete(athleteId).subscribe();
+        this.startLoading();
+        this.intakeService.loadWeeklyPlansForAthlete(athleteId).subscribe({
+          next: () => this.stopLoading(2000),
+          error: () => this.stopLoading(2000),
+        });
+      } else {
+        this.stopLoading(2000);
       }
     } else {
       this.athleteService.loadInitialAthletes();
+      this.stopLoading(2000);
     }
   }
 

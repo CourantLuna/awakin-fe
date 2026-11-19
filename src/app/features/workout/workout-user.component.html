@@ -56,7 +56,12 @@
 
 </div>
 
-<div class="pb-24 pt-5 px-4 max-w-4xl mx-auto">
+<div class="pb-24 pt-5 px-4 max-w-4xl mx-auto relative">
+  @if (isLoadingWorkouts()) {
+  <app-workout-loader mode="inline" class="overflow-hidden sticky" label="Cargando tu entrenamiento..."
+    [active]="isLoadingWorkouts()" />
+  }
+
   <!-- HEADER WORKOUT + BOTÓN HISTORIAL -->
   <div class="flex justify-between items-center mb-5">
     <div>

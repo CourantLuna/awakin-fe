@@ -32,6 +32,7 @@ import { WorkoutLogDetailModalComponent } from './components/workout-log-detail-
 import { WorkoutLogCardComponent } from './components/workout-log-card/workout-log-card.component';
 import { WorkoutLogEditModalComponent } from './components/workout-log-edit-modal/workout-log-edit-modal.component';
 import { WorkoutStoryModalComponent } from './components/workout-story-modal/workout-story-modal.component';
+import { WorkoutLoaderComponent } from '../../components/workout-loader/workout-loader-component';
 import { ChartImageExportService } from '../profile/services/chart-image-export.service';
 import { BodyMapGender } from './components/body-map/body-map.component';
 
@@ -74,7 +75,8 @@ const DOMINICAN_MOTIVATIONAL_TEMPLATES: string[] = [
     WorkoutLogDetailModalComponent,
     WorkoutLogCardComponent,
     WorkoutLogEditModalComponent,
-    WorkoutStoryModalComponent
+    WorkoutStoryModalComponent,
+    WorkoutLoaderComponent
   ],
   templateUrl: './workout-user.component.html'
 })
@@ -172,7 +174,10 @@ export class WorkoutUserComponent implements OnInit {
   activePlan = this.workoutService.activePlan;
   availableRoutines = this.workoutService.allRoutines;
   workoutLogs = this.workoutService.workoutLogs;
-  isLoadingWorkouts = this.workoutService.isLoading;
+  // Estado de carga con duración mínima para permitir animación fluida de carga
+  isLoadingWorkouts = signal<boolean>(true);
+  private workoutLoadingStartTime = Date.now();
+  private workoutLoadingTimer: any = null;
 
   // Fechas con al menos un entrenamiento completado (solo para sombrear el calendario de Workout)
   workoutActiveDates = computed<Set<string>>(() => {
@@ -582,6 +587,22 @@ export class WorkoutUserComponent implements OnInit {
       untracked(() => {
         this.workoutService.loadAthleteWorkoutData(athleteId);
       });
+    });
+
+    effect(() => {
+      const serviceLoading = this.workoutService.isLoading();
+      if (serviceLoading) {
+        clearTimeout(this.workoutLoadingTimer);
+        this.workoutLoadingStartTime = Date.now();
+        this.isLoadingWorkouts.set(true);
+      } else {
+        const elapsed = Date.now() - this.workoutLoadingStartTime;
+        const remaining = Math.max(0, 2000 - elapsed);
+        clearTimeout(this.workoutLoadingTimer);
+        this.workoutLoadingTimer = setTimeout(() => {
+          this.isLoadingWorkouts.set(false);
+        }, remaining);
+      }
     });
   }
 

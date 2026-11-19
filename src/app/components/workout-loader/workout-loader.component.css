@@ -1,0 +1,394 @@
+:host {
+    --awakin-orange: #fe970a;
+    --awakin-gray: #93918b;
+    --loader-z-backdrop: 990;
+    --loader-z-content: 991;
+    --cycle-duration: 4s;
+    display: block;
+}
+
+:host.workout-loader-host--inline,
+:host:has(.workout-loader--inline) {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 25;
+    pointer-events: auto;
+}
+
+.workout-loader {
+    position: relative;
+    display: grid;
+    place-items: center;
+    min-height: 160px;
+}
+
+.workout-loader--overlay {
+    position: fixed;
+    inset: 0;
+    width: 100vw;
+    height: 100dvh;
+    min-height: 100dvh;
+    background-color: #ffffff;
+    z-index: var(--loader-z-backdrop);
+}
+
+.workout-loader--overlay .workout-loader__backdrop {
+    position: fixed;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    background: #ffffff;
+    backdrop-filter: none;
+    z-index: var(--loader-z-backdrop);
+}
+
+/* Modo Inline: Cubre todo el div principal del módulo Workout */
+.workout-loader--inline {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    min-height: calc(100dvh - 180px);
+    background-color: rgba(250, 250, 249, 0.98);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    z-index: 25;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    padding-top: clamp(60px, 16vh, 180px);
+    box-sizing: border-box;
+    border-radius: inherit;
+}
+
+.workout-loader--inline .workout-loader__backdrop-inline {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(250, 250, 249, 0.98);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    z-index: -1;
+    border-radius: inherit;
+}
+
+.workout-loader--inline .workout-loader__content {
+    position: sticky;
+    top: clamp(80px, 25vh, 220px);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 14px;
+}
+
+.workout-loader__content {
+    position: relative;
+    z-index: var(--loader-z-content);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+}
+
+.workout-loader__svg {
+    width: clamp(90px, 20vw, 132px);
+    height: auto;
+    aspect-ratio: 1 / 1;
+    overflow: visible;
+}
+
+.workout-loader__label {
+    margin: 0;
+    font-size: 0.875rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    color: var(--awakin-gray);
+    text-align: center;
+}
+
+.is-paused * {
+    animation-play-state: paused !important;
+}
+
+/* --- Animaciones del SVG --- */
+
+/* 1. Respiración sutil de la estructura de la Kettlebell */
+.layer-kettlebell {
+    transform-box: fill-box;
+    transform-origin: center;
+    animation: kettlebell-breathe var(--cycle-duration) ease-in-out infinite;
+}
+
+/* 2. Capa base gris (#93918B) */
+.layer-base-parts {
+    opacity: 0.55;
+    transform-box: fill-box;
+    transform-origin: center;
+}
+
+/* 3. Capa de Carga Activa (#FE970A): Barrido de izquierda a derecha (2 pasadas en 4s) */
+.layer-charge-sweep {
+    transform-box: fill-box;
+    transform-origin: center;
+    filter: drop-shadow(0 0 4px rgba(254, 151, 10, 0.45));
+    will-change: clip-path, opacity;
+    animation: sweep-fill-progress var(--cycle-duration) cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+
+/* 4. Haz de luz del barrido horizontal */
+.sweep-light-beam {
+    pointer-events: none;
+    will-change: transform, opacity;
+    animation: sweep-beam-motion var(--cycle-duration) cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+
+/* Micro-animaciones al ser alcanzados por la onda de carga */
+.charge-arm-left {
+    transform-box: fill-box;
+    transform-origin: center;
+    animation: arm-left-pulse var(--cycle-duration) cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+
+.charge-core {
+    transform-box: fill-box;
+    transform-origin: center;
+    animation: core-pulse var(--cycle-duration) cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+
+.charge-arm-right {
+    transform-box: fill-box;
+    transform-origin: center;
+    animation: arm-right-pulse var(--cycle-duration) cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+
+/* --- KEYFRAMES (Ciclo de 4 segundos con 2 barridos completos) --- */
+
+/* Barrido 1: 0% - 50% (0s - 2s) | Barrido 2: 50% - 100% (2s - 4s) */
+@keyframes sweep-fill-progress {
+    /* --- BARRIDO 1 (0s a 2s) --- */
+    0% {
+        clip-path: inset(0 100% 0 0);
+        opacity: 0;
+    }
+
+    2% {
+        clip-path: inset(0 100% 0 0);
+        opacity: 1;
+    }
+
+    /* Brazo izquierdo cubierto (~9%) */
+    /* Córnea y pupila cubiertas (~22%) */
+    /* Brazo derecho cubierto (~38%) */
+    38% {
+        clip-path: inset(0 0% 0 0);
+        opacity: 1;
+    }
+
+    /* Mantiene todo iluminado brevemente */
+    44% {
+        clip-path: inset(0 0% 0 0);
+        opacity: 1;
+    }
+
+    /* Disolución suave para dar paso al segundo barrido */
+    48% {
+        clip-path: inset(0 0% 0 0);
+        opacity: 0.15;
+    }
+
+    50% {
+        clip-path: inset(0 100% 0 0);
+        opacity: 0;
+    }
+
+    /* --- BARRIDO 2 (2s a 4s) --- */
+    52% {
+        clip-path: inset(0 100% 0 0);
+        opacity: 1;
+    }
+
+    /* Brazo izquierdo cubierto (~59%) */
+    /* Córnea y pupila cubiertas (~72%) */
+    /* Brazo derecho cubierto (~88%) */
+    88% {
+        clip-path: inset(0 0% 0 0);
+        opacity: 1;
+    }
+
+    /* Mantiene todo cargado en resplandor completo */
+    94% {
+        clip-path: inset(0 0% 0 0);
+        opacity: 1;
+    }
+
+    /* Transición final para ciclo continuo */
+    98% {
+        clip-path: inset(0 0% 0 0);
+        opacity: 0.15;
+    }
+
+    100% {
+        clip-path: inset(0 100% 0 0);
+        opacity: 0;
+    }
+}
+
+/* Movimiento horizontal del haz de luz resplandeciente */
+@keyframes sweep-beam-motion {
+    /* --- BARRIDO 1 --- */
+    0% {
+        transform: translateX(0px);
+        opacity: 0;
+    }
+
+    3% {
+        transform: translateX(8px);
+        opacity: 0.9;
+    }
+
+    38% {
+        transform: translateX(102px);
+        opacity: 0.95;
+    }
+
+    42% {
+        transform: translateX(108px);
+        opacity: 0;
+    }
+
+    43%,
+    49% {
+        transform: translateX(110px);
+        opacity: 0;
+    }
+
+    /* --- BARRIDO 2 --- */
+    50% {
+        transform: translateX(0px);
+        opacity: 0;
+    }
+
+    53% {
+        transform: translateX(8px);
+        opacity: 0.9;
+    }
+
+    88% {
+        transform: translateX(102px);
+        opacity: 0.95;
+    }
+
+    92% {
+        transform: translateX(108px);
+        opacity: 0;
+    }
+
+    93%,
+    100% {
+        transform: translateX(110px);
+        opacity: 0;
+    }
+}
+
+/* Pop y brillo al pasar por el brazo izquierdo */
+@keyframes arm-left-pulse {
+    0%,
+    5%,
+    50%,
+    55% {
+        transform: scale(1);
+    }
+
+    9%,
+    59% {
+        transform: scale(1.08);
+        filter: drop-shadow(0 0 5px rgba(254, 151, 10, 0.8));
+    }
+
+    15%,
+    45%,
+    65%,
+    95% {
+        transform: scale(1);
+        filter: drop-shadow(0 0 2px rgba(254, 151, 10, 0.4));
+    }
+}
+
+/* Dilatación y brillo al pasar por la córnea / pupila central */
+@keyframes core-pulse {
+    0%,
+    18%,
+    50%,
+    68% {
+        transform: scale(1);
+    }
+
+    22%,
+    72% {
+        transform: scale(1.12);
+        filter: drop-shadow(0 0 6px rgba(254, 151, 10, 0.85));
+    }
+
+    28%,
+    45%,
+    78%,
+    95% {
+        transform: scale(1);
+        filter: drop-shadow(0 0 2px rgba(254, 151, 10, 0.4));
+    }
+}
+
+/* Pop y brillo al pasar por el brazo derecho */
+@keyframes arm-right-pulse {
+    0%,
+    34%,
+    50%,
+    84% {
+        transform: scale(1);
+    }
+
+    38%,
+    88% {
+        transform: scale(1.08);
+        filter: drop-shadow(0 0 5px rgba(254, 151, 10, 0.8));
+    }
+
+    44%,
+    48%,
+    94%,
+    98% {
+        transform: scale(1);
+        filter: drop-shadow(0 0 2px rgba(254, 151, 10, 0.4));
+    }
+}
+
+/* Respiración sutil de la Kettlebell */
+@keyframes kettlebell-breathe {
+    0%,
+    100% {
+        transform: scale(0.99);
+    }
+
+    50% {
+        transform: scale(1.012);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .workout-loader__svg * {
+        animation: none !important;
+    }
+
+    .layer-charge-sweep {
+        clip-path: none !important;
+        opacity: 1 !important;
+    }
+
+    .sweep-light-beam {
+        display: none !important;
+    }
+}

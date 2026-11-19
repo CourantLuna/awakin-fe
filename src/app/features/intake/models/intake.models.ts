@@ -41,6 +41,8 @@ export interface DishItem {
   dishId: string;
   name: string;
   mealType: string;
+  meal_types?: string[];
+  type?: string[];
   prepTimeMinutes: number;
   coverImageUrl?: string | null;
   authorName?: string;

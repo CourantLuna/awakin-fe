@@ -68,6 +68,9 @@ export function translateMealType(raw?: string | null): string {
     case 'BEBIDA':
     case 'BEBIDAS':
       return 'Bebida';
+    case 'OTHER':
+    case 'OTRO':
+      return 'Otro';
     default:
       return clean.charAt(0).toUpperCase() + clean.slice(1);
   }
