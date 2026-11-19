@@ -29,6 +29,7 @@ import { IntakeScaleWidgetComponent } from './components/intake-scale-widget/int
 import { ProtocolMatrixDrawer } from './components/protocol-matrix-drawer/protocol-matrix-drawer';
 import { ShoppingListDrawer } from './components/shopping-list-drawer/shopping-list-drawer';
 import { RecipeDetailsModal } from './components/recipe-details-modal/recipe-details-modal';
+import { FoodStoryModalComponent, translateMealType } from './components/food-story-modal/food-story-modal.component';
 import { WeeklyTemplate, MenuPlan, DayAssignment, ManualMenuSelection, DishItem } from './models/intake.models';
 import { FormsModule } from '@angular/forms';
 import { IntakeService, determineCoverIcon } from '../../core/services/intake.service';
@@ -137,6 +138,7 @@ export interface FoodItem {
     ProtocolMatrixDrawer,
     ShoppingListDrawer,
     RecipeDetailsModal,
+    FoodStoryModalComponent,
     FormsModule,
     IntakeTopBar,
   ],
@@ -1303,7 +1305,7 @@ export class IntakeUserComponent implements OnInit {
         this.openStoryShareModal({
           photoUrl: localPhotoData,
           dateFormatted: this.getStoryDateFormatted(this.selectedDate()),
-          mealTitle: this.mealDefinitions[chosenMealType]?.title || chosenMealType,
+          mealTitle: translateMealType(this.mealDefinitions[chosenMealType]?.title || chosenMealType),
           dishName: combinedTitle,
           emoji: selectedItems[0]?.emoji || '🍲',
           portionText:
@@ -1396,7 +1398,7 @@ export class IntakeUserComponent implements OnInit {
         this.openStoryShareModal({
           photoUrl: localPhotoData,
           dateFormatted: this.getStoryDateFormatted(this.selectedDate()),
-          mealTitle: this.mealDefinitions[chosenMealType]?.title || chosenMealType,
+          mealTitle: translateMealType(this.mealDefinitions[chosenMealType]?.title || chosenMealType),
           dishName: dishTitle,
           emoji:
             chosenMealType === 'BREAKFAST' ? '🍳' : chosenMealType === 'LUNCH' ? '🍲' : '🥗',
@@ -1701,7 +1703,7 @@ export class IntakeUserComponent implements OnInit {
       photoUrl: photoUrl || siblingPhotos[0] || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=800&q=80',
       photoUrls: siblingPhotos.length > 1 ? siblingPhotos : undefined,
       dateFormatted: this.getStoryDateFormatted(this.selectedDate()),
-      mealTitle: this.mealDefinitions[food.mealType]?.title || food.mealType,
+      mealTitle: translateMealType(this.mealDefinitions[food.mealType]?.title || food.mealType),
       dishName: dishName,
       emoji: food.emoji,
       portionText: portionText,
@@ -1825,7 +1827,7 @@ export class IntakeUserComponent implements OnInit {
       photoUrl: photoUrls[0] || fallbackPhoto,
       photoUrls: photoUrls.length > 1 ? photoUrls : undefined,
       dateFormatted: this.getStoryDateFormatted(this.selectedDate()),
-      mealTitle: this.mealDefinitions[mealType]?.title || mealType,
+      mealTitle: translateMealType(this.mealDefinitions[mealType]?.title || mealType),
       dishName: dishName,
       emoji: loggedFoods[0]?.emoji || '🍲',
       portionText: portionText,
@@ -1963,6 +1965,20 @@ export class IntakeUserComponent implements OnInit {
     setTimeout(() => this.storyShareSuccess.set(null), 3500);
   }
 
+  openSocialFeedModalWithBlob(blob: Blob) {
+    if (this.feedPostPreviewUrl()) {
+      URL.revokeObjectURL(this.feedPostPreviewUrl()!);
+    }
+    this.feedPostPreviewBlob.set(blob);
+    this.feedPostPreviewUrl.set(URL.createObjectURL(blob));
+    const data = this.storyData();
+    const mealTitle = translateMealType(data?.mealTitle);
+    const defaultCaption = `🍽️ ${mealTitle}: ${data?.dishName || 'Platillo'} (${data?.kcal || 0} kcal · ${data?.protein || 0}P ${data?.carbs || 0}C ${data?.fat || 0}G)`;
+    this.feedPostCaption.set(defaultCaption);
+    this.isStoryModalOpen.set(false);
+    this.isShareFeedModalOpen.set(true);
+  }
+
   async openSocialFeedModal() {
     this.isGeneratingStory.set(true);
     this.storyShareSuccess.set('Preparando publicación...');
@@ -1981,7 +1997,8 @@ export class IntakeUserComponent implements OnInit {
       this.feedPostPreviewUrl.set(URL.createObjectURL(blob));
 
       const data = this.storyData();
-      const defaultCaption = `🍽️ ${data?.mealTitle || 'Comida'}: ${data?.dishName || 'Platillo'} (${data?.kcal || 0} kcal · ${data?.protein || 0}P ${data?.carbs || 0}C ${data?.fat || 0}G)`;
+      const mealTitle = translateMealType(data?.mealTitle);
+      const defaultCaption = `🍽️ ${mealTitle}: ${data?.dishName || 'Platillo'} (${data?.kcal || 0} kcal · ${data?.protein || 0}P ${data?.carbs || 0}C ${data?.fat || 0}G)`;
       this.feedPostCaption.set(defaultCaption);
       this.storyShareSuccess.set(null);
       this.isShareFeedModalOpen.set(true);
@@ -2026,7 +2043,8 @@ export class IntakeUserComponent implements OnInit {
   async shareStoryWhatsApp() {
     const blob = await this.generateStoryBlob();
     const data = this.storyData();
-    const text = `🍽️ Mi comida en Awakin Protocol:\n${data?.mealTitle}: ${data?.dishName}\n🔥 ${data?.kcal} kcal | ${data?.protein}g P | ${data?.carbs}g C | ${data?.fat}g G`;
+    const mealTitle = translateMealType(data?.mealTitle);
+    const text = `🍽️ Mi comida en Awakin Protocol:\n${mealTitle}: ${data?.dishName}\n🔥 ${data?.kcal} kcal | ${data?.protein}g P | ${data?.carbs}g C | ${data?.fat}g G`;
 
     if (blob && navigator.canShare) {
       const file = new File([blob], 'comida-awakin.png', { type: 'image/png' });

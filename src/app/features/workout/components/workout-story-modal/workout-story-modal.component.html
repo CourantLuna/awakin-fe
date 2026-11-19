@@ -32,7 +32,7 @@
           <div #storyCaptureArea
             class="story-preview-container relative overflow-hidden rounded-none border-0 shadow-none bg-stone-950 flex flex-col justify-center items-center w-full transition-all"
             style="border-radius: 0px !important; border: 0 !important; box-shadow: none !important;"
-            [ngClass]="aspectRatioClass()">
+            [ngClass]="aspectRatioClass()" (wheel)="onWheelZoom($event)">
 
             <!-- 1. FONDO: FOTO O DEGRADADO DARK AWAKIN -->
             @if (activeBackgroundUrl(); as bgUrl) {
@@ -59,7 +59,7 @@
             <!-- 2. CAPA OVERLAY ARRASTRABLE Y ESCALABLE (DRAGGABLE & ZOOMABLE / PINCH ON MOBILE) -->
             <div
               class="story-draggable-layer relative z-20 w-full h-full flex items-center justify-center px-3 select-none touch-none"
-              (mousedown)="onDragStart($event)" (touchstart)="onDragStart($event)"
+              (mousedown)="onDragStart($event)" (touchstart)="onDragStart($event)" (wheel)="onWheelZoom($event)"
               (document:mousemove)="onDragMove($event)" (document:touchmove)="onDragMove($event)"
               (document:mouseup)="onDragEnd()" (document:touchend)="onDragEnd()">
 
@@ -311,7 +311,7 @@
                       <img src="/icons/awakin-workout-logo.png" alt="Awakin Workout" class="w-4 h-4 object-contain" />
                       @if (currentAthlete()?.kin?.team_logo_url; as kinLogo) {
                       <span class="text-[9px] text-stone-400 font-bold">×</span>
-                      <img [src]="kinLogo" alt="Kin logo" class="w-3.5 h-3.5 object-contain rounded-full" />
+                      <img [src]="kinLogo" alt="Kin logo" class="w-3.5 h-3.5 object-contain overflow-visible" />
                       }
                     </div>
                     <div class="text-[10px] font-bold text-stone-300 tracking-tight">
@@ -332,7 +332,7 @@
       <!-- ========================================================================= -->
       <div class="space-y-1.5">
         <label class="block text-[10px] font-black uppercase tracking-wider text-stone-500">
-          Plantilla de Gráfico Overlay
+          Plantilla de Gráfico
         </label>
         <div class="flex items-center gap-1.5 overflow-x-auto pb-1 no-scrollbar">
           @for (tpl of templates; track tpl.id) {
@@ -353,7 +353,7 @@
       <!-- ========================================================================= -->
       <div class="hidden md:block p-3.5 rounded-2xl bg-white border border-stone-200 shadow-2xs space-y-2.5">
         <div class="flex items-center justify-between text-[10px] font-black uppercase tracking-wider text-stone-500">
-          <span>Escala del Gráfico (Zoom 30% - 100%)</span>
+          <span>Escala del Gráfico (Zoom 30% - 105%)</span>
           <span class="text-awakin-sun font-bold">{{ (overlayScale() * 100).toFixed(0) }}%</span>
         </div>
 
@@ -364,13 +364,13 @@
             <i class="pi pi-minus text-xs"></i>
           </button>
 
-          <!-- Slider de Escala (30% a 100%) -->
-          <input type="range" min="0.30" max="1.00" step="0.05" [ngModel]="overlayScale()"
+          <!-- Slider de Escala (30% a 105%) -->
+          <input type="range" min="0.30" max="1.05" step="0.05" [ngModel]="overlayScale()"
             (ngModelChange)="setZoom($event)"
             class="flex-1 h-2 bg-stone-200 rounded-lg appearance-none cursor-pointer accent-awakin-sun" />
 
           <!-- Zoom In -->
-          <button type="button" (click)="zoomIn()" [disabled]="overlayScale() >= 1.00"
+          <button type="button" (click)="zoomIn()" [disabled]="overlayScale() >= 1.05"
             class="w-8 h-8 rounded-xl bg-stone-100 hover:bg-stone-200 text-stone-700 flex items-center justify-center cursor-pointer transition-all disabled:opacity-40 border border-stone-200">
             <i class="pi pi-plus text-xs"></i>
           </button>

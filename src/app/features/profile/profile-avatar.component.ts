@@ -32,6 +32,7 @@ import { WorkoutLogDetailModalComponent } from '../workout/components/workout-lo
 import { WorkoutLogCardComponent } from '../workout/components/workout-log-card/workout-log-card.component';
 import { WorkoutLogEditModalComponent } from '../workout/components/workout-log-edit-modal/workout-log-edit-modal.component';
 import { WorkoutStoryModalComponent } from '../workout/components/workout-story-modal/workout-story-modal.component';
+import { FoodStoryModalComponent, StoryShareData, translateMealType } from '../intake/components/food-story-modal/food-story-modal.component';
 
 export type ProfileFeedTab = 'posts' | 'meals' | 'workouts' | 'progress';
 
@@ -45,7 +46,8 @@ export type ProfileFeedTab = 'posts' | 'meals' | 'workouts' | 'progress';
     WorkoutLogDetailModalComponent,
     WorkoutLogCardComponent,
     WorkoutLogEditModalComponent,
-    WorkoutStoryModalComponent
+    WorkoutStoryModalComponent,
+    FoodStoryModalComponent
   ],
   templateUrl: './profile-avatar.component.html',
   styleUrl: './profile-avatar.component.css',
@@ -137,6 +139,40 @@ export class ProfileAvatarComponent implements OnInit {
   isMenuOpen = signal<boolean>(false);
   selectedMeal = signal<NutritionMealRecord | null>(null);
   selectedPost = signal<AthleteFeedPost | null>(null);
+
+  // Modal de Historia de Comida Interactiva 9:16
+  protected readonly translateMealType = translateMealType;
+  isFoodStoryModalOpen = signal<boolean>(false);
+  foodStoryData = signal<StoryShareData | null>(null);
+
+  openFoodStoryModal(meal?: NutritionMealRecord | null): void {
+    const m = meal || this.selectedMeal();
+    if (!m) return;
+    const d = m.timestamp ? new Date(m.timestamp) : new Date();
+    const dayName = new Intl.DateTimeFormat('es-ES', { weekday: 'short' }).format(d).replace('.', '');
+    const monthName = new Intl.DateTimeFormat('es-ES', { month: 'short' }).format(d);
+    const dateFormatted = `${dayName}, ${d.getDate()} ${monthName}`;
+
+    this.foodStoryData.set({
+      photoUrl: m.foto_url || '',
+      dateFormatted: dateFormatted,
+      mealTitle: translateMealType(m.tipo_comida),
+      dishName: m.nombre || m.plato_estimado || 'Plato Registrado',
+      emoji: '🍽️',
+      portionText: m.items_count && m.items_count > 1 ? `${m.items_count} alimentos` : '1 porción',
+      kcal: Math.round(Number(m.calorias || 450)),
+      protein: Math.round(Number(m.proteinas || 30)),
+      carbs: Math.round(Number(m.carbohidratos || 40)),
+      fat: Math.round(Number(m.grasas || 12)),
+      dishes: m.dishes?.map((name) => ({
+        name,
+        portionText: '1 porción',
+        kcal: Math.round(Number(m.calorias || 0) / (m.dishes?.length || 1)),
+      })),
+      adherence: m.adherencia,
+    });
+    this.isFoodStoryModalOpen.set(true);
+  }
 
   // Modal y controles de Avatar (Zoom, Cut y subida a bucket 'avatars')
   isAvatarModalOpen = signal<boolean>(false);

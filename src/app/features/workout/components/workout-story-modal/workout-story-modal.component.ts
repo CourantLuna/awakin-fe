@@ -506,9 +506,9 @@ export class WorkoutStoryModalComponent implements OnChanges {
     }
   }
 
-  // --- Controles de Escala / Zoom (30% a 100%) ---
+  // --- Controles de Escala / Zoom (30% a 105%) ---
   zoomIn(): void {
-    const next = Math.min(1.0, Math.round((this.overlayScale() + 0.05) * 100) / 100);
+    const next = Math.min(1.05, Math.round((this.overlayScale() + 0.05) * 100) / 100);
     this.overlayScale.set(next);
   }
 
@@ -520,8 +520,19 @@ export class WorkoutStoryModalComponent implements OnChanges {
   setZoom(val: any): void {
     const num = Number(val);
     if (!isNaN(num)) {
-      this.overlayScale.set(Math.max(0.30, Math.min(1.0, num)));
+      this.overlayScale.set(Math.max(0.30, Math.min(1.05, num)));
     }
+  }
+
+  // Zoom interactivo con rueda del ratón (Mouse Scroll Wheel)
+  onWheelZoom(event: WheelEvent): void {
+    if (event.cancelable) {
+      event.preventDefault();
+    }
+    event.stopPropagation();
+    const delta = event.deltaY < 0 ? 0.04 : -0.04;
+    const next = Math.max(0.30, Math.min(1.05, Math.round((this.overlayScale() + delta) * 100) / 100));
+    this.overlayScale.set(next);
   }
 
   alignTop(): void {
@@ -709,7 +720,7 @@ export class WorkoutStoryModalComponent implements OnChanges {
       }
     }
 
-    const defaultMuscleFill = 'rgba(255, 255, 255, 0.35)';
+    const defaultMuscleFill = 'rgba(255, 255, 255, 0.42)';
 
     // 3. Inyectar fill nativo en cada región muscular y sus paths
     const regions = container.querySelectorAll<SVGGraphicsElement>('.body-map__region:not(.joints)');
@@ -728,16 +739,16 @@ export class WorkoutStoryModalComponent implements OnChanges {
       });
     });
 
-    // 4. Inyectar silueta del cuerpo (#body) con stroke visible
-    const bodyOutlines = container.querySelectorAll<SVGGraphicsElement>('.body-map__model, #body, #body-2');
-    bodyOutlines.forEach((b) => {
-      const paths = b.querySelectorAll<SVGPathElement>('path');
-      paths.forEach((p) => {
-        p.setAttribute('fill', 'none');
-        p.style.fill = 'none';
-        p.setAttribute('stroke', 'rgba(255, 255, 255, 0.85)');
-        p.style.stroke = 'rgba(255, 255, 255, 0.85)';
-      });
+    // 4. Inyectar silueta del cuerpo y todas las líneas de contorno con stroke visible explícito
+    const strokeColor = 'rgba(255, 255, 255, 0.88)';
+    const contourElements = container.querySelectorAll<SVGGraphicsElement>(
+      '.body-map__model path, .body-map__model line, [id*="body"] path, [id*="body"] line, path[fill="none"], line[fill="none"], path[stroke], line[stroke]'
+    );
+    contourElements.forEach((el) => {
+      el.setAttribute('fill', 'none');
+      el.style.fill = 'none';
+      el.setAttribute('stroke', strokeColor);
+      el.style.stroke = strokeColor;
     });
   }
 

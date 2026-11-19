@@ -10,6 +10,8 @@ import {
   SimpleChanges,
   effect,
   inject,
+  ElementRef,
+  HostListener,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { StreakService, formatToDateKey } from '../../core/services/streak.service';
@@ -33,6 +35,7 @@ export type CalendarViewMode = 'week' | 'month'; //
 })
 export class WeekCalendarHeaderComponent implements OnInit, OnChanges {
   public streakService = inject(StreakService);
+  private elementRef = inject(ElementRef);
 
   // Configuración de Protocolo
   @Input() weekStart: number = 1; // 0: Domingo, 1: Lunes (Default AWAKIN)
@@ -113,7 +116,7 @@ public activeVersion = signal<number>(0);
     return this.compareDates(day.fullDate, this.selectedDate()) === 0;
   }
 
-  // Método público para que el padre (IntakeUser) cambie el modo
+  // Método público para que el padre cambie el modo
   toggleViewMode() {
     this.viewMode.update((mode) => (mode === 'week' ? 'month' : 'week'));
     // PROTOCOLO DE ANCLAJE: 
@@ -121,6 +124,45 @@ public activeVersion = signal<number>(0);
     // para que la semana/mes se genere partiendo de esa realidad.
     this.baseDate.set(new Date(this.selectedDate()));
     this.generateCalendar(); // Regeneramos los días según el nuevo modo
+  }
+
+  /**
+   * Minimiza el calendario a vista de semana cuando está maximizado en vista mensual
+   */
+  public minimize(): void {
+    if (this.viewMode() === 'month') {
+      this.viewMode.set('week');
+      this.baseDate.set(new Date(this.selectedDate()));
+      this.generateCalendar();
+    }
+  }
+
+  /**
+   * Si el header calendar está maximizado (vista mes) y el usuario pulsa fuera de él,
+   * se minimiza automáticamente a la vista de semana.
+   */
+  @HostListener('document:pointerdown', ['$event'])
+  @HostListener('document:click', ['$event'])
+  onDocumentPointerDown(event: Event): void {
+    if (this.viewMode() !== 'month') return;
+
+    const target = event.target as HTMLElement | null;
+    if (!target) return;
+
+    // Si el toque/clic ocurrió dentro del propio calendario, ignorar
+    if (this.elementRef.nativeElement.contains(target)) return;
+
+    // Si el clic ocurrió en la barra superior o en los controles de navegación del header, ignorar
+    if (
+      target.closest('app-intake-top-bar') ||
+      target.closest('p-toolbar') ||
+      target.closest('[data-calendar-toggle]')
+    ) {
+      return;
+    }
+
+    // Se pulsó fuera del header calendar maximizado -> minimizar
+    this.minimize();
   }
 
 generateCalendar() {

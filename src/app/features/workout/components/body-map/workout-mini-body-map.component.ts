@@ -410,17 +410,16 @@ export class WorkoutMiniBodyMapComponent implements OnChanges, AfterViewInit {
       });
     });
 
-    // 4. Silueta del cuerpo (#body)
-    const bodyOutlines = root.querySelectorAll<SVGGraphicsElement>('.body-map__model, #body, #body-2');
-    bodyOutlines.forEach((b) => {
-      const paths = b.querySelectorAll<SVGPathElement>('path');
-      paths.forEach((p) => {
-        p.setAttribute('fill', 'none');
-        p.style.fill = 'none';
-        const strokeColor = this.variant === 'light' ? '#94a3b8' : 'rgba(255, 255, 255, 0.85)';
-        p.setAttribute('stroke', strokeColor);
-        p.style.stroke = strokeColor;
-      });
+    // 4. Silueta del cuerpo y todas las líneas de contorno con stroke visible explícito
+    const strokeColor = this.variant === 'light' ? '#94a3b8' : 'rgba(255, 255, 255, 0.85)';
+    const contourElements = root.querySelectorAll<SVGGraphicsElement>(
+      '.body-map__model path, .body-map__model line, [id*="body"] path, [id*="body"] line, path[fill="none"], line[fill="none"], path[stroke], line[stroke]'
+    );
+    contourElements.forEach((el) => {
+      el.setAttribute('fill', 'none');
+      el.style.fill = 'none';
+      el.setAttribute('stroke', strokeColor);
+      el.style.stroke = strokeColor;
     });
   }
 

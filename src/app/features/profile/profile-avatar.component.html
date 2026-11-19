@@ -409,7 +409,7 @@
           class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-end p-2 text-white">
           <span
             class="text-[8px] font-black uppercase tracking-wider bg-emerald-600/90 self-start px-1.5 py-0.5 rounded shadow-xs">
-            {{ meal.tipo_comida || 'Comida' }}
+            {{ translateMealType(meal.tipo_comida) }}
           </span>
           <p class="text-[9px] text-stone-200 mt-1 truncate">
             {{ meal.timestamp | date:'shortDate' }}
@@ -1447,7 +1447,7 @@
       <div class="flex items-center justify-between">
         <span
           class="text-[9px] font-bold uppercase tracking-widest bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full">
-          {{ selectedMeal()?.tipo_comida || 'Comida' }}
+          {{ translateMealType(selectedMeal()?.tipo_comida) }}
         </span>
         @if (selectedMeal()?.items_count && selectedMeal()!.items_count! > 1) {
         <span class="text-[9px] font-bold text-stone-500 bg-stone-100 px-2 py-0.5 rounded-full">
@@ -1501,6 +1501,15 @@
       {{ selectedMeal()?.notas }}
     </p>
     }
+
+    <!-- Botón Crear Historia 9:16 -->
+    <div class="pt-2 border-t border-stone-100">
+      <button type="button" (click)="openFoodStoryModal(selectedMeal())"
+        class="w-full py-2.5 px-3 rounded-xl bg-awakin-sun hover:bg-awakin-sun-dark text-stone-950 font-black text-xs uppercase tracking-wider flex items-center justify-center gap-2 shadow-xs transition-all cursor-pointer active:scale-98">
+        <i class="pi pi-camera text-xs"></i>
+        <span>Crear Historia 9:16</span>
+      </button>
+    </div>
   </div>
 </p-dialog>
 }
@@ -2141,3 +2150,12 @@
   [athlete]="athlete()"
   [gender]="athleteGender()"
   (closed)="closeWorkoutStoryModal()" />
+
+<!-- ========================================================================= -->
+<!-- MODAL: COMPARTIR HISTORIA DE NUTRICIÓN (AWAKIN × KIN)                     -->
+<!-- ========================================================================= -->
+<app-food-story-modal
+  [(visible)]="isFoodStoryModalOpen"
+  [storyData]="foodStoryData()"
+  [athlete]="athlete()"
+  [athleteKin]="athlete()?.kin" />
