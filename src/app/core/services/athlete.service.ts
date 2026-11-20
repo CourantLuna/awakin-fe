@@ -180,6 +180,26 @@ export class AthleteService {
   public currentNutritionProtocol = signal<AthleteNutritionProtocol | null>(null);
   public isLoading = signal<boolean>(false);
 
+  public readonly dailyPostLimit: number = environment.dailyPostLimit ?? 3;
+
+  public postsTodayCount = computed<number>(() => {
+    const todayUtc = new Date().toISOString().slice(0, 10);
+    return this.currentPosts().filter((p) => {
+      if (!p.created_at) return false;
+      const d = new Date(p.created_at);
+      return !Number.isNaN(d.getTime()) && d.toISOString().slice(0, 10) === todayUtc;
+    }).length;
+  });
+
+  public remainingPostsToday = computed<number>(() => {
+    if (this.dailyPostLimit <= 0) return Number.MAX_SAFE_INTEGER;
+    return Math.max(0, this.dailyPostLimit - this.postsTodayCount());
+  });
+
+  public canCreatePostToday = computed<boolean>(() => {
+    return this.dailyPostLimit <= 0 || this.postsTodayCount() < this.dailyPostLimit;
+  });
+
   // Nivel de actividad del atleta (solo lectura desde Supabase)
   public currentActivityLevel = computed<ActivityLevelOption>(() => {
     const raw = (this.currentAthlete()?.nivel_actividad || 'SEDENTARY').toUpperCase().trim();

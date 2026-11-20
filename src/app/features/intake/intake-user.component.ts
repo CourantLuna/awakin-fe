@@ -975,6 +975,7 @@ export class IntakeUserComponent implements OnInit {
   feedPostPreviewBlob = signal<Blob | null>(null);
   feedPostPreviewUrl = signal<string | null>(null);
   isPublishingFeed = signal<boolean>(false);
+  feedPostError = signal<string | null>(null);
   kinLogoDataUrl = signal<string | null>(null);
 
   availableDishesForSelectedDay = computed<FoodItem[]>(() => {
@@ -2143,6 +2144,7 @@ export class IntakeUserComponent implements OnInit {
     const mealTitle = translateMealType(data?.mealTitle);
     const defaultCaption = `🍽️ ${mealTitle}: ${data?.dishName || 'Platillo'} (${data?.kcal || 0} kcal · ${data?.protein || 0}P ${data?.carbs || 0}C ${data?.fat || 0}G)`;
     this.feedPostCaption.set(defaultCaption);
+    this.feedPostError.set(null);
     this.isStoryModalOpen.set(false);
     this.isShareFeedModalOpen.set(true);
   }
@@ -2168,6 +2170,7 @@ export class IntakeUserComponent implements OnInit {
       const mealTitle = translateMealType(data?.mealTitle);
       const defaultCaption = `🍽️ ${mealTitle}: ${data?.dishName || 'Platillo'} (${data?.kcal || 0} kcal · ${data?.protein || 0}P ${data?.carbs || 0}C ${data?.fat || 0}G)`;
       this.feedPostCaption.set(defaultCaption);
+      this.feedPostError.set(null);
       this.storyShareSuccess.set(null);
       this.isShareFeedModalOpen.set(true);
     } finally {
@@ -2179,6 +2182,14 @@ export class IntakeUserComponent implements OnInit {
     const athleteId = this.currentAthleteId();
     const blob = this.feedPostPreviewBlob();
     if (!athleteId || !blob || this.isPublishingFeed()) return;
+
+    this.feedPostError.set(null);
+    if (!this.athleteService.canCreatePostToday()) {
+      this.feedPostError.set(
+        `Has alcanzado el límite diario de ${this.athleteService.dailyPostLimit} publicaciones por día.`
+      );
+      return;
+    }
 
     this.isPublishingFeed.set(true);
     try {
@@ -2199,9 +2210,11 @@ export class IntakeUserComponent implements OnInit {
       this.isShareFeedModalOpen.set(false);
       this.storyShareSuccess.set('¡Publicado con éxito en tu Feed de Awakin!');
       setTimeout(() => this.storyShareSuccess.set(null), 4000);
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error publicando en feed de Awakin:', err);
-      this.storyShareSuccess.set('Error al publicar en el feed.');
+      const detail = err?.error?.detail || 'Error al publicar en el feed.';
+      this.feedPostError.set(detail);
+      this.storyShareSuccess.set(detail);
       setTimeout(() => this.storyShareSuccess.set(null), 4000);
     } finally {
       this.isPublishingFeed.set(false);

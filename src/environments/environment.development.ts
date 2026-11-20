@@ -7,6 +7,7 @@ export const environment = {
   exercisesCdnUrl: 'https://exercises.awakin.app',
   SUPABASE_URL: 'https://cgdfraunsnwihuajkiuq.supabase.co',
   SUPABASE_KEY: 'sb_publishable_kxYmYZsTOiJNpeTgpD65gA_3DIijba0',
+  dailyPostLimit: 3,
   modules: {
     home: true,
     intake: true,

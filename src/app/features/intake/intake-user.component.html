@@ -491,7 +491,7 @@
         </div>
         }
 
-        <input #fileInput type="file" accept="image/*" capture="environment" (change)="onPhotoSelected($event)"
+        <input #fileInput type="file" accept="image/*" (change)="onPhotoSelected($event)"
           class="hidden" />
 
         @if (!uploadedPhotoUrl()) {
@@ -671,14 +671,23 @@
           class="w-full bg-stone-50 border border-stone-300 rounded-xl p-3 text-xs sm:text-sm text-stone-900 placeholder-stone-400 focus:outline-none focus:border-kin-primary focus:bg-white resize-none transition-all"></textarea>
       </div>
 
+      @if (feedPostError() || !athleteService.canCreatePostToday()) {
+      <div
+        class="p-2.5 bg-rose-50 border border-rose-200 text-rose-700 text-xs font-bold rounded-xl flex items-center gap-2">
+        <i class="pi pi-exclamation-triangle shrink-0"></i>
+        <span>{{ feedPostError() || ('Has alcanzado el límite diario de ' + athleteService.dailyPostLimit + ' publicaciones por día.') }}</span>
+      </div>
+      }
+
       <!-- Botones de Acción -->
       <div class="flex items-center gap-2 pt-2 border-t border-stone-200">
         <button type="button" (click)="isShareFeedModalOpen.set(false)"
           class="flex-1 py-3 px-4 rounded-xl bg-stone-100 hover:bg-stone-200 text-stone-700 font-bold text-xs cursor-pointer transition-all">
           Cancelar
         </button>
-        <button type="button" (click)="confirmPublishFeed()" [disabled]="isPublishingFeed()"
-          class="flex-1 py-3 px-4 rounded-xl bg-awakin-sun hover:bg-amber-400 text-stone-950 font-black text-xs uppercase tracking-wider flex items-center justify-center gap-1.5 shadow-md cursor-pointer transition-all active:scale-[0.98]"
+        <button type="button" (click)="confirmPublishFeed()"
+          [disabled]="isPublishingFeed() || !athleteService.canCreatePostToday()"
+          class="flex-1 py-3 px-4 rounded-xl bg-awakin-sun hover:bg-amber-400 disabled:opacity-50 text-stone-950 font-black text-xs uppercase tracking-wider flex items-center justify-center gap-1.5 shadow-md cursor-pointer transition-all active:scale-[0.98]"
           [class.opacity-60]="isPublishingFeed()">
           @if (isPublishingFeed()) {
           <i class="pi pi-spin pi-spinner text-xs"></i>

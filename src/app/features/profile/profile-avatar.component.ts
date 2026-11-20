@@ -199,6 +199,7 @@ export class ProfileAvatarComponent implements OnInit {
   newPostModule = signal<'GENERAL' | 'INTAKE' | 'WORKOUT'>('GENERAL');
   isCreatingPost = signal<boolean>(false);
   createPostSuccess = signal<boolean>(false);
+  createPostError = signal<string | null>(null);
 
   // Formulario de edición reactivo
   editFirstName = signal<string>('');
@@ -991,6 +992,7 @@ export class ProfileAvatarComponent implements OnInit {
     this.newPostCaption.set('');
     this.newPostModule.set('GENERAL');
     this.createPostSuccess.set(false);
+    this.createPostError.set(null);
     this.isNewPostModalOpen.set(true);
   }
 
@@ -1017,11 +1019,20 @@ export class ProfileAvatarComponent implements OnInit {
     const current = this.athlete();
     if (!current) return;
 
+    this.createPostError.set(null);
+
+    if (!this.athleteService.canCreatePostToday()) {
+      this.createPostError.set(
+        `Has alcanzado el límite diario de ${this.athleteService.dailyPostLimit} publicaciones por día.`
+      );
+      return;
+    }
+
     const file = this.selectedPostFile();
     const manualUrl = this.newPostMediaUrl().trim();
 
     if (!file && !manualUrl) {
-      alert('Por favor selecciona una imagen para subir.');
+      this.createPostError.set('Por favor selecciona una imagen para subir.');
       return;
     }
 
@@ -1051,12 +1062,16 @@ export class ProfileAvatarComponent implements OnInit {
               },
               error: (err) => {
                 console.error('Error insertando en athlete_feed_posts:', err);
+                this.createPostError.set(
+                  err?.error?.detail || 'No se pudo publicar el post. Intenta nuevamente.'
+                );
                 this.isCreatingPost.set(false);
               }
             });
         },
         error: (err) => {
           console.error('Error subiendo imagen al bucket feed_posts:', err);
+          this.createPostError.set('Error subiendo la imagen. Intenta nuevamente.');
           this.isCreatingPost.set(false);
         }
       });
@@ -1080,6 +1095,9 @@ export class ProfileAvatarComponent implements OnInit {
           },
           error: (err) => {
             console.error('Error creando post con URL:', err);
+            this.createPostError.set(
+              err?.error?.detail || 'No se pudo publicar el post. Intenta nuevamente.'
+            );
             this.isCreatingPost.set(false);
           }
         });
