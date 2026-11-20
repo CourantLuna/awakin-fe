@@ -305,7 +305,7 @@ export function getAwakinSunTone(
         variant === 'transparent' ? 'mini-body-map--transparent shadow-none p-0' : '',
         variant === 'dark' ? 'mini-body-map--dark shadow-md text-white p-1 sm:p-1.5 rounded-2xl' : '',
         variant === 'light' ? 'mini-body-map--light shadow-2xs text-stone-800 p-1 sm:p-1.5 rounded-2xl' : '',
-        showLabels ? 'gap-2 sm:gap-3' : 'gap-1.5'
+        showLabels ? 'has-labels gap-2 sm:gap-3' : 'gap-1.5'
       ]"
       [ngStyle]="cssVariables">
 
@@ -349,16 +349,33 @@ export function getAwakinSunTone(
   styles: [`
     :host {
       display: inline-flex;
+      flex-direction: row;
       align-self: stretch;
+      align-items: stretch;
       height: 100%;
+      width: auto;
       min-height: 48px;
+      flex-shrink: 0;
+    }
+
+    app-workout-mini-body-map {
+      display: inline-flex;
+      flex-direction: row;
+      align-self: stretch;
+      align-items: stretch;
+      height: 100%;
+      width: auto;
+      min-height: 48px;
+      flex-shrink: 0;
     }
 
     .mini-body-map-wrapper {
       display: inline-flex;
+      flex-direction: row;
       align-items: stretch;
       height: 100%;
       width: auto;
+      flex-shrink: 0;
     }
 
     .mini-body-map__figure-col {
@@ -367,7 +384,9 @@ export function getAwakinSunTone(
       align-items: center;
       justify-content: center;
       height: 100%;
+      width: auto;
       min-height: 0;
+      flex-shrink: 0;
     }
 
     .mini-body-map__label {
@@ -377,18 +396,24 @@ export function getAwakinSunTone(
       letter-spacing: 0.05em;
       margin-bottom: 4px;
       line-height: 1;
+      height: 10px;
       flex-shrink: 0;
     }
 
     .mini-body-map__svg-box {
-      flex: 1 1 0%;
+      flex: 0 0 auto;
       height: 100%;
+      width: auto;
       min-height: 0;
-      aspect-ratio: 660 / 1206;
+      aspect-ratio: 660.46 / 1206.46;
       display: flex;
       align-items: center;
       justify-content: center;
       overflow: visible;
+    }
+
+    .mini-body-map-wrapper.has-labels .mini-body-map__svg-box {
+      height: calc(100% - 14px);
     }
 
     .mini-body-map__divider {
@@ -423,16 +448,27 @@ export function getAwakinSunTone(
       filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.85));
     }
 
-    .mini-body-map-wrapper app-body-map-model-svg {
-      display: contents;
+    .mini-body-map-wrapper app-body-map-model-svg,
+    .mini-body-map-wrapper app-male-standard-svg,
+    .mini-body-map-wrapper app-female-standard-svg,
+    .mini-body-map-wrapper app-male-advanced-svg,
+    .mini-body-map-wrapper app-female-advanced-svg {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+      width: auto;
+      flex-shrink: 0;
     }
 
     .mini-body-map-wrapper .body-map__svg {
       display: block;
-      width: 100%;
-      height: 100%;
-      max-width: 100%;
+      height: 100% !important;
+      width: auto !important;
+      aspect-ratio: 660.46 / 1206.46;
+      max-width: none;
       max-height: 100%;
+      flex-shrink: 0;
       overflow: visible;
       pointer-events: none;
       user-select: none;
@@ -499,6 +535,14 @@ export class WorkoutMiniBodyMapComponent implements OnChanges, AfterViewInit {
   public syncSvgVisuals(): void {
     const root = this.elementRef?.nativeElement;
     if (!root) return;
+
+    // 0. Forzar dimensiones y proporción compatibles con WebKit iOS en cada SVG
+    const svgs = root.querySelectorAll<SVGSVGElement>('svg.body-map__svg');
+    svgs.forEach((svg) => {
+      svg.setAttribute('preserveAspectRatio', 'xMidYMid meet');
+      svg.style.height = '100%';
+      svg.style.width = 'auto';
+    });
 
     // 1. Ocultar todas las articulaciones (joints) forzosamente con atributos nativos SVG
     const joints = root.querySelectorAll<SVGGraphicsElement>(
