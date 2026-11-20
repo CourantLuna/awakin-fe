@@ -59,6 +59,7 @@
               (mousedown)="onDragStart($event)" (wheel)="onWheelZoom($event)"
               (document:mousemove)="onDragMove($event)" (document:mouseup)="onDragEnd()">
 
+              <div
                 class="w-full ease-out will-change-transform" [class.transition-transform]="!isActivelyGesturing()"
                 [style.transform]="'translate(' + overlayPosition().x + 'px, ' + overlayPosition().y + 'px) scale(' + overlayScale() + ')'"
                 [style.transformOrigin]="'center center'">
