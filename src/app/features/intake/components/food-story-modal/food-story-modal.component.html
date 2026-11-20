@@ -82,11 +82,10 @@
             <!-- 2. CAPA OVERLAY ARRASTRABLE Y ESCALABLE (DRAGGABLE & ZOOMABLE / PINCH ON MOBILE) -->
             <div
               class="story-draggable-layer relative z-20 w-full h-full flex items-center justify-center px-3 select-none touch-none"
-              (mousedown)="onDragStart($event)" (wheel)="onWheelZoom($event)"
-              (document:mousemove)="onDragMove($event)" (document:mouseup)="onDragEnd()">
+              (mousedown)="onDragStart($event)" (wheel)="onWheelZoom($event)" (document:mousemove)="onDragMove($event)"
+              (document:mouseup)="onDragEnd()">
 
-              <div
-                class="w-full ease-out will-change-transform" [class.transition-transform]="!isActivelyGesturing()"
+              <div class="w-full ease-out will-change-transform" [class.transition-transform]="!isActivelyGesturing()"
                 [style.transform]="'translate(' + overlayPosition().x + 'px, ' + overlayPosition().y + 'px) scale(' + overlayScale() + ')'"
                 [style.transformOrigin]="'center center'">
 
@@ -515,9 +514,8 @@
         </button>
       </div>
 
-      <!-- Popover Flotante de la Herramienta Seleccionada -->
+      <!-- Popover Flotante de la Herramienta Seleccionada (sin bloquear gestos sobre el canvas) -->
       @if (activeTool(); as tool) {
-      <div class="absolute inset-0 z-20" (click)="closeTool()"></div>
       <div
         class="absolute bottom-2.5 left-2.5 right-12 z-30 bg-stone-900/90 backdrop-blur-md border border-white/15 rounded-2xl p-2 shadow-2xl text-white"
         (click)="$event.stopPropagation()" (touchstart)="$event.stopPropagation()">

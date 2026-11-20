@@ -188,6 +188,7 @@ export class WorkoutStoryModalComponent implements OnChanges, OnDestroy {
   // Gesto táctil pinch-to-zoom en mobile
   private initialPinchDistance = 0;
   private initialPinchScale = 1;
+  private initialPinchCenter = { x: 0, y: 0 };
 
   // Fondo
   backgroundMode = signal<'auto' | 'custom' | 'dark'>('auto');
@@ -657,6 +658,11 @@ export class WorkoutStoryModalComponent implements OnChanges, OnDestroy {
           const t2 = event.touches[1];
           this.initialPinchDistance = Math.hypot(t2.clientX - t1.clientX, t2.clientY - t1.clientY);
           this.initialPinchScale = this.overlayScale();
+          this.initialPinchCenter = {
+            x: (t1.clientX + t2.clientX) / 2,
+            y: (t1.clientY + t2.clientY) / 2,
+          };
+          this.initialPos = { ...this.overlayPosition() };
           this.isDragging = false;
           this.isActivelyGesturing.set(true);
           if (event.cancelable) event.preventDefault();
@@ -683,6 +689,15 @@ export class WorkoutStoryModalComponent implements OnChanges, OnDestroy {
           const factor = currentDistance / this.initialPinchDistance;
           const newScale = Math.max(0.30, Math.min(1.05, this.initialPinchScale * factor));
           this.overlayScale.set(Math.round(newScale * 100) / 100);
+
+          const midX = (t1.clientX + t2.clientX) / 2;
+          const midY = (t1.clientY + t2.clientY) / 2;
+          const maxShiftX = 140;
+          const maxShiftY = 180;
+          this.overlayPosition.set({
+            x: Math.max(-maxShiftX, Math.min(maxShiftX, this.initialPos.x + (midX - this.initialPinchCenter.x))),
+            y: Math.max(-maxShiftY, Math.min(maxShiftY, this.initialPos.y + (midY - this.initialPinchCenter.y))),
+          });
           if (event.cancelable) event.preventDefault();
           return;
         }
