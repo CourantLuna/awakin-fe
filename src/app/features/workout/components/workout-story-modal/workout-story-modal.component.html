@@ -56,11 +56,10 @@
             <!-- 2. CAPA OVERLAY ARRASTRABLE Y ESCALABLE (DRAGGABLE & ZOOMABLE / PINCH ON MOBILE) -->
             <div
               class="story-draggable-layer relative z-20 w-full h-full flex items-center justify-center px-3 select-none touch-none"
-              (mousedown)="onDragStart($event)" (touchstart)="onDragStart($event)" (wheel)="onWheelZoom($event)"
-              (document:mousemove)="onDragMove($event)" (document:touchmove)="onDragMove($event)"
-              (document:mouseup)="onDragEnd()" (document:touchend)="onDragEnd()">
+              (mousedown)="onDragStart($event)" (wheel)="onWheelZoom($event)"
+              (document:mousemove)="onDragMove($event)" (document:mouseup)="onDragEnd()">
 
-              <div class="w-full transition-transform ease-out will-change-transform"
+                class="w-full ease-out will-change-transform" [class.transition-transform]="!isActivelyGesturing()"
                 [style.transform]="'translate(' + overlayPosition().x + 'px, ' + overlayPosition().y + 'px) scale(' + overlayScale() + ')'"
                 [style.transformOrigin]="'center center'">
 

@@ -1,11 +1,11 @@
 .story-preview-container {
-  touch-action: none;
+  touch-action: none !important;
   user-select: none;
   -webkit-user-select: none;
 }
 
 .story-draggable-layer {
-  touch-action: none;
+  touch-action: none !important;
   cursor: grab;
 
   &:active {
@@ -17,6 +17,7 @@
 .no-scrollbar::-webkit-scrollbar {
   display: none;
 }
+
 .no-scrollbar {
   -ms-overflow-style: none;
   scrollbar-width: none;

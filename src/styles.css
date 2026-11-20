@@ -438,7 +438,6 @@ body.p-overflow-hidden {
 .p-dialog-mask,
 .p-drawer-mask {
   overscroll-behavior: none !important;
-  touch-action: none;
 }
 
 .p-dialog {
@@ -446,7 +445,6 @@ body.p-overflow-hidden {
   display: flex !important;
   flex-direction: column !important;
   overflow: hidden !important;
-  touch-action: pan-y;
   overscroll-behavior: contain;
 }
 

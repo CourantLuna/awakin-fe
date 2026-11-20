@@ -4,6 +4,7 @@ import {
   EventEmitter,
   Input,
   OnChanges,
+  OnDestroy,
   Output,
   SimpleChanges,
   ViewChild,
@@ -101,8 +102,30 @@ export interface FoodStoryTemplateOption {
   templateUrl: './food-story-modal.component.html',
   styleUrls: ['./food-story-modal.component.scss'],
 })
-export class FoodStoryModalComponent implements OnChanges {
+export class FoodStoryModalComponent implements OnChanges, OnDestroy {
   protected readonly Math = Math;
+
+  private readonly boundTouchStart = (e: TouchEvent) => this.handleNativeTouchStart(e);
+  private readonly boundTouchMove = (e: TouchEvent) => this.handleNativeTouchMove(e);
+  private readonly boundTouchEnd = (e: TouchEvent) => this.handleNativeTouchEnd(e);
+
+  constructor() {
+    if (typeof document !== 'undefined') {
+      document.addEventListener('touchstart', this.boundTouchStart, { passive: false });
+      document.addEventListener('touchmove', this.boundTouchMove, { passive: false });
+      document.addEventListener('touchend', this.boundTouchEnd, { passive: true });
+      document.addEventListener('touchcancel', this.boundTouchEnd, { passive: true });
+    }
+  }
+
+  ngOnDestroy(): void {
+    if (typeof document !== 'undefined') {
+      document.removeEventListener('touchstart', this.boundTouchStart);
+      document.removeEventListener('touchmove', this.boundTouchMove);
+      document.removeEventListener('touchend', this.boundTouchEnd);
+      document.removeEventListener('touchcancel', this.boundTouchEnd);
+    }
+  }
 
   @Input() visible: boolean = false;
   @Input() storyData: StoryShareData | null = null;
@@ -195,9 +218,10 @@ export class FoodStoryModalComponent implements OnChanges {
   currentAthlete = signal<AthleteProfile | null>(null);
   currentKin = signal<KinInfo | null>(null);
 
-  // Drag & Zoom Controls (30% a 120%)
+  // Drag & Zoom Controls (30% a 125%)
   overlayScale = signal<number>(0.88);
   overlayPosition = signal<{ x: number; y: number }>({ x: 0, y: 0 });
+  isActivelyGesturing = signal<boolean>(false);
   isDragging = false;
   private dragStart = { x: 0, y: 0 };
   private initialPos = { x: 0, y: 0 };
@@ -398,43 +422,69 @@ export class FoodStoryModalComponent implements OnChanges {
     this.overlayScale.set(next);
   }
 
-  // --- Drag & Drop del Overlay Card (Mouse & Multi-Touch Gestures) ---
-  onDragStart(event: MouseEvent | TouchEvent): void {
-    const target = event.target as HTMLElement;
-    if (target.closest('button, input, select, a')) return;
+    // --- Drag & Drop del Overlay Card (Mouse en Desktop + Touch No-Pasivo en Móvil) ---
+    onDragStart(event: MouseEvent): void {
+      const target = event.target as HTMLElement;
+      if(target.closest('button, input, select, a')) return;
 
-    if ('touches' in event) {
-      if (event.touches.length >= 2) {
-        // Gesto de pellizco (Pinch-to-zoom en móvil con 2 dedos)
-        const t1 = event.touches[0];
-        const t2 = event.touches[1];
-        this.initialPinchDistance = Math.hypot(t2.clientX - t1.clientX, t2.clientY - t1.clientY);
-        this.initialPinchScale = this.overlayScale();
-        this.isDragging = false;
-        if (event.cancelable) event.preventDefault();
-        return;
-      }
-      if (event.touches.length === 1) {
-        // Mover con 1 dedo
         this.isDragging = true;
-        this.initialPinchDistance = 0;
-        this.dragStart = { x: event.touches[0].clientX, y: event.touches[0].clientY };
+        this.isActivelyGesturing.set(true);
+        this.dragStart = { x: event.clientX, y: event.clientY };
         this.initialPos = { ...this.overlayPosition() };
-        if (event.cancelable) event.preventDefault();
+        if(event.cancelable) event.preventDefault();
       }
-    } else {
-      // Arrastrar con ratón en desktop
-      this.isDragging = true;
-      this.dragStart = { x: event.clientX, y: event.clientY };
-      this.initialPos = { ...this.overlayPosition() };
-      if (event.cancelable) event.preventDefault();
-    }
-  }
 
-  onDragMove(event: MouseEvent | TouchEvent): void {
-    if ('touches' in event) {
+  onDragMove(event: MouseEvent): void {
+        if (!this.isDragging) return;
+        const deltaX = event.clientX - this.dragStart.x;
+        const deltaY = event.clientY - this.dragStart.y;
+        const maxShiftX = 160;
+        const maxShiftY = 240;
+        this.overlayPosition.set({
+          x: Math.max(-maxShiftX, Math.min(maxShiftX, this.initialPos.x + deltaX)),
+          y: Math.max(-maxShiftY, Math.min(maxShiftY, this.initialPos.y + deltaY)),
+        });
+      }
+
+  onDragEnd(): void {
+        this.isDragging = false;
+        this.initialPinchDistance = 0;
+        this.isActivelyGesturing.set(false);
+      }
+
+  private handleNativeTouchStart(event: TouchEvent): void {
+        if (!this.visible || !this.storyCaptureArea?.nativeElement) return;
+        const target = event.target as HTMLElement | null;
+        if (!target || target.closest('button, input, select, a')) return;
+
+        const draggableEl = target.closest('.story-draggable-layer');
+        if (!draggableEl || !this.storyCaptureArea.nativeElement.contains(draggableEl)) return;
+
+        if (event.touches.length >= 2) {
+          const t1 = event.touches[0];
+          const t2 = event.touches[1];
+          this.initialPinchDistance = Math.hypot(t2.clientX - t1.clientX, t2.clientY - t1.clientY);
+          this.initialPinchScale = this.overlayScale();
+          this.isDragging = false;
+          this.isActivelyGesturing.set(true);
+          if (event.cancelable) event.preventDefault();
+          return;
+        }
+
+        if (event.touches.length === 1) {
+          this.isDragging = true;
+          this.initialPinchDistance = 0;
+          this.isActivelyGesturing.set(true);
+          this.dragStart = { x: event.touches[0].clientX, y: event.touches[0].clientY };
+          this.initialPos = { ...this.overlayPosition() };
+          if (event.cancelable) event.preventDefault();
+        }
+      }
+
+  private handleNativeTouchMove(event: TouchEvent): void {
+        if (!this.visible || (!this.isDragging && this.initialPinchDistance <= 0)) return;
+
       if (event.touches.length >= 2 && this.initialPinchDistance > 0) {
-        // Pinch-to-zoom activo en móvil (ampliar / reducir)
         const t1 = event.touches[0];
         const t2 = event.touches[1];
         const currentDistance = Math.hypot(t2.clientX - t1.clientX, t2.clientY - t1.clientY);
@@ -446,7 +496,6 @@ export class FoodStoryModalComponent implements OnChanges {
       }
 
       if (event.touches.length === 1 && this.isDragging) {
-        // Mover libremente sobre la imagen con 1 dedo sólo si el arrastre inició en la imagen
         const deltaX = event.touches[0].clientX - this.dragStart.x;
         const deltaY = event.touches[0].clientY - this.dragStart.y;
         const maxShiftX = 160;
@@ -457,111 +506,112 @@ export class FoodStoryModalComponent implements OnChanges {
         });
         if (event.cancelable) event.preventDefault();
       }
-    } else if (this.isDragging) {
-      const deltaX = event.clientX - this.dragStart.x;
-      const deltaY = event.clientY - this.dragStart.y;
-      const maxShiftX = 160;
-      const maxShiftY = 240;
-      this.overlayPosition.set({
-        x: Math.max(-maxShiftX, Math.min(maxShiftX, this.initialPos.x + deltaX)),
-        y: Math.max(-maxShiftY, Math.min(maxShiftY, this.initialPos.y + deltaY)),
-      });
     }
-  }
 
-  onDragEnd(): void {
-    this.isDragging = false;
-    this.initialPinchDistance = 0;
-  }
+      private handleNativeTouchEnd(event: TouchEvent): void {
+        if (!this.isDragging && this.initialPinchDistance <= 0) return;
+
+        if (event.touches && event.touches.length === 1 && this.initialPinchDistance > 0) {
+          this.initialPinchDistance = 0;
+          this.isDragging = true;
+          this.dragStart = { x: event.touches[0].clientX, y: event.touches[0].clientY };
+          this.initialPos = { ...this.overlayPosition() };
+          return;
+        }
+
+        if (!event.touches || event.touches.length === 0) {
+          this.onDragEnd();
+        }
+      }
 
   // --- Exportación a Imagen PNG de Alta Resolución ---
   async exportStory(action: 'download' | 'share' | 'feed'): Promise<void> {
-    if (this.isExporting() || !this.storyCaptureArea) return;
+        if (this.isExporting() || !this.storyCaptureArea) return;
 
-    this.isExporting.set(true);
-    this.exportAction.set(action);
+        this.isExporting.set(true);
+        this.exportAction.set(action);
 
-    try {
-      const element = this.storyCaptureArea.nativeElement;
-
-      const renderOptions = {
-        quality: 0.95,
-        pixelRatio: 3,
-        cacheBust: true,
-        backgroundColor: '#0C0A09',
-      };
-
-      // Fix para Safari/WebKit: primer render calienta el contexto
-      const isWebKit =
-        /Safari|iPhone|iPad|iPod/i.test(navigator.userAgent) &&
-        !/Chrome|CriOS/i.test(navigator.userAgent);
-      if (isWebKit) {
         try {
-          await htmlToImage.toPng(element, renderOptions);
-        } catch {}
-      }
+          const element = this.storyCaptureArea.nativeElement;
 
-      const dataUrl = await htmlToImage.toPng(element, renderOptions);
-      const res = await fetch(dataUrl);
-      const blob = await res.blob();
-      const filename = `awakin-comida-${Date.now()}.png`;
+          const renderOptions = {
+            quality: 0.95,
+            pixelRatio: 3,
+            cacheBust: true,
+            backgroundColor: '#0C0A09',
+          };
 
-      if (action === 'download') {
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = filename;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        URL.revokeObjectURL(url);
-        this.exportSuccessMessage.set('¡Historia guardada en tu dispositivo!');
-        setTimeout(() => this.exportSuccessMessage.set(null), 3500);
-      } else if (action === 'feed') {
-        this.shareFeed.emit(blob);
-      } else if (action === 'share') {
-        const data = this.currentData();
-        const mealTitle = this.formattedMealTitle();
-        const shareText = `🍽️ Mi nutrición en Awakin Protocol:\n${mealTitle}: ${data?.dishName}\n🔥 ${data?.kcal} kcal | ${data?.protein}g P | ${data?.carbs}g C | ${data?.fat}g G\n⚡ Únete a la tribu en Awakin`;
+          // Fix para Safari/WebKit: primer render calienta el contexto
+          const isWebKit =
+            /Safari|iPhone|iPad|iPod/i.test(navigator.userAgent) &&
+            !/Chrome|CriOS/i.test(navigator.userAgent);
+          if (isWebKit) {
+            try {
+              await htmlToImage.toPng(element, renderOptions);
+            } catch { }
+          }
 
-        const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-        const file = new File([blob], filename, { type: 'image/png' });
+          const dataUrl = await htmlToImage.toPng(element, renderOptions);
+          const res = await fetch(dataUrl);
+          const blob = await res.blob();
+          const filename = `awakin-comida-${Date.now()}.png`;
 
-        if (isMobile && navigator.canShare && navigator.canShare({ files: [file] })) {
-          try {
-            await navigator.share({
-              files: [file],
-              title: 'Awakin Nutrition Story',
-              text: shareText,
-            });
-            this.exportSuccessMessage.set('¡Compartido con éxito!');
+          if (action === 'download') {
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = filename;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+            this.exportSuccessMessage.set('¡Historia guardada en tu dispositivo!');
             setTimeout(() => this.exportSuccessMessage.set(null), 3500);
-          } catch (e: any) {
-            if (e.name !== 'AbortError') {
-              console.error('Error al compartir nativamente:', e);
+          } else if (action === 'feed') {
+            this.shareFeed.emit(blob);
+          } else if (action === 'share') {
+            const data = this.currentData();
+            const mealTitle = this.formattedMealTitle();
+            const shareText = `🍽️ Mi nutrición en Awakin Protocol:\n${mealTitle}: ${data?.dishName}\n🔥 ${data?.kcal} kcal | ${data?.protein}g P | ${data?.carbs}g C | ${data?.fat}g G\n⚡ Únete a la tribu en Awakin`;
+
+            const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+            const file = new File([blob], filename, { type: 'image/png' });
+
+            if (isMobile && navigator.canShare && navigator.canShare({ files: [file] })) {
+              try {
+                await navigator.share({
+                  files: [file],
+                  title: 'Awakin Nutrition Story',
+                  text: shareText,
+                });
+                this.exportSuccessMessage.set('¡Compartido con éxito!');
+                setTimeout(() => this.exportSuccessMessage.set(null), 3500);
+              } catch (e: any) {
+                if (e.name !== 'AbortError') {
+                  console.error('Error al compartir nativamente:', e);
+                }
+              }
+            } else {
+              // Fallback a descarga directa
+              const url = URL.createObjectURL(blob);
+              const link = document.createElement('a');
+              link.href = url;
+              link.download = filename;
+              document.body.appendChild(link);
+              link.click();
+              document.body.removeChild(link);
+              URL.revokeObjectURL(url);
+              this.exportSuccessMessage.set('¡Historia descargada!');
+              setTimeout(() => this.exportSuccessMessage.set(null), 3500);
             }
           }
-        } else {
-          // Fallback a descarga directa
-          const url = URL.createObjectURL(blob);
-          const link = document.createElement('a');
-          link.href = url;
-          link.download = filename;
-          document.body.appendChild(link);
-          link.click();
-          document.body.removeChild(link);
-          URL.revokeObjectURL(url);
-          this.exportSuccessMessage.set('¡Historia descargada!');
-          setTimeout(() => this.exportSuccessMessage.set(null), 3500);
+        } catch (err) {
+          console.error('Error exportando historia de comida:', err);
+          this.exportSuccessMessage.set('Error al generar la imagen. Intenta nuevamente.');
+          setTimeout(() => this.exportSuccessMessage.set(null), 4000);
+        } finally {
+          this.isExporting.set(false);
+          this.exportAction.set(null);
         }
       }
-    } catch (err) {
-      console.error('Error exportando historia de comida:', err);
-      this.exportSuccessMessage.set('Error al generar la imagen. Intenta nuevamente.');
-      setTimeout(() => this.exportSuccessMessage.set(null), 4000);
-    } finally {
-      this.isExporting.set(false);
-      this.exportAction.set(null);
     }
-  }
-}

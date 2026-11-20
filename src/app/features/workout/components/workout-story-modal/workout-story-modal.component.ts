@@ -4,6 +4,7 @@ import {
   EventEmitter,
   Input,
   OnChanges,
+  OnDestroy,
   Output,
   SimpleChanges,
   ViewChild,
@@ -68,8 +69,30 @@ interface RadarPoint {
   templateUrl: './workout-story-modal.component.html',
   styleUrls: ['./workout-story-modal.component.scss']
 })
-export class WorkoutStoryModalComponent implements OnChanges {
+export class WorkoutStoryModalComponent implements OnChanges, OnDestroy {
   public themeService = inject(ThemeService);
+
+  private readonly boundTouchStart = (e: TouchEvent) => this.handleNativeTouchStart(e);
+  private readonly boundTouchMove = (e: TouchEvent) => this.handleNativeTouchMove(e);
+  private readonly boundTouchEnd = (e: TouchEvent) => this.handleNativeTouchEnd(e);
+
+  constructor() {
+    if (typeof document !== 'undefined') {
+      document.addEventListener('touchstart', this.boundTouchStart, { passive: false });
+      document.addEventListener('touchmove', this.boundTouchMove, { passive: false });
+      document.addEventListener('touchend', this.boundTouchEnd, { passive: true });
+      document.addEventListener('touchcancel', this.boundTouchEnd, { passive: true });
+    }
+  }
+
+  ngOnDestroy(): void {
+    if (typeof document !== 'undefined') {
+      document.removeEventListener('touchstart', this.boundTouchStart);
+      document.removeEventListener('touchmove', this.boundTouchMove);
+      document.removeEventListener('touchend', this.boundTouchEnd);
+      document.removeEventListener('touchcancel', this.boundTouchEnd);
+    }
+  }
 
   @Input() visible: boolean = false;
   @Input() log: WorkoutLog | null = null;
@@ -170,9 +193,10 @@ export class WorkoutStoryModalComponent implements OnChanges {
   backgroundMode = signal<'auto' | 'custom' | 'dark'>('auto');
   customPhotoUrl = signal<string | null>(null);
 
-  // Drag & Zoom Controls: rango 30% a 100%
-  overlayScale = signal<number>(0.85); // 0.30 a 1.00
+  // Drag & Zoom Controls: rango 30% a 105%
+  overlayScale = signal<number>(0.85); // 0.30 a 1.05
   overlayPosition = signal<{ x: number; y: number }>({ x: 0, y: 0 });
+  isActivelyGesturing = signal<boolean>(false);
   isDragging = false;
   private dragStart = { x: 0, y: 0 };
   private initialPos = { x: 0, y: 0 };
@@ -590,222 +614,253 @@ export class WorkoutStoryModalComponent implements OnChanges {
     this.overlayScale.set(0.85);
   }
 
-  // --- Drag & Drop del Overlay Card (Mouse & Touch con Pinch-to-Zoom para mobile) ---
-  onDragStart(event: MouseEvent | TouchEvent): void {
-    const target = event.target as HTMLElement;
-    if (target.closest('button, input, select, a')) return;
+    // --- Drag & Drop del Overlay Card (Mouse en Desktop + Touch No-Pasivo en Móvil) ---
+    onDragStart(event: MouseEvent): void {
+      const target = event.target as HTMLElement;
+      if(target.closest('button, input, select, a')) return;
 
-    if ('touches' in event) {
-      if (event.touches.length === 2) {
-        // Gesto de pellizco (Pinch-to-zoom en móvil)
-        const t1 = event.touches[0];
-        const t2 = event.touches[1];
-        this.initialPinchDistance = Math.hypot(t2.clientX - t1.clientX, t2.clientY - t1.clientY);
-        this.initialPinchScale = this.overlayScale();
-        this.isDragging = false;
-        event.preventDefault();
-        return;
-      }
-      if (event.touches.length === 1) {
         this.isDragging = true;
-        this.dragStart = { x: event.touches[0].clientX, y: event.touches[0].clientY };
+        this.isActivelyGesturing.set(true);
+        this.dragStart = { x: event.clientX, y: event.clientY };
         this.initialPos = { ...this.overlayPosition() };
         event.preventDefault();
       }
-    } else {
-      this.isDragging = true;
-      this.dragStart = { x: event.clientX, y: event.clientY };
-      this.initialPos = { ...this.overlayPosition() };
-      event.preventDefault();
-    }
-  }
 
-  onDragMove(event: MouseEvent | TouchEvent): void {
-    if ('touches' in event) {
-      if (event.touches.length === 2 && this.initialPinchDistance > 0) {
-        // Pinch-to-zoom activo en móvil
-        const t1 = event.touches[0];
-        const t2 = event.touches[1];
-        const currentDistance = Math.hypot(t2.clientX - t1.clientX, t2.clientY - t1.clientY);
-        const factor = currentDistance / this.initialPinchDistance;
-        const newScale = Math.max(0.30, Math.min(1.0, this.initialPinchScale * factor));
-        this.overlayScale.set(Math.round(newScale * 100) / 100);
-        event.preventDefault();
-        return;
-      }
-      if (event.touches.length === 1 && this.isDragging) {
-        const deltaX = event.touches[0].clientX - this.dragStart.x;
-        const deltaY = event.touches[0].clientY - this.dragStart.y;
+  onDragMove(event: MouseEvent): void {
+        if (!this.isDragging) return;
+        const deltaX = event.clientX - this.dragStart.x;
+        const deltaY = event.clientY - this.dragStart.y;
         const maxShiftX = 140;
         const maxShiftY = 180;
         this.overlayPosition.set({
           x: Math.max(-maxShiftX, Math.min(maxShiftX, this.initialPos.x + deltaX)),
           y: Math.max(-maxShiftY, Math.min(maxShiftY, this.initialPos.y + deltaY))
         });
-        event.preventDefault();
       }
-    } else if (this.isDragging) {
-      const deltaX = event.clientX - this.dragStart.x;
-      const deltaY = event.clientY - this.dragStart.y;
-      const maxShiftX = 140;
-      const maxShiftY = 180;
-      this.overlayPosition.set({
-        x: Math.max(-maxShiftX, Math.min(maxShiftX, this.initialPos.x + deltaX)),
-        y: Math.max(-maxShiftY, Math.min(maxShiftY, this.initialPos.y + deltaY))
-      });
-    }
-  }
 
   onDragEnd(): void {
-    this.isDragging = false;
-    this.initialPinchDistance = 0;
-  }
+        this.isDragging = false;
+        this.initialPinchDistance = 0;
+        this.isActivelyGesturing.set(false);
+      }
+
+  private handleNativeTouchStart(event: TouchEvent): void {
+        if (!this.visible || !this.storyCaptureArea?.nativeElement) return;
+        const target = event.target as HTMLElement | null;
+        if (!target || target.closest('button, input, select, a')) return;
+
+        const draggableEl = target.closest('.story-draggable-layer');
+        if (!draggableEl || !this.storyCaptureArea.nativeElement.contains(draggableEl)) return;
+
+        if (event.touches.length >= 2) {
+          const t1 = event.touches[0];
+          const t2 = event.touches[1];
+          this.initialPinchDistance = Math.hypot(t2.clientX - t1.clientX, t2.clientY - t1.clientY);
+          this.initialPinchScale = this.overlayScale();
+          this.isDragging = false;
+          this.isActivelyGesturing.set(true);
+          if (event.cancelable) event.preventDefault();
+          return;
+        }
+
+        if (event.touches.length === 1) {
+          this.isDragging = true;
+          this.initialPinchDistance = 0;
+          this.isActivelyGesturing.set(true);
+          this.dragStart = { x: event.touches[0].clientX, y: event.touches[0].clientY };
+          this.initialPos = { ...this.overlayPosition() };
+          if (event.cancelable) event.preventDefault();
+        }
+      }
+
+  private handleNativeTouchMove(event: TouchEvent): void {
+        if (!this.visible || (!this.isDragging && this.initialPinchDistance <= 0)) return;
+
+        if (event.touches.length >= 2 && this.initialPinchDistance > 0) {
+          const t1 = event.touches[0];
+          const t2 = event.touches[1];
+          const currentDistance = Math.hypot(t2.clientX - t1.clientX, t2.clientY - t1.clientY);
+          const factor = currentDistance / this.initialPinchDistance;
+          const newScale = Math.max(0.30, Math.min(1.05, this.initialPinchScale * factor));
+          this.overlayScale.set(Math.round(newScale * 100) / 100);
+          if (event.cancelable) event.preventDefault();
+          return;
+        }
+
+        if (event.touches.length === 1 && this.isDragging) {
+          const deltaX = event.touches[0].clientX - this.dragStart.x;
+          const deltaY = event.touches[0].clientY - this.dragStart.y;
+          const maxShiftX = 140;
+          const maxShiftY = 180;
+          this.overlayPosition.set({
+            x: Math.max(-maxShiftX, Math.min(maxShiftX, this.initialPos.x + deltaX)),
+            y: Math.max(-maxShiftY, Math.min(maxShiftY, this.initialPos.y + deltaY))
+          });
+          if (event.cancelable) event.preventDefault();
+        }
+      }
+
+  private handleNativeTouchEnd(event: TouchEvent): void {
+        if (!this.isDragging && this.initialPinchDistance <= 0) return;
+
+        if (event.touches && event.touches.length === 1 && this.initialPinchDistance > 0) {
+          this.initialPinchDistance = 0;
+          this.isDragging = true;
+          this.dragStart = { x: event.touches[0].clientX, y: event.touches[0].clientY };
+          this.initialPos = { ...this.overlayPosition() };
+          return;
+        }
+
+        if (!event.touches || event.touches.length === 0) {
+          this.onDragEnd();
+        }
+      }
 
   // --- Exportación a Imagen PNG de Alta Resolución (Soporta OKLCH nativamente) ---
   async exportStory(action: 'download' | 'share'): Promise<void> {
-    if (this.isExporting() || !this.storyCaptureArea) return;
+        if (this.isExporting() || !this.storyCaptureArea) return;
 
-    this.isExporting.set(true);
-    this.exportAction.set(action);
+        this.isExporting.set(true);
+        this.exportAction.set(action);
 
-    try {
-      const element = this.storyCaptureArea.nativeElement;
-
-      // Inyectar atributos SVG nativos antes de exportar para que foreignObject conserve colores y oculte articulaciones
-      this.prepareSvgForExport(element);
-
-      const renderOptions = {
-        quality: 0.95,
-        pixelRatio: 3,
-        cacheBust: true,
-        backgroundColor: '#0C0A09'
-      };
-
-      // Fix para Safari/WebKit: primer render calienta el foreignObject
-      const isWebKit = /Safari|iPhone|iPad|iPod/i.test(navigator.userAgent) && !/Chrome|CriOS/i.test(navigator.userAgent);
-      if (isWebKit) {
         try {
-          await htmlToImage.toPng(element, renderOptions);
-        } catch {}
-      }
+          const element = this.storyCaptureArea.nativeElement;
 
-      const dataUrl = await htmlToImage.toPng(element, renderOptions);
-      const res = await fetch(dataUrl);
-      const blob = await res.blob();
-      const filename = `awakin-workout-${Date.now()}.png`;
+          // Inyectar atributos SVG nativos antes de exportar para que foreignObject conserve colores y oculte articulaciones
+          this.prepareSvgForExport(element);
 
-      if (action === 'download') {
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.download = filename;
-        link.href = url;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        URL.revokeObjectURL(url);
-      } else {
-        const file = new File([blob], filename, { type: 'image/png' });
+          const renderOptions = {
+            quality: 0.95,
+            pixelRatio: 3,
+            cacheBust: true,
+            backgroundColor: '#0C0A09'
+          };
 
-        if (navigator.canShare && navigator.canShare({ files: [file] })) {
-          await navigator.share({
-            files: [file],
-            title: 'Entrenamiento Awakin',
-            text: `¡Completé mi sesión: ${this.routineTitle()} con Awakin!`
-          });
-        } else {
-          // Fallback descarga
-          const url = URL.createObjectURL(blob);
-          const link = document.createElement('a');
-          link.download = filename;
-          link.href = url;
-          document.body.appendChild(link);
-          link.click();
-          document.body.removeChild(link);
-          URL.revokeObjectURL(url);
+          // Fix para Safari/WebKit: primer render calienta el foreignObject
+          const isWebKit = /Safari|iPhone|iPad|iPod/i.test(navigator.userAgent) && !/Chrome|CriOS/i.test(navigator.userAgent);
+          if (isWebKit) {
+            try {
+              await htmlToImage.toPng(element, renderOptions);
+            } catch { }
+          }
+
+          const dataUrl = await htmlToImage.toPng(element, renderOptions);
+          const res = await fetch(dataUrl);
+          const blob = await res.blob();
+          const filename = `awakin-workout-${Date.now()}.png`;
+
+          if (action === 'download') {
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.download = filename;
+            link.href = url;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+          } else {
+            const file = new File([blob], filename, { type: 'image/png' });
+
+            if (navigator.canShare && navigator.canShare({ files: [file] })) {
+              await navigator.share({
+                files: [file],
+                title: 'Entrenamiento Awakin',
+                text: `¡Completé mi sesión: ${this.routineTitle()} con Awakin!`
+              });
+            } else {
+              // Fallback descarga
+              const url = URL.createObjectURL(blob);
+              const link = document.createElement('a');
+              link.download = filename;
+              link.href = url;
+              document.body.appendChild(link);
+              link.click();
+              document.body.removeChild(link);
+              URL.revokeObjectURL(url);
+            }
+          }
+        } catch (err) {
+          console.error('Error exportando historia:', err);
+        } finally {
+          this.isExporting.set(false);
+          this.exportAction.set(null);
         }
       }
-    } catch (err) {
-      console.error('Error exportando historia:', err);
-    } finally {
-      this.isExporting.set(false);
-      this.exportAction.set(null);
-    }
-  }
 
   private prepareSvgForExport(container: HTMLElement): void {
-    if (!container) return;
+        if (!container) return;
 
-    // 1. Ocultar todas las articulaciones (joints) forzosamente
-    const joints = container.querySelectorAll<SVGGraphicsElement>(
-      '.joints, [data-muscle-id="shoulders"], [data-muscle-id="hips"], [data-muscle-id="knees"], [data-muscle-id="ankles"], [data-muscle-id="wrist"], [data-muscle-id="elbow"], [data-muscle-id="upper-spine"], [data-muscle-id="scapula"], [data-muscle-id="lower-spine"]'
-    );
-    joints.forEach((el) => {
-      el.style.display = 'none';
-      el.setAttribute('display', 'none');
-    });
+        // 1. Ocultar todas las articulaciones (joints) forzosamente
+        const joints = container.querySelectorAll<SVGGraphicsElement>(
+          '.joints, [data-muscle-id="shoulders"], [data-muscle-id="hips"], [data-muscle-id="knees"], [data-muscle-id="ankles"], [data-muscle-id="wrist"], [data-muscle-id="elbow"], [data-muscle-id="upper-spine"], [data-muscle-id="scapula"], [data-muscle-id="lower-spine"]'
+        );
+        joints.forEach((el) => {
+          el.style.display = 'none';
+          el.setAttribute('display', 'none');
+        });
 
-    // 2. Mapear colores de los músculos
-    const breakdown = this.muscleBreakdown();
-    const maxSets = Math.max(...breakdown.map((m) => m.sets), 1);
-    const muscleColorMap = new Map<string, string>();
-    const kinPrimary = this.themeService.kinPrimaryColor();
-    const kinSecondary = this.themeService.kinSecondaryColor();
+        // 2. Mapear colores de los músculos
+        const breakdown = this.muscleBreakdown();
+        const maxSets = Math.max(...breakdown.map((m) => m.sets), 1);
+        const muscleColorMap = new Map<string, string>();
+        const kinPrimary = this.themeService.kinPrimaryColor();
+        const kinSecondary = this.themeService.kinSecondaryColor();
 
-    for (const item of breakdown) {
-      const color =
-        item.color || getAwakinSunTone(item.sets, maxSets, kinPrimary, kinSecondary).color;
-      const varNames = getMuscleCssVariableNames(item.muscle);
-      for (const vName of varNames) {
-        const id = vName.replace('--muscle-', '');
-        muscleColorMap.set(id, color);
+        for (const item of breakdown) {
+          const color =
+            item.color || getAwakinSunTone(item.sets, maxSets, kinPrimary, kinSecondary).color;
+          const varNames = getMuscleCssVariableNames(item.muscle);
+          for (const vName of varNames) {
+            const id = vName.replace('--muscle-', '');
+            muscleColorMap.set(id, color);
+          }
+        }
+
+        const defaultMuscleFill = 'rgba(255, 255, 255, 0.42)';
+
+        // 3. Inyectar fill nativo en cada región muscular y sus paths
+        const regions = container.querySelectorAll<SVGGraphicsElement>('.body-map__region:not(.joints)');
+        regions.forEach((region) => {
+          const id = region.getAttribute('data-muscle-id') || region.id;
+          const fill = (id && muscleColorMap.get(id)) || defaultMuscleFill;
+
+          region.setAttribute('fill', fill);
+          region.style.fill = fill;
+          region.style.color = fill;
+
+          const paths = region.querySelectorAll<SVGPathElement>('path');
+          paths.forEach((p) => {
+            p.setAttribute('fill', fill);
+            p.style.fill = fill;
+          });
+        });
+
+        // 4. Inyectar silueta del cuerpo y todas las líneas de contorno con stroke visible explícito
+        const strokeColor = 'rgba(255, 255, 255, 0.88)';
+        const contourElements = container.querySelectorAll<SVGGraphicsElement>(
+          '.body-map__model path, .body-map__model line, [id*="body"] path, [id*="body"] line, path[fill="none"], line[fill="none"], path[stroke], line[stroke]'
+        );
+        contourElements.forEach((el) => {
+          el.setAttribute('fill', 'none');
+          el.style.fill = 'none';
+          el.setAttribute('stroke', strokeColor);
+          el.style.stroke = strokeColor;
+        });
       }
-    }
-
-    const defaultMuscleFill = 'rgba(255, 255, 255, 0.42)';
-
-    // 3. Inyectar fill nativo en cada región muscular y sus paths
-    const regions = container.querySelectorAll<SVGGraphicsElement>('.body-map__region:not(.joints)');
-    regions.forEach((region) => {
-      const id = region.getAttribute('data-muscle-id') || region.id;
-      const fill = (id && muscleColorMap.get(id)) || defaultMuscleFill;
-
-      region.setAttribute('fill', fill);
-      region.style.fill = fill;
-      region.style.color = fill;
-
-      const paths = region.querySelectorAll<SVGPathElement>('path');
-      paths.forEach((p) => {
-        p.setAttribute('fill', fill);
-        p.style.fill = fill;
-      });
-    });
-
-    // 4. Inyectar silueta del cuerpo y todas las líneas de contorno con stroke visible explícito
-    const strokeColor = 'rgba(255, 255, 255, 0.88)';
-    const contourElements = container.querySelectorAll<SVGGraphicsElement>(
-      '.body-map__model path, .body-map__model line, [id*="body"] path, [id*="body"] line, path[fill="none"], line[fill="none"], path[stroke], line[stroke]'
-    );
-    contourElements.forEach((el) => {
-      el.setAttribute('fill', 'none');
-      el.style.fill = 'none';
-      el.setAttribute('stroke', strokeColor);
-      el.style.stroke = strokeColor;
-    });
-  }
 
   private translateMuscle(raw: string): string {
-    const clean = (raw || '').toLowerCase().trim();
-    if (clean.includes('chest') || clean.includes('pecho')) return 'Pecho';
-    if (clean.includes('quad') || clean.includes('cuádriceps') || clean.includes('cuadriceps')) return 'Cuádriceps';
-    if (clean.includes('glute') || clean.includes('glúteo') || clean.includes('gluteo')) return 'Glúteos';
-    if (clean.includes('hamstring') || clean.includes('isquio') || clean.includes('femoral')) return 'Isquiotibiales';
-    if (clean.includes('back') || clean.includes('espalda') || clean.includes('dorsal')) return 'Dorsales';
-    if (clean.includes('trap') || clean.includes('trapecio')) return 'Trapecios';
-    if (clean.includes('shoulder') || clean.includes('hombro') || clean.includes('delt')) return 'Hombros';
-    if (clean.includes('bicep') || clean.includes('bíceps')) return 'Bíceps';
-    if (clean.includes('tricep') || clean.includes('tríceps')) return 'Tríceps';
-    if (clean.includes('calf') || clean.includes('calves') || clean.includes('pantorrilla') || clean.includes('gemelo')) return 'Pantorrillas';
-    if (clean.includes('ab') || clean.includes('core') || clean.includes('oblicuo')) return 'Abdomen';
-    return raw.charAt(0).toUpperCase() + raw.slice(1);
-  }
-}
+        const clean = (raw || '').toLowerCase().trim();
+        if (clean.includes('chest') || clean.includes('pecho')) return 'Pecho';
+        if (clean.includes('quad') || clean.includes('cuádriceps') || clean.includes('cuadriceps')) return 'Cuádriceps';
+        if (clean.includes('glute') || clean.includes('glúteo') || clean.includes('gluteo')) return 'Glúteos';
+        if (clean.includes('hamstring') || clean.includes('isquio') || clean.includes('femoral')) return 'Isquiotibiales';
+        if (clean.includes('back') || clean.includes('espalda') || clean.includes('dorsal')) return 'Dorsales';
+        if (clean.includes('trap') || clean.includes('trapecio')) return 'Trapecios';
+        if (clean.includes('shoulder') || clean.includes('hombro') || clean.includes('delt')) return 'Hombros';
+        if (clean.includes('bicep') || clean.includes('bíceps')) return 'Bíceps';
+        if (clean.includes('tricep') || clean.includes('tríceps')) return 'Tríceps';
+        if (clean.includes('calf') || clean.includes('calves') || clean.includes('pantorrilla') || clean.includes('gemelo')) return 'Pantorrillas';
+        if (clean.includes('ab') || clean.includes('core') || clean.includes('oblicuo')) return 'Abdomen';
+        return raw.charAt(0).toUpperCase() + raw.slice(1);
+      }
+    }
