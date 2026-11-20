@@ -1,5 +1,7 @@
-<div class="w-full bg-white">
-  <p-toolbar styleClass="bg-transparent border-none p-0 mb-3">
+<div class="w-full bg-white pt-2">
+  <p-toolbar class="!bg-transparent !border-none !border-0 !p-0 mb-3"
+    styleClass="!bg-transparent !border-none !border-0 !p-0 mb-3"
+    [style]="{ border: 'none', background: 'transparent', padding: '0' }">
     <ng-template pTemplate="start">
       <button type="button" (click)="themeService.toggleTheme()"
         class="w-10 h-10 flex items-center justify-center rounded-full hover:bg-stone-100 active:scale-90 transition-all text-stone-700 cursor-pointer"

@@ -378,6 +378,12 @@ html.dark .p-inputtext {
   border-color: var(--app-border);
 }
 
+p-toolbar,
+.p-toolbar {
+  border: none !important;
+  background: transparent !important;
+}
+
 /* Loaders en Modo Noche */
 html.dark .intake-loader--overlay,
 html.dark .intake-loader--overlay .intake-loader__backdrop,
