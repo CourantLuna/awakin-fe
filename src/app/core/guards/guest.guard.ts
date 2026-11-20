@@ -4,14 +4,14 @@ import { AuthService } from '../services/auth.service';
 
 /**
  * Guard para rutas públicas (ej. /login).
- * Si el atleta ya tiene una sesión activa/token, lo redirige automáticamente a /home.
+ * Si el atleta ya tiene una sesión activa/token, lo redirige automáticamente a su última ruta activa.
  */
 export const guestGuard: CanActivateFn = (route, state) => {
   const authService = inject(AuthService);
   const router = inject(Router);
 
   if (authService.isAuthenticated()) {
-    router.navigate(['/home']);
+    router.navigate([authService.getLastRoute()]);
     return false;
   }
 

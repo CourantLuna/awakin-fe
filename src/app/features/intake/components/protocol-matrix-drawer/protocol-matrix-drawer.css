@@ -1,14 +1,14 @@
 /* Ajustes de Contención de Overflow y Acordeón */
 :host ::ng-deep .p-accordioncontent-content {
-  padding-left: 0.25rem !important;
-  padding-right: 0.25rem !important;
+  padding-left: 0 !important;
+  padding-right: 0 !important;
   overflow-x: hidden !important;
 }
 
 @media (min-width: 640px) {
   :host ::ng-deep .p-accordioncontent-content {
-    padding-left: 1rem !important;
-    padding-right: 1rem !important;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
   }
 }
 

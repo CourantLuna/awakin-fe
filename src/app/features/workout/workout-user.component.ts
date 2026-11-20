@@ -1075,9 +1075,11 @@ export class WorkoutUserComponent implements OnInit {
 
   private buildMuscleBreakdownWithColors(list: { muscle: string; sets: number }[]): WorkoutMuscleLegendItem[] {
     if (list.length === 0) return [];
+    const primary = this.themeService.kinPrimaryColor();
+    const secondary = this.themeService.kinSecondaryColor();
     const maxSets = Math.max(...list.map((item) => item.sets), 1);
     return list.map((item) => {
-      const tone = getAwakinSunTone(item.sets, maxSets);
+      const tone = getAwakinSunTone(item.sets, maxSets, primary, secondary);
       return {
         muscle: item.muscle,
         sets: item.sets,
@@ -1145,9 +1147,11 @@ export class WorkoutUserComponent implements OnInit {
   getExactMuscleBreakdownWithColors(log: WorkoutLog | null | undefined): WorkoutMuscleLegendItem[] {
     const list = this.getExactMuscleBreakdown(log);
     if (list.length === 0) return [];
+    const primary = this.themeService.kinPrimaryColor();
+    const secondary = this.themeService.kinSecondaryColor();
     const maxSets = Math.max(...list.map((item) => item.sets), 1);
     return list.map((item) => {
-      const tone = getAwakinSunTone(item.sets, maxSets);
+      const tone = getAwakinSunTone(item.sets, maxSets, primary, secondary);
       return {
         muscle: item.muscle,
         sets: item.sets,

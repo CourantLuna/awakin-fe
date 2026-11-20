@@ -2,9 +2,25 @@ import { Routes } from '@angular/router';
 import { authGuard } from './core/guards/auth.guard';
 import { guestGuard } from './core/guards/guest.guard';
 import { moduleEnabledGuard } from './core/guards/module-enabled.guard';
+import { LAST_ROUTE_STORAGE_KEY, VALID_APP_MODULES } from './core/services/auth.service';
+
+export function resolveInitialRedirect(): string {
+  if (typeof localStorage === 'undefined') return 'home';
+  try {
+    const saved = localStorage.getItem(LAST_ROUTE_STORAGE_KEY) || '';
+    const clean = saved.split('?')[0].split('#')[0];
+    const segment = clean.split('/').filter(Boolean)[0] || '';
+    if ((VALID_APP_MODULES as readonly string[]).includes(segment)) {
+      return segment;
+    }
+  } catch {
+    // Ignorar errores de almacenamiento
+  }
+  return 'home';
+}
 
 export const routes: Routes = [
-  { path: '', redirectTo: 'home', pathMatch: 'full' },
+  { path: '', redirectTo: () => resolveInitialRedirect(), pathMatch: 'full' },
 
   // Módulo de Acceso Público (Protegido por guestGuard si ya está autenticado)
   {
@@ -60,5 +76,5 @@ export const routes: Routes = [
   },
 
   // Comodín para redirigir rutas inexistentes
-  { path: '**', redirectTo: 'home' }
+  { path: '**', redirectTo: () => resolveInitialRedirect() }
 ];

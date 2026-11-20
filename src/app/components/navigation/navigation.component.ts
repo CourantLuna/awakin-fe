@@ -5,6 +5,7 @@ import { Router, NavigationEnd } from '@angular/router';
 import { filter } from 'rxjs/operators';
 
 import { ModuleConfigService } from '../../core/services/module-config.service';
+import { AuthService } from '../../core/services/auth.service';
 
 // Definimos el tipo de nuestras pestañas permitidas
 type TabId = 'intake' | 'workout' | 'home' | 'kin' | 'avatar';
@@ -20,6 +21,7 @@ type TabId = 'intake' | 'workout' | 'home' | 'kin' | 'avatar';
 export class NavigationComponent implements OnInit {
   // Inyectamos el motor de rutas de Angular
   private router = inject(Router);
+  private authService = inject(AuthService);
   public moduleConfig = inject(ModuleConfigService);
 
   // Estado reactivo de pestaña activa
@@ -75,9 +77,10 @@ export class NavigationComponent implements OnInit {
    * Extrae el módulo de la URL y actualiza el signal visual
    */
   private syncTabWithUrl(url: string) {
-    // Si la URL es "/", sabemos que el Router redirige a "/home" (según tus rutas)
+    // Si la URL es "/", no sobrescribimos la ruta persistida antes de la redirección inicial
     if (url === '/') {
-      this.activeTab.set('home');
+      const savedSegment = this.authService.getLastRoute().replace('/', '') as TabId;
+      this.activeTab.set(savedSegment || 'home');
       return;
     }
 
@@ -102,6 +105,7 @@ export class NavigationComponent implements OnInit {
 
     if (validTabs.includes(currentModule)) {
       this.activeTab.set(currentModule);
+      this.authService.saveLastRoute('/' + currentModule);
     }
   }
 
@@ -110,6 +114,7 @@ export class NavigationComponent implements OnInit {
    */
   selectModule(id: TabId) {
     this.isBarVisible.set(true);
+    this.authService.saveLastRoute('/' + id);
     console.log(`⚡ Enrutando al módulo: /${id}`);
     this.router.navigate(['/' + id]);
   }

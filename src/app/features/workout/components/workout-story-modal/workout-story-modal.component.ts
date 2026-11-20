@@ -8,6 +8,7 @@ import {
   SimpleChanges,
   ViewChild,
   computed,
+  inject,
   signal
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
@@ -17,6 +18,7 @@ import * as htmlToImage from 'html-to-image';
 
 import { WorkoutLog, WorkoutLogExercise } from '../../models/workout.models';
 import { AthleteProfile } from '../../../../core/services/athlete.service';
+import { ThemeService } from '../../../../core/services/theme.service';
 import { BodyMapGender } from '../body-map/body-map.component';
 import {
   WorkoutMiniBodyMapComponent,
@@ -67,6 +69,8 @@ interface RadarPoint {
   styleUrls: ['./workout-story-modal.component.scss']
 })
 export class WorkoutStoryModalComponent implements OnChanges {
+  public themeService = inject(ThemeService);
+
   @Input() visible: boolean = false;
   @Input() log: WorkoutLog | null = null;
   @Input() athlete: AthleteProfile | null = null;
@@ -292,9 +296,11 @@ export class WorkoutStoryModalComponent implements OnChanges {
     const list = Array.from(muscleMap.entries()).map(([muscle, sets]) => ({ muscle, sets }));
     if (list.length === 0) return [];
 
+    const primary = this.themeService.kinPrimaryColor();
+    const secondary = this.themeService.kinSecondaryColor();
     const maxSets = Math.max(...list.map((i) => i.sets), 1);
     return list.map((item) => {
-      const tone = getAwakinSunTone(item.sets, maxSets);
+      const tone = getAwakinSunTone(item.sets, maxSets, primary, secondary);
       return {
         muscle: item.muscle,
         sets: item.sets,
@@ -710,9 +716,12 @@ export class WorkoutStoryModalComponent implements OnChanges {
     const breakdown = this.muscleBreakdown();
     const maxSets = Math.max(...breakdown.map((m) => m.sets), 1);
     const muscleColorMap = new Map<string, string>();
+    const kinPrimary = this.themeService.kinPrimaryColor();
+    const kinSecondary = this.themeService.kinSecondaryColor();
 
     for (const item of breakdown) {
-      const color = item.color || getAwakinSunTone(item.sets, maxSets).color;
+      const color =
+        item.color || getAwakinSunTone(item.sets, maxSets, kinPrimary, kinSecondary).color;
       const varNames = getMuscleCssVariableNames(item.muscle);
       for (const vName of varNames) {
         const id = vName.replace('--muscle-', '');

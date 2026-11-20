@@ -5,6 +5,7 @@ import { PrimeNGModule } from './shared/prime-ng.module';
 import { NavigationComponent } from './components/navigation/navigation.component';
 import { AuthService } from './core/services/auth.service';
 import { ThemeService } from './core/services/theme.service';
+import { PwaUpdateService } from './core/services/pwa-update.service';
 import { WorkoutSessionDrawerComponent } from './features/workout/components/workout-session-drawer/workout-session-drawer.component';
 import { ActiveWorkoutSessionService } from './features/workout/services/active-workout-session.service';
 
@@ -26,6 +27,7 @@ export class App {
   activeTab = signal<string>('intake');
   private authService = inject(AuthService);
   public readonly themeService = inject(ThemeService);
+  public readonly pwaUpdate = inject(PwaUpdateService);
   public readonly activeSession = inject(ActiveWorkoutSessionService);
 
   // Computed Signal: Se actualiza de forma automática y óptima cuando cambia la sesión de Supabase

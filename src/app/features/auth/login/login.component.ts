@@ -48,9 +48,9 @@ export class LoginComponent implements OnInit {
   });
 
   ngOnInit(): void {
-    // Si ya existe sesión activa, redirigir de inmediato a /home
+    // Si ya existe sesión activa, redirigir de inmediato a la última ruta activa
     if (this.authService.isAuthenticated()) {
-      this.router.navigate(['/home']);
+      this.router.navigate([this.authService.getLastRoute()]);
     }
   }
 
@@ -82,7 +82,7 @@ export class LoginComponent implements OnInit {
       // 1. Intentar inicio de sesión mediante la API Gateway del backend
       await firstValueFrom(this.authService.signInWithEmail(userEmail, userPass));
       localStorage.setItem('awakin_selected_role', this.selectedRole());
-      this.router.navigate(['/home']);
+      this.router.navigate([this.authService.getLastRoute()]);
     } catch (backendError: any) {
       // 2. Si el backend falla o no reconoce las credenciales, intentar Supabase Auth directo
       try {
@@ -95,7 +95,7 @@ export class LoginComponent implements OnInit {
 
         if (data?.session) {
           localStorage.setItem('awakin_selected_role', this.selectedRole());
-          this.router.navigate(['/home']);
+          this.router.navigate([this.authService.getLastRoute()]);
           return;
         }
       } catch (sbError: any) {

@@ -8,6 +8,9 @@ import { supabaseClient } from './supabase.service';
 import { AthleteService } from './athlete.service';
 import { environment } from '../../../environments/environment';
 
+export const LAST_ROUTE_STORAGE_KEY = 'awakin_last_route';
+export const VALID_APP_MODULES = ['intake', 'workout', 'home', 'kin', 'avatar'] as const;
+
 // Interfaz para el control del Avatar en el ecosistema
 export interface AthleteSession {
   token: string;
@@ -114,9 +117,45 @@ export class AuthService {
       }
     };
     this.initializeProtocol(sessionData);
-    if (this.router.url.includes('/login') || this.router.url === '/') {
-      this.router.navigate(['/home']);
+    const currentPath =
+      typeof window !== 'undefined' ? window.location.pathname : this.router.url;
+    if (currentPath.includes('/login') || currentPath === '/' || currentPath === '') {
+      this.router.navigate([this.getLastRoute()]);
     }
+  }
+
+  /**
+   * Persiste el módulo activo actual para restaurarlo al reabrir la PWA
+   */
+  public saveLastRoute(url: string): void {
+    if (typeof localStorage === 'undefined' || !url) return;
+    const cleanUrl = url.split('?')[0].split('#')[0];
+    const segment = cleanUrl.split('/').filter(Boolean)[0] || '';
+    if ((VALID_APP_MODULES as readonly string[]).includes(segment)) {
+      try {
+        localStorage.setItem(LAST_ROUTE_STORAGE_KEY, `/${segment}`);
+      } catch {
+        // Ignorar errores de almacenamiento
+      }
+    }
+  }
+
+  /**
+   * Recupera la última ruta válida visitada (por defecto /home)
+   */
+  public getLastRoute(): string {
+    if (typeof localStorage === 'undefined') return '/home';
+    try {
+      const saved = localStorage.getItem(LAST_ROUTE_STORAGE_KEY) || '';
+      const clean = saved.split('?')[0].split('#')[0];
+      const segment = clean.split('/').filter(Boolean)[0] || '';
+      if ((VALID_APP_MODULES as readonly string[]).includes(segment)) {
+        return `/${segment}`;
+      }
+    } catch {
+      // Ignorar errores de lectura
+    }
+    return '/home';
   }
 
   /**

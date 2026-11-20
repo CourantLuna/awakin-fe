@@ -37,8 +37,7 @@
       <button (click)="themeService.toggleTheme()"
         class="w-full flex items-center justify-between gap-2 px-3 py-2 text-xs font-bold text-stone-800 hover:bg-stone-100 rounded-xl transition-all cursor-pointer">
         <span class="flex items-center gap-2">
-          <i class="pi"
-            [ngClass]="themeService.isDarkMode() ? 'pi-sun text-amber-400' : 'pi-moon text-stone-500'"></i>
+          <i class="pi" [ngClass]="themeService.isDarkMode() ? 'pi-sun text-amber-400' : 'pi-moon text-stone-500'"></i>
           <span>{{ themeService.isDarkMode() ? 'Modo Día' : 'Modo Noche' }}</span>
         </span>
         <span
@@ -412,7 +411,8 @@
           class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" />
 
         @if (meal.items_count && meal.items_count > 1) {
-        <span class="absolute top-1.5 right-1.5 bg-stone-900/75 backdrop-blur-xs text-white text-[9px] font-black px-1.5 py-0.5 rounded-full shadow-xs flex items-center gap-1 z-10">
+        <span
+          class="absolute top-1.5 right-1.5 bg-stone-900/75 backdrop-blur-xs text-white text-[9px] font-black px-1.5 py-0.5 rounded-full shadow-xs flex items-center gap-1 z-10">
           <i class="pi pi-clone text-[8px]"></i> {{ meal.items_count }}
         </span>
         }
@@ -454,12 +454,8 @@
   <div class="mt-2 px-3 md:px-5 pb-6 space-y-3 animate-fade-in">
     @if (workoutLogs().length > 0) {
     @for (log of workoutLogs(); track log.id) {
-    <app-workout-log-card
-      [log]="log"
-      [athlete]="athlete()"
-      (onDetail)="openWorkoutDetail($event)"
-      (onShare)="openWorkoutStoryModal($event)"
-      (onEdit)="openWorkoutEditModal($event)">
+    <app-workout-log-card [log]="log" [athlete]="athlete()" (onDetail)="openWorkoutDetail($event)"
+      (onShare)="openWorkoutStoryModal($event)" (onEdit)="openWorkoutEditModal($event)">
     </app-workout-log-card>
     }
     } @else {
@@ -1272,8 +1268,7 @@
     </div>
     <div>
       <div class="flex items-center justify-between mb-1">
-        <span
-          class="text-[9px] font-bold uppercase tracking-widest bg-amber-100 text-amber-800 px-2 py-0.5 rounded-full">
+        <span class="text-[9px] font-bold uppercase tracking-widest bg-kin-secondary/80  px-2 py-0.5 rounded-full">
           {{ selectedPost()?.module_source || 'GENERAL' }}
         </span>
         <span class="text-[10px] text-stone-400 font-mono">
@@ -1457,8 +1452,7 @@
     </div>
     <div>
       <div class="flex items-center justify-between">
-        <span
-          class="text-[9px] font-bold uppercase tracking-widest bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full">
+        <span class="text-[9px] font-bold uppercase tracking-widest bg-kin-primary/80 px-2 py-0.5 rounded-full">
           {{ translateMealType(selectedMeal()?.tipo_comida) }}
         </span>
         @if (selectedMeal()?.items_count && selectedMeal()!.items_count! > 1) {
@@ -1475,7 +1469,8 @@
       @if (selectedMeal()?.dishes && selectedMeal()!.dishes!.length > 1) {
       <div class="mt-2 flex flex-wrap gap-1">
         @for (d of selectedMeal()!.dishes; track d) {
-        <span class="text-[10px] font-medium bg-stone-100 text-stone-700 px-2 py-0.5 rounded-md border border-stone-200/50">
+        <span
+          class="text-[10px] font-medium bg-stone-100 text-stone-700 px-2 py-0.5 rounded-md border border-stone-200/50">
           {{ d }}
         </span>
         }
@@ -1575,8 +1570,8 @@
           </label>
           <div
             class="h-10 flex items-center bg-stone-50 hover:bg-stone-100/70 focus-within:bg-white border border-stone-200 focus-within:border-awakin-sun focus-within:ring-2 focus-within:ring-awakin-sun/15 rounded-xl overflow-hidden transition-all">
-            <input type="number" step="0.1" inputmode="decimal" [ngModel]="progressWeight()" (ngModelChange)="progressWeight.set($event)"
-              placeholder="Ej: 70.5"
+            <input type="number" step="0.1" inputmode="decimal" [ngModel]="progressWeight()"
+              (ngModelChange)="progressWeight.set($event)" placeholder="Ej: 70.5"
               class="w-full min-w-0 flex-1 bg-transparent border-0 text-xs px-3 text-stone-900 font-bold placeholder:text-stone-400 focus:outline-none" />
             <div class="flex items-center p-0.5 bg-stone-200/70 rounded-lg mr-1 shrink-0">
               <button type="button" (click)="progressWeightUnit.set('lb')"
@@ -1604,8 +1599,8 @@
             <span class="block text-[9px] font-bold uppercase text-stone-400 mb-1 text-center">Cintura</span>
             <div
               class="h-10 flex items-center bg-stone-50 focus-within:bg-white border border-stone-200 focus-within:border-awakin-sun focus-within:ring-2 focus-within:ring-awakin-sun/15 rounded-xl px-2.5 transition-all">
-              <input type="number" step="0.5" inputmode="decimal" [ngModel]="progressWaist()" (ngModelChange)="progressWaist.set($event)"
-                placeholder="--"
+              <input type="number" step="0.5" inputmode="decimal" [ngModel]="progressWaist()"
+                (ngModelChange)="progressWaist.set($event)" placeholder="--"
                 class="w-full min-w-0 bg-transparent border-0 text-xs text-stone-900 text-center font-bold placeholder:text-stone-400 focus:outline-none" />
               <span class="text-[10px] font-bold text-stone-400 ml-1 shrink-0">cm</span>
             </div>
@@ -1615,8 +1610,8 @@
             <span class="block text-[9px] font-bold uppercase text-stone-400 mb-1 text-center">Cadera</span>
             <div
               class="h-10 flex items-center bg-stone-50 focus-within:bg-white border border-stone-200 focus-within:border-awakin-sun focus-within:ring-2 focus-within:ring-awakin-sun/15 rounded-xl px-2.5 transition-all">
-              <input type="number" step="0.5" inputmode="decimal" [ngModel]="progressHip()" (ngModelChange)="progressHip.set($event)"
-                placeholder="--"
+              <input type="number" step="0.5" inputmode="decimal" [ngModel]="progressHip()"
+                (ngModelChange)="progressHip.set($event)" placeholder="--"
                 class="w-full min-w-0 bg-transparent border-0 text-xs text-stone-900 text-center font-bold placeholder:text-stone-400 focus:outline-none" />
               <span class="text-[10px] font-bold text-stone-400 ml-1 shrink-0">cm</span>
             </div>
@@ -1626,8 +1621,8 @@
             <span class="block text-[9px] font-bold uppercase text-stone-400 mb-1 text-center">Pecho</span>
             <div
               class="h-10 flex items-center bg-stone-50 focus-within:bg-white border border-stone-200 focus-within:border-awakin-sun focus-within:ring-2 focus-within:ring-awakin-sun/15 rounded-xl px-2.5 transition-all">
-              <input type="number" step="0.5" inputmode="decimal" [ngModel]="progressChest()" (ngModelChange)="progressChest.set($event)"
-                placeholder="--"
+              <input type="number" step="0.5" inputmode="decimal" [ngModel]="progressChest()"
+                (ngModelChange)="progressChest.set($event)" placeholder="--"
                 class="w-full min-w-0 bg-transparent border-0 text-xs text-stone-900 text-center font-bold placeholder:text-stone-400 focus:outline-none" />
               <span class="text-[10px] font-bold text-stone-400 ml-1 shrink-0">cm</span>
             </div>
@@ -1650,26 +1645,26 @@
         <div class="grid grid-cols-2 gap-2.5 mt-3 pt-3 border-t border-stone-200/80 animate-fade-in">
           <div>
             <label class="block text-[9px] font-bold uppercase text-stone-500 mb-1">Cuello (cm)</label>
-            <input type="number" step="0.5" inputmode="decimal" [ngModel]="progressNeck()" (ngModelChange)="progressNeck.set($event)"
-              placeholder="--"
+            <input type="number" step="0.5" inputmode="decimal" [ngModel]="progressNeck()"
+              (ngModelChange)="progressNeck.set($event)" placeholder="--"
               class="w-full h-9 bg-white border border-stone-200 focus:border-awakin-sun rounded-xl text-xs px-2.5 text-stone-900 font-bold placeholder:text-stone-400 outline-hidden" />
           </div>
           <div>
             <label class="block text-[9px] font-bold uppercase text-stone-500 mb-1">Bíceps (cm)</label>
-            <input type="number" step="0.5" inputmode="decimal" [ngModel]="progressBiceps()" (ngModelChange)="progressBiceps.set($event)"
-              placeholder="--"
+            <input type="number" step="0.5" inputmode="decimal" [ngModel]="progressBiceps()"
+              (ngModelChange)="progressBiceps.set($event)" placeholder="--"
               class="w-full h-9 bg-white border border-stone-200 focus:border-awakin-sun rounded-xl text-xs px-2.5 text-stone-900 font-bold placeholder:text-stone-400 outline-hidden" />
           </div>
           <div>
             <label class="block text-[9px] font-bold uppercase text-stone-500 mb-1">Muslo (cm)</label>
-            <input type="number" step="0.5" inputmode="decimal" [ngModel]="progressThigh()" (ngModelChange)="progressThigh.set($event)"
-              placeholder="--"
+            <input type="number" step="0.5" inputmode="decimal" [ngModel]="progressThigh()"
+              (ngModelChange)="progressThigh.set($event)" placeholder="--"
               class="w-full h-9 bg-white border border-stone-200 focus:border-awakin-sun rounded-xl text-xs px-2.5 text-stone-900 font-bold placeholder:text-stone-400 outline-hidden" />
           </div>
           <div>
             <label class="block text-[9px] font-bold uppercase text-stone-500 mb-1">% Grasa Corporal</label>
-            <input type="number" step="0.1" inputmode="decimal" [ngModel]="progressBodyFat()" (ngModelChange)="progressBodyFat.set($event)"
-              placeholder="--"
+            <input type="number" step="0.1" inputmode="decimal" [ngModel]="progressBodyFat()"
+              (ngModelChange)="progressBodyFat.set($event)" placeholder="--"
               class="w-full h-9 bg-white border border-stone-200 focus:border-awakin-sun rounded-xl text-xs px-2.5 text-stone-900 font-bold placeholder:text-stone-400 outline-hidden" />
           </div>
         </div>
@@ -1865,20 +1860,14 @@
 <!-- ========================================== -->
 <!-- MODAL: DETALLE DEL ENTRENAMIENTO ESTILO HEVY -->
 <!-- ========================================== -->
-<app-workout-log-detail-modal
-  [(visible)]="isWorkoutDetailOpen"
-  [log]="selectedWorkoutDetail()"
-  [gender]="athleteGender()"
-  (shareStory)="openWorkoutStoryModal($event)"
-  (edit)="openWorkoutEditModal($event)">
+<app-workout-log-detail-modal [(visible)]="isWorkoutDetailOpen" [log]="selectedWorkoutDetail()"
+  [gender]="athleteGender()" (shareStory)="openWorkoutStoryModal($event)" (edit)="openWorkoutEditModal($event)">
 </app-workout-log-detail-modal>
 
 <!-- ========================================== -->
 <!-- MODAL: EDITAR ENTRENAMIENTO (WORKOUT LOG)  -->
 <!-- ========================================== -->
-<app-workout-log-edit-modal
-  [(visible)]="isWorkoutEditModalOpen"
-  [log]="logToEdit()"
+<app-workout-log-edit-modal [(visible)]="isWorkoutEditModalOpen" [log]="logToEdit()"
   (saved)="onWorkoutLogSaved($event)">
 </app-workout-log-edit-modal>
 
@@ -2156,18 +2145,11 @@
 <!-- ========================================================================= -->
 <!-- MODAL: COMPARTIR HISTORIA DE ENTRENAMIENTO (AWAKIN × KIN)                 -->
 <!-- ========================================================================= -->
-<app-workout-story-modal
-  [(visible)]="isShareWorkoutModalOpen"
-  [log]="shareWorkoutTargetLog()"
-  [athlete]="athlete()"
-  [gender]="athleteGender()"
-  (closed)="closeWorkoutStoryModal()" />
+<app-workout-story-modal [(visible)]="isShareWorkoutModalOpen" [log]="shareWorkoutTargetLog()" [athlete]="athlete()"
+  [gender]="athleteGender()" (closed)="closeWorkoutStoryModal()" />
 
 <!-- ========================================================================= -->
 <!-- MODAL: COMPARTIR HISTORIA DE NUTRICIÓN (AWAKIN × KIN)                     -->
 <!-- ========================================================================= -->
-<app-food-story-modal
-  [(visible)]="isFoodStoryModalOpen"
-  [storyData]="foodStoryData()"
-  [athlete]="athlete()"
+<app-food-story-modal [(visible)]="isFoodStoryModalOpen" [storyData]="foodStoryData()" [athlete]="athlete()"
   [athleteKin]="athlete()?.kin" />

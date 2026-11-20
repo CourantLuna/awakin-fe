@@ -5,11 +5,14 @@ import {
   Input,
   OnChanges,
   SimpleChanges,
-  ViewEncapsulation
+  ViewEncapsulation,
+  effect,
+  inject
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { BodyMapGender } from './body-map.component';
 import { BodyMapModelSvgComponent } from './svg/body-map-model-svg.component';
+import { ThemeService } from '../../../../core/services/theme.service';
 
 export interface WorkoutMuscleLegendItem {
   muscle: string;
@@ -155,23 +158,139 @@ export function getMuscleCssVariableNames(rawMuscle: string): string[] {
   }
 }
 
-/**
- * Escala cromática de Awakin Sun (solar) para el mapa de calor por volumen de series:
- * - 80%+ del volumen máximo: Fuego solar concentrado (#EA580C)
- * - 45% - 79% del volumen máximo: Awakin Sun principal (#FE970A)
- * - Menos del 45%: Luz ámbar cálida suave (#FBBF24)
- */
-export function getAwakinSunTone(sets: number, maxSets: number): { color: string; levelLabel: string } {
-  if (maxSets <= 0 || sets <= 0) {
-    return { color: '#FE970A', levelLabel: 'Activo' };
+const DEFAULT_AWAKIN_PRIMARY_HEX = '#FE970A';
+const DEFAULT_AWAKIN_SECONDARY_HEX = '#E58500';
+
+function parseColorToRgb(color: string): [number, number, number] | null {
+  const clean = (color || '').trim();
+  if (!clean) return null;
+
+  if (clean.startsWith('#')) {
+    let hex = clean.slice(1);
+    if (hex.length === 3 || hex.length === 4) {
+      hex = hex
+        .slice(0, 3)
+        .split('')
+        .map((c) => c + c)
+        .join('');
+    }
+    if (hex.length >= 6) {
+      const r = parseInt(hex.slice(0, 2), 16);
+      const g = parseInt(hex.slice(2, 4), 16);
+      const b = parseInt(hex.slice(4, 6), 16);
+      if (!Number.isNaN(r) && !Number.isNaN(g) && !Number.isNaN(b)) {
+        return [r, g, b];
+      }
+    }
   }
+
+  const rgbMatch = clean.match(/^rgba?\(\s*(\d+(?:\.\d+)?)\s*[,\s]\s*(\d+(?:\.\d+)?)\s*[,\s]\s*(\d+(?:\.\d+)?)/i);
+  if (rgbMatch) {
+    return [
+      Math.round(Number(rgbMatch[1])),
+      Math.round(Number(rgbMatch[2])),
+      Math.round(Number(rgbMatch[3]))
+    ];
+  }
+
+  return null;
+}
+
+function rgbToHex(r: number, g: number, b: number): string {
+  const clamp = (n: number) => Math.max(0, Math.min(255, Math.round(n)));
+  const toHex = (n: number) => clamp(n).toString(16).padStart(2, '0').toUpperCase();
+  return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
+}
+
+function mixColorsHex(colorA: string, colorB: string, weightA: number): string {
+  const rgbA = parseColorToRgb(colorA);
+  const rgbB = parseColorToRgb(colorB);
+  if (!rgbA) return colorB;
+  if (!rgbB) return rgbToHex(rgbA[0], rgbA[1], rgbA[2]);
+
+  const w = Math.max(0, Math.min(1, weightA));
+  const r = rgbA[0] * w + rgbB[0] * (1 - w);
+  const g = rgbA[1] * w + rgbB[1] * (1 - w);
+  const b = rgbA[2] * w + rgbB[2] * (1 - w);
+  return rgbToHex(r, g, b);
+}
+
+function normalizeToHex(color: string | undefined | null, fallback: string): string {
+  if (!color) return fallback;
+  const rgb = parseColorToRgb(color);
+  return rgb ? rgbToHex(rgb[0], rgb[1], rgb[2]) : fallback;
+}
+
+function readActiveKinColors(
+  customPrimary?: string,
+  customSecondary?: string
+): { primary: string; secondary: string } {
+  let rawPrimary = customPrimary?.trim();
+  let rawSecondary = customSecondary?.trim();
+
+  if (typeof document !== 'undefined') {
+    const root = document.documentElement;
+    if (!rawPrimary) {
+      rawPrimary =
+        root.style.getPropertyValue('--kin-primary').trim() ||
+        getComputedStyle(root).getPropertyValue('--kin-primary').trim();
+    }
+    if (!rawSecondary) {
+      rawSecondary =
+        root.style.getPropertyValue('--kin-secondary').trim() ||
+        getComputedStyle(root).getPropertyValue('--kin-secondary').trim();
+    }
+  }
+
+  const primary = normalizeToHex(rawPrimary, DEFAULT_AWAKIN_PRIMARY_HEX);
+  const secondary = normalizeToHex(rawSecondary || rawPrimary, DEFAULT_AWAKIN_SECONDARY_HEX);
+  return { primary, secondary };
+}
+
+/**
+ * Escala cromática dinámica para el mapa de calor por volumen de series:
+ * - Si no hay colores de Kin personalizados, conserva la escala solar de Awakin:
+ *   Alto (#EA580C), Medio (#FE970A), Suave (#FBBF24).
+ * - Si hay Kin activo, deriva 3 tonos armónicos desde `--kin-primary` y `--kin-secondary`.
+ */
+export function getAwakinSunTone(
+  sets: number,
+  maxSets: number,
+  customPrimary?: string,
+  customSecondary?: string
+): { color: string; levelLabel: string } {
+  const { primary, secondary } = readActiveKinColors(customPrimary, customSecondary);
+  const isDefaultAwakin =
+    primary === DEFAULT_AWAKIN_PRIMARY_HEX && secondary === DEFAULT_AWAKIN_SECONDARY_HEX;
+
+  if (isDefaultAwakin) {
+    if (maxSets <= 0 || sets <= 0) {
+      return { color: '#FE970A', levelLabel: 'Activo' };
+    }
+    const ratio = sets / maxSets;
+    if (ratio >= 0.75) {
+      return { color: '#EA580C', levelLabel: 'Alto' };
+    } else if (ratio >= 0.4) {
+      return { color: '#FE970A', levelLabel: 'Medio' };
+    } else {
+      return { color: '#FBBF24', levelLabel: 'Suave' };
+    }
+  }
+
+  if (maxSets <= 0 || sets <= 0) {
+    return { color: primary, levelLabel: 'Activo' };
+  }
+
   const ratio = sets / maxSets;
   if (ratio >= 0.75) {
-    return { color: '#EA580C', levelLabel: 'Alto' };
+    return {
+      color: mixColorsHex(mixColorsHex(primary, secondary, 0.75), '#111827', 0.76),
+      levelLabel: 'Alto'
+    };
   } else if (ratio >= 0.4) {
-    return { color: '#FE970A', levelLabel: 'Medio' };
+    return { color: primary, levelLabel: 'Medio' };
   } else {
-    return { color: '#FBBF24', levelLabel: 'Suave' };
+    return { color: mixColorsHex(secondary, '#FFFFFF', 0.62), levelLabel: 'Suave' };
   }
 }
 
@@ -284,6 +403,11 @@ export function getAwakinSunTone(sets: number, maxSets: number): { color: string
       --bodymap-stroke: 148 163 184;
     }
 
+    html.dark .mini-body-map-wrapper.mini-body-map--light {
+      --body-map-muscle: rgba(255, 255, 255, 0.16);
+      --bodymap-stroke: 255 255 255 / 0.45;
+    }
+
     .mini-body-map-wrapper.mini-body-map--dark {
       --body-map-muscle: rgba(255, 255, 255, 0.22);
       --bodymap-stroke: 255 255 255 / 0.55;
@@ -344,6 +468,8 @@ export function getAwakinSunTone(sets: number, maxSets: number): { color: string
   encapsulation: ViewEncapsulation.None
 })
 export class WorkoutMiniBodyMapComponent implements OnChanges, AfterViewInit {
+  public themeService = inject(ThemeService);
+
   @Input() gender: BodyMapGender = 'male';
   @Input() variant: 'transparent' | 'light' | 'dark' = 'light';
   @Input() showLabels: boolean = true;
@@ -351,7 +477,15 @@ export class WorkoutMiniBodyMapComponent implements OnChanges, AfterViewInit {
 
   cssVariables: Record<string, string> = {};
 
-  constructor(private elementRef: ElementRef<HTMLElement>) {}
+  constructor(private elementRef: ElementRef<HTMLElement>) {
+    effect(() => {
+      this.themeService.kinPrimaryColor();
+      this.themeService.kinSecondaryColor();
+      this.themeService.isDarkMode();
+      this.updateCssVariables();
+      setTimeout(() => this.syncSvgVisuals(), 0);
+    });
+  }
 
   ngAfterViewInit(): void {
     this.syncSvgVisuals();
@@ -379,9 +513,12 @@ export class WorkoutMiniBodyMapComponent implements OnChanges, AfterViewInit {
     const breakdown = this.muscleBreakdown || [];
     const maxSets = Math.max(...breakdown.map((m) => m.sets), 1);
     const muscleColorMap = new Map<string, string>();
+    const kinPrimary = this.themeService.kinPrimaryColor();
+    const kinSecondary = this.themeService.kinSecondaryColor();
 
     for (const item of breakdown) {
-      const color = item.color || getAwakinSunTone(item.sets, maxSets).color;
+      const color =
+        getAwakinSunTone(item.sets, maxSets, kinPrimary, kinSecondary).color || item.color || '#FE970A';
       const varNames = getMuscleCssVariableNames(item.muscle);
       for (const vName of varNames) {
         const id = vName.replace('--muscle-', '');
@@ -389,8 +526,9 @@ export class WorkoutMiniBodyMapComponent implements OnChanges, AfterViewInit {
       }
     }
 
+    const isLightOnDark = this.variant === 'light' && this.themeService.isDarkMode();
     const defaultMuscleFill = this.variant === 'light'
-      ? '#cbd5e1'
+      ? (isLightOnDark ? 'rgba(255, 255, 255, 0.16)' : '#cbd5e1')
       : 'rgba(255, 255, 255, 0.35)';
 
     // 3. Pintar cada región muscular directamente con atributo fill y style.fill nativos
@@ -411,7 +549,9 @@ export class WorkoutMiniBodyMapComponent implements OnChanges, AfterViewInit {
     });
 
     // 4. Silueta del cuerpo y todas las líneas de contorno con stroke visible explícito
-    const strokeColor = this.variant === 'light' ? '#94a3b8' : 'rgba(255, 255, 255, 0.85)';
+    const strokeColor = this.variant === 'light'
+      ? (isLightOnDark ? 'rgba(255, 255, 255, 0.45)' : '#94a3b8')
+      : 'rgba(255, 255, 255, 0.85)';
     const contourElements = root.querySelectorAll<SVGGraphicsElement>(
       '.body-map__model path, .body-map__model line, [id*="body"] path, [id*="body"] line, path[fill="none"], line[fill="none"], path[stroke], line[stroke]'
     );
@@ -431,9 +571,12 @@ export class WorkoutMiniBodyMapComponent implements OnChanges, AfterViewInit {
     }
 
     const maxSets = Math.max(...this.muscleBreakdown.map((m) => m.sets), 1);
+    const kinPrimary = this.themeService.kinPrimaryColor();
+    const kinSecondary = this.themeService.kinSecondaryColor();
 
     for (const item of this.muscleBreakdown) {
-      const color = item.color || getAwakinSunTone(item.sets, maxSets).color;
+      const color =
+        getAwakinSunTone(item.sets, maxSets, kinPrimary, kinSecondary).color || item.color || '#FE970A';
       const varNames = getMuscleCssVariableNames(item.muscle);
       for (const varName of varNames) {
         vars[varName] = color;

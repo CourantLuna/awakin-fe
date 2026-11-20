@@ -96,7 +96,7 @@
             class="flex items-center gap-1.5 text-xs sm:text-[13px] font-black text-white drop-shadow-[0_1px_3px_rgba(0,0,0,0.95)] tracking-tight">
             <span class="w-1.5 h-1.5 rounded-full shrink-0 shadow-sm" [style.background-color]="m.color"></span>
             <span class="capitalize">{{ m.muscle }}:</span>
-            <span class="text-amber-300 font-black">{{ m.sets }}</span>
+            <span class="font-black" [style.color]="m.color">{{ m.sets }}</span>
           </div>
           }
         </div>

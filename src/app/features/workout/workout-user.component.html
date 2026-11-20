@@ -44,7 +44,8 @@
 
     <ng-template pTemplate="end">
       <div class="flex items-center gap-1.5 pr-2">
-        <i class="pi pi-bolt text-xl" [ngClass]="streak() > 0 ? 'text-kin-primary animate-pulse' : 'text-stone-300'"></i>
+        <i class="pi pi-bolt text-xl"
+          [ngClass]="streak() > 0 ? 'text-kin-primary animate-pulse' : 'text-stone-300'"></i>
         <span class="text-xl font-bold font-mono" [ngClass]="streak() > 0 ? 'text-black' : 'text-stone-400'">
           {{ streak() }}
         </span>
@@ -528,7 +529,7 @@
     @if (activeChartType() === 'heatmap') {
     @let heatMuscles = rangeMuscleBreakdownWithColors();
     <div
-      class="grid grid-cols-1 sm:grid-cols-12 gap-4 items-center bg-amber-500/5 border border-amber-500/20 rounded-2xl p-3.5">
+      class="grid grid-cols-1 sm:grid-cols-12 gap-4 items-center bg-kin-primary/5 border border-kin-primary/20 rounded-2xl p-3.5">
       <div class="sm:col-span-5 flex items-center justify-center">
         <div class="h-60 sm:h-64 w-full flex items-stretch justify-center">
           <app-workout-mini-body-map variant="light" [showLabels]="true" [gender]="athleteGender()"
@@ -539,7 +540,7 @@
       <div class="sm:col-span-7 flex flex-col gap-2 pr-0.5">
         @for (m of heatMuscles; track m.muscle) {
         <div
-          class="flex items-center justify-between p-2.5 px-3 rounded-xl bg-white border border-amber-500/20 text-xs font-bold text-stone-900 shadow-2xs">
+          class="flex items-center justify-between p-2.5 px-3 rounded-xl bg-white border border-kin-primary/20 text-xs font-bold text-stone-900 shadow-2xs">
           <div class="flex items-center gap-2 min-w-0">
             <span class="w-3 h-3 rounded-full shrink-0 border border-white shadow-2xs"
               [style.background-color]="m.color"></span>
@@ -548,11 +549,11 @@
           <div class="flex items-center gap-2 shrink-0">
             @if (m.levelLabel) {
             <span
-              class="text-[9px] font-bold px-2 py-0.5 rounded-md text-amber-800 bg-amber-50 uppercase tracking-wide">
+              class="text-[9px] font-bold px-2 py-0.5 rounded-md text-kin-secondary bg-kin-primary/10 uppercase tracking-wide">
               {{ m.levelLabel }}
             </span>
             }
-            <strong class="font-black text-amber-950">
+            <strong class="font-black text-kin-primary">
               {{ m.sets }} {{ m.sets === 1 ? 'serie' : 'series' }}
             </strong>
           </div>
@@ -612,8 +613,7 @@
 <!-- DRAWER: PLAN DE ENTRENAMIENTO SEMANAL (PERMITIR INICIAR CUALQUIER DÍA)    -->
 <!-- ========================================================================= -->
 <p-drawer [(visible)]="isWeeklyPlanDrawerOpen" position="bottom" appendTo="body"
-  [style]="{ height: '90dvh', maxHeight: '90dvh', width: '100%', borderTopLeftRadius: '24px', borderTopRightRadius: '24px', backgroundColor: 'var(--app-bg)' }"
-  styleClass="[&_.p-drawer-content]:!p-4 [&_.p-drawer-header]:!px-5 [&_.p-drawer-header]:!py-4 [&_.p-drawer-header]:!border-b [&_.p-drawer-header]:!border-stone-200 [&_.p-drawer-header]:!bg-white"
+  [style]="{ height: '90dvh', maxHeight: '90dvh', width: '100%', borderTopLeftRadius: '24px', borderTopRightRadius: '24px' }"
   header="Plan Semanal de Entrenamientos">
   <div class="max-w-4xl mx-auto space-y-4 pb-12">
     @if (activePlan(); as plan) {
@@ -802,7 +802,6 @@
 <!-- ========================================================================= -->
 <p-drawer [(visible)]="isHistoryDrawerOpen" position="bottom" appendTo="body"
   [style]="{ height: '90dvh', maxHeight: '90dvh', width: '100%', borderTopLeftRadius: '24px', borderTopRightRadius: '24px', backgroundColor: 'var(--app-bg)' }"
-  styleClass="[&_.p-drawer-content]:!p-4 [&_.p-drawer-header]:!px-5 [&_.p-drawer-header]:!py-4 [&_.p-drawer-header]:!border-b [&_.p-drawer-header]:!border-stone-200 [&_.p-drawer-header]:!bg-white"
   [header]="'Entrenamientos (' + currentLabel() + ')'">
   <div class="max-w-3xl mx-auto space-y-3 pb-10">
     @for (log of selectedDayLogs(); track log.id) {
@@ -1059,10 +1058,10 @@
       <!-- 1. DESGLOSE POR GRUPO MUSCULAR CON MINI BODY-MAP Y LEYENDA HEAT MAP (2 COLUMNAS) -->
       @let muscleBreakdown = getRoutineMuscleBreakdownWithColors(routine);
       @if (muscleBreakdown.length > 0) {
-      <div class="p-3.5 sm:p-4 rounded-2xl bg-amber-500/5 border border-amber-500/20 space-y-3">
+      <div class="p-3.5 sm:p-4 rounded-2xl  space-y-3">
         <div class="flex items-center justify-between">
-          <div class="flex items-center gap-1.5 text-xs font-black text-amber-950 uppercase tracking-tight">
-            <i class="pi pi-chart-pie text-awakin-sun"></i>
+          <div class="flex items-center gap-1.5 text-xs font-black  uppercase tracking-tight">
+            <i class="pi pi-chart-pie text-kin-primary"></i>
             <span>Desglose por Músculo Objetivo</span>
           </div>
 
@@ -1082,7 +1081,7 @@
           <div class="sm:col-span-7 flex flex-col gap-2">
             @for (m of muscleBreakdown; track m.muscle) {
             <div
-              class="flex items-center justify-between p-2.5 sm:p-3 px-3.5 rounded-2xl bg-white border border-amber-500/25 text-xs sm:text-sm font-bold text-stone-900 shadow-2xs">
+              class="flex items-center justify-between p-2.5 sm:p-3 px-3.5 rounded-2xl border border-kin-primary/25 bg-white text-xs sm:text-sm font-bold text-kin-primary shadow-2xs">
               <div class="flex items-center gap-2.5 min-w-0">
                 <span class="w-3 h-3 rounded-full shrink-0 shadow-2xs border border-white"
                   [style.background-color]="m.color"></span>
@@ -1091,11 +1090,11 @@
               <div class="flex items-center gap-2 shrink-0">
                 @if (m.levelLabel) {
                 <span
-                  class="text-[9px] font-bold px-2 py-0.5 rounded-md text-amber-800 bg-amber-50 uppercase tracking-wide">
+                  class="text-[9px] font-bold px-2 py-0.5 rounded-md text-kin-secondary bg-kin-primary/10 uppercase tracking-wide">
                   {{ m.levelLabel }}
                 </span>
                 }
-                <strong class="font-black text-amber-950">
+                <strong class="font-black text-kin-secondary">
                   {{ m.sets }} {{ m.sets === 1 ? 'serie' : 'series' }}
                 </strong>
               </div>
@@ -1121,7 +1120,7 @@
         @if (routine.exercises.length > 0) {
         @for (ex of routine.exercises; track ex.id || $index) {
         @let thumb = getExerciseThumbnail(ex);
-        <div class="bg-stone-50/80 border border-stone-200/90 rounded-2xl p-3.5 space-y-3">
+        <div class="bg-kin-primary/20 border border-stone-200/90 rounded-2xl p-3.5 space-y-3">
           <!-- Encabezado del ejercicio: Miniatura interactiva + Nombre y Badges en Español -->
           <div class="flex items-start gap-3">
             <!-- Miniatura del ejercicio que abre el modal de detalle de biblioteca -->
@@ -1152,7 +1151,7 @@
               <div class="flex items-center gap-1.5 flex-wrap mt-1.5">
                 @if (ex.target_muscle || ex.apiDetail?.target) {
                 <span
-                  class="px-2 py-0.5 rounded-md bg-amber-500/10 text-amber-800 text-[10px] font-black uppercase tracking-wider">
+                  class="px-2 py-0.5 rounded-md bg-kin-secondary text-amber-800 text-[10px] font-black uppercase tracking-wider">
                   {{ translateMuscleName(ex.target_muscle || ex.apiDetail?.target) }}
                 </span>
                 }

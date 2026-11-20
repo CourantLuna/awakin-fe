@@ -94,11 +94,11 @@
           </div>
         </p-accordion-header>
 
-        <p-accordion-content class="w-full max-w-full overflow-x-hidden">
+        <p-accordion-content class="w-full max-w-full overflow-x-hidden px-0 mx-0 [&_.p-accordioncontent-content]:!px-0"
+          style="--p-accordion-content-padding: 0;">
           <div class="pt-2 pb-4 px-0 w-full max-w-full overflow-x-hidden">
             <!-- Barra de Vigencia del Plan (Rige por fechas) -->
-            <div
-              class="mb-4 p-3 bg-stone-50 rounded-2xl border border-stone-200/80 flex items-center justify-between gap-3 flex-wrap">
+            <div class="mb-4   rounded-2xl  flex items-center justify-between gap-3 flex-wrap">
               <div class="flex items-center gap-2 flex-wrap">
                 <div class="flex items-center gap-1.5 text-stone-600 font-bold text-[10px] uppercase tracking-wider">
                   <i class="pi pi-calendar text-awakin-sun text-xs"></i>
@@ -205,7 +205,7 @@
 
               <!-- CARD DEL DÍA: Ancho fijo consistente, centrado en pantalla móvil -->
               <div
-                class="w-full max-w-[450px] shrink-0 mx-auto bg-white border-2 border-emerald-300/80 rounded-[28px] p-4 sm:p-5 shadow-[0_4px_25px_rgb(0,0,0,0.03)] relative day-card-transition min-w-0">
+                class="w-full max-w-[450px] shrink-0 p-1 bg-white  rounded-[28px]  shadow-[0_4px_25px_rgb(0,0,0,0.03)] relative day-card-transition ">
                 <!-- Header del Día: Nombre del Día + Badge de Kcal -->
                 <div class="flex items-center justify-between mb-4">
                   <div>
