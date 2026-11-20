@@ -1,293 +1,300 @@
-<p-dialog [(visible)]="visible" [modal]="true" [draggable]="false" [resizable]="false" [closable]="false"
-  [showHeader]="false" [dismissableMask]="true" appendTo="body" (onHide)="closeModal()"
+  [modal]="true" [blockScroll]="true" [draggable]="false" [resizable]="false" [closable]="false" [showHeader]="false"
+  [dismissableMask]="true" appendTo="body" (onHide)="closeModal()"
   [style]="{ width: '95vw', maxWidth: '680px', borderRadius: '28px' }"
-  styleClass="overflow-hidden shadow-2xl border border-stone-200 bg-white [&_.p-dialog-content]:!p-0">
+  styleClass="overflow-hidden shadow-2xl border border-stone-200 bg-white [&_.p-dialog-content]:!p-0
+  [&_.p-dialog-content]:!overflow-hidden">
 
-  <div class="bg-white flex flex-col max-h-[92vh] overflow-hidden">
+    <div class="bg-white flex flex-col max-h-[84dvh] overflow-hidden">
 
-    <!-- CABECERA DEL MODAL DE EDICIÓN -->
-    <div class="px-5 py-4 border-b border-stone-100 bg-stone-50/80 flex items-center justify-between gap-3 shrink-0">
-      <div class="flex items-center gap-3">
-        <div
-          class="w-9 h-9 rounded-2xl bg-awakin-sun/15 text-awakin-sun flex items-center justify-center font-black text-sm">
-          <i class="pi pi-pencil"></i>
-        </div>
-        <div>
-          <h3 class="text-sm sm:text-base font-black text-stone-900 tracking-tight">Editar Entrenamiento</h3>
-          <p class="text-[11px] text-stone-500 font-medium">Ajusta fecha, duración, notas, ejercicios y series</p>
-        </div>
-      </div>
-
-      <button type="button" (click)="closeModal()"
-        class="w-8 h-8 rounded-full bg-stone-100 hover:bg-stone-200 text-stone-600 flex items-center justify-center transition-all cursor-pointer shadow-2xs active:scale-95"
-        title="Cancelar edición">
-        <i class="pi pi-times text-xs"></i>
-      </button>
-    </div>
-
-    <!-- CONTENIDO SCROLLEABLE -->
-    <div class="p-4 sm:p-5 overflow-y-auto space-y-4 flex-1">
-
-      <!-- BANNER DE LA FOTO DEL COACH (SOLO LECTURA) -->
-      @if (bannerPhotoUrl(); as photoUrl) {
-      <div class="relative w-full h-36 rounded-2xl overflow-hidden bg-stone-950 border border-stone-200 shadow-2xs">
-        <img [src]="photoUrl" alt="Foto entrenamiento" class="w-full h-full object-cover opacity-85" />
-        <div class="absolute inset-0 bg-gradient-to-t from-black/75 via-transparent to-transparent"></div>
-        <div class="absolute bottom-2.5 left-3 right-3 flex items-center justify-between text-white">
-          <span class="text-[10px] font-bold text-stone-300">No editable</span>
-        </div>
-      </div>
-      }
-
-      <!-- DATOS BÁSICOS DEL ENTRENAMIENTO -->
-      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        <!-- Nombre de la rutina (No editable: fijado por el coach / rutina asignada) -->
-        <div class="sm:col-span-2">
-          <div class="flex items-center justify-between mb-1">
-            <label class="block text-[10px] font-black uppercase tracking-wider text-stone-500">
-              Nombre de la Rutina / Sesión
-            </label>
-            <span class="inline-flex items-center gap-1 text-[9px] font-bold text-stone-400 bg-stone-100 border border-stone-200/80 px-2 py-0.5 rounded-full">
-              <i class="pi pi-lock text-[8px]"></i> No editable
-            </span>
-          </div>
+      <!-- CABECERA DEL MODAL DE EDICIÓN -->
+      <div class="px-5 py-4 border-b border-stone-100 bg-stone-50/80 flex items-center justify-between gap-3 shrink-0">
+        <div class="flex items-center gap-3">
           <div
-            class="w-full h-10 bg-stone-100/80 border border-stone-200 rounded-xl px-3 flex items-center text-xs font-bold text-stone-600 select-none cursor-not-allowed">
-            {{ editRoutineName() }}
+            class="w-9 h-9 rounded-2xl bg-awakin-sun/15 text-awakin-sun flex items-center justify-center font-black text-sm">
+            <i class="pi pi-pencil"></i>
+          </div>
+          <div>
+            <h3 class="text-sm sm:text-base font-black text-stone-900 tracking-tight">Editar Entrenamiento</h3>
+            <p class="text-[11px] text-stone-500 font-medium">Ajusta fecha, duración, notas, ejercicios y series</p>
           </div>
         </div>
 
-        <!-- Fecha -->
-        <div>
-          <label class="block text-[10px] font-black uppercase tracking-wider text-stone-500 mb-1">Fecha del
-            Entrenamiento *</label>
-          <input type="date" [ngModel]="editWorkoutDate()" (ngModelChange)="editWorkoutDate.set($event)"
-            class="w-full h-10 bg-stone-50 border border-stone-200 focus:border-awakin-sun rounded-xl px-3 text-xs font-bold text-stone-900 outline-hidden cursor-pointer" />
-        </div>
-
-        <!-- Duración -->
-        <div>
-          <label class="block text-[10px] font-black uppercase tracking-wider text-stone-500 mb-1">Duración (Minutos)
-            *</label>
-          <div class="relative">
-            <input type="number" inputmode="numeric" pattern="[0-9]*" [ngModel]="editDurationMinutes()" (ngModelChange)="editDurationMinutes.set($event)"
-              min="1" max="600"
-              class="w-full h-10 bg-stone-50 border border-stone-200 focus:border-awakin-sun rounded-xl px-3 text-xs font-bold text-stone-900 outline-hidden" />
-            <span class="absolute right-3 top-2.5 text-stone-400 text-xs font-bold">min</span>
-          </div>
-        </div>
-
-        <!-- Ubicación -->
-        <div>
-          <label class="block text-[10px] font-black uppercase tracking-wider text-stone-500 mb-1">Ubicación</label>
-          <input type="text" inputmode="text" [ngModel]="editLocation()" (ngModelChange)="editLocation.set($event)"
-            placeholder="Ej. Gimnasio, Casa"
-            class="w-full h-10 bg-stone-50 border border-stone-200 focus:border-awakin-sun rounded-xl px-3 text-xs font-bold text-stone-900 outline-hidden" />
-        </div>
-
-        <!-- Unidad de peso -->
-        <div>
-          <label class="block text-[10px] font-black uppercase tracking-wider text-stone-500 mb-1">Unidad de
-            Peso</label>
-          <select [ngModel]="editVolumeUnit()" (ngModelChange)="editVolumeUnit.set($event)"
-            class="w-full h-10 bg-stone-50 border border-stone-200 focus:border-awakin-sun rounded-xl px-3 text-xs font-bold text-stone-900 outline-hidden cursor-pointer">
-            <option value="lb">Libras (LB)</option>
-            <option value="kg">Kilogramos (KG)</option>
-          </select>
-        </div>
-
-        <!-- Notas / Comentarios -->
-        <div class="sm:col-span-2">
-          <label class="block text-[10px] font-black uppercase tracking-wider text-stone-500 mb-1">Notas /
-            Sensaciones</label>
-          <textarea inputmode="text" [ngModel]="editNotes()" (ngModelChange)="editNotes.set($event)" rows="2"
-            placeholder="Sensaciones, RPE general, observaciones..."
-            class="w-full p-2.5 bg-stone-50 border border-stone-200 focus:border-awakin-sun rounded-xl text-xs font-medium text-stone-900 outline-hidden resize-none"></textarea>
-        </div>
-      </div>
-
-      <!-- SECCIÓN DE EJERCICIOS Y SERIES -->
-      <div class="space-y-3 pt-2">
-        <div class="flex items-center justify-between">
-          <h4 class="text-xs font-black uppercase tracking-wider text-stone-600 flex items-center gap-1.5">
-            <i class="pi pi-list text-awakin-sun"></i>
-            <span>Ejercicios y Series Realizadas</span>
-          </h4>
-          <span class="text-[11px] font-bold text-stone-400">{{ editExercises().length }} ejercicios</span>
-        </div>
-
-        @for (ex of editExercises(); track $index; let exIdx = $index) {
-        <div class="bg-white border border-stone-200/90 rounded-3xl p-4 shadow-sm space-y-3">
-          <!-- Cabecera del ejercicio (Miniatura + Título Fijo no editable + Badges) -->
-          <div class="flex items-start gap-3">
-            <button type="button" (click)="inspectedExercise.set(ex)"
-              class="w-16 h-16 rounded-2xl bg-stone-100 border border-stone-200 overflow-hidden shrink-0 flex items-center justify-center relative group cursor-pointer">
-              @if (ex.image_url) {
-              <img [src]="ex.image_url" [alt]="ex.exercise_name" class="w-full h-full object-cover" />
-              <div
-                class="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                <i class="pi pi-play text-white text-xs"></i>
-              </div>
-              } @else {
-              <i class="pi pi-bolt text-awakin-sun text-lg"></i>
-              }
-            </button>
-
-            <div class="flex-1 min-w-0">
-              <div class="flex items-start justify-between gap-2">
-                <h3 (click)="inspectedExercise.set(ex)"
-                  class="text-sm font-black text-stone-900 uppercase tracking-tight leading-snug hover:text-awakin-sun transition-colors cursor-pointer select-none">
-                  {{ exIdx + 1 }}. {{ ex.exercise_name }}
-                </h3>
-                <button type="button" (click)="removeExercise(exIdx)"
-                  class="w-7 h-7 rounded-lg bg-stone-100 hover:bg-rose-50 text-stone-400 hover:text-rose-600 flex items-center justify-center shrink-0 cursor-pointer"
-                  title="Quitar ejercicio">
-                  <i class="pi pi-trash text-[10px]"></i>
-                </button>
-              </div>
-
-              <div class="flex items-center gap-1.5 flex-wrap mt-1">
-                @if (ex.target_muscle) {
-                <span class="px-2 py-0.5 rounded-md bg-amber-500/10 text-amber-700 text-[9px] font-black uppercase tracking-tight">
-                  {{ translateMuscleName(ex.target_muscle) }}
-                </span>
-                }
-                @for (sec of ex.secondary_muscles; track sec) {
-                <span class="px-2 py-0.5 rounded-md bg-stone-100 text-stone-600 text-[9px] font-bold uppercase tracking-tight">
-                  {{ translateMuscleName(sec) }}
-                </span>
-                }
-                @if (ex.equipment) {
-                <span class="px-2 py-0.5 rounded-md bg-stone-100 text-stone-600 text-[9px] font-bold uppercase tracking-tight">
-                  {{ translateEquipmentName(ex.equipment) }}
-                </span>
-                }
-                @if (ex.rest_seconds) {
-                <span class="text-[10px] font-bold text-stone-400 inline-flex items-center gap-1">
-                  <i class="pi pi-clock text-[9px]"></i> {{ ex.rest_seconds }}s descanso
-                </span>
-                }
-              </div>
-            </div>
-          </div>
-
-          <!-- Notas del ejercicio (ocupa todo el ancho con padding) -->
-          @if (ex.notes) {
-          <div class="w-full px-3.5 py-2.5 rounded-xl bg-amber-500/5 border border-amber-500/20 text-xs text-amber-900 flex items-start gap-2">
-            <i class="pi pi-info-circle text-awakin-sun text-sm shrink-0 mt-0.5"></i>
-            <span class="font-medium leading-relaxed">{{ ex.notes }}</span>
-          </div>
-          }
-
-          <!-- Tabla de Series estilo activo -->
-          <div class="space-y-1.5 pt-1">
-            <div
-              class="grid grid-cols-12 gap-1.5 px-2 text-[9px] font-black uppercase tracking-wider text-stone-400 text-center">
-              <div class="col-span-1">#</div>
-              <div class="col-span-3">Tipo</div>
-              <div class="col-span-3">Peso ({{ editVolumeUnit().toUpperCase() }})</div>
-              <div class="col-span-3">Reps</div>
-              <div class="col-span-2">Hecho</div>
-            </div>
-
-            @for (set of ex.sets; track set.set_number; let setIdx = $index) {
-            <div class="grid grid-cols-12 gap-1.5 items-center p-1.5 rounded-xl border transition-all" [ngClass]="set.is_completed
-                ? 'bg-emerald-50/70 border-emerald-200'
-                : 'bg-stone-50/70 border-stone-200/70'">
-              <!-- # Serie -->
-              <div class="col-span-1 text-center text-xs font-black text-stone-600">
-                {{ set.set_number }}
-              </div>
-
-              <!-- Tipo Serie -->
-              <div class="col-span-3">
-                <select [(ngModel)]="set.set_type"
-                  class="w-full h-8 bg-white border border-stone-200 rounded-lg text-[10px] font-bold px-1.5 text-stone-700 outline-hidden cursor-pointer">
-                  @for (st of setTypes; track st) {
-                  <option [value]="st">{{ setTypeLabels[st].label }}</option>
-                  }
-                </select>
-              </div>
-
-              <!-- Peso -->
-              <div class="col-span-3">
-                <input type="number" step="any" min="0" inputmode="decimal" [(ngModel)]="set.weight_used"
-                  class="w-full h-8 bg-white border border-stone-200 focus:border-awakin-sun rounded-lg text-xs text-center font-black text-stone-900 outline-hidden" />
-              </div>
-
-              <!-- Reps -->
-              <div class="col-span-3">
-                <input type="number" min="0" inputmode="numeric" pattern="[0-9]*" [(ngModel)]="set.reps_completed"
-                  class="w-full h-8 bg-white border border-stone-200 focus:border-awakin-sun rounded-lg text-xs text-center font-black text-stone-900 outline-hidden" />
-              </div>
-
-              <!-- Check Hecho -->
-              <div class="col-span-2 flex items-center justify-center gap-1">
-                <button type="button" (click)="toggleSetCompleted(exIdx, setIdx)"
-                  class="w-8 h-8 rounded-lg flex items-center justify-center transition-all cursor-pointer active:scale-95"
-                  [ngClass]="set.is_completed
-                    ? 'bg-emerald-500 text-white shadow-xs'
-                    : 'bg-white border border-stone-300 text-stone-400 hover:border-awakin-sun hover:text-awakin-sun'">
-                  <i class="pi pi-check text-xs font-black"></i>
-                </button>
-              </div>
-            </div>
-            }
-          </div>
-
-          <!-- Acciones de series -->
-          <div class="flex items-center justify-between pt-1">
-            <button type="button" (click)="addSetToExercise(exIdx)"
-              class="text-[11px] font-black text-awakin-sun hover:underline flex items-center gap-1 cursor-pointer">
-              <i class="pi pi-plus text-[10px]"></i> Añadir serie
-            </button>
-            @if (ex.sets.length > 1) {
-            <button type="button" (click)="removeSetFromExercise(exIdx, ex.sets.length - 1)"
-              class="text-[11px] font-bold text-stone-400 hover:text-rose-600 cursor-pointer">
-              Quitar última
-            </button>
-            }
-          </div>
-        </div>
-        }
-
-        <!-- Botón agregar nuevo ejercicio -->
-        <button type="button" (click)="addCustomExercise()"
-          class="w-full py-2.5 rounded-xl border-2 border-dashed border-stone-200 hover:border-awakin-sun bg-stone-50 hover:bg-amber-50/50 text-stone-600 hover:text-amber-800 text-xs font-black uppercase tracking-wider flex items-center justify-center gap-1.5 transition-all cursor-pointer">
-          <i class="pi pi-plus text-xs"></i>
-          <span>Agregar Ejercicio</span>
+        <button type="button" (click)="closeModal()"
+          class="w-8 h-8 rounded-full bg-stone-100 hover:bg-stone-200 text-stone-600 flex items-center justify-center transition-all cursor-pointer shadow-2xs active:scale-95"
+          title="Cancelar edición">
+          <i class="pi pi-times text-xs"></i>
         </button>
       </div>
 
-      <!-- ERROR AL GUARDAR -->
-      @if (saveError()) {
-      <div class="p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-semibold">
-        {{ saveError() }}
+      <!-- CONTENIDO SCROLLEABLE -->
+        <div class="p-4 sm:p-5 overflow-y-auto overscroll-contain space-y-4 flex-1 min-h-0">
+
+          <!-- BANNER DE LA FOTO DEL COACH (SOLO LECTURA) -->
+          @if (bannerPhotoUrl(); as photoUrl) {
+          <div class="relative w-full h-36 rounded-2xl overflow-hidden bg-stone-950 border border-stone-200 shadow-2xs">
+            <img [src]="photoUrl" alt="Foto entrenamiento" class="w-full h-full object-cover opacity-85" />
+            <div class="absolute inset-0 bg-gradient-to-t from-black/75 via-transparent to-transparent"></div>
+            <div class="absolute bottom-2.5 left-3 right-3 flex items-center justify-between text-white">
+              <span class="text-[10px] font-bold text-stone-300">No editable</span>
+            </div>
+          </div>
+          }
+
+          <!-- DATOS BÁSICOS DEL ENTRENAMIENTO -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <!-- Nombre de la rutina (No editable: fijado por el coach / rutina asignada) -->
+            <div class="sm:col-span-2">
+              <div class="flex items-center justify-between mb-1">
+                <label class="block text-[10px] font-black uppercase tracking-wider text-stone-500">
+                  Nombre de la Rutina / Sesión
+                </label>
+                <span
+                  class="inline-flex items-center gap-1 text-[9px] font-bold text-stone-400 bg-stone-100 border border-stone-200/80 px-2 py-0.5 rounded-full">
+                  <i class="pi pi-lock text-[8px]"></i> No editable
+                </span>
+              </div>
+              <div
+                class="w-full h-10 bg-stone-100/80 border border-stone-200 rounded-xl px-3 flex items-center text-xs font-bold text-stone-600 select-none cursor-not-allowed">
+                {{ editRoutineName() }}
+              </div>
+            </div>
+
+            <!-- Fecha -->
+            <div>
+              <label class="block text-[10px] font-black uppercase tracking-wider text-stone-500 mb-1">Fecha del
+                Entrenamiento *</label>
+              <input type="date" [ngModel]="editWorkoutDate()" (ngModelChange)="editWorkoutDate.set($event)"
+                class="w-full h-10 bg-stone-50 border border-stone-200 focus:border-awakin-sun rounded-xl px-3 text-xs font-bold text-stone-900 outline-hidden cursor-pointer" />
+            </div>
+
+            <!-- Duración -->
+            <div>
+              <label class="block text-[10px] font-black uppercase tracking-wider text-stone-500 mb-1">Duración
+                (Minutos)
+                *</label>
+              <div class="relative">
+                <input type="number" inputmode="numeric" pattern="[0-9]*" [ngModel]="editDurationMinutes()"
+                  (ngModelChange)="editDurationMinutes.set($event)" min="1" max="600"
+                  class="w-full h-10 bg-stone-50 border border-stone-200 focus:border-awakin-sun rounded-xl px-3 text-xs font-bold text-stone-900 outline-hidden" />
+                <span class="absolute right-3 top-2.5 text-stone-400 text-xs font-bold">min</span>
+              </div>
+            </div>
+
+            <!-- Ubicación -->
+            <div>
+              <label class="block text-[10px] font-black uppercase tracking-wider text-stone-500 mb-1">Ubicación</label>
+              <input type="text" inputmode="text" [ngModel]="editLocation()" (ngModelChange)="editLocation.set($event)"
+                placeholder="Ej. Gimnasio, Casa"
+                class="w-full h-10 bg-stone-50 border border-stone-200 focus:border-awakin-sun rounded-xl px-3 text-xs font-bold text-stone-900 outline-hidden" />
+            </div>
+
+            <!-- Unidad de peso -->
+            <div>
+              <label class="block text-[10px] font-black uppercase tracking-wider text-stone-500 mb-1">Unidad de
+                Peso</label>
+              <select [ngModel]="editVolumeUnit()" (ngModelChange)="editVolumeUnit.set($event)"
+                class="w-full h-10 bg-stone-50 border border-stone-200 focus:border-awakin-sun rounded-xl px-3 text-xs font-bold text-stone-900 outline-hidden cursor-pointer">
+                <option value="lb">Libras (LB)</option>
+                <option value="kg">Kilogramos (KG)</option>
+              </select>
+            </div>
+
+            <!-- Notas / Comentarios -->
+            <div class="sm:col-span-2">
+              <label class="block text-[10px] font-black uppercase tracking-wider text-stone-500 mb-1">Notas /
+                Sensaciones</label>
+              <textarea inputmode="text" [ngModel]="editNotes()" (ngModelChange)="editNotes.set($event)" rows="2"
+                placeholder="Sensaciones, RPE general, observaciones..."
+                class="w-full p-2.5 bg-stone-50 border border-stone-200 focus:border-awakin-sun rounded-xl text-xs font-medium text-stone-900 outline-hidden resize-none"></textarea>
+            </div>
+          </div>
+
+          <!-- SECCIÓN DE EJERCICIOS Y SERIES -->
+          <div class="space-y-3 pt-2">
+            <div class="flex items-center justify-between">
+              <h4 class="text-xs font-black uppercase tracking-wider text-stone-600 flex items-center gap-1.5">
+                <i class="pi pi-list text-awakin-sun"></i>
+                <span>Ejercicios y Series Realizadas</span>
+              </h4>
+              <span class="text-[11px] font-bold text-stone-400">{{ editExercises().length }} ejercicios</span>
+            </div>
+
+            @for (ex of editExercises(); track $index; let exIdx = $index) {
+            <div class="bg-white border border-stone-200/90 rounded-3xl p-4 shadow-sm space-y-3">
+              <!-- Cabecera del ejercicio (Miniatura + Título Fijo no editable + Badges) -->
+              <div class="flex items-start gap-3">
+                <button type="button" (click)="inspectedExercise.set(ex)"
+                  class="w-16 h-16 rounded-2xl bg-stone-100 border border-stone-200 overflow-hidden shrink-0 flex items-center justify-center relative group cursor-pointer">
+                  @if (ex.image_url) {
+                  <img [src]="ex.image_url" [alt]="ex.exercise_name" class="w-full h-full object-cover" />
+                  <div
+                    class="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                    <i class="pi pi-play text-white text-xs"></i>
+                  </div>
+                  } @else {
+                  <i class="pi pi-bolt text-awakin-sun text-lg"></i>
+                  }
+                </button>
+
+                <div class="flex-1 min-w-0">
+                  <div class="flex items-start justify-between gap-2">
+                    <h3 (click)="inspectedExercise.set(ex)"
+                      class="text-sm font-black text-stone-900 uppercase tracking-tight leading-snug hover:text-awakin-sun transition-colors cursor-pointer select-none">
+                      {{ exIdx + 1 }}. {{ ex.exercise_name }}
+                    </h3>
+                    <button type="button" (click)="removeExercise(exIdx)"
+                      class="w-7 h-7 rounded-lg bg-stone-100 hover:bg-rose-50 text-stone-400 hover:text-rose-600 flex items-center justify-center shrink-0 cursor-pointer"
+                      title="Quitar ejercicio">
+                      <i class="pi pi-trash text-[10px]"></i>
+                    </button>
+                  </div>
+
+                  <div class="flex items-center gap-1.5 flex-wrap mt-1">
+                    @if (ex.target_muscle) {
+                    <span
+                      class="px-2 py-0.5 rounded-md bg-amber-500/10 text-amber-700 text-[9px] font-black uppercase tracking-tight">
+                      {{ translateMuscleName(ex.target_muscle) }}
+                    </span>
+                    }
+                    @for (sec of ex.secondary_muscles; track sec) {
+                    <span
+                      class="px-2 py-0.5 rounded-md bg-stone-100 text-stone-600 text-[9px] font-bold uppercase tracking-tight">
+                      {{ translateMuscleName(sec) }}
+                    </span>
+                    }
+                    @if (ex.equipment) {
+                    <span
+                      class="px-2 py-0.5 rounded-md bg-stone-100 text-stone-600 text-[9px] font-bold uppercase tracking-tight">
+                      {{ translateEquipmentName(ex.equipment) }}
+                    </span>
+                    }
+                    @if (ex.rest_seconds) {
+                    <span class="text-[10px] font-bold text-stone-400 inline-flex items-center gap-1">
+                      <i class="pi pi-clock text-[9px]"></i> {{ ex.rest_seconds }}s descanso
+                    </span>
+                    }
+                  </div>
+                </div>
+              </div>
+
+              <!-- Notas del ejercicio (ocupa todo el ancho con padding) -->
+              @if (ex.notes) {
+              <div
+                class="w-full px-3.5 py-2.5 rounded-xl bg-amber-500/5 border border-amber-500/20 text-xs text-amber-900 flex items-start gap-2">
+                <i class="pi pi-info-circle text-awakin-sun text-sm shrink-0 mt-0.5"></i>
+                <span class="font-medium leading-relaxed">{{ ex.notes }}</span>
+              </div>
+              }
+
+              <!-- Tabla de Series estilo activo -->
+              <div class="space-y-1.5 pt-1">
+                <div
+                  class="grid grid-cols-12 gap-1.5 px-2 text-[9px] font-black uppercase tracking-wider text-stone-400 text-center">
+                  <div class="col-span-1">#</div>
+                  <div class="col-span-3">Tipo</div>
+                  <div class="col-span-3">Peso ({{ editVolumeUnit().toUpperCase() }})</div>
+                  <div class="col-span-3">Reps</div>
+                  <div class="col-span-2">Hecho</div>
+                </div>
+
+                @for (set of ex.sets; track set.set_number; let setIdx = $index) {
+                <div class="grid grid-cols-12 gap-1.5 items-center p-1.5 rounded-xl border transition-all" [ngClass]="set.is_completed
+                ? 'bg-emerald-50/70 border-emerald-200'
+                : 'bg-stone-50/70 border-stone-200/70'">
+                  <!-- # Serie -->
+                  <div class="col-span-1 text-center text-xs font-black text-stone-600">
+                    {{ set.set_number }}
+                  </div>
+
+                  <!-- Tipo Serie -->
+                  <div class="col-span-3">
+                    <select [(ngModel)]="set.set_type"
+                      class="w-full h-8 bg-white border border-stone-200 rounded-lg text-[10px] font-bold px-1.5 text-stone-700 outline-hidden cursor-pointer">
+                      @for (st of setTypes; track st) {
+                      <option [value]="st">{{ setTypeLabels[st].label }}</option>
+                      }
+                    </select>
+                  </div>
+
+                  <!-- Peso -->
+                  <div class="col-span-3">
+                    <input type="number" step="any" min="0" inputmode="decimal" [(ngModel)]="set.weight_used"
+                      class="w-full h-8 bg-white border border-stone-200 focus:border-awakin-sun rounded-lg text-xs text-center font-black text-stone-900 outline-hidden" />
+                  </div>
+
+                  <!-- Reps -->
+                  <div class="col-span-3">
+                    <input type="number" min="0" inputmode="numeric" pattern="[0-9]*" [(ngModel)]="set.reps_completed"
+                      class="w-full h-8 bg-white border border-stone-200 focus:border-awakin-sun rounded-lg text-xs text-center font-black text-stone-900 outline-hidden" />
+                  </div>
+
+                  <!-- Check Hecho -->
+                  <div class="col-span-2 flex items-center justify-center gap-1">
+                    <button type="button" (click)="toggleSetCompleted(exIdx, setIdx)"
+                      class="w-8 h-8 rounded-lg flex items-center justify-center transition-all cursor-pointer active:scale-95"
+                      [ngClass]="set.is_completed
+                    ? 'bg-emerald-500 text-white shadow-xs'
+                    : 'bg-white border border-stone-300 text-stone-400 hover:border-awakin-sun hover:text-awakin-sun'">
+                      <i class="pi pi-check text-xs font-black"></i>
+                    </button>
+                  </div>
+                </div>
+                }
+              </div>
+
+              <!-- Acciones de series -->
+              <div class="flex items-center justify-between pt-1">
+                <button type="button" (click)="addSetToExercise(exIdx)"
+                  class="text-[11px] font-black text-awakin-sun hover:underline flex items-center gap-1 cursor-pointer">
+                  <i class="pi pi-plus text-[10px]"></i> Añadir serie
+                </button>
+                @if (ex.sets.length > 1) {
+                <button type="button" (click)="removeSetFromExercise(exIdx, ex.sets.length - 1)"
+                  class="text-[11px] font-bold text-stone-400 hover:text-rose-600 cursor-pointer">
+                  Quitar última
+                </button>
+                }
+              </div>
+            </div>
+            }
+
+            <!-- Botón agregar nuevo ejercicio -->
+            <button type="button" (click)="addCustomExercise()"
+              class="w-full py-2.5 rounded-xl border-2 border-dashed border-stone-200 hover:border-awakin-sun bg-stone-50 hover:bg-amber-50/50 text-stone-600 hover:text-amber-800 text-xs font-black uppercase tracking-wider flex items-center justify-center gap-1.5 transition-all cursor-pointer">
+              <i class="pi pi-plus text-xs"></i>
+              <span>Agregar Ejercicio</span>
+            </button>
+          </div>
+
+          <!-- ERROR AL GUARDAR -->
+          @if (saveError()) {
+          <div class="p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-semibold">
+            {{ saveError() }}
+          </div>
+          }
+
+        </div>
+
+        <!-- FOOTER: BOTONES DE ACCIÓN -->
+        <div class="px-5 py-3.5 border-t border-stone-100 bg-stone-50/80 flex items-center justify-end gap-2 shrink-0">
+          <button type="button" (click)="closeModal()" [disabled]="isSaving()"
+            class="px-4 py-2.5 rounded-xl bg-stone-100 hover:bg-stone-200 text-stone-700 font-bold text-xs cursor-pointer">
+            Cancelar
+          </button>
+
+          <button type="button" (click)="saveChanges()" [disabled]="isSaving()"
+            class="px-5 py-2.5 rounded-xl bg-awakin-sun hover:bg-awakin-sun-dim text-white font-black text-xs uppercase tracking-wider shadow-lg shadow-awakin-sun/25 transition-all active:scale-95 cursor-pointer disabled:opacity-60 flex items-center gap-1.5">
+            @if (isSaving()) {
+            <i class="pi pi-spin pi-spinner text-xs"></i>
+            <span>Guardando...</span>
+            } @else {
+            <i class="pi pi-check text-xs"></i>
+            <span>Guardar Cambios</span>
+            }
+          </button>
+        </div>
+
       </div>
-      }
-
-    </div>
-
-    <!-- FOOTER: BOTONES DE ACCIÓN -->
-    <div class="px-5 py-3.5 border-t border-stone-100 bg-stone-50/80 flex items-center justify-end gap-2 shrink-0">
-      <button type="button" (click)="closeModal()" [disabled]="isSaving()"
-        class="px-4 py-2.5 rounded-xl bg-stone-100 hover:bg-stone-200 text-stone-700 font-bold text-xs cursor-pointer">
-        Cancelar
-      </button>
-
-      <button type="button" (click)="saveChanges()" [disabled]="isSaving()"
-        class="px-5 py-2.5 rounded-xl bg-awakin-sun hover:bg-awakin-sun-dim text-white font-black text-xs uppercase tracking-wider shadow-lg shadow-awakin-sun/25 transition-all active:scale-95 cursor-pointer disabled:opacity-60 flex items-center gap-1.5">
-        @if (isSaving()) {
-        <i class="pi pi-spin pi-spinner text-xs"></i>
-        <span>Guardando...</span>
-        } @else {
-        <i class="pi pi-check text-xs"></i>
-        <span>Guardar Cambios</span>
-        }
-      </button>
-    </div>
-
-  </div>
 </p-dialog>
 
 <!-- MODAL: INSTRUCCIONES Y GIF DEL EJERCICIO -->
@@ -299,7 +306,8 @@
   <div class="bg-white flex flex-col max-h-[85vh]">
     <div class="px-5 py-4 border-b border-stone-100 bg-stone-50/80 flex items-center justify-between">
       <div class="min-w-0 pr-2">
-        <span class="text-[9px] font-black uppercase tracking-wider text-awakin-sun">{{ translateEquipmentName(ex.equipment) }}</span>
+        <span class="text-[9px] font-black uppercase tracking-wider text-awakin-sun">{{
+          translateEquipmentName(ex.equipment) }}</span>
         <h3 class="text-sm font-black text-stone-900 uppercase truncate">{{ ex.exercise_name }}</h3>
       </div>
       <button type="button" (click)="inspectedExercise.set(null)"
@@ -325,9 +333,9 @@
           <span class="text-[9px] font-black uppercase text-stone-400 block">Secundarios</span>
           <span class="font-semibold text-stone-600 capitalize">
             @for (sec of ex.secondary_muscles; track sec; let isLast = $last) {
-              {{ translateMuscleName(sec) }}{{ isLast ? '' : ', ' }}
+            {{ translateMuscleName(sec) }}{{ isLast ? '' : ', ' }}
             } @empty {
-              --
+            --
             }
           </span>
         </div>

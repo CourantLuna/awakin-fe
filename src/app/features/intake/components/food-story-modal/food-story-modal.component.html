@@ -1,667 +1,683 @@
-<p-dialog [(visible)]="visible" [modal]="true" [draggable]="false" [resizable]="false" [closable]="false"
-  [showHeader]="false" [dismissableMask]="true" appendTo="body" (onHide)="closeModal()"
+  [modal]="true" [blockScroll]="true" [draggable]="false" [resizable]="false" [closable]="false" [showHeader]="false"
+  [dismissableMask]="true" appendTo="body" (onHide)="closeModal()"
   [style]="{ width: '96vw', maxWidth: '440px', borderRadius: '14px' }"
   styleClass="overflow-hidden shadow-2xl border border-stone-200 bg-white rounded-xl [&_.p-dialog-content]:!p-0 [&_.p-dialog-content]:!overflow-hidden">
 
-  <div class="bg-white text-stone-900 flex flex-col h-[90vh] max-h-[90vh] overflow-hidden rounded-xl">
-    <!-- Header del Editor (Fijo arriba) -->
-    <div class="px-5 py-3.5 border-b border-stone-100 bg-white flex items-center justify-between shrink-0 z-10">
-      <div class="flex items-center gap-2.5">
-        <div class="w-8 h-8 rounded-xl bg-awakin-sun/10 border border-awakin-sun/25 flex items-center justify-center">
-          <img src="/icons/intake-active.png" alt="Awakin Intake" class="w-5 h-5 object-contain" />
+    <div class="bg-white text-stone-900 flex flex-col h-[82dvh] max-h-[82dvh] w-full overflow-hidden rounded-xl">
+      <!-- Header del Editor (Fijo arriba) -->
+      <div class="px-5 py-3.5 border-b border-stone-100 bg-white flex items-center justify-between shrink-0 z-10">
+        <div class="flex items-center gap-2.5">
+          <div class="w-8 h-8 rounded-xl bg-awakin-sun/10 border border-awakin-sun/25 flex items-center justify-center">
+            <img src="/icons/intake-active.png" alt="Awakin Intake" class="w-5 h-5 object-contain" />
+          </div>
+          <div>
+            <h3 class="text-xs font-black uppercase tracking-wider text-stone-900">Historia de Nutrición</h3>
+            <p class="text-[10px] text-stone-500 font-medium">Personaliza gráficos, escala y encuadre</p>
+          </div>
         </div>
-        <div>
-          <h3 class="text-xs font-black uppercase tracking-wider text-stone-900">Historia de Nutrición</h3>
-          <p class="text-[10px] text-stone-500 font-medium">Personaliza gráficos, escala y encuadre</p>
-        </div>
+        <button type="button" (click)="closeModal()"
+          class="w-7 h-7 rounded-full bg-stone-100 hover:bg-stone-200 text-stone-600 flex items-center justify-center cursor-pointer transition-all active:scale-95">
+          <i class="pi pi-times text-xs"></i>
+        </button>
       </div>
-      <button type="button" (click)="closeModal()"
-        class="w-7 h-7 rounded-full bg-stone-100 hover:bg-stone-200 text-stone-600 flex items-center justify-center cursor-pointer transition-all active:scale-95">
-        <i class="pi pi-times text-xs"></i>
-      </button>
-    </div>
 
-    <!-- Área de Trabajo Scrollable (Preview Canvas + Controles Awakin Light) -->
-    <div class="overflow-y-auto flex-1 min-h-0 p-3.5 sm:p-4 space-y-3.5 bg-stone-100/70 no-scrollbar">
+      <!-- Área de Trabajo Scrollable (Preview Canvas + Controles Awakin Light) -->
+        <div
+          class="overflow-y-auto overscroll-contain flex-1 min-h-0 p-3.5 sm:p-4 space-y-3.5 bg-stone-100/70 no-scrollbar">
 
-      <!-- ========================================================================= -->
-      <!-- CANVAS DE CAPTURA VISUAL (Descarga pura rectangular, sin bordes redondos) -->
-      <!-- ========================================================================= -->
-      <div class="flex justify-center select-none p-1">
-        <div class="overflow-hidden rounded-none shadow-md max-w-[310px] sm:max-w-[330px] w-full bg-stone-950">
-          <div #storyCaptureArea
-            class="story-preview-container relative overflow-hidden rounded-none border-0 shadow-none bg-stone-950 flex flex-col justify-center items-center w-full transition-all"
-            style="border-radius: 0px !important; border: 0 !important; box-shadow: none !important;"
-            [ngClass]="aspectRatioClass()" (wheel)="onWheelZoom($event)">
+          <!-- ========================================================================= -->
+          <!-- CANVAS DE CAPTURA VISUAL (Descarga pura rectangular, sin bordes redondos) -->
+          <!-- ========================================================================= -->
+          <div class="flex justify-center select-none p-1">
+            <div class="overflow-hidden rounded-none shadow-md max-w-[310px] sm:max-w-[330px] w-full bg-stone-950">
+              <div #storyCaptureArea
+                class="story-preview-container relative overflow-hidden rounded-none border-0 shadow-none bg-stone-950 flex flex-col justify-center items-center w-full transition-all"
+                style="border-radius: 0px !important; border: 0 !important; box-shadow: none !important;"
+                [ngClass]="aspectRatioClass()" (wheel)="onWheelZoom($event)">
 
-            <!-- 1. FONDO: FOTO O DEGRADADO DARK AWAKIN -->
-            @if (hasMultiplePhotos()) {
-            <!-- Collage para comidas con múltiples fotos -->
-            <div class="absolute inset-0 w-full h-full overflow-hidden select-none pointer-events-none">
-              @let pList = currentData()!.photoUrls!;
-              @if (pList.length === 2) {
-              <div class="grid grid-rows-2 h-full w-full gap-0.5">
-                <img [src]="pList[0]" alt="Foto 1" class="w-full h-full object-cover" />
-                <img [src]="pList[1]" alt="Foto 2" class="w-full h-full object-cover" />
-              </div>
-              } @else if (pList.length === 3) {
-              <div class="grid grid-rows-2 h-full w-full gap-0.5">
-                <img [src]="pList[0]" alt="Foto 1" class="w-full h-full object-cover" />
-                <div class="grid grid-cols-2 h-full w-full gap-0.5">
-                  <img [src]="pList[1]" alt="Foto 2" class="w-full h-full object-cover" />
-                  <img [src]="pList[2]" alt="Foto 3" class="w-full h-full object-cover" />
+                <!-- 1. FONDO: FOTO O DEGRADADO DARK AWAKIN -->
+                @if (hasMultiplePhotos()) {
+                <!-- Collage para comidas con múltiples fotos -->
+                <div class="absolute inset-0 w-full h-full overflow-hidden select-none pointer-events-none">
+                  @let pList = currentData()!.photoUrls!;
+                  @if (pList.length === 2) {
+                  <div class="grid grid-rows-2 h-full w-full gap-0.5">
+                    <img [src]="pList[0]" alt="Foto 1" class="w-full h-full object-cover" />
+                    <img [src]="pList[1]" alt="Foto 2" class="w-full h-full object-cover" />
+                  </div>
+                  } @else if (pList.length === 3) {
+                  <div class="grid grid-rows-2 h-full w-full gap-0.5">
+                    <img [src]="pList[0]" alt="Foto 1" class="w-full h-full object-cover" />
+                    <div class="grid grid-cols-2 h-full w-full gap-0.5">
+                      <img [src]="pList[1]" alt="Foto 2" class="w-full h-full object-cover" />
+                      <img [src]="pList[2]" alt="Foto 3" class="w-full h-full object-cover" />
+                    </div>
+                  </div>
+                  } @else {
+                  <div class="grid grid-cols-2 grid-rows-2 h-full w-full gap-0.5">
+                    <img [src]="pList[0]" alt="Foto 1" class="w-full h-full object-cover" />
+                    <img [src]="pList[1]" alt="Foto 2" class="w-full h-full object-cover" />
+                    <img [src]="pList[2]" alt="Foto 3" class="w-full h-full object-cover" />
+                    <img [src]="pList[3]" alt="Foto 4" class="w-full h-full object-cover" />
+                  </div>
+                  }
                 </div>
-              </div>
-              } @else {
-              <div class="grid grid-cols-2 grid-rows-2 h-full w-full gap-0.5">
-                <img [src]="pList[0]" alt="Foto 1" class="w-full h-full object-cover" />
-                <img [src]="pList[1]" alt="Foto 2" class="w-full h-full object-cover" />
-                <img [src]="pList[2]" alt="Foto 3" class="w-full h-full object-cover" />
-                <img [src]="pList[3]" alt="Foto 4" class="w-full h-full object-cover" />
-              </div>
-              }
-            </div>
-            <div class="absolute inset-0 pointer-events-none transition-opacity duration-200"
-              [style.background]="'rgba(12, 10, 9, ' + (dimLevel() / 100) + ')'"></div>
-            <div
-              class="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-black/60 pointer-events-none">
-            </div>
-            } @else if (activeBackgroundUrl(); as bgUrl) {
-            <img [src]="bgUrl" alt="Foto de comida"
-              class="absolute inset-0 w-full h-full object-cover select-none pointer-events-none rounded-none"
-              style="border-radius: 0px !important;" />
-            <!-- Viñeta y Oscurecimiento para contraste -->
-            <div class="absolute inset-0 pointer-events-none transition-opacity duration-200"
-              [style.background]="'rgba(12, 10, 9, ' + (dimLevel() / 100) + ')'"></div>
-            <div
-              class="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-black/60 pointer-events-none">
-            </div>
-            } @else {
-            <div
-              class="absolute inset-0 bg-stone-900 flex items-center justify-center text-stone-500 text-xs font-bold">
-              Foto no disponible
-            </div>
-            }
+                <div class="absolute inset-0 pointer-events-none transition-opacity duration-200"
+                  [style.background]="'rgba(12, 10, 9, ' + (dimLevel() / 100) + ')'"></div>
+                <div
+                  class="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-black/60 pointer-events-none">
+                </div>
+                } @else if (activeBackgroundUrl(); as bgUrl) {
+                <img [src]="bgUrl" alt="Foto de comida"
+                  class="absolute inset-0 w-full h-full object-cover select-none pointer-events-none rounded-none"
+                  style="border-radius: 0px !important;" />
+                <!-- Viñeta y Oscurecimiento para contraste -->
+                <div class="absolute inset-0 pointer-events-none transition-opacity duration-200"
+                  [style.background]="'rgba(12, 10, 9, ' + (dimLevel() / 100) + ')'"></div>
+                <div
+                  class="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-black/60 pointer-events-none">
+                </div>
+                } @else {
+                <div
+                  class="absolute inset-0 bg-stone-900 flex items-center justify-center text-stone-500 text-xs font-bold">
+                  Foto no disponible
+                </div>
+                }
 
-            <!-- 2. CAPA OVERLAY ARRASTRABLE Y ESCALABLE (DRAGGABLE & ZOOMABLE / PINCH ON MOBILE) -->
-            <div
-              class="story-draggable-layer relative z-20 w-full h-full flex items-center justify-center px-3 select-none touch-none"
-              (mousedown)="onDragStart($event)" (touchstart)="onDragStart($event)" (wheel)="onWheelZoom($event)"
-              (document:mousemove)="onDragMove($event)" (document:touchmove)="onDragMove($event)"
-              (document:mouseup)="onDragEnd()" (document:touchend)="onDragEnd()">
+                <!-- 2. CAPA OVERLAY ARRASTRABLE Y ESCALABLE (DRAGGABLE & ZOOMABLE / PINCH ON MOBILE) -->
+                <div
+                  class="story-draggable-layer relative z-20 w-full h-full flex items-center justify-center px-3 select-none touch-none"
+                  (mousedown)="onDragStart($event)" (touchstart)="onDragStart($event)" (wheel)="onWheelZoom($event)"
+                  (document:mousemove)="onDragMove($event)" (document:touchmove)="onDragMove($event)"
+                  (document:mouseup)="onDragEnd()" (document:touchend)="onDragEnd()">
 
-              <div class="w-full transition-transform ease-out will-change-transform"
-                [style.transform]="'translate(' + overlayPosition().x + 'px, ' + overlayPosition().y + 'px) scale(' + overlayScale() + ')'"
-                [style.transformOrigin]="'center center'">
+                  <div class="w-full transition-transform ease-out will-change-transform"
+                    [style.transform]="'translate(' + overlayPosition().x + 'px, ' + overlayPosition().y + 'px) scale(' + overlayScale() + ')'"
+                    [style.transformOrigin]="'center center'">
 
-                <!-- CONTENEDOR DE LA TARJETA (Default: Limpio / Transparent) -->
-                <div class="w-full rounded-2xl p-3 select-none transition-all" [ngClass]="{
+                    <!-- CONTENEDOR DE LA TARJETA (Default: Limpio / Transparent) -->
+                    <div class="w-full rounded-2xl p-3 select-none transition-all" [ngClass]="{
                     'bg-transparent drop-shadow-[0_2px_12px_rgba(0,0,0,0.95)]': cardStyle() === 'transparent',
                     'backdrop-blur-md bg-stone-950/75 border border-white/15 shadow-2xl': cardStyle() === 'glass',
                     'bg-stone-950/95 border border-awakin-sun/35 shadow-2xl': cardStyle() === 'dark'
                   }">
 
-                  <!-- ========================================================== -->
-                  <!-- VARIANTE 1: ANILLO DE MACROS (POLAR DONUT CHART)           -->
-                  <!-- ========================================================== -->
-                  @if (selectedTemplate() === 'macroring') {
-                  <div class="space-y-2 text-center text-white">
-                    <!-- Cabecera de la Comida -->
-                    <div class="space-y-0.5">
-                      <div class="flex items-center justify-center gap-1.5">
-                        <span
-                          class="text-[9px] font-black uppercase tracking-widest text-awakin-sun bg-awakin-sun/15 px-2 py-0.5 rounded-full border border-awakin-sun/30">
-                          {{ formattedMealTitle() }}
-                        </span>
-                        <span class="text-[9px] font-bold text-stone-300 uppercase tracking-wider">
-                          {{ currentData()?.dateFormatted }}
-                        </span>
-                      </div>
-                      <h4
-                        class="text-xs sm:text-sm font-black uppercase tracking-tight break-words text-wrap leading-tight mt-1">
-                        {{ currentData()?.dishName }}
-                      </h4>
-                    </div>
+                      <!-- ========================================================== -->
+                      <!-- VARIANTE 1: ANILLO DE MACROS (POLAR DONUT CHART)           -->
+                      <!-- ========================================================== -->
+                      @if (selectedTemplate() === 'macroring') {
+                      <div class="space-y-2 text-center text-white">
+                        <!-- Cabecera de la Comida -->
+                        <div class="space-y-0.5">
+                          <div class="flex items-center justify-center gap-1.5">
+                            <span
+                              class="text-[9px] font-black uppercase tracking-widest text-awakin-sun bg-awakin-sun/15 px-2 py-0.5 rounded-full border border-awakin-sun/30">
+                              {{ formattedMealTitle() }}
+                            </span>
+                            <span class="text-[9px] font-bold text-stone-300 uppercase tracking-wider">
+                              {{ currentData()?.dateFormatted }}
+                            </span>
+                          </div>
+                          <h4
+                            class="text-xs sm:text-sm font-black uppercase tracking-tight break-words text-wrap leading-tight mt-1">
+                            {{ currentData()?.dishName }}
+                          </h4>
+                        </div>
 
-                    <!-- SVG Donut Ring Polar -->
-                    @if (macroDistribution(); as dist) {
-                    <div class="w-full flex items-center justify-center py-1">
-                      <div class="relative w-36 sm:w-40 h-36 sm:h-40 flex items-center justify-center">
-                        <svg viewBox="0 0 128 128" class="w-full h-full -rotate-90 overflow-visible">
-                          <!-- Círculo base de guía -->
-                          <circle cx="64" cy="64" r="54" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="9" />
+                        <!-- SVG Donut Ring Polar -->
+                        @if (macroDistribution(); as dist) {
+                        <div class="w-full flex items-center justify-center py-1">
+                          <div class="relative w-36 sm:w-40 h-36 sm:h-40 flex items-center justify-center">
+                            <svg viewBox="0 0 128 128" class="w-full h-full -rotate-90 overflow-visible">
+                              <!-- Círculo base de guía -->
+                              <circle cx="64" cy="64" r="54" fill="none" stroke="rgba(255,255,255,0.08)"
+                                stroke-width="9" />
 
-                          <!-- Segmento Proteína (Verde Esmeralda) -->
-                          <circle cx="64" cy="64" r="54" fill="none" stroke="#10B981" stroke-width="9"
-                            [attr.stroke-dasharray]="dist.pDash + ' ' + dist.circumference"
-                            [attr.stroke-dashoffset]="dist.pOffset" stroke-linecap="round"
-                            class="transition-all duration-300 drop-shadow-[0_0_6px_rgba(16,185,129,0.5)]" />
+                              <!-- Segmento Proteína (Verde Esmeralda) -->
+                              <circle cx="64" cy="64" r="54" fill="none" stroke="#10B981" stroke-width="9"
+                                [attr.stroke-dasharray]="dist.pDash + ' ' + dist.circumference"
+                                [attr.stroke-dashoffset]="dist.pOffset" stroke-linecap="round"
+                                class="transition-all duration-300 drop-shadow-[0_0_6px_rgba(16,185,129,0.5)]" />
 
-                          <!-- Segmento Carbohidratos (Ámbar Awakin Sun) -->
-                          <circle cx="64" cy="64" r="54" fill="none" stroke="#FE970A" stroke-width="9"
-                            [attr.stroke-dasharray]="dist.cDash + ' ' + dist.circumference"
-                            [attr.stroke-dashoffset]="dist.cOffset" stroke-linecap="round"
-                            class="transition-all duration-300 drop-shadow-[0_0_6px_rgba(254,151,10,0.5)]" />
+                              <!-- Segmento Carbohidratos (Ámbar Awakin Sun) -->
+                              <circle cx="64" cy="64" r="54" fill="none" stroke="#FE970A" stroke-width="9"
+                                [attr.stroke-dasharray]="dist.cDash + ' ' + dist.circumference"
+                                [attr.stroke-dashoffset]="dist.cOffset" stroke-linecap="round"
+                                class="transition-all duration-300 drop-shadow-[0_0_6px_rgba(254,151,10,0.5)]" />
 
-                          <!-- Segmento Grasas (Rosa Coral) -->
-                          <circle cx="64" cy="64" r="54" fill="none" stroke="#F43F5E" stroke-width="9"
-                            [attr.stroke-dasharray]="dist.fDash + ' ' + dist.circumference"
-                            [attr.stroke-dashoffset]="dist.fOffset" stroke-linecap="round"
-                            class="transition-all duration-300 drop-shadow-[0_0_6px_rgba(244,63,94,0.5)]" />
-                        </svg>
+                              <!-- Segmento Grasas (Rosa Coral) -->
+                              <circle cx="64" cy="64" r="54" fill="none" stroke="#F43F5E" stroke-width="9"
+                                [attr.stroke-dasharray]="dist.fDash + ' ' + dist.circumference"
+                                [attr.stroke-dashoffset]="dist.fOffset" stroke-linecap="round"
+                                class="transition-all duration-300 drop-shadow-[0_0_6px_rgba(244,63,94,0.5)]" />
+                            </svg>
 
-                        <!-- Contenido central del Anillo: Kcal -->
-                        <div class="absolute inset-0 flex flex-col items-center justify-center text-center">
-                          <span
-                            class="text-xl sm:text-2xl font-black text-white tracking-tight leading-none tabular-nums">
-                            {{ currentData()?.kcal || 0 }}
-                          </span>
-                          <span class="text-[9px] font-black uppercase tracking-widest text-stone-300 mt-0.5">
-                            KCAL
-                          </span>
+                            <!-- Contenido central del Anillo: Kcal -->
+                            <div class="absolute inset-0 flex flex-col items-center justify-center text-center">
+                              <span
+                                class="text-xl sm:text-2xl font-black text-white tracking-tight leading-none tabular-nums">
+                                {{ currentData()?.kcal || 0 }}
+                              </span>
+                              <span class="text-[9px] font-black uppercase tracking-widest text-stone-300 mt-0.5">
+                                KCAL
+                              </span>
+                            </div>
+                          </div>
                         </div>
-                      </div>
-                    </div>
 
-                    <!-- Leyenda de 3 Macros con porcentaje -->
-                    <div class="grid grid-cols-3 gap-1 pt-1.5 border-t border-white/15 text-center">
-                      <div class="flex flex-col items-center">
-                        <div class="inline-flex items-center gap-1 text-[9px] font-bold text-stone-300 uppercase">
-                          <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0"></span>
-                          <span>Proteína</span>
+                        <!-- Leyenda de 3 Macros con porcentaje -->
+                        <div class="grid grid-cols-3 gap-1 pt-1.5 border-t border-white/15 text-center">
+                          <div class="flex flex-col items-center">
+                            <div class="inline-flex items-center gap-1 text-[9px] font-bold text-stone-300 uppercase">
+                              <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0"></span>
+                              <span>Proteína</span>
+                            </div>
+                            <div class="text-xs sm:text-sm font-black text-emerald-400 mt-0.5 tabular-nums">
+                              {{ currentData()?.protein }}g <span class="text-[9px] font-medium text-stone-300">({{
+                                dist.proteinPct }}%)</span>
+                            </div>
+                          </div>
+                          <div class="flex flex-col items-center border-x border-white/15">
+                            <div class="inline-flex items-center gap-1 text-[9px] font-bold text-stone-300 uppercase">
+                              <span class="w-1.5 h-1.5 rounded-full bg-awakin-sun shrink-0"></span>
+                              <span>Carbos</span>
+                            </div>
+                            <div class="text-xs sm:text-sm font-black text-awakin-sun mt-0.5 tabular-nums">
+                              {{ currentData()?.carbs }}g <span class="text-[9px] font-medium text-stone-300">({{
+                                dist.carbsPct }}%)</span>
+                            </div>
+                          </div>
+                          <div class="flex flex-col items-center">
+                            <div class="inline-flex items-center gap-1 text-[9px] font-bold text-stone-300 uppercase">
+                              <span class="w-1.5 h-1.5 rounded-full bg-rose-500 shrink-0"></span>
+                              <span>Grasas</span>
+                            </div>
+                            <div class="text-xs sm:text-sm font-black text-rose-400 mt-0.5 tabular-nums">
+                              {{ currentData()?.fat }}g <span class="text-[9px] font-medium text-stone-300">({{
+                                dist.fatPct
+                                }}%)</span>
+                            </div>
+                          </div>
                         </div>
-                        <div class="text-xs sm:text-sm font-black text-emerald-400 mt-0.5 tabular-nums">
-                          {{ currentData()?.protein }}g <span class="text-[9px] font-medium text-stone-300">({{
-                            dist.proteinPct }}%)</span>
-                        </div>
+                        }
                       </div>
-                      <div class="flex flex-col items-center border-x border-white/15">
-                        <div class="inline-flex items-center gap-1 text-[9px] font-bold text-stone-300 uppercase">
-                          <span class="w-1.5 h-1.5 rounded-full bg-awakin-sun shrink-0"></span>
-                          <span>Carbos</span>
-                        </div>
-                        <div class="text-xs sm:text-sm font-black text-awakin-sun mt-0.5 tabular-nums">
-                          {{ currentData()?.carbs }}g <span class="text-[9px] font-medium text-stone-300">({{
-                            dist.carbsPct }}%)</span>
-                        </div>
-                      </div>
-                      <div class="flex flex-col items-center">
-                        <div class="inline-flex items-center gap-1 text-[9px] font-bold text-stone-300 uppercase">
-                          <span class="w-1.5 h-1.5 rounded-full bg-rose-500 shrink-0"></span>
-                          <span>Grasas</span>
-                        </div>
-                        <div class="text-xs sm:text-sm font-black text-rose-400 mt-0.5 tabular-nums">
-                          {{ currentData()?.fat }}g <span class="text-[9px] font-medium text-stone-300">({{ dist.fatPct
-                            }}%)</span>
-                        </div>
-                      </div>
-                    </div>
-                    }
-                  </div>
-                  }
-
-                  <!-- ========================================================== -->
-                  <!-- VARIANTE 2: GRID 4 MÉTRICAS (2x2 BLOQUES ESTILIZADOS)      -->
-                  <!-- ========================================================== -->
-                  @else if (selectedTemplate() === 'grid2x2') {
-                  <div class="space-y-2 text-center text-white">
-                    <div class="space-y-0.5">
-                      <span class="text-[9px] font-black uppercase tracking-widest text-awakin-sun">
-                        {{ formattedMealTitle() }} • {{ currentData()?.dateFormatted }}
-                      </span>
-                      <h4
-                        class="text-xs sm:text-sm font-black uppercase tracking-tight break-words text-wrap leading-tight">
-                        {{ currentData()?.dishName }}
-                      </h4>
-                    </div>
-
-                    <div class="grid grid-cols-2 gap-1.5 pt-1 text-left">
-                      <div class="p-2.5 rounded-xl bg-black/40 backdrop-blur-xs border border-white/15">
-                        <div class="text-[9px] font-bold text-stone-300 uppercase tracking-wider">Calorías Totales</div>
-                        <div class="text-base sm:text-lg font-black text-white mt-0.5 tabular-nums leading-none">
-                          {{ currentData()?.kcal }} <span class="text-[10px] text-stone-300 font-bold">kcal</span>
-                        </div>
-                      </div>
-                      <div class="p-2.5 rounded-xl bg-black/40 backdrop-blur-xs border border-white/15">
-                        <div class="text-[9px] font-bold text-emerald-400 uppercase tracking-wider">Proteínas</div>
-                        <div class="text-base sm:text-lg font-black text-emerald-400 mt-0.5 tabular-nums leading-none">
-                          {{ currentData()?.protein }} <span class="text-[10px] text-stone-300 font-bold">g</span>
-                        </div>
-                      </div>
-                      <div class="p-2.5 rounded-xl bg-black/40 backdrop-blur-xs border border-white/15">
-                        <div class="text-[9px] font-bold text-awakin-sun uppercase tracking-wider">Carbohidratos</div>
-                        <div class="text-base sm:text-lg font-black text-awakin-sun mt-0.5 tabular-nums leading-none">
-                          {{ currentData()?.carbs }} <span class="text-[10px] text-stone-300 font-bold">g</span>
-                        </div>
-                      </div>
-                      <div class="p-2.5 rounded-xl bg-black/40 backdrop-blur-xs border border-white/15">
-                        <div class="text-[9px] font-bold text-rose-400 uppercase tracking-wider">Grasas</div>
-                        <div class="text-base sm:text-lg font-black text-rose-400 mt-0.5 tabular-nums leading-none">
-                          {{ currentData()?.fat }} <span class="text-[10px] text-stone-300 font-bold">g</span>
-                        </div>
-                      </div>
-                    </div>
-
-                    @if (currentData()?.dishes && currentData()!.dishes!.length > 1) {
-                    <div class="flex flex-wrap items-center justify-center gap-1 pt-1">
-                      @for (dish of currentData()?.dishes; track dish.name) {
-                      <span
-                        class="text-[9px] font-bold px-2 py-0.5 rounded-full bg-white/10 text-stone-100 border border-white/15 truncate max-w-[130px]">
-                        • {{ dish.name }}
-                      </span>
                       }
-                    </div>
-                    }
-                  </div>
-                  }
 
-                  <!-- ========================================================== -->
-                  <!-- VARIANTE 3: CHEF / PLATILLOS & RECETA (DESGLOSE GOURMET)   -->
-                  <!-- ========================================================== -->
-                  @else if (selectedTemplate() === 'chef') {
-                  <div class="space-y-2 text-white text-left">
-                    <div class="border-b border-white/15 pb-1.5 flex items-start justify-between gap-2">
-                      <div>
-                        <div class="text-[9px] font-black uppercase tracking-widest text-awakin-sun">
+                      <!-- ========================================================== -->
+                      <!-- VARIANTE 2: GRID 4 MÉTRICAS (2x2 BLOQUES ESTILIZADOS)      -->
+                      <!-- ========================================================== -->
+                      @else if (selectedTemplate() === 'grid2x2') {
+                      <div class="space-y-2 text-center text-white">
+                        <div class="space-y-0.5">
+                          <span class="text-[9px] font-black uppercase tracking-widest text-awakin-sun">
+                            {{ formattedMealTitle() }} • {{ currentData()?.dateFormatted }}
+                          </span>
+                          <h4
+                            class="text-xs sm:text-sm font-black uppercase tracking-tight break-words text-wrap leading-tight">
+                            {{ currentData()?.dishName }}
+                          </h4>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-1.5 pt-1 text-left">
+                          <div class="p-2.5 rounded-xl bg-black/40 backdrop-blur-xs border border-white/15">
+                            <div class="text-[9px] font-bold text-stone-300 uppercase tracking-wider">Calorías Totales
+                            </div>
+                            <div class="text-base sm:text-lg font-black text-white mt-0.5 tabular-nums leading-none">
+                              {{ currentData()?.kcal }} <span class="text-[10px] text-stone-300 font-bold">kcal</span>
+                            </div>
+                          </div>
+                          <div class="p-2.5 rounded-xl bg-black/40 backdrop-blur-xs border border-white/15">
+                            <div class="text-[9px] font-bold text-emerald-400 uppercase tracking-wider">Proteínas</div>
+                            <div
+                              class="text-base sm:text-lg font-black text-emerald-400 mt-0.5 tabular-nums leading-none">
+                              {{ currentData()?.protein }} <span class="text-[10px] text-stone-300 font-bold">g</span>
+                            </div>
+                          </div>
+                          <div class="p-2.5 rounded-xl bg-black/40 backdrop-blur-xs border border-white/15">
+                            <div class="text-[9px] font-bold text-awakin-sun uppercase tracking-wider">Carbohidratos
+                            </div>
+                            <div
+                              class="text-base sm:text-lg font-black text-awakin-sun mt-0.5 tabular-nums leading-none">
+                              {{ currentData()?.carbs }} <span class="text-[10px] text-stone-300 font-bold">g</span>
+                            </div>
+                          </div>
+                          <div class="p-2.5 rounded-xl bg-black/40 backdrop-blur-xs border border-white/15">
+                            <div class="text-[9px] font-bold text-rose-400 uppercase tracking-wider">Grasas</div>
+                            <div class="text-base sm:text-lg font-black text-rose-400 mt-0.5 tabular-nums leading-none">
+                              {{ currentData()?.fat }} <span class="text-[10px] text-stone-300 font-bold">g</span>
+                            </div>
+                          </div>
+                        </div>
+
+                        @if (currentData()?.dishes && currentData()!.dishes!.length > 1) {
+                        <div class="flex flex-wrap items-center justify-center gap-1 pt-1">
+                          @for (dish of currentData()?.dishes; track dish.name) {
+                          <span
+                            class="text-[9px] font-bold px-2 py-0.5 rounded-full bg-white/10 text-stone-100 border border-white/15 truncate max-w-[130px]">
+                            • {{ dish.name }}
+                          </span>
+                          }
+                        </div>
+                        }
+                      </div>
+                      }
+
+                      <!-- ========================================================== -->
+                      <!-- VARIANTE 3: CHEF / PLATILLOS & RECETA (DESGLOSE GOURMET)   -->
+                      <!-- ========================================================== -->
+                      @else if (selectedTemplate() === 'chef') {
+                      <div class="space-y-2 text-white text-left">
+                        <div class="border-b border-white/15 pb-1.5 flex items-start justify-between gap-2">
+                          <div>
+                            <div class="text-[9px] font-black uppercase tracking-widest text-awakin-sun">
+                              {{ formattedMealTitle() }} • {{ currentData()?.dateFormatted }}
+                            </div>
+                            <h4
+                              class="text-xs sm:text-sm font-black uppercase tracking-tight break-words text-wrap leading-tight mt-0.5">
+                              {{ currentData()?.dishName }}
+                            </h4>
+                          </div>
+                          <div class="text-right shrink-0">
+                            <span class="text-sm sm:text-base font-black text-white tabular-nums">{{ currentData()?.kcal
+                              }}</span>
+                            <span class="text-[9px] text-stone-300 font-bold uppercase block -mt-1">kcal</span>
+                          </div>
+                        </div>
+
+                        <!-- Barra horizontal de distribución de macros -->
+                        @if (macroDistribution(); as dist) {
+                        <div class="space-y-1">
+                          <div class="h-2 w-full rounded-full bg-white/10 overflow-hidden flex shadow-inner">
+                            <div class="bg-emerald-500 h-full" [style.width.%]="dist.proteinPct"></div>
+                            <div class="bg-awakin-sun h-full" [style.width.%]="dist.carbsPct"></div>
+                            <div class="bg-rose-500 h-full" [style.width.%]="dist.fatPct"></div>
+                          </div>
+                          <div class="flex items-center justify-between text-[9px] font-bold text-stone-300">
+                            <span class="text-emerald-400">{{ currentData()?.protein }}g P</span>
+                            <span class="text-awakin-sun">{{ currentData()?.carbs }}g C</span>
+                            <span class="text-rose-400">{{ currentData()?.fat }}g G</span>
+                          </div>
+                        </div>
+                        }
+
+                        <!-- Lista de platillos o ingredientes -->
+                        @if (currentData()?.dishes && currentData()!.dishes!.length > 1) {
+                        <div class="space-y-1 py-1 max-h-36 overflow-y-auto pr-0.5">
+                          @for (dish of currentData()?.dishes; track dish.name) {
+                          <div class="flex items-center justify-between text-[10px] bg-white/5 px-2 py-1 rounded-lg">
+                            <span class="font-bold text-stone-100 truncate pr-2">• {{ dish.name }}</span>
+                            <span class="text-stone-300 font-mono text-[9px] shrink-0">{{ dish.portionText }} · {{
+                              dish.kcal
+                              }} kcal</span>
+                          </div>
+                          }
+                        </div>
+                        } @else if (currentData()?.ingredients && currentData()!.ingredients!.length > 0) {
+                        <div class="space-y-0.5 py-1 max-h-32 overflow-y-auto pr-0.5">
+                          <div class="text-[8px] font-black uppercase tracking-wider text-awakin-sun mb-1">Ingredientes
+                            Principales:</div>
+                          @for (ing of currentData()?.ingredients?.slice(0, 5); track $index) {
+                          <div
+                            class="flex items-center justify-between text-[9px] text-stone-300 bg-white/5 px-1.5 py-0.5 rounded">
+                            <span class="truncate pr-1">• {{ ing.nombre || ing.ingredient?.name || ing.name }}</span>
+                            <span class="font-black text-white shrink-0">
+                              {{ ing.cantidad_display || (ing.quantity ? formatQty(ing.quantity, ing.unit) : '') }}
+                            </span>
+                          </div>
+                          }
+                        </div>
+                        }
+                      </div>
+                      }
+
+                      <!-- ========================================================== -->
+                      <!-- VARIANTE 4: RITUAL CULT (EDICIÓN OFICIAL DE TRIBU AWAKIN)  -->
+                      <!-- ========================================================== -->
+                      @else if (selectedTemplate() === 'ritual') {
+                      <div class="space-y-2.5 text-center text-white">
+                        <div class="text-[w-12] font-black uppercase tracking-widest text-awakin-sun drop-shadow-sm">
+                          DISCIPLINA EN CADA COMIDA
+                        </div>
+
+                        <!-- Gran Calórica Destacada -->
+                        <div class="py-1">
+                          <div
+                            class="text-2xl sm:text-3xl font-black text-white tracking-tighter tabular-nums leading-none drop-shadow-lg">
+                            {{ currentData()?.kcal || 0 }} <span
+                              class="text-sm font-bold text-awakin-sun tracking-normal">KCAL</span>
+                          </div>
+                          <h4
+                            class="text-xs font-black uppercase italic tracking-tight break-words text-wrap leading-tight mt-1 text-stone-100">
+                            {{ currentData()?.dishName }}
+                          </h4>
+                        </div>
+
+                        <!-- Fila de 3 macros con estilo insignia militar / tribu -->
+                        <div class="grid grid-cols-3 gap-1.5 py-1.5 border-y border-white/20">
+                          <div class="p-1 rounded-lg bg-black/40 border border-white/10">
+                            <div class="text-[8px] font-black text-emerald-400 uppercase tracking-widest">Proteína</div>
+                            <div class="text-xs sm:text-sm font-black text-white mt-0.5">{{ currentData()?.protein }}g
+                            </div>
+                          </div>
+                          <div class="p-1 rounded-lg bg-black/40 border border-white/10">
+                            <div class="text-[8px] font-black text-awakin-sun uppercase tracking-widest">Carbos</div>
+                            <div class="text-xs sm:text-sm font-black text-white mt-0.5">{{ currentData()?.carbs }}g
+                            </div>
+                          </div>
+                          <div class="p-1 rounded-lg bg-black/40 border border-white/10">
+                            <div class="text-[8px] font-black text-rose-400 uppercase tracking-widest">Grasas</div>
+                            <div class="text-xs sm:text-sm font-black text-white mt-0.5">{{ currentData()?.fat }}g</div>
+                          </div>
+                        </div>
+
+                        <div class="text-[9px] font-bold text-stone-300 uppercase tracking-wider">
                           {{ formattedMealTitle() }} • {{ currentData()?.dateFormatted }}
                         </div>
+                      </div>
+                      }
+
+                      <!-- ========================================================== -->
+                      <!-- VARIANTE 5: STICKER MINIMAL (ESTÉTICO ULTRA LIMPIO)        -->
+                      <!-- ========================================================== -->
+                      @else if (selectedTemplate() === 'minimal') {
+                      <div class="py-2 px-3 text-center space-y-1.5 text-white">
+                        <div
+                          class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-black/60 backdrop-blur-md border border-white/20 text-white shadow-xl">
+                          <span class="text-[10px] font-black text-awakin-sun uppercase">{{ formattedMealTitle()
+                            }}</span>
+                          <span class="text-stone-400">•</span>
+                          <span class="text-xs font-black text-white tabular-nums">{{ currentData()?.kcal }} kcal</span>
+                        </div>
+
                         <h4
-                          class="text-xs sm:text-sm font-black uppercase tracking-tight break-words text-wrap leading-tight mt-0.5">
+                          class="text-xs sm:text-sm font-black uppercase tracking-tight break-words text-wrap leading-tight drop-shadow-md">
                           {{ currentData()?.dishName }}
                         </h4>
-                      </div>
-                      <div class="text-right shrink-0">
-                        <span class="text-sm sm:text-base font-black text-white tabular-nums">{{ currentData()?.kcal
-                          }}</span>
-                        <span class="text-[9px] text-stone-300 font-bold uppercase block -mt-1">kcal</span>
-                      </div>
-                    </div>
 
-                    <!-- Barra horizontal de distribución de macros -->
-                    @if (macroDistribution(); as dist) {
-                    <div class="space-y-1">
-                      <div class="h-2 w-full rounded-full bg-white/10 overflow-hidden flex shadow-inner">
-                        <div class="bg-emerald-500 h-full" [style.width.%]="dist.proteinPct"></div>
-                        <div class="bg-awakin-sun h-full" [style.width.%]="dist.carbsPct"></div>
-                        <div class="bg-rose-500 h-full" [style.width.%]="dist.fatPct"></div>
-                      </div>
-                      <div class="flex items-center justify-between text-[9px] font-bold text-stone-300">
-                        <span class="text-emerald-400">{{ currentData()?.protein }}g P</span>
-                        <span class="text-awakin-sun">{{ currentData()?.carbs }}g C</span>
-                        <span class="text-rose-400">{{ currentData()?.fat }}g G</span>
-                      </div>
-                    </div>
-                    }
-
-                    <!-- Lista de platillos o ingredientes -->
-                    @if (currentData()?.dishes && currentData()!.dishes!.length > 1) {
-                    <div class="space-y-1 py-1 max-h-36 overflow-y-auto pr-0.5">
-                      @for (dish of currentData()?.dishes; track dish.name) {
-                      <div class="flex items-center justify-between text-[10px] bg-white/5 px-2 py-1 rounded-lg">
-                        <span class="font-bold text-stone-100 truncate pr-2">• {{ dish.name }}</span>
-                        <span class="text-stone-300 font-mono text-[9px] shrink-0">{{ dish.portionText }} · {{ dish.kcal
-                          }} kcal</span>
+                        <div
+                          class="flex items-center justify-center gap-2 text-[10px] font-black tracking-wider text-stone-200 drop-shadow-sm">
+                          <span class="text-emerald-400">{{ currentData()?.protein }}g P</span>
+                          <span class="text-stone-400">•</span>
+                          <span class="text-awakin-sun">{{ currentData()?.carbs }}g C</span>
+                          <span class="text-stone-400">•</span>
+                          <span class="text-rose-400">{{ currentData()?.fat }}g G</span>
+                        </div>
                       </div>
                       }
-                    </div>
-                    } @else if (currentData()?.ingredients && currentData()!.ingredients!.length > 0) {
-                    <div class="space-y-0.5 py-1 max-h-32 overflow-y-auto pr-0.5">
-                      <div class="text-[8px] font-black uppercase tracking-wider text-awakin-sun mb-1">Ingredientes
-                        Principales:</div>
-                      @for (ing of currentData()?.ingredients?.slice(0, 5); track $index) {
-                      <div
-                        class="flex items-center justify-between text-[9px] text-stone-300 bg-white/5 px-1.5 py-0.5 rounded">
-                        <span class="truncate pr-1">• {{ ing.nombre || ing.ingredient?.name || ing.name }}</span>
-                        <span class="font-black text-white shrink-0">
-                          {{ ing.cantidad_display || (ing.quantity ? formatQty(ing.quantity, ing.unit) : '') }}
-                        </span>
+
+                      <!-- ========================================================== -->
+                      <!-- VARIANTE 6: 100% EN EL PLAN (CERTIFICADO DE ADHERENCIA)    -->
+                      <!-- ========================================================== -->
+                      @else if (selectedTemplate() === 'adherence') {
+                      <div class="space-y-2 text-center text-white">
+                        <!-- Sello Verde Esmeralda -->
+                        <div
+                          class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/90 text-white font-black text-[9px] uppercase tracking-widest shadow-md">
+                          <i class="pi pi-check text-[9px]"></i>
+                          <span>100% En El Plan</span>
+                        </div>
+
+                        <div class="space-y-0.5">
+                          <div class="text-lg sm:text-xl font-black text-white tabular-nums">
+                            {{ currentData()?.kcal }} kcal
+                          </div>
+                          <h4
+                            class="text-xs font-black uppercase tracking-tight break-words text-wrap leading-tight text-stone-100">
+                            {{ currentData()?.dishName }}
+                          </h4>
+                        </div>
+
+                        <div class="grid grid-cols-3 gap-1 pt-1.5 border-t border-white/15 text-center">
+                          <div>
+                            <div class="text-[8px] font-bold text-stone-300 uppercase">Proteína</div>
+                            <div class="text-xs font-black text-emerald-400">{{ currentData()?.protein }}g</div>
+                          </div>
+                          <div class="border-x border-white/15">
+                            <div class="text-[8px] font-bold text-stone-300 uppercase">Carbos</div>
+                            <div class="text-xs font-black text-awakin-sun">{{ currentData()?.carbs }}g</div>
+                          </div>
+                          <div>
+                            <div class="text-[8px] font-bold text-stone-300 uppercase">Grasas</div>
+                            <div class="text-xs font-black text-rose-400">{{ currentData()?.fat }}g</div>
+                          </div>
+                        </div>
                       </div>
                       }
+
+                      <!-- ========================================================== -->
+                      <!-- BRANDING FOOTER EN CADA PLANTILLA (LOGO TRIBU + INTAKE)   -->
+                      <!-- ========================================================== -->
+                      <div class="pt-2 mt-2 border-t border-white/15 flex items-center justify-between text-left">
+                        <div class="flex items-center gap-1.5">
+                          <img src="/icons/intake-active.png" alt="Awakin Intake"
+                            class="w-4 h-4 object-contain shrink-0" />
+                          <span class="text-[9px] font-black uppercase tracking-wider text-white">Awakin</span>
+
+                          @if (kinTeam(); as kin) {
+                          <span class="text-[9px] text-stone-400 font-bold">×</span>
+                          @if (kin.team_logo_url) {
+                          <img [src]="kin.team_logo_url" [alt]="kin.team_name || 'Tribu'"
+                            class="w-3.5 h-3.5 object-cover rounded-full shrink-0" />
+                          }
+                          <span
+                            class="text-[8px] font-black uppercase tracking-wider text-awakin-sun truncate max-w-[80px]">
+                            {{ kin.team_name || 'Tribu' }}
+                          </span>
+                          }
+                        </div>
+
+                        <div class="text-[9px] font-bold text-stone-300 tracking-tight shrink-0">
+                          {{ athleteHandle() }}
+                        </div>
+                      </div>
+
                     </div>
-                    }
                   </div>
+                </div>
+
+              </div>
+            </div>
+          </div>
+
+          <!-- Tip interactivo para Mobile (Pellizcar para zoom / arrastrar con 1 dedo) -->
+          <div class="sm:hidden -mt-1 text-center select-none">
+            <span
+              class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-stone-200/70 text-[10px] font-bold text-stone-600">
+              <i class="pi pi-arrows-alt text-[9px] text-awakin-sun"></i>
+              Mueve con 1 dedo y pellizca con 2 dedos para cambiar tamaño
+            </span>
+          </div>
+
+          <!-- ========================================================================= -->
+          <!-- CONTROLES AWAKIN LIGHT (Configuración y Personalización Visual)           -->
+          <!-- ========================================================================= -->
+          <div class="space-y-3 pt-1" (touchstart)="$event.stopPropagation()" (touchmove)="$event.stopPropagation()">
+
+            <!-- 1. Carrusel de Plantillas Gráficas -->
+            <div>
+              <label class="block text-[10px] font-black uppercase tracking-wider text-stone-600 mb-1.5">
+                Plantilla Gráfica
+              </label>
+              <div class="flex gap-2 overflow-x-auto pb-1 no-scrollbar" (touchstart)="$event.stopPropagation()"
+                (touchmove)="$event.stopPropagation()">
+                @for (tpl of templates; track tpl.id) {
+                <button type="button" (click)="selectedTemplate.set(tpl.id)"
+                  class="flex flex-col items-center justify-center p-2 rounded-xl border text-center transition-all cursor-pointer shrink-0 min-w-[92px] w-[92px]"
+                  [ngClass]="selectedTemplate() === tpl.id
+                ? 'bg-awakin-sun/10 border-awakin-sun text-stone-900 shadow-xs'
+                : 'bg-white border-stone-200 text-stone-600 hover:border-stone-300'">
+                  <i [class]="tpl.icon + ' text-base mb-1'"
+                    [ngClass]="selectedTemplate() === tpl.id ? 'text-awakin-sun' : 'text-stone-400'"></i>
+                  <span class="text-[10px] font-black leading-tight">{{ tpl.label }}</span>
+                </button>
+                }
+              </div>
+            </div>
+
+            <!-- 2. Estilo de Tarjeta (Limpio / Cristal / Obsidiana) -->
+            <div>
+              <label class="block text-[10px] font-black uppercase tracking-wider text-stone-600 mb-1.5">
+                Estilo de Gráfico
+              </label>
+              <div class="grid grid-cols-3 gap-1.5">
+                <button type="button" (click)="cardStyle.set('transparent')"
+                  class="py-2 px-2.5 rounded-xl border text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5"
+                  [ngClass]="cardStyle() === 'transparent'
+                ? 'bg-stone-900 text-white border-stone-900 shadow-xs'
+                : 'bg-white text-stone-700 border-stone-200 hover:border-stone-300'">
+                  <i class="pi pi-sun text-xs"></i>
+                  <span>Limpio</span>
+                </button>
+                <button type="button" (click)="cardStyle.set('glass')"
+                  class="py-2 px-2.5 rounded-xl border text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5"
+                  [ngClass]="cardStyle() === 'glass'
+                ? 'bg-stone-900 text-white border-stone-900 shadow-xs'
+                : 'bg-white text-stone-700 border-stone-200 hover:border-stone-300'">
+                  <i class="pi pi-clone text-xs"></i>
+                  <span>Cristal</span>
+                </button>
+                <button type="button" (click)="cardStyle.set('dark')"
+                  class="py-2 px-2.5 rounded-xl border text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5"
+                  [ngClass]="cardStyle() === 'dark'
+                ? 'bg-stone-900 text-white border-stone-900 shadow-xs'
+                : 'bg-white text-stone-700 border-stone-200 hover:border-stone-300'">
+                  <i class="pi pi-moon text-xs"></i>
+                  <span>Obsidiana</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- 3. Formato y Proporción (9:16 / 4:5 / 1:1) -->
+            <div>
+              <label class="block text-[10px] font-black uppercase tracking-wider text-stone-600 mb-1.5">
+                Proporción
+              </label>
+              <div class="grid grid-cols-3 gap-1.5">
+                <button type="button" (click)="aspectRatio.set('9:16')"
+                  class="py-1.5 px-2 rounded-xl border text-xs font-bold transition-all cursor-pointer" [ngClass]="aspectRatio() === '9:16'
+                ? 'bg-stone-900 text-white border-stone-900 shadow-xs'
+                : 'bg-white text-stone-700 border-stone-200 hover:border-stone-300'">
+                  9:16 (Historia)
+                </button>
+                <button type="button" (click)="aspectRatio.set('4:5')"
+                  class="py-1.5 px-2 rounded-xl border text-xs font-bold transition-all cursor-pointer" [ngClass]="aspectRatio() === '4:5'
+                ? 'bg-stone-900 text-white border-stone-900 shadow-xs'
+                : 'bg-white text-stone-700 border-stone-200 hover:border-stone-300'">
+                  4:5 (Post)
+                </button>
+                <button type="button" (click)="aspectRatio.set('1:1')"
+                  class="py-1.5 px-2 rounded-xl border text-xs font-bold transition-all cursor-pointer" [ngClass]="aspectRatio() === '1:1'
+                ? 'bg-stone-900 text-white border-stone-900 shadow-xs'
+                : 'bg-white text-stone-700 border-stone-200 hover:border-stone-300'">
+                  1:1 (Cuadrado)
+                </button>
+              </div>
+            </div>
+
+            <!-- 4. Controles de Zoom / Tamaño y Posicionamiento Rápido (Solo Desktop) -->
+            <div class="hidden sm:block bg-white p-3 rounded-2xl border border-stone-200 space-y-2">
+              <div class="flex items-center justify-between">
+                <span class="text-[10px] font-black uppercase tracking-wider text-stone-600">
+                  Tamaño y Posición
+                </span>
+                <span class="text-xs font-black text-stone-800 tabular-nums">
+                  {{ Math.round(overlayScale() * 100) }}%
+                </span>
+              </div>
+
+              <!-- Slider de Escala y Botones Zoom -->
+              <div class="flex items-center gap-2">
+                <button type="button" (click)="zoomOut()"
+                  class="w-8 h-8 rounded-xl bg-stone-100 hover:bg-stone-200 text-stone-700 flex items-center justify-center font-bold text-xs cursor-pointer active:scale-95">
+                  -
+                </button>
+                <input type="range" min="0.30" max="1.25" step="0.01" [ngModel]="overlayScale()"
+                  (ngModelChange)="setZoom($event)"
+                  class="flex-1 accent-awakin-sun h-1.5 bg-stone-200 rounded-lg cursor-pointer" />
+                <button type="button" (click)="zoomIn()"
+                  class="w-8 h-8 rounded-xl bg-stone-100 hover:bg-stone-200 text-stone-700 flex items-center justify-center font-bold text-xs cursor-pointer active:scale-95">
+                  +
+                </button>
+              </div>
+
+              <!-- Botones de Alineación Rápida -->
+              <div class="grid grid-cols-4 gap-1 pt-1">
+                <button type="button" (click)="alignTop()"
+                  class="py-1 px-2 rounded-lg bg-stone-100 hover:bg-stone-200 text-[10px] font-bold text-stone-700 text-center cursor-pointer transition-all">
+                  Arriba
+                </button>
+                <button type="button" (click)="alignCenter()"
+                  class="py-1 px-2 rounded-lg bg-stone-100 hover:bg-stone-200 text-[10px] font-bold text-stone-700 text-center cursor-pointer transition-all">
+                  Centro
+                </button>
+                <button type="button" (click)="alignBottom()"
+                  class="py-1 px-2 rounded-lg bg-stone-100 hover:bg-stone-200 text-[10px] font-bold text-stone-700 text-center cursor-pointer transition-all">
+                  Abajo
+                </button>
+                <button type="button" (click)="resetPosition()"
+                  class="py-1 px-2 rounded-lg bg-stone-100 hover:bg-stone-200 text-[10px] font-bold text-stone-700 text-center cursor-pointer transition-all">
+                  Reset
+                </button>
+              </div>
+              <p class="text-[9px] text-stone-400 italic text-center">
+                Tip: Puedes arrastrar con el ratón o usar la rueda para ajustar el tamaño.
+              </p>
+            </div>
+
+            <!-- 5. Oscurecimiento de Fondo (Porcentaje) -->
+            <div class="bg-white p-3 rounded-2xl border border-stone-200 space-y-1">
+              <div class="flex items-center justify-between">
+                <div>
+                  <span class="text-[10px] font-black uppercase tracking-wider text-stone-700 block">
+                    Oscurecer Fondo
+                  </span>
+                  <span class="text-[9px] text-stone-400">Mejora el contraste sobre la foto</span>
+                </div>
+                <div class="flex items-center gap-1">
+                  @for (lvl of [0, 20, 35, 50]; track lvl) {
+                  <button type="button" (click)="dimLevel.set(lvl)"
+                    class="px-2.5 py-1 rounded-lg text-[10px] font-bold transition-all cursor-pointer" [ngClass]="dimLevel() === lvl
+                  ? 'bg-stone-900 text-white shadow-xs'
+                  : 'bg-stone-100 text-stone-600 hover:bg-stone-200'">
+                    {{ lvl }}%
+                  </button>
                   }
-
-                  <!-- ========================================================== -->
-                  <!-- VARIANTE 4: RITUAL CULT (EDICIÓN OFICIAL DE TRIBU AWAKIN)  -->
-                  <!-- ========================================================== -->
-                  @else if (selectedTemplate() === 'ritual') {
-                  <div class="space-y-2.5 text-center text-white">
-                    <div class="text-[w-12] font-black uppercase tracking-widest text-awakin-sun drop-shadow-sm">
-                      DISCIPLINA EN CADA COMIDA
-                    </div>
-
-                    <!-- Gran Calórica Destacada -->
-                    <div class="py-1">
-                      <div
-                        class="text-2xl sm:text-3xl font-black text-white tracking-tighter tabular-nums leading-none drop-shadow-lg">
-                        {{ currentData()?.kcal || 0 }} <span
-                          class="text-sm font-bold text-awakin-sun tracking-normal">KCAL</span>
-                      </div>
-                      <h4
-                        class="text-xs font-black uppercase italic tracking-tight break-words text-wrap leading-tight mt-1 text-stone-100">
-                        {{ currentData()?.dishName }}
-                      </h4>
-                    </div>
-
-                    <!-- Fila de 3 macros con estilo insignia militar / tribu -->
-                    <div class="grid grid-cols-3 gap-1.5 py-1.5 border-y border-white/20">
-                      <div class="p-1 rounded-lg bg-black/40 border border-white/10">
-                        <div class="text-[8px] font-black text-emerald-400 uppercase tracking-widest">Proteína</div>
-                        <div class="text-xs sm:text-sm font-black text-white mt-0.5">{{ currentData()?.protein }}g</div>
-                      </div>
-                      <div class="p-1 rounded-lg bg-black/40 border border-white/10">
-                        <div class="text-[8px] font-black text-awakin-sun uppercase tracking-widest">Carbos</div>
-                        <div class="text-xs sm:text-sm font-black text-white mt-0.5">{{ currentData()?.carbs }}g</div>
-                      </div>
-                      <div class="p-1 rounded-lg bg-black/40 border border-white/10">
-                        <div class="text-[8px] font-black text-rose-400 uppercase tracking-widest">Grasas</div>
-                        <div class="text-xs sm:text-sm font-black text-white mt-0.5">{{ currentData()?.fat }}g</div>
-                      </div>
-                    </div>
-
-                    <div class="text-[9px] font-bold text-stone-300 uppercase tracking-wider">
-                      {{ formattedMealTitle() }} • {{ currentData()?.dateFormatted }}
-                    </div>
-                  </div>
-                  }
-
-                  <!-- ========================================================== -->
-                  <!-- VARIANTE 5: STICKER MINIMAL (ESTÉTICO ULTRA LIMPIO)        -->
-                  <!-- ========================================================== -->
-                  @else if (selectedTemplate() === 'minimal') {
-                  <div class="py-2 px-3 text-center space-y-1.5 text-white">
-                    <div
-                      class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-black/60 backdrop-blur-md border border-white/20 text-white shadow-xl">
-                      <span class="text-[10px] font-black text-awakin-sun uppercase">{{ formattedMealTitle() }}</span>
-                      <span class="text-stone-400">•</span>
-                      <span class="text-xs font-black text-white tabular-nums">{{ currentData()?.kcal }} kcal</span>
-                    </div>
-
-                    <h4
-                      class="text-xs sm:text-sm font-black uppercase tracking-tight break-words text-wrap leading-tight drop-shadow-md">
-                      {{ currentData()?.dishName }}
-                    </h4>
-
-                    <div
-                      class="flex items-center justify-center gap-2 text-[10px] font-black tracking-wider text-stone-200 drop-shadow-sm">
-                      <span class="text-emerald-400">{{ currentData()?.protein }}g P</span>
-                      <span class="text-stone-400">•</span>
-                      <span class="text-awakin-sun">{{ currentData()?.carbs }}g C</span>
-                      <span class="text-stone-400">•</span>
-                      <span class="text-rose-400">{{ currentData()?.fat }}g G</span>
-                    </div>
-                  </div>
-                  }
-
-                  <!-- ========================================================== -->
-                  <!-- VARIANTE 6: 100% EN EL PLAN (CERTIFICADO DE ADHERENCIA)    -->
-                  <!-- ========================================================== -->
-                  @else if (selectedTemplate() === 'adherence') {
-                  <div class="space-y-2 text-center text-white">
-                    <!-- Sello Verde Esmeralda -->
-                    <div
-                      class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/90 text-white font-black text-[9px] uppercase tracking-widest shadow-md">
-                      <i class="pi pi-check text-[9px]"></i>
-                      <span>100% En El Plan</span>
-                    </div>
-
-                    <div class="space-y-0.5">
-                      <div class="text-lg sm:text-xl font-black text-white tabular-nums">
-                        {{ currentData()?.kcal }} kcal
-                      </div>
-                      <h4
-                        class="text-xs font-black uppercase tracking-tight break-words text-wrap leading-tight text-stone-100">
-                        {{ currentData()?.dishName }}
-                      </h4>
-                    </div>
-
-                    <div class="grid grid-cols-3 gap-1 pt-1.5 border-t border-white/15 text-center">
-                      <div>
-                        <div class="text-[8px] font-bold text-stone-300 uppercase">Proteína</div>
-                        <div class="text-xs font-black text-emerald-400">{{ currentData()?.protein }}g</div>
-                      </div>
-                      <div class="border-x border-white/15">
-                        <div class="text-[8px] font-bold text-stone-300 uppercase">Carbos</div>
-                        <div class="text-xs font-black text-awakin-sun">{{ currentData()?.carbs }}g</div>
-                      </div>
-                      <div>
-                        <div class="text-[8px] font-bold text-stone-300 uppercase">Grasas</div>
-                        <div class="text-xs font-black text-rose-400">{{ currentData()?.fat }}g</div>
-                      </div>
-                    </div>
-                  </div>
-                  }
-
-                  <!-- ========================================================== -->
-                  <!-- BRANDING FOOTER EN CADA PLANTILLA (LOGO TRIBU + INTAKE)   -->
-                  <!-- ========================================================== -->
-                  <div class="pt-2 mt-2 border-t border-white/15 flex items-center justify-between text-left">
-                    <div class="flex items-center gap-1.5">
-                      <img src="/icons/intake-active.png" alt="Awakin Intake" class="w-4 h-4 object-contain shrink-0" />
-                      <span class="text-[9px] font-black uppercase tracking-wider text-white">Awakin</span>
-
-                      @if (kinTeam(); as kin) {
-                      <span class="text-[9px] text-stone-400 font-bold">×</span>
-                      @if (kin.team_logo_url) {
-                      <img [src]="kin.team_logo_url" [alt]="kin.team_name || 'Tribu'"
-                        class="w-3.5 h-3.5 object-cover rounded-full shrink-0" />
-                      }
-                      <span
-                        class="text-[8px] font-black uppercase tracking-wider text-awakin-sun truncate max-w-[80px]">
-                        {{ kin.team_name || 'Tribu' }}
-                      </span>
-                      }
-                    </div>
-
-                    <div class="text-[9px] font-bold text-stone-300 tracking-tight shrink-0">
-                      {{ athleteHandle() }}
-                    </div>
-                  </div>
-
                 </div>
               </div>
             </div>
 
           </div>
-        </div>
-      </div>
 
-      <!-- Tip interactivo para Mobile (Pellizcar para zoom / arrastrar con 1 dedo) -->
-      <div class="sm:hidden -mt-1 text-center select-none">
-        <span
-          class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-stone-200/70 text-[10px] font-bold text-stone-600">
-          <i class="pi pi-arrows-alt text-[9px] text-awakin-sun"></i>
-          Mueve con 1 dedo y pellizca con 2 dedos para cambiar tamaño
-        </span>
-      </div>
-
-      <!-- ========================================================================= -->
-      <!-- CONTROLES AWAKIN LIGHT (Configuración y Personalización Visual)           -->
-      <!-- ========================================================================= -->
-      <div class="space-y-3 pt-1" (touchstart)="$event.stopPropagation()" (touchmove)="$event.stopPropagation()">
-
-        <!-- 1. Carrusel de Plantillas Gráficas -->
-        <div>
-          <label class="block text-[10px] font-black uppercase tracking-wider text-stone-600 mb-1.5">
-            Plantilla Gráfica
-          </label>
-          <div class="flex gap-2 overflow-x-auto pb-1 no-scrollbar" (touchstart)="$event.stopPropagation()" (touchmove)="$event.stopPropagation()">
-            @for (tpl of templates; track tpl.id) {
-            <button type="button" (click)="selectedTemplate.set(tpl.id)"
-              class="flex flex-col items-center justify-center p-2 rounded-xl border text-center transition-all cursor-pointer shrink-0 min-w-[92px] w-[92px]"
-              [ngClass]="selectedTemplate() === tpl.id
-                ? 'bg-awakin-sun/10 border-awakin-sun text-stone-900 shadow-xs'
-                : 'bg-white border-stone-200 text-stone-600 hover:border-stone-300'">
-              <i [class]="tpl.icon + ' text-base mb-1'"
-                [ngClass]="selectedTemplate() === tpl.id ? 'text-awakin-sun' : 'text-stone-400'"></i>
-              <span class="text-[10px] font-black leading-tight">{{ tpl.label }}</span>
-            </button>
-            }
+          <!-- Feedback de Éxito -->
+          @if (exportSuccessMessage()) {
+          <div
+            class="p-2.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-bold text-center flex items-center justify-center gap-1.5 animate-fadeIn">
+            <i class="pi pi-check text-xs"></i>
+            <span>{{ exportSuccessMessage() }}</span>
           </div>
+          }
+
         </div>
 
-        <!-- 2. Estilo de Tarjeta (Limpio / Cristal / Obsidiana) -->
-        <div>
-          <label class="block text-[10px] font-black uppercase tracking-wider text-stone-600 mb-1.5">
-            Estilo de Gráfico
-          </label>
-          <div class="grid grid-cols-3 gap-1.5">
-            <button type="button" (click)="cardStyle.set('transparent')"
-              class="py-2 px-2.5 rounded-xl border text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5"
-              [ngClass]="cardStyle() === 'transparent'
-                ? 'bg-stone-900 text-white border-stone-900 shadow-xs'
-                : 'bg-white text-stone-700 border-stone-200 hover:border-stone-300'">
-              <i class="pi pi-sun text-xs"></i>
-              <span>Limpio</span>
-            </button>
-            <button type="button" (click)="cardStyle.set('glass')"
-              class="py-2 px-2.5 rounded-xl border text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5"
-              [ngClass]="cardStyle() === 'glass'
-                ? 'bg-stone-900 text-white border-stone-900 shadow-xs'
-                : 'bg-white text-stone-700 border-stone-200 hover:border-stone-300'">
-              <i class="pi pi-clone text-xs"></i>
-              <span>Cristal</span>
-            </button>
-            <button type="button" (click)="cardStyle.set('dark')"
-              class="py-2 px-2.5 rounded-xl border text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5"
-              [ngClass]="cardStyle() === 'dark'
-                ? 'bg-stone-900 text-white border-stone-900 shadow-xs'
-                : 'bg-white text-stone-700 border-stone-200 hover:border-stone-300'">
-              <i class="pi pi-moon text-xs"></i>
-              <span>Obsidiana</span>
-            </button>
-          </div>
-        </div>
-
-        <!-- 3. Formato y Proporción (9:16 / 4:5 / 1:1) -->
-        <div>
-          <label class="block text-[10px] font-black uppercase tracking-wider text-stone-600 mb-1.5">
-            Proporción
-          </label>
-          <div class="grid grid-cols-3 gap-1.5">
-            <button type="button" (click)="aspectRatio.set('9:16')"
-              class="py-1.5 px-2 rounded-xl border text-xs font-bold transition-all cursor-pointer" [ngClass]="aspectRatio() === '9:16'
-                ? 'bg-stone-900 text-white border-stone-900 shadow-xs'
-                : 'bg-white text-stone-700 border-stone-200 hover:border-stone-300'">
-              9:16 (Historia)
-            </button>
-            <button type="button" (click)="aspectRatio.set('4:5')"
-              class="py-1.5 px-2 rounded-xl border text-xs font-bold transition-all cursor-pointer" [ngClass]="aspectRatio() === '4:5'
-                ? 'bg-stone-900 text-white border-stone-900 shadow-xs'
-                : 'bg-white text-stone-700 border-stone-200 hover:border-stone-300'">
-              4:5 (Post)
-            </button>
-            <button type="button" (click)="aspectRatio.set('1:1')"
-              class="py-1.5 px-2 rounded-xl border text-xs font-bold transition-all cursor-pointer" [ngClass]="aspectRatio() === '1:1'
-                ? 'bg-stone-900 text-white border-stone-900 shadow-xs'
-                : 'bg-white text-stone-700 border-stone-200 hover:border-stone-300'">
-              1:1 (Cuadrado)
-            </button>
-          </div>
-        </div>
-
-        <!-- 4. Controles de Zoom / Tamaño y Posicionamiento Rápido (Solo Desktop) -->
-        <div class="hidden sm:block bg-white p-3 rounded-2xl border border-stone-200 space-y-2">
-          <div class="flex items-center justify-between">
-            <span class="text-[10px] font-black uppercase tracking-wider text-stone-600">
-              Tamaño y Posición
-            </span>
-            <span class="text-xs font-black text-stone-800 tabular-nums">
-              {{ Math.round(overlayScale() * 100) }}%
-            </span>
-          </div>
-
-          <!-- Slider de Escala y Botones Zoom -->
-          <div class="flex items-center gap-2">
-            <button type="button" (click)="zoomOut()"
-              class="w-8 h-8 rounded-xl bg-stone-100 hover:bg-stone-200 text-stone-700 flex items-center justify-center font-bold text-xs cursor-pointer active:scale-95">
-              -
-            </button>
-            <input type="range" min="0.30" max="1.25" step="0.01" [ngModel]="overlayScale()"
-              (ngModelChange)="setZoom($event)"
-              class="flex-1 accent-awakin-sun h-1.5 bg-stone-200 rounded-lg cursor-pointer" />
-            <button type="button" (click)="zoomIn()"
-              class="w-8 h-8 rounded-xl bg-stone-100 hover:bg-stone-200 text-stone-700 flex items-center justify-center font-bold text-xs cursor-pointer active:scale-95">
-              +
-            </button>
-          </div>
-
-          <!-- Botones de Alineación Rápida -->
-          <div class="grid grid-cols-4 gap-1 pt-1">
-            <button type="button" (click)="alignTop()"
-              class="py-1 px-2 rounded-lg bg-stone-100 hover:bg-stone-200 text-[10px] font-bold text-stone-700 text-center cursor-pointer transition-all">
-              Arriba
-            </button>
-            <button type="button" (click)="alignCenter()"
-              class="py-1 px-2 rounded-lg bg-stone-100 hover:bg-stone-200 text-[10px] font-bold text-stone-700 text-center cursor-pointer transition-all">
-              Centro
-            </button>
-            <button type="button" (click)="alignBottom()"
-              class="py-1 px-2 rounded-lg bg-stone-100 hover:bg-stone-200 text-[10px] font-bold text-stone-700 text-center cursor-pointer transition-all">
-              Abajo
-            </button>
-            <button type="button" (click)="resetPosition()"
-              class="py-1 px-2 rounded-lg bg-stone-100 hover:bg-stone-200 text-[10px] font-bold text-stone-700 text-center cursor-pointer transition-all">
-              Reset
-            </button>
-          </div>
-          <p class="text-[9px] text-stone-400 italic text-center">
-            Tip: Puedes arrastrar con el ratón o usar la rueda para ajustar el tamaño.
-          </p>
-        </div>
-
-        <!-- 5. Oscurecimiento de Fondo (Porcentaje) -->
-        <div class="bg-white p-3 rounded-2xl border border-stone-200 space-y-1">
-          <div class="flex items-center justify-between">
-            <div>
-              <span class="text-[10px] font-black uppercase tracking-wider text-stone-700 block">
-                Oscurecer Fondo
-              </span>
-              <span class="text-[9px] text-stone-400">Mejora el contraste sobre la foto</span>
-            </div>
-            <div class="flex items-center gap-1">
-              @for (lvl of [0, 20, 35, 50]; track lvl) {
-              <button type="button" (click)="dimLevel.set(lvl)"
-                class="px-2.5 py-1 rounded-lg text-[10px] font-bold transition-all cursor-pointer" [ngClass]="dimLevel() === lvl
-                  ? 'bg-stone-900 text-white shadow-xs'
-                  : 'bg-stone-100 text-stone-600 hover:bg-stone-200'">
-                {{ lvl }}%
-              </button>
+        <!-- Footer de Acciones (Fijo abajo) -->
+          <div
+            class="px-5 py-3 border-t border-stone-200 bg-white flex items-center gap-2 shrink-0 sticky bottom-0 z-20">
+            <!-- Botón Principal: Compartir Historia -->
+            <button type="button" (click)="exportStory('share')" [disabled]="isExporting()"
+              class="flex-1 py-3 px-4 rounded-xl bg-awakin-sun hover:bg-awakin-sun-dark active:scale-[0.98] text-white
+              font-black text-xs uppercase tracking-wider flex items-center justify-center gap-2 shadow-sm
+              transition-all cursor-pointer disabled:opacity-50">
+              @if (isExporting() && exportAction() === 'share') {
+              <i class="pi pi-spin pi-spinner text-xs"></i>
+              <span>Generando...</span>
+              } @else {
+              <i class="pi pi-share-alt text-xs"></i>
+              <span>Compartir Historia</span>
               }
-            </div>
-          </div>
-        </div>
+            </button>
 
-      </div>
-
-      <!-- Feedback de Éxito -->
-      @if (exportSuccessMessage()) {
-      <div
-        class="p-2.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-bold text-center flex items-center justify-center gap-1.5 animate-fadeIn">
-        <i class="pi pi-check text-xs"></i>
-        <span>{{ exportSuccessMessage() }}</span>
-      </div>
-      }
-
-    </div>
-
-    <!-- Footer de Acciones (Fijo abajo) -->
-    <div class="px-5 py-3 border-t border-stone-200 bg-white flex items-center gap-2 shrink-0 z-10">
-      <!-- Botón Principal: Compartir Historia -->
-      <button type="button" (click)="exportStory('share')" [disabled]="isExporting()"
-        class="flex-1 py-3 px-4 rounded-xl bg-awakin-sun hover:bg-awakin-sun-dark active:scale-[0.98] text-stone-950 font-black text-xs uppercase tracking-wider flex items-center justify-center gap-2 shadow-sm transition-all cursor-pointer disabled:opacity-50">
-        @if (isExporting() && exportAction() === 'share') {
-        <i class="pi pi-spin pi-spinner text-xs"></i>
-        <span>Generando...</span>
-        } @else {
-        <i class="pi pi-share-alt text-xs"></i>
-        <span>Compartir Historia</span>
-        }
-      </button>
-
-      <!-- Botón Secundario: Descargar HD -->
-      <!-- <button type="button" (click)="exportStory('download')" [disabled]="isExporting()"
+            <!-- Botón Secundario: Descargar HD -->
+            <!-- <button type="button" (click)="exportStory('download')" [disabled]="isExporting()"
         class="py-3 px-3.5 rounded-xl bg-stone-100 hover:bg-stone-200 text-stone-800 font-bold text-xs flex items-center justify-center gap-1.5 transition-all cursor-pointer disabled:opacity-50"
         title="Descargar imagen en alta resolución">
         @if (isExporting() && exportAction() === 'download') {
@@ -670,7 +686,7 @@
         <i class="pi pi-download text-xs"></i>
         }
       </button> -->
-    </div>
+          </div>
 
-  </div>
+        </div>
 </p-dialog>

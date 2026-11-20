@@ -1,333 +1,341 @@
-<p-dialog [(visible)]="visible" [modal]="true" [draggable]="false" [resizable]="false" [closable]="false"
-  [showHeader]="false" [dismissableMask]="true" appendTo="body" (onHide)="closeModal()"
+  [modal]="true" [blockScroll]="true" [draggable]="false" [resizable]="false" [closable]="false" [showHeader]="false"
+  [dismissableMask]="true" appendTo="body" (onHide)="closeModal()"
   [style]="{ width: '95vw', maxWidth: '640px', borderRadius: '28px' }"
-  styleClass="overflow-hidden shadow-2xl border border-stone-200 bg-white [&_.p-dialog-content]:!p-0">
+  styleClass="overflow-hidden shadow-2xl border border-stone-200 bg-white [&_.p-dialog-content]:!p-0
+  [&_.p-dialog-content]:!overflow-hidden">
 
   @if (log(); as detail) {
-  <div class="bg-white flex flex-col max-h-[90vh] overflow-hidden">
+    <div class="bg-white flex flex-col max-h-[84dvh] overflow-hidden">
 
-    <!-- 1. CABECERA: SOLO FECHA, DURACIÓN, UBICACIÓN Y BOTÓN CANCELAR/CERRAR -->
-    <div class="px-5 py-3.5 border-b border-stone-100 bg-stone-50/80 flex items-center justify-between gap-3 shrink-0">
-      <div class="flex items-center gap-2 flex-wrap min-w-0">
-        <span
-          class="px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-awakin-sun/15 text-amber-900 border border-awakin-sun/25">
-          {{ detail.workout_date | date:'d MMM yyyy' }}
-        </span>
-        <span class="text-xs font-bold text-stone-600 flex items-center gap-1">
-          <i class="pi pi-clock text-[11px] text-awakin-sun"></i> {{ detail.duration_minutes }} min
-        </span>
-        @if (detail.location) {
-        <span class="text-xs font-semibold text-stone-500 flex items-center gap-1 truncate max-w-[150px]">
-          <i class="pi pi-map-marker text-[11px] text-stone-400"></i> {{ detail.location }}
-        </span>
-        }
-      </div>
-
-      <div class="flex items-center gap-1.5 shrink-0">
-        <button type="button" (click)="edit.emit(detail)"
-          class="w-8 h-8 rounded-full bg-stone-100 hover:bg-stone-200 text-stone-600 hover:text-stone-900 flex items-center justify-center transition-all cursor-pointer shadow-2xs active:scale-95"
-          title="Editar entrenamiento">
-          <i class="pi pi-pencil text-xs"></i>
-        </button>
-        <button type="button" (click)="closeModal()"
-          class="w-8 h-8 rounded-full bg-stone-100 hover:bg-stone-200 text-stone-600 hover:text-stone-900 flex items-center justify-center transition-all cursor-pointer shadow-2xs active:scale-95"
-          aria-label="Cerrar modal" title="Cerrar">
-          <i class="pi pi-times text-xs"></i>
-        </button>
-      </div>
-    </div>
-
-    <!-- CONTENIDO SCROLLEABLE -->
-    <div class="p-4 sm:p-5 overflow-y-auto space-y-4 flex-1">
-
-      <!-- TÍTULO DE LA RUTINA -->
-      <h3 class="text-base sm:text-lg font-black text-stone-900 uppercase tracking-tight text-wrap leading-tight">
-        {{ detail.routine_name }}
-      </h3>
-
-      <!-- 2. BANNER DE FOTO CON OVERLAY DE VOLUMEN Y SERIES TOTALES + ÍCONO AMPLIAR IMAGEN -->
-      @if (detail.photo_url) {
-      <div class="relative w-full h-52 sm:h-64 rounded-3xl overflow-hidden bg-stone-950 shadow-sm group select-none">
-        <img [src]="detail.photo_url" [alt]="detail.routine_name"
-          class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-[1.02] cursor-pointer"
-          (click)="openLightbox(detail.photo_url)" />
-        <div class="absolute inset-0 bg-gradient-to-t from-black/85 via-black/25 to-black/40 pointer-events-none"></div>
-
-        <!-- Botón ampliar imagen en la esquina superior derecha -->
-        <button type="button" (click)="openLightbox(detail.photo_url)"
-          class="absolute top-3 right-3 w-8 h-8 rounded-full bg-black/55 hover:bg-black/80 text-white backdrop-blur-md flex items-center justify-center transition-all cursor-pointer shadow-md active:scale-95 z-10"
-          title="Ampliar imagen" aria-label="Ampliar imagen">
-          <i class="pi pi-search-plus text-xs"></i>
-        </button>
-
-        <!-- Overlay inferior: Volumen Total y Series Totales -->
-        <div
-          class="absolute bottom-3 left-3.5 right-3.5 sm:bottom-4 sm:left-4 sm:right-4 flex items-end justify-between gap-3 text-white z-10">
-          <div>
-            <span
-              class="text-[10px] font-black uppercase tracking-wider text-amber-300 drop-shadow-sm block mb-0.5">Volumen
-              Total</span>
-            <span class="text-xl sm:text-2xl font-black drop-shadow-md">
-              {{ detail.total_volume | number:'1.0-0' }} <span class="text-xs font-bold text-stone-200 uppercase">{{
-                detail.volume_unit }}</span>
-            </span>
-          </div>
-          <div class="text-right">
-            <span
-              class="text-[10px] font-black uppercase tracking-wider text-amber-300 drop-shadow-sm block mb-0.5">Series
-              Totales</span>
-            <span class="text-xl sm:text-2xl font-black drop-shadow-md">
-              {{ detail.total_sets }} <span class="text-xs font-bold text-stone-200">series</span>
-            </span>
-          </div>
-        </div>
-      </div>
-      } @else {
-      <!-- Banner sin foto: Estilo Awakin con Volumen y Series Totales -->
+      <!-- 1. CABECERA: SOLO FECHA, DURACIÓN, UBICACIÓN Y BOTÓN CANCELAR/CERRAR -->
       <div
-        class="relative w-full rounded-3xl p-4 sm:p-5 bg-gradient-to-br from-stone-900 to-stone-800 text-white shadow-sm flex items-center justify-between">
-        <div>
-          <span class="text-[10px] font-black uppercase tracking-wider text-amber-400 block mb-0.5">Volumen Total</span>
-          <span class="text-xl sm:text-2xl font-black text-white">
-            {{ detail.total_volume | number:'1.0-0' }} <span class="text-xs font-bold text-stone-300 uppercase">{{
-              detail.volume_unit }}</span>
+        class="px-5 py-3.5 border-b border-stone-100 bg-stone-50/80 flex items-center justify-between gap-3 shrink-0">
+        <div class="flex items-center gap-2 flex-wrap min-w-0">
+          <span
+            class="px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-awakin-sun/15 text-amber-900 border border-awakin-sun/25">
+            {{ detail.workout_date | date:'d MMM yyyy' }}
           </span>
+          <span class="text-xs font-bold text-stone-600 flex items-center gap-1">
+            <i class="pi pi-clock text-[11px] text-awakin-sun"></i> {{ detail.duration_minutes }} min
+          </span>
+          @if (detail.location) {
+          <span class="text-xs font-semibold text-stone-500 flex items-center gap-1 truncate max-w-[150px]">
+            <i class="pi pi-map-marker text-[11px] text-stone-400"></i> {{ detail.location }}
+          </span>
+          }
         </div>
-        <div class="text-right">
-          <span class="text-[10px] font-black uppercase tracking-wider text-amber-400 block mb-0.5">Series
-            Totales</span>
-          <span class="text-xl sm:text-2xl font-black text-white">
-            {{ detail.total_sets }} <span class="text-xs font-bold text-stone-300">series</span>
-          </span>
+
+        <div class="flex items-center gap-1.5 shrink-0">
+          <button type="button" (click)="edit.emit(detail)"
+            class="w-8 h-8 rounded-full bg-stone-100 hover:bg-stone-200 text-stone-600 hover:text-stone-900 flex items-center justify-center transition-all cursor-pointer shadow-2xs active:scale-95"
+            title="Editar entrenamiento">
+            <i class="pi pi-pencil text-xs"></i>
+          </button>
+          <button type="button" (click)="closeModal()"
+            class="w-8 h-8 rounded-full bg-stone-100 hover:bg-stone-200 text-stone-600 hover:text-stone-900 flex items-center justify-center transition-all cursor-pointer shadow-2xs active:scale-95"
+            aria-label="Cerrar modal" title="Cerrar">
+            <i class="pi pi-times text-xs"></i>
+          </button>
         </div>
       </div>
-      }
 
-      <!-- 3. DESGLOSE EXACTO POR GRUPO MUSCULAR CON MINI BODY-MAP Y LEYENDA (2 COLUMNAS) -->
-      @if (getExactMuscleBreakdownWithColors(detail).length > 0) {
-      <div class="p-3.5 rounded-2xl bg-kin-primary/5 border border-kin-primary/20 space-y-3">
-        <div class="flex items-center justify-between">
-          <div class="flex items-center gap-1.5 text-xs font-black text-stone-900 uppercase tracking-tight">
-            <i class="pi pi-chart-pie text-kin-primary"></i>
-            <span>Desglose por Músculo Objetivo</span>
-          </div>
-          <span
-            class="text-[9px] font-bold text-kin-secondary bg-white border border-kin-primary/25 px-2 py-0.5 rounded-full inline-flex items-center gap-1 shadow-2xs">
-            <span class="w-1.5 h-1.5 rounded-full bg-kin-primary"></span>
-            <span>Mapa de Calor</span>
-          </span>
-        </div>
+      <!-- CONTENIDO SCROLLEABLE -->
+        <div class="p-4 sm:p-5 overflow-y-auto overscroll-contain space-y-4 flex-1 min-h-0">
 
-        <div class="grid grid-cols-1 sm:grid-cols-12 gap-3.5 sm:gap-4 items-center">
-          <!-- Columna Izquierda: Body Map grande adaptado a la altura -->
-          <div class="sm:col-span-5 flex items-center justify-center p-3 rounded-2xl shadow-2xs">
-            <div class="h-60 sm:h-72 w-full flex items-stretch justify-center">
-              <app-workout-mini-body-map variant="light" [showLabels]="true" [gender]="athleteGender()"
-                [muscleBreakdown]="getExactMuscleBreakdownWithColors(detail)" />
+          <!-- TÍTULO DE LA RUTINA -->
+          <h3 class="text-base sm:text-lg font-black text-stone-900 uppercase tracking-tight text-wrap leading-tight">
+            {{ detail.routine_name }}
+          </h3>
+
+          <!-- 2. BANNER DE FOTO CON OVERLAY DE VOLUMEN Y SERIES TOTALES + ÍCONO AMPLIAR IMAGEN -->
+          @if (detail.photo_url) {
+          <div
+            class="relative w-full h-52 sm:h-64 rounded-3xl overflow-hidden bg-stone-950 shadow-sm group select-none">
+            <img [src]="detail.photo_url" [alt]="detail.routine_name"
+              class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-[1.02] cursor-pointer"
+              (click)="openLightbox(detail.photo_url)" />
+            <div class="absolute inset-0 bg-gradient-to-t from-black/85 via-black/25 to-black/40 pointer-events-none">
+            </div>
+
+            <!-- Botón ampliar imagen en la esquina superior derecha -->
+            <button type="button" (click)="openLightbox(detail.photo_url)"
+              class="absolute top-3 right-3 w-8 h-8 rounded-full bg-black/55 hover:bg-black/80 text-white backdrop-blur-md flex items-center justify-center transition-all cursor-pointer shadow-md active:scale-95 z-10"
+              title="Ampliar imagen" aria-label="Ampliar imagen">
+              <i class="pi pi-search-plus text-xs"></i>
+            </button>
+
+            <!-- Overlay inferior: Volumen Total y Series Totales -->
+            <div
+              class="absolute bottom-3 left-3.5 right-3.5 sm:bottom-4 sm:left-4 sm:right-4 flex items-end justify-between gap-3 text-white z-10">
+              <div>
+                <span
+                  class="text-[10px] font-black uppercase tracking-wider text-amber-300 drop-shadow-sm block mb-0.5">Volumen
+                  Total</span>
+                <span class="text-xl sm:text-2xl font-black drop-shadow-md">
+                  {{ detail.total_volume | number:'1.0-0' }} <span class="text-xs font-bold text-stone-200 uppercase">{{
+                    detail.volume_unit }}</span>
+                </span>
+              </div>
+              <div class="text-right">
+                <span
+                  class="text-[10px] font-black uppercase tracking-wider text-amber-300 drop-shadow-sm block mb-0.5">Series
+                  Totales</span>
+                <span class="text-xl sm:text-2xl font-black drop-shadow-md">
+                  {{ detail.total_sets }} <span class="text-xs font-bold text-stone-200">series</span>
+                </span>
+              </div>
             </div>
           </div>
+          } @else {
+          <!-- Banner sin foto: Estilo Awakin con Volumen y Series Totales -->
+          <div
+            class="relative w-full rounded-3xl p-4 sm:p-5 bg-gradient-to-br from-stone-900 to-stone-800 text-white shadow-sm flex items-center justify-between">
+            <div>
+              <span class="text-[10px] font-black uppercase tracking-wider text-amber-400 block mb-0.5">Volumen
+                Total</span>
+              <span class="text-xl sm:text-2xl font-black text-white">
+                {{ detail.total_volume | number:'1.0-0' }} <span class="text-xs font-bold text-stone-300 uppercase">{{
+                  detail.volume_unit }}</span>
+              </span>
+            </div>
+            <div class="text-right">
+              <span class="text-[10px] font-black uppercase tracking-wider text-amber-400 block mb-0.5">Series
+                Totales</span>
+              <span class="text-xl sm:text-2xl font-black text-white">
+                {{ detail.total_sets }} <span class="text-xs font-bold text-stone-300">series</span>
+              </span>
+            </div>
+          </div>
+          }
 
-          <!-- Columna Derecha: Leyenda de series por músculo -->
-          <div class="sm:col-span-7 flex flex-col gap-2">
-            @for (m of getExactMuscleBreakdownWithColors(detail); track m.muscle) {
-            <div
-              class="flex items-center justify-between p-2.5 sm:p-3 px-3.5 rounded-2xl bg-white border border-kin-secondary/50 text-xs sm:text-sm font-bold text-stone-900 shadow-2xs">
-              <div class="flex items-center gap-2.5 min-w-0">
-                <span class="w-3 h-3 rounded-full shrink-0 shadow-2xs border border-white"
-                  [style.background-color]="m.color"></span>
-                <span class="font-black text-stone-900 truncate capitalize">{{ m.muscle }}</span>
+          <!-- 3. DESGLOSE EXACTO POR GRUPO MUSCULAR CON MINI BODY-MAP Y LEYENDA (2 COLUMNAS) -->
+          @if (getExactMuscleBreakdownWithColors(detail).length > 0) {
+          <div class="p-3.5 rounded-2xl bg-kin-primary/5 border border-kin-primary/20 space-y-3">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-1.5 text-xs font-black text-stone-900 uppercase tracking-tight">
+                <i class="pi pi-chart-pie text-kin-primary"></i>
+                <span>Desglose por Músculo Objetivo</span>
               </div>
-              <div class="flex items-center gap-2 shrink-0">
-                @if (m.levelLabel) {
-                <span
-                  class="text-[9px] font-bold px-2 py-0.5 rounded-md text-kin-secondary bg-kin-primary/10 uppercase tracking-wide">
-                  {{ m.levelLabel }}
-                </span>
+              <span
+                class="text-[9px] font-bold text-kin-secondary bg-white border border-kin-primary/25 px-2 py-0.5 rounded-full inline-flex items-center gap-1 shadow-2xs">
+                <span class="w-1.5 h-1.5 rounded-full bg-kin-primary"></span>
+                <span>Mapa de Calor</span>
+              </span>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-12 gap-3.5 sm:gap-4 items-center">
+              <!-- Columna Izquierda: Body Map grande adaptado a la altura -->
+              <div class="sm:col-span-5 flex items-center justify-center p-3 rounded-2xl shadow-2xs">
+                <div class="h-60 sm:h-72 w-full flex items-stretch justify-center">
+                  <app-workout-mini-body-map variant="light" [showLabels]="true" [gender]="athleteGender()"
+                    [muscleBreakdown]="getExactMuscleBreakdownWithColors(detail)" />
+                </div>
+              </div>
+
+              <!-- Columna Derecha: Leyenda de series por músculo -->
+              <div class="sm:col-span-7 flex flex-col gap-2">
+                @for (m of getExactMuscleBreakdownWithColors(detail); track m.muscle) {
+                <div
+                  class="flex items-center justify-between p-2.5 sm:p-3 px-3.5 rounded-2xl bg-white border border-kin-secondary/50 text-xs sm:text-sm font-bold text-stone-900 shadow-2xs">
+                  <div class="flex items-center gap-2.5 min-w-0">
+                    <span class="w-3 h-3 rounded-full shrink-0 shadow-2xs border border-white"
+                      [style.background-color]="m.color"></span>
+                    <span class="font-black text-stone-900 truncate capitalize">{{ m.muscle }}</span>
+                  </div>
+                  <div class="flex items-center gap-2 shrink-0">
+                    @if (m.levelLabel) {
+                    <span
+                      class="text-[9px] font-bold px-2 py-0.5 rounded-md text-kin-secondary bg-kin-primary/10 uppercase tracking-wide">
+                      {{ m.levelLabel }}
+                    </span>
+                    }
+                    <strong class="font-black text-kin-primary">
+                      {{ m.sets }} {{ m.sets === 1 ? 'serie' : 'series' }}
+                    </strong>
+                  </div>
+                </div>
                 }
-                <strong class="font-black text-kin-primary">
-                  {{ m.sets }} {{ m.sets === 1 ? 'serie' : 'series' }}
-                </strong>
               </div>
+            </div>
+          </div>
+          }
+
+          <!-- 4. NOTAS DEL ENTRENAMIENTO -->
+          @if (detail.notes) {
+          <div class="p-3 rounded-2xl bg-stone-50 border border-stone-200/90 text-xs text-stone-700 space-y-1">
+            <span class="text-[10px] font-black uppercase tracking-wider text-stone-400 block">Comentarios /
+              Notas</span>
+            <p class="leading-relaxed font-medium italic">"{{ detail.notes }}"</p>
+          </div>
+          }
+
+          <!-- 5. LISTA DE EJERCICIOS Y DETALLE DE SERIES (ESTILO HEVY) -->
+          <div class="space-y-3 pt-2">
+            <div class="flex items-center justify-between">
+              <h4 class="text-xs font-black uppercase tracking-wider text-stone-500 flex items-center gap-2">
+                <i class="pi pi-list text-awakin-sun"></i>
+                <span>Detalle de Ejercicios y Series</span>
+              </h4>
+              <span class="text-[11px] font-bold text-stone-400">
+                {{ detail.exercises?.length || 0 }} ejercicios
+              </span>
+            </div>
+
+            @if (detail.exercises && detail.exercises.length > 0) {
+            @for (ex of detail.exercises; track ex.id || $index) {
+            <div class="bg-white border border-stone-200/90 rounded-3xl p-4 shadow-sm space-y-3">
+              <!-- Cabecera del ejercicio (Miniatura + Título Fijo + Badges) -->
+              <div class="flex items-start gap-3">
+                <button type="button" (click)="inspectedExercise.set(ex)"
+                  class="w-16 h-16 rounded-2xl bg-stone-100 border border-stone-200 overflow-hidden shrink-0 flex items-center justify-center relative group cursor-pointer">
+                  @if (ex.image_url) {
+                  <img [src]="ex.image_url" [alt]="ex.exercise_name" class="w-full h-full object-cover" />
+                  <div
+                    class="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                    <i class="pi pi-play text-white text-xs"></i>
+                  </div>
+                  } @else {
+                  <i class="pi pi-bolt text-awakin-sun text-lg"></i>
+                  }
+                </button>
+
+                <div class="flex-1 min-w-0">
+                  <h4 (click)="inspectedExercise.set(ex)"
+                    class="text-sm font-black text-stone-900 uppercase tracking-tight leading-snug hover:text-awakin-sun transition-colors cursor-pointer select-none">
+                    {{ $index + 1 }}. {{ ex.exercise_name }}
+                  </h4>
+
+                  <div class="flex items-center gap-1.5 flex-wrap mt-1">
+                    @if (ex.target_muscle) {
+                    <span
+                      class="px-2 py-0.5 rounded-md bg-amber-500/10 text-amber-700 text-[9px] font-black uppercase tracking-tight">
+                      {{ translateMuscleName(ex.target_muscle) }}
+                    </span>
+                    }
+                    @for (sec of ex.secondary_muscles; track sec) {
+                    <span
+                      class="px-2 py-0.5 rounded-md bg-stone-100 text-stone-600 text-[9px] font-bold uppercase tracking-tight">
+                      {{ translateMuscleName(sec) }}
+                    </span>
+                    }
+                    @if (ex.equipment) {
+                    <span
+                      class="px-2 py-0.5 rounded-md bg-stone-100 text-stone-600 text-[9px] font-bold uppercase tracking-tight">
+                      {{ translateEquipmentName(ex.equipment) }}
+                    </span>
+                    }
+                    @if (ex.rest_seconds) {
+                    <span class="text-[10px] font-bold text-stone-400 inline-flex items-center gap-1">
+                      <i class="pi pi-clock text-[9px]"></i> {{ ex.rest_seconds }}s descanso
+                    </span>
+                    }
+                  </div>
+                </div>
+              </div>
+
+              <!-- Notas del ejercicio (ocupa todo el ancho con padding) -->
+              @if (ex.notes) {
+              <div
+                class="w-full px-3.5 py-2.5 rounded-xl bg-amber-500/5 border border-amber-500/20 text-xs text-amber-900 flex items-start gap-2">
+                <i class="pi pi-info-circle text-awakin-sun text-sm shrink-0 mt-0.5"></i>
+                <span class="font-medium leading-relaxed">{{ ex.notes }}</span>
+              </div>
+              }
+
+              @if (ex.sets && ex.sets.length > 0) {
+              <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse text-[11px] whitespace-nowrap">
+                  <thead>
+                    <tr
+                      class="border-b border-stone-200 text-[9px] font-black uppercase tracking-wider text-stone-400 whitespace-nowrap">
+                      <th class="py-1 px-2 text-center w-10 whitespace-nowrap">Set</th>
+                      <th class="py-1 px-2 text-left whitespace-nowrap">Tipo</th>
+                      <th class="py-1 px-2 text-right whitespace-nowrap">Peso</th>
+                      <th class="py-1 px-2 text-right whitespace-nowrap">Reps</th>
+                      <th class="py-1 px-2 text-center w-12 whitespace-nowrap">RPE</th>
+                      <th class="py-1 px-2 text-center w-10 whitespace-nowrap">Estado</th>
+                    </tr>
+                  </thead>
+                  <tbody class="divide-y divide-stone-200/60 font-semibold text-stone-700 whitespace-nowrap">
+                    @for (s of ex.sets; track s.id || $index) {
+                    <tr class="hover:bg-white/80 transition-colors whitespace-nowrap"
+                      [ngClass]="s.is_completed === false ? 'opacity-40' : ''">
+                      <!-- Número de set -->
+                      <td class="py-1.5 px-2 text-center font-black text-stone-500 whitespace-nowrap">
+                        {{ s.set_number || ($index + 1) }}
+                      </td>
+                      <!-- Tipo de set (1 línea, truncate) -->
+                      <td class="py-1.5 px-2 whitespace-nowrap truncate max-w-[100px]">
+                        <span
+                          class="inline-block px-1.5 py-0.5 rounded text-[9px] font-bold border whitespace-nowrap truncate"
+                          [ngClass]="getSetTypeInfo(s.set_type).badgeClass">
+                          {{ getSetTypeInfo(s.set_type).label }}
+                        </span>
+                      </td>
+                      <!-- Peso usado (1 línea, truncate) -->
+                      <td
+                        class="py-1.5 px-2 text-right font-bold text-stone-900 whitespace-nowrap truncate max-w-[120px]">
+                        @if (s.weight_used > 0) {
+                        <span>{{ s.weight_used }}</span> <span
+                          class="text-[9px] pl-1 font-normal text-stone-500 whitespace-nowrap">{{ s.weight_unit ||
+                          detail.volume_unit }}</span>
+                        } @else {
+                        <span class="text-stone-400 font-normal whitespace-nowrap">Corporal</span>
+                        }
+                      </td>
+                      <!-- Repeticiones (estrictamente 1 línea, truncate) -->
+                      <td
+                        class="py-1.5 px-2 text-right font-black text-stone-900 whitespace-nowrap truncate max-w-[90px]">
+                        <span>{{ s.reps_completed }}</span> <span
+                          class="text-[9px] pl-1 font-normal text-stone-500 whitespace-nowrap">reps</span>
+                      </td>
+                      <!-- RPE (1 línea) -->
+                      <td class="py-1.5 px-2 text-center font-bold text-stone-600 whitespace-nowrap truncate">
+                        {{ s.rpe ? '@' + s.rpe : '-' }}
+                      </td>
+                      <!-- Estado -->
+                      <td class="py-1.5 px-2 text-center whitespace-nowrap">
+                        @if (s.is_completed !== false) {
+                        <div
+                          class="w-5 h-5 mx-auto rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center text-[10px]">
+                          <i class="pi pi-check"></i>
+                        </div>
+                        } @else {
+                        <div
+                          class="w-5 h-5 mx-auto rounded-full bg-stone-200 text-stone-400 flex items-center justify-center text-[10px]">
+                          <i class="pi pi-minus"></i>
+                        </div>
+                        }
+                      </td>
+                    </tr>
+                    }
+                  </tbody>
+                </table>
+              </div>
+              } @else {
+              <p class="text-[11px] text-stone-400 italic py-1">Sin series registradas para este ejercicio.</p>
+              }
+            </div>
+            }
+            } @else {
+            <div class="p-6 text-center rounded-2xl bg-stone-50 border border-stone-200 text-stone-400 text-xs">
+              No hay desglose individual de ejercicios para este registro.
             </div>
             }
           </div>
+
         </div>
+
+        <!-- FOOTER DEL MODAL -->
+        <div class="px-5 py-3 border-t border-stone-100 bg-stone-50/80 flex items-center justify-end gap-2 shrink-0">
+          <button type="button" (click)="closeModal()"
+            class="px-4 py-2 rounded-xl bg-stone-900 hover:bg-stone-800 text-white text-xs font-black uppercase tracking-wider shadow-xs transition-all active:scale-95 cursor-pointer">
+            Cerrar
+          </button>
+        </div>
+
       </div>
       }
-
-      <!-- 4. NOTAS DEL ENTRENAMIENTO -->
-      @if (detail.notes) {
-      <div class="p-3 rounded-2xl bg-stone-50 border border-stone-200/90 text-xs text-stone-700 space-y-1">
-        <span class="text-[10px] font-black uppercase tracking-wider text-stone-400 block">Comentarios / Notas</span>
-        <p class="leading-relaxed font-medium italic">"{{ detail.notes }}"</p>
-      </div>
-      }
-
-      <!-- 5. LISTA DE EJERCICIOS Y DETALLE DE SERIES (ESTILO HEVY) -->
-      <div class="space-y-3 pt-2">
-        <div class="flex items-center justify-between">
-          <h4 class="text-xs font-black uppercase tracking-wider text-stone-500 flex items-center gap-2">
-            <i class="pi pi-list text-awakin-sun"></i>
-            <span>Detalle de Ejercicios y Series</span>
-          </h4>
-          <span class="text-[11px] font-bold text-stone-400">
-            {{ detail.exercises?.length || 0 }} ejercicios
-          </span>
-        </div>
-
-        @if (detail.exercises && detail.exercises.length > 0) {
-        @for (ex of detail.exercises; track ex.id || $index) {
-        <div class="bg-white border border-stone-200/90 rounded-3xl p-4 shadow-sm space-y-3">
-          <!-- Cabecera del ejercicio (Miniatura + Título Fijo + Badges) -->
-          <div class="flex items-start gap-3">
-            <button type="button" (click)="inspectedExercise.set(ex)"
-              class="w-16 h-16 rounded-2xl bg-stone-100 border border-stone-200 overflow-hidden shrink-0 flex items-center justify-center relative group cursor-pointer">
-              @if (ex.image_url) {
-              <img [src]="ex.image_url" [alt]="ex.exercise_name" class="w-full h-full object-cover" />
-              <div
-                class="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                <i class="pi pi-play text-white text-xs"></i>
-              </div>
-              } @else {
-              <i class="pi pi-bolt text-awakin-sun text-lg"></i>
-              }
-            </button>
-
-            <div class="flex-1 min-w-0">
-              <h4 (click)="inspectedExercise.set(ex)"
-                class="text-sm font-black text-stone-900 uppercase tracking-tight leading-snug hover:text-awakin-sun transition-colors cursor-pointer select-none">
-                {{ $index + 1 }}. {{ ex.exercise_name }}
-              </h4>
-
-              <div class="flex items-center gap-1.5 flex-wrap mt-1">
-                @if (ex.target_muscle) {
-                <span
-                  class="px-2 py-0.5 rounded-md bg-amber-500/10 text-amber-700 text-[9px] font-black uppercase tracking-tight">
-                  {{ translateMuscleName(ex.target_muscle) }}
-                </span>
-                }
-                @for (sec of ex.secondary_muscles; track sec) {
-                <span
-                  class="px-2 py-0.5 rounded-md bg-stone-100 text-stone-600 text-[9px] font-bold uppercase tracking-tight">
-                  {{ translateMuscleName(sec) }}
-                </span>
-                }
-                @if (ex.equipment) {
-                <span
-                  class="px-2 py-0.5 rounded-md bg-stone-100 text-stone-600 text-[9px] font-bold uppercase tracking-tight">
-                  {{ translateEquipmentName(ex.equipment) }}
-                </span>
-                }
-                @if (ex.rest_seconds) {
-                <span class="text-[10px] font-bold text-stone-400 inline-flex items-center gap-1">
-                  <i class="pi pi-clock text-[9px]"></i> {{ ex.rest_seconds }}s descanso
-                </span>
-                }
-              </div>
-            </div>
-          </div>
-
-          <!-- Notas del ejercicio (ocupa todo el ancho con padding) -->
-          @if (ex.notes) {
-          <div
-            class="w-full px-3.5 py-2.5 rounded-xl bg-amber-500/5 border border-amber-500/20 text-xs text-amber-900 flex items-start gap-2">
-            <i class="pi pi-info-circle text-awakin-sun text-sm shrink-0 mt-0.5"></i>
-            <span class="font-medium leading-relaxed">{{ ex.notes }}</span>
-          </div>
-          }
-
-          @if (ex.sets && ex.sets.length > 0) {
-          <div class="overflow-x-auto">
-            <table class="w-full text-left border-collapse text-[11px] whitespace-nowrap">
-              <thead>
-                <tr
-                  class="border-b border-stone-200 text-[9px] font-black uppercase tracking-wider text-stone-400 whitespace-nowrap">
-                  <th class="py-1 px-2 text-center w-10 whitespace-nowrap">Set</th>
-                  <th class="py-1 px-2 text-left whitespace-nowrap">Tipo</th>
-                  <th class="py-1 px-2 text-right whitespace-nowrap">Peso</th>
-                  <th class="py-1 px-2 text-right whitespace-nowrap">Reps</th>
-                  <th class="py-1 px-2 text-center w-12 whitespace-nowrap">RPE</th>
-                  <th class="py-1 px-2 text-center w-10 whitespace-nowrap">Estado</th>
-                </tr>
-              </thead>
-              <tbody class="divide-y divide-stone-200/60 font-semibold text-stone-700 whitespace-nowrap">
-                @for (s of ex.sets; track s.id || $index) {
-                <tr class="hover:bg-white/80 transition-colors whitespace-nowrap"
-                  [ngClass]="s.is_completed === false ? 'opacity-40' : ''">
-                  <!-- Número de set -->
-                  <td class="py-1.5 px-2 text-center font-black text-stone-500 whitespace-nowrap">
-                    {{ s.set_number || ($index + 1) }}
-                  </td>
-                  <!-- Tipo de set (1 línea, truncate) -->
-                  <td class="py-1.5 px-2 whitespace-nowrap truncate max-w-[100px]">
-                    <span
-                      class="inline-block px-1.5 py-0.5 rounded text-[9px] font-bold border whitespace-nowrap truncate"
-                      [ngClass]="getSetTypeInfo(s.set_type).badgeClass">
-                      {{ getSetTypeInfo(s.set_type).label }}
-                    </span>
-                  </td>
-                  <!-- Peso usado (1 línea, truncate) -->
-                  <td class="py-1.5 px-2 text-right font-bold text-stone-900 whitespace-nowrap truncate max-w-[120px]">
-                    @if (s.weight_used > 0) {
-                    <span>{{ s.weight_used }}</span> <span
-                      class="text-[9px] pl-1 font-normal text-stone-500 whitespace-nowrap">{{ s.weight_unit ||
-                      detail.volume_unit }}</span>
-                    } @else {
-                    <span class="text-stone-400 font-normal whitespace-nowrap">Corporal</span>
-                    }
-                  </td>
-                  <!-- Repeticiones (estrictamente 1 línea, truncate) -->
-                  <td class="py-1.5 px-2 text-right font-black text-stone-900 whitespace-nowrap truncate max-w-[90px]">
-                    <span>{{ s.reps_completed }}</span> <span
-                      class="text-[9px] pl-1 font-normal text-stone-500 whitespace-nowrap">reps</span>
-                  </td>
-                  <!-- RPE (1 línea) -->
-                  <td class="py-1.5 px-2 text-center font-bold text-stone-600 whitespace-nowrap truncate">
-                    {{ s.rpe ? '@' + s.rpe : '-' }}
-                  </td>
-                  <!-- Estado -->
-                  <td class="py-1.5 px-2 text-center whitespace-nowrap">
-                    @if (s.is_completed !== false) {
-                    <div
-                      class="w-5 h-5 mx-auto rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center text-[10px]">
-                      <i class="pi pi-check"></i>
-                    </div>
-                    } @else {
-                    <div
-                      class="w-5 h-5 mx-auto rounded-full bg-stone-200 text-stone-400 flex items-center justify-center text-[10px]">
-                      <i class="pi pi-minus"></i>
-                    </div>
-                    }
-                  </td>
-                </tr>
-                }
-              </tbody>
-            </table>
-          </div>
-          } @else {
-          <p class="text-[11px] text-stone-400 italic py-1">Sin series registradas para este ejercicio.</p>
-          }
-        </div>
-        }
-        } @else {
-        <div class="p-6 text-center rounded-2xl bg-stone-50 border border-stone-200 text-stone-400 text-xs">
-          No hay desglose individual de ejercicios para este registro.
-        </div>
-        }
-      </div>
-
-    </div>
-
-    <!-- FOOTER DEL MODAL -->
-    <div class="px-5 py-3 border-t border-stone-100 bg-stone-50/80 flex items-center justify-end gap-2 shrink-0">
-      <button type="button" (click)="closeModal()"
-        class="px-4 py-2 rounded-xl bg-stone-900 hover:bg-stone-800 text-white text-xs font-black uppercase tracking-wider shadow-xs transition-all active:scale-95 cursor-pointer">
-        Cerrar
-      </button>
-    </div>
-
-  </div>
-  }
 </p-dialog>
 
 <!-- LIGHTBOX PARA AMPLIAR LA FOTO DEL ENTRENAMIENTO (CON STACK DE Z-INDEX DE PRIMENG) -->

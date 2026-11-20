@@ -19,10 +19,14 @@
   --color-awakin-text: var(--app-text);
 
   /* Los Módulos (Semánticos) */
-  --color-module-intake: #3e9f31;   /* Verde Naturaleza */
-  --color-module-workout: #1e74b2;  /* Azul Oxígeno */
-  --color-module-kin: #8e44ad;      /* Violeta Tribu */
-  --color-module-avatar: #c0392b;   /* Terracota Identidad */
+  --color-module-intake: #3e9f31;
+  /* Verde Naturaleza */
+  --color-module-workout: #1e74b2;
+  /* Azul Oxígeno */
+  --color-module-kin: #8e44ad;
+  /* Violeta Tribu */
+  --color-module-avatar: #c0392b;
+  /* Terracota Identidad */
 }
 
 /* ==========================================================================
@@ -175,21 +179,27 @@ html.dark .hover\:bg-stone-800:hover {
 html.dark .from-stone-50 {
   --tw-gradient-from: var(--app-surface-subtle);
 }
+
 html.dark .from-stone-50\/70 {
   --tw-gradient-from: color-mix(in srgb, var(--app-surface-subtle) 70%, transparent);
 }
+
 html.dark .via-stone-50 {
   --tw-gradient-via: var(--app-surface-subtle);
 }
+
 html.dark .to-stone-50 {
   --tw-gradient-to: var(--app-surface-subtle);
 }
+
 html.dark .from-white {
   --tw-gradient-from: var(--app-surface);
 }
+
 html.dark .via-white {
   --tw-gradient-via: var(--app-surface);
 }
+
 html.dark .to-white {
   --tw-gradient-to: var(--app-surface);
 }
@@ -198,16 +208,20 @@ html.dark .to-white {
 html.dark .\!bg-white {
   background-color: var(--app-surface) !important;
 }
+
 html.dark .\!bg-stone-50 {
   background-color: var(--app-surface-subtle) !important;
 }
+
 html.dark .\!bg-stone-100 {
   background-color: var(--app-surface-elevated) !important;
 }
+
 html.dark .\!border-stone-100,
 html.dark .\!border-stone-200 {
   border-color: var(--app-border) !important;
 }
+
 html.dark .p-drawer .p-drawer-header {
   background-color: var(--app-surface) !important;
   border-color: var(--app-border) !important;
@@ -287,11 +301,13 @@ html.dark .bg-kin-primary.text-stone-950 {
 html.dark .bg-emerald-50 {
   background-color: color-mix(in srgb, #10b981 14%, var(--app-surface));
 }
+
 html.dark .border-emerald-100,
 html.dark .border-emerald-200,
 html.dark .border-emerald-200\/70 {
   border-color: color-mix(in srgb, #10b981 32%, var(--app-surface));
 }
+
 html.dark .text-emerald-700,
 html.dark .text-emerald-800 {
   color: #6ee7b7;
@@ -302,12 +318,14 @@ html.dark .bg-amber-50\/70,
 html.dark .bg-amber-50\/80 {
   background-color: color-mix(in srgb, #f59e0b 14%, var(--app-surface));
 }
+
 html.dark .border-amber-100,
 html.dark .border-amber-200,
 html.dark .border-amber-200\/70,
 html.dark .border-amber-200\/80 {
   border-color: color-mix(in srgb, #f59e0b 32%, var(--app-surface));
 }
+
 html.dark .text-amber-700,
 html.dark .text-amber-800,
 html.dark .text-amber-900 {
@@ -317,10 +335,12 @@ html.dark .text-amber-900 {
 html.dark .bg-sky-50 {
   background-color: color-mix(in srgb, #0ea5e9 14%, var(--app-surface));
 }
+
 html.dark .border-sky-100,
 html.dark .border-sky-200 {
   border-color: color-mix(in srgb, #0ea5e9 32%, var(--app-surface));
 }
+
 html.dark .text-sky-700 {
   color: #7dd3fc;
 }
@@ -329,6 +349,7 @@ html.dark .bg-orange-50,
 html.dark .bg-orange-50\/80 {
   background-color: color-mix(in srgb, #f97316 14%, var(--app-surface));
 }
+
 html.dark .border-orange-100,
 html.dark .border-orange-200,
 html.dark .border-orange-200\/80 {
@@ -339,11 +360,13 @@ html.dark .bg-red-50,
 html.dark .bg-rose-50 {
   background-color: color-mix(in srgb, #ef4444 14%, var(--app-surface));
 }
+
 html.dark .border-red-200,
 html.dark .border-red-200\/80,
 html.dark .border-rose-200 {
   border-color: color-mix(in srgb, #ef4444 32%, var(--app-surface));
 }
+
 html.dark .text-red-700,
 html.dark .text-red-900 {
   color: #fca5a5;
@@ -401,13 +424,66 @@ html.dark .workout-loader--inline .workout-loader__backdrop-inline {
 }
 
 /* ==========================================================================
-   5. PREVENCIÓN DE AUTO-ZOOM EN DISPOSITIVOS MÓVILES (iOS / Android)
+   5. BLOQUEO DE SCROLL DE FONDO Y FIJACIÓN DE FOOTER EN MODALES / DRAWERS (iOS/MÓVIL)
+   ========================================================================== */
+html:has(.p-dialog-mask),
+body:has(.p-dialog-mask),
+html:has(.p-drawer-mask),
+body:has(.p-drawer-mask),
+body.p-overflow-hidden {
+  overflow: hidden !important;
+  overscroll-behavior: none !important;
+}
+
+.p-dialog-mask,
+.p-drawer-mask {
+  overscroll-behavior: none !important;
+  touch-action: none;
+}
+
+.p-dialog {
+  max-height: 85dvh !important;
+  display: flex !important;
+  flex-direction: column !important;
+  overflow: hidden !important;
+  touch-action: pan-y;
+  overscroll-behavior: contain;
+}
+
+.p-dialog-content {
+  display: flex !important;
+  flex-direction: column !important;
+  flex: 1 1 auto !important;
+  min-height: 0 !important;
+  max-height: 100% !important;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
+.p-dialog-content>div.flex.flex-col {
+  flex: 1 1 auto !important;
+  min-height: 0 !important;
+  max-height: 100% !important;
+  overflow: hidden !important;
+}
+
+.p-dialog-content>div.flex.flex-col>.overflow-y-auto {
+  flex: 1 1 0% !important;
+  min-height: 0 !important;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* ==========================================================================
+   6. PREVENCIÓN DE AUTO-ZOOM EN DISPOSITIVOS MÓVILES (iOS / Android)
    En iOS Safari / WebKit PWA, cualquier input/select/textarea con font-size < 16px
    activa un zoom de cámara automático y forzado al recibir foco.
    Fijar un tamaño base mínimo de 16px en pantallas móviles previene el auto-zoom
    de raíz sin alterar la legibilidad ni el diseño desktop.
    ========================================================================== */
 @media screen and (max-width: 768px) {
+
   input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]),
   select,
   textarea {
