@@ -7,7 +7,8 @@
     <!-- Header del Editor (Compacto y fijo arriba) -->
     <div class="px-4 py-2.5 border-b border-stone-100 bg-white flex items-center justify-between shrink-0 z-10">
       <div class="flex items-center gap-2 min-w-0">
-        <div class="w-7 h-7 rounded-xl bg-awakin-sun/10 border border-awakin-sun/25 flex items-center justify-center shrink-0">
+        <div
+          class="w-7 h-7 rounded-xl bg-awakin-sun/10 border border-awakin-sun/25 flex items-center justify-center shrink-0">
           <img src="/icons/intake-active.png" alt="Awakin Intake" class="w-4 h-4 object-contain" />
         </div>
         <h3 class="text-xs font-black uppercase tracking-wider text-stone-900 truncate">Historia de Nutrición</h3>
@@ -480,7 +481,7 @@
 
       <!-- Toolbar Lateral Vertical Solo Iconos (Estilo Instagram Stories) -->
       <div
-        class="absolute right-2 top-1/2 -translate-y-1/2 z-30 flex flex-col items-center gap-1.5 bg-stone-900/80 backdrop-blur-md border border-white/15 p-1.5 rounded-full shadow-xl"
+        class="absolute right-1 top-1/2 -translate-y-1/2 z-30 flex flex-col items-center gap-1.5 bg-stone-900/80 backdrop-blur-md border border-white/15 p-1.5 rounded-full shadow-xl"
         (touchstart)="$event.stopPropagation()">
         <button type="button" (click)="toggleTool('template')" title="Plantilla" aria-label="Plantilla"
           class="w-8 h-8 rounded-full flex items-center justify-center transition-all cursor-pointer active:scale-90"
@@ -494,7 +495,8 @@
           <i class="pi pi-expand text-xs"></i>
         </button>
 
-        <button type="button" (click)="toggleTool('contrast')" title="Contraste de fondo" aria-label="Contraste de fondo"
+        <button type="button" (click)="toggleTool('contrast')" title="Contraste de fondo"
+          aria-label="Contraste de fondo"
           class="w-8 h-8 rounded-full flex items-center justify-center transition-all cursor-pointer active:scale-90"
           [ngClass]="activeTool() === 'contrast' ? 'bg-awakin-sun text-white shadow-sm' : 'text-white/85 hover:bg-white/15'">
           <i class="pi pi-sliders-h text-xs"></i>
@@ -515,100 +517,100 @@
 
       <!-- Popover Flotante de la Herramienta Seleccionada -->
       @if (activeTool(); as tool) {
-        <div class="absolute inset-0 z-20" (click)="closeTool()"></div>
-        <div
-          class="absolute bottom-2.5 left-2.5 right-12 z-30 bg-stone-900/90 backdrop-blur-md border border-white/15 rounded-2xl p-2 shadow-2xl text-white"
-          (click)="$event.stopPropagation()" (touchstart)="$event.stopPropagation()">
+      <div class="absolute inset-0 z-20" (click)="closeTool()"></div>
+      <div
+        class="absolute bottom-2.5 left-2.5 right-12 z-30 bg-stone-900/90 backdrop-blur-md border border-white/15 rounded-2xl p-2 shadow-2xl text-white"
+        (click)="$event.stopPropagation()" (touchstart)="$event.stopPropagation()">
 
-          @if (tool === 'template') {
-            <div class="flex items-center gap-1.5 overflow-x-auto no-scrollbar">
-              @for (tpl of templates; track tpl.id) {
-              <button type="button" (click)="selectedTemplate.set(tpl.id)" [title]="tpl.label"
-                class="px-2.5 py-1.5 rounded-xl text-[10px] font-bold transition-all cursor-pointer flex items-center gap-1.5 shrink-0"
-                [ngClass]="selectedTemplate() === tpl.id
+        @if (tool === 'template') {
+        <div class="flex items-center gap-1.5 overflow-x-auto no-scrollbar">
+          @for (tpl of templates; track tpl.id) {
+          <button type="button" (click)="selectedTemplate.set(tpl.id)" [title]="tpl.label"
+            class="px-2.5 py-1.5 rounded-xl text-[10px] font-bold transition-all cursor-pointer flex items-center gap-1.5 shrink-0"
+            [ngClass]="selectedTemplate() === tpl.id
                   ? 'bg-awakin-sun text-white shadow-xs'
                   : 'bg-white/10 text-white/85 hover:bg-white/20'">
-                <i [class]="tpl.icon + ' text-[11px]'"></i>
-                <span>{{ tpl.label }}</span>
-              </button>
-              }
-            </div>
-          } @else if (tool === 'ratio') {
-            <div class="flex items-center gap-1.5">
-              @for (r of ['9:16', '4:5', '1:1']; track r) {
-              <button type="button" (click)="aspectRatio.set($any(r))"
-                class="flex-1 py-1.5 rounded-xl text-[10px] font-black transition-all cursor-pointer"
-                [ngClass]="aspectRatio() === r ? 'bg-awakin-sun text-white' : 'bg-white/10 text-white/85 hover:bg-white/20'">
-                {{ r }}
-              </button>
-              }
-            </div>
-          } @else if (tool === 'contrast') {
-            <div class="flex items-center gap-2.5 px-1 py-0.5">
-              <i class="pi pi-moon text-xs text-awakin-sun shrink-0"></i>
-              <input type="range" min="0" max="75" step="5" [ngModel]="dimLevel()"
-                (ngModelChange)="dimLevel.set($event)"
-                class="flex-1 h-1.5 bg-white/25 rounded-lg appearance-none cursor-pointer accent-awakin-sun" />
-              <span class="text-[10px] font-black tabular-nums w-8 text-right">{{ dimLevel() }}%</span>
-            </div>
-          } @else if (tool === 'overlay') {
-            <div class="flex items-center gap-1.5">
-              <button type="button" (click)="cardStyle.set('transparent')" title="Limpio"
-                class="flex-1 py-1.5 px-2 rounded-xl text-[10px] font-bold flex items-center justify-center gap-1 cursor-pointer transition-all"
-                [ngClass]="cardStyle() === 'transparent' ? 'bg-awakin-sun text-white' : 'bg-white/10 text-white/85 hover:bg-white/20'">
-                <i class="pi pi-eye-slash text-[11px]"></i>
-                <span>Limpio</span>
-              </button>
-              <button type="button" (click)="cardStyle.set('glass')" title="Cristal"
-                class="flex-1 py-1.5 px-2 rounded-xl text-[10px] font-bold flex items-center justify-center gap-1 cursor-pointer transition-all"
-                [ngClass]="cardStyle() === 'glass' ? 'bg-awakin-sun text-white' : 'bg-white/10 text-white/85 hover:bg-white/20'">
-                <i class="pi pi-clone text-[11px]"></i>
-                <span>Cristal</span>
-              </button>
-              <button type="button" (click)="cardStyle.set('dark')" title="Obsidiana"
-                class="flex-1 py-1.5 px-2 rounded-xl text-[10px] font-bold flex items-center justify-center gap-1 cursor-pointer transition-all"
-                [ngClass]="cardStyle() === 'dark' ? 'bg-awakin-sun text-white' : 'bg-white/10 text-white/85 hover:bg-white/20'">
-                <i class="pi pi-moon text-[11px]"></i>
-                <span>Obsidiana</span>
-              </button>
-            </div>
-          } @else if (tool === 'transform') {
-            <div class="space-y-1.5 px-1">
-              <div class="flex items-center gap-2">
-                <button type="button" (click)="zoomOut()" [disabled]="overlayScale() <= 0.30"
-                  class="w-7 h-7 rounded-lg bg-white/10 hover:bg-white/20 flex items-center justify-center cursor-pointer disabled:opacity-40">
-                  <i class="pi pi-minus text-[10px]"></i>
-                </button>
-                <input type="range" min="0.30" max="1.25" step="0.01" [ngModel]="overlayScale()"
-                  (ngModelChange)="setZoom($event)"
-                  class="flex-1 h-1.5 bg-white/25 rounded-lg appearance-none cursor-pointer accent-awakin-sun" />
-                <button type="button" (click)="zoomIn()" [disabled]="overlayScale() >= 1.25"
-                  class="w-7 h-7 rounded-lg bg-white/10 hover:bg-white/20 flex items-center justify-center cursor-pointer disabled:opacity-40">
-                  <i class="pi pi-plus text-[10px]"></i>
-                </button>
-                <span class="text-[10px] font-black tabular-nums w-8 text-right">{{ Math.round(overlayScale() * 100) }}%</span>
-              </div>
-              <div class="flex items-center justify-center gap-1.5">
-                <button type="button" (click)="alignTop()" title="Arriba"
-                  class="flex-1 py-1 rounded-lg bg-white/10 hover:bg-white/20 flex items-center justify-center cursor-pointer">
-                  <i class="pi pi-arrow-up text-[10px]"></i>
-                </button>
-                <button type="button" (click)="alignCenter()" title="Centrar"
-                  class="flex-1 py-1 rounded-lg bg-white/10 hover:bg-white/20 flex items-center justify-center cursor-pointer">
-                  <i class="pi pi-arrows-alt text-[10px]"></i>
-                </button>
-                <button type="button" (click)="alignBottom()" title="Abajo"
-                  class="flex-1 py-1 rounded-lg bg-white/10 hover:bg-white/20 flex items-center justify-center cursor-pointer">
-                  <i class="pi pi-arrow-down text-[10px]"></i>
-                </button>
-                <button type="button" (click)="resetPosition()" title="Restablecer"
-                  class="flex-1 py-1 rounded-lg bg-white/10 hover:bg-white/20 flex items-center justify-center cursor-pointer">
-                  <i class="pi pi-refresh text-[10px]"></i>
-                </button>
-              </div>
-            </div>
+            <i [class]="tpl.icon + ' text-[11px]'"></i>
+            <span>{{ tpl.label }}</span>
+          </button>
           }
         </div>
+        } @else if (tool === 'ratio') {
+        <div class="flex items-center gap-1.5">
+          @for (r of ['9:16', '4:5', '1:1']; track r) {
+          <button type="button" (click)="aspectRatio.set($any(r))"
+            class="flex-1 py-1.5 rounded-xl text-[10px] font-black transition-all cursor-pointer"
+            [ngClass]="aspectRatio() === r ? 'bg-awakin-sun text-white' : 'bg-white/10 text-white/85 hover:bg-white/20'">
+            {{ r }}
+          </button>
+          }
+        </div>
+        } @else if (tool === 'contrast') {
+        <div class="flex items-center gap-2.5 px-1 py-0.5">
+          <i class="pi pi-moon text-xs text-awakin-sun shrink-0"></i>
+          <input type="range" min="0" max="75" step="5" [ngModel]="dimLevel()" (ngModelChange)="dimLevel.set($event)"
+            class="flex-1 h-1.5 bg-white/25 rounded-lg appearance-none cursor-pointer accent-awakin-sun" />
+          <span class="text-[10px] font-black tabular-nums w-8 text-right">{{ dimLevel() }}%</span>
+        </div>
+        } @else if (tool === 'overlay') {
+        <div class="flex items-center gap-1.5">
+          <button type="button" (click)="cardStyle.set('transparent')" title="Limpio"
+            class="flex-1 py-1.5 px-2 rounded-xl text-[10px] font-bold flex items-center justify-center gap-1 cursor-pointer transition-all"
+            [ngClass]="cardStyle() === 'transparent' ? 'bg-awakin-sun text-white' : 'bg-white/10 text-white/85 hover:bg-white/20'">
+            <i class="pi pi-eye-slash text-[11px]"></i>
+            <span>Limpio</span>
+          </button>
+          <button type="button" (click)="cardStyle.set('glass')" title="Cristal"
+            class="flex-1 py-1.5 px-2 rounded-xl text-[10px] font-bold flex items-center justify-center gap-1 cursor-pointer transition-all"
+            [ngClass]="cardStyle() === 'glass' ? 'bg-awakin-sun text-white' : 'bg-white/10 text-white/85 hover:bg-white/20'">
+            <i class="pi pi-clone text-[11px]"></i>
+            <span>Cristal</span>
+          </button>
+          <button type="button" (click)="cardStyle.set('dark')" title="Obsidiana"
+            class="flex-1 py-1.5 px-2 rounded-xl text-[10px] font-bold flex items-center justify-center gap-1 cursor-pointer transition-all"
+            [ngClass]="cardStyle() === 'dark' ? 'bg-awakin-sun text-white' : 'bg-white/10 text-white/85 hover:bg-white/20'">
+            <i class="pi pi-moon text-[11px]"></i>
+            <span>Obsidiana</span>
+          </button>
+        </div>
+        } @else if (tool === 'transform') {
+        <div class="space-y-1.5 px-1">
+          <div class="flex items-center gap-2">
+            <button type="button" (click)="zoomOut()" [disabled]="overlayScale() <= 0.30"
+              class="w-7 h-7 rounded-lg bg-white/10 hover:bg-white/20 flex items-center justify-center cursor-pointer disabled:opacity-40">
+              <i class="pi pi-minus text-[10px]"></i>
+            </button>
+            <input type="range" min="0.30" max="1.25" step="0.01" [ngModel]="overlayScale()"
+              (ngModelChange)="setZoom($event)"
+              class="flex-1 h-1.5 bg-white/25 rounded-lg appearance-none cursor-pointer accent-awakin-sun" />
+            <button type="button" (click)="zoomIn()" [disabled]="overlayScale() >= 1.25"
+              class="w-7 h-7 rounded-lg bg-white/10 hover:bg-white/20 flex items-center justify-center cursor-pointer disabled:opacity-40">
+              <i class="pi pi-plus text-[10px]"></i>
+            </button>
+            <span class="text-[10px] font-black tabular-nums w-8 text-right">{{ Math.round(overlayScale() * 100)
+              }}%</span>
+          </div>
+          <div class="flex items-center justify-center gap-1.5">
+            <button type="button" (click)="alignTop()" title="Arriba"
+              class="flex-1 py-1 rounded-lg bg-white/10 hover:bg-white/20 flex items-center justify-center cursor-pointer">
+              <i class="pi pi-arrow-up text-[10px]"></i>
+            </button>
+            <button type="button" (click)="alignCenter()" title="Centrar"
+              class="flex-1 py-1 rounded-lg bg-white/10 hover:bg-white/20 flex items-center justify-center cursor-pointer">
+              <i class="pi pi-arrows-alt text-[10px]"></i>
+            </button>
+            <button type="button" (click)="alignBottom()" title="Abajo"
+              class="flex-1 py-1 rounded-lg bg-white/10 hover:bg-white/20 flex items-center justify-center cursor-pointer">
+              <i class="pi pi-arrow-down text-[10px]"></i>
+            </button>
+            <button type="button" (click)="resetPosition()" title="Restablecer"
+              class="flex-1 py-1 rounded-lg bg-white/10 hover:bg-white/20 flex items-center justify-center cursor-pointer">
+              <i class="pi pi-refresh text-[10px]"></i>
+            </button>
+          </div>
+        </div>
+        }
+      </div>
       }
 
     </div>
