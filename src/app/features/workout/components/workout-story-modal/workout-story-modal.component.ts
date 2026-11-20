@@ -125,7 +125,37 @@ export class WorkoutStoryModalComponent implements OnChanges {
   selectedTemplate = signal<StoryTemplateId>('bodymap');
   aspectRatio = signal<StoryAspectRatio>('9:16');
   cardStyle = signal<StoryCardStyle>('transparent'); // Default: 'Limpio' (sin fondo)
-  dimLevel = signal<number>(35); // 0, 20, 35, 55%
+  dimLevel = signal<number>(35); // 0 - 75%
+  activeTool = signal<'template' | 'background' | 'ratio' | 'contrast' | 'overlay' | 'transform' | null>(null);
+
+  toggleTool(tool: 'template' | 'background' | 'ratio' | 'contrast' | 'overlay' | 'transform'): void {
+    this.activeTool.update((curr) => (curr === tool ? null : tool));
+  }
+
+  closeTool(): void {
+    this.activeTool.set(null);
+  }
+
+  captureBoxStyle = computed(() => {
+    switch (this.aspectRatio()) {
+      case '4:5':
+        return {
+          width: 'min(100cqw, calc(100cqh * 4 / 5))',
+          height: 'min(100cqh, calc(100cqw * 5 / 4))',
+        };
+      case '1:1':
+        return {
+          width: 'min(100cqw, 100cqh)',
+          height: 'min(100cqw, 100cqh)',
+        };
+      case '9:16':
+      default:
+        return {
+          width: 'min(100cqw, calc(100cqh * 9 / 16))',
+          height: 'min(100cqh, calc(100cqw * 16 / 9))',
+        };
+    }
+  });
 
   // Señales reactivas internas vinculadas a los Inputs
   currentLog = signal<WorkoutLog | null>(null);
@@ -467,6 +497,7 @@ export class WorkoutStoryModalComponent implements OnChanges {
     this.overlayPosition.set({ x: 0, y: 0 });
     this.customPhotoUrl.set(null);
     this.cardStyle.set('transparent');
+    this.activeTool.set(null);
     if (this.log?.photo_url) {
       this.backgroundMode.set('auto');
     } else {
@@ -475,6 +506,7 @@ export class WorkoutStoryModalComponent implements OnChanges {
   }
 
   closeModal(): void {
+    this.activeTool.set(null);
     this.visible = false;
     this.visibleChange.emit(false);
     this.closed.emit();

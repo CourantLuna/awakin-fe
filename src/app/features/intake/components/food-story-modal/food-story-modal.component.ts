@@ -158,7 +158,37 @@ export class FoodStoryModalComponent implements OnChanges {
   selectedTemplate = signal<FoodStoryTemplateId>('macroring');
   aspectRatio = signal<FoodStoryAspectRatio>('9:16');
   cardStyle = signal<FoodStoryCardStyle>('transparent'); // Default: 'Limpio' (directo sobre la foto)
-  dimLevel = signal<number>(25); // 0, 20, 35, 50%
+  dimLevel = signal<number>(25); // 0 - 75%
+  activeTool = signal<'template' | 'ratio' | 'contrast' | 'overlay' | 'transform' | null>(null);
+
+  toggleTool(tool: 'template' | 'ratio' | 'contrast' | 'overlay' | 'transform'): void {
+    this.activeTool.update((curr) => (curr === tool ? null : tool));
+  }
+
+  closeTool(): void {
+    this.activeTool.set(null);
+  }
+
+  captureBoxStyle = computed(() => {
+    switch (this.aspectRatio()) {
+      case '4:5':
+        return {
+          width: 'min(100cqw, calc(100cqh * 4 / 5))',
+          height: 'min(100cqh, calc(100cqw * 5 / 4))',
+        };
+      case '1:1':
+        return {
+          width: 'min(100cqw, 100cqh)',
+          height: 'min(100cqw, 100cqh)',
+        };
+      case '9:16':
+      default:
+        return {
+          width: 'min(100cqw, calc(100cqh * 9 / 16))',
+          height: 'min(100cqh, calc(100cqw * 16 / 9))',
+        };
+    }
+  });
 
   // Señales reactivas internas
   currentData = signal<StoryShareData | null>(null);
@@ -209,9 +239,11 @@ export class FoodStoryModalComponent implements OnChanges {
     this.dimLevel.set(25);
     this.showIngredientsList.set(false);
     this.exportSuccessMessage.set(null);
+    this.activeTool.set(null);
   }
 
   closeModal(): void {
+    this.activeTool.set(null);
     this.visible = false;
     this.visibleChange.emit(false);
     this.closed.emit();
