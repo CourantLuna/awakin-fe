@@ -42,6 +42,9 @@ export interface KinInfo {
   manifesto?: string | null;
   head_coach_id?: string | null;
   instructor_id?: string | null;
+  whatsapp_group_url?: string | null;
+  google_calendar_id?: string | null;
+  google_calendar_ics_url?: string | null;
   role_in_kin?: string;
   instructors?: KinInstructor[];
 }

@@ -1,4 +1,4 @@
-import { Component, signal, inject, computed } from '@angular/core';
+import { Component, signal, inject, computed, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterOutlet, Router } from '@angular/router'; // <-- Importamos Router
 import { PrimeNGModule } from './shared/prime-ng.module';
@@ -6,6 +6,7 @@ import { NavigationComponent } from './components/navigation/navigation.componen
 import { AuthService } from './core/services/auth.service';
 import { ThemeService } from './core/services/theme.service';
 import { PwaUpdateService } from './core/services/pwa-update.service';
+import { KinService } from './core/services/kin.service';
 import { WorkoutSessionDrawerComponent } from './features/workout/components/workout-session-drawer/workout-session-drawer.component';
 import { ActiveWorkoutSessionService } from './features/workout/services/active-workout-session.service';
 
@@ -28,7 +29,23 @@ export class App {
   private authService = inject(AuthService);
   public readonly themeService = inject(ThemeService);
   public readonly pwaUpdate = inject(PwaUpdateService);
+  public readonly kinService = inject(KinService);
   public readonly activeSession = inject(ActiveWorkoutSessionService);
+
+  constructor() {
+    effect(() => {
+      const loggedIn = this.isLoggedIn();
+      const kinId = this.themeService.activeKin()?.id;
+      if (loggedIn && kinId) {
+        this.kinService.loadEvents(kinId);
+      }
+    });
+  }
+
+  openKinAgendaFromPopup(eventId: string): void {
+    this.kinService.dismissPopupEvent(eventId);
+    this.router.navigate(['/kin']);
+  }
 
   // Computed Signal: Se actualiza de forma automática y óptima cuando cambia la sesión de Supabase
   isLoggedIn = computed(() => !!this.authService.currentSession());

@@ -12,7 +12,7 @@ export const environment = {
     home: true,
     intake: true,
     workout: true,
-    kin: false,
+    kin: true,
     avatar: true,
   },
 };

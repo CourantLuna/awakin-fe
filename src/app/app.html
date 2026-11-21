@@ -34,6 +34,44 @@
 @if (isLoggedIn()) {
   <app-navigation />
   <app-workout-session-drawer />
+
+  <!-- POPUP DE NOTIFICACIÓN DE PRÓXIMA ACTIVIDAD DEL KIN (GOOGLE CALENDAR) -->
+  @if (kinService.upcomingPopupEvent(); as evt) {
+    <div
+      class="fixed top-3 left-1/2 -translate-x-1/2 z-50 w-[94vw] max-w-md bg-white border border-kin-primary/40 rounded-2xl p-3.5 shadow-2xl flex items-start gap-3 animate-fadeIn">
+      <div
+        class="w-10 h-10 rounded-xl bg-kin-primary/15 border border-kin-primary/25 text-kin-primary flex items-center justify-center shrink-0">
+        <i class="pi pi-calendar text-base"></i>
+      </div>
+      <div class="flex-1 min-w-0">
+        <span class="text-[9px] font-black uppercase tracking-widest text-kin-primary block">
+          Próxima Actividad de tu Kin
+        </span>
+        <div class="text-xs font-black text-stone-900 truncate mt-0.5">{{ evt.title }}</div>
+        <div class="text-[11px] font-semibold text-stone-500 mt-0.5 flex items-center gap-1.5 truncate">
+          <span>{{ evt.start | date:'EEE d MMM, HH:mm' }}</span>
+          @if (evt.location) {
+            <span>·</span>
+            <span class="truncate">{{ evt.location }}</span>
+          }
+        </div>
+        <div class="flex items-center gap-2 mt-2.5">
+          <button type="button" (click)="openKinAgendaFromPopup(evt.id)"
+            class="px-3 py-1 rounded-lg bg-kin-primary text-white text-[10px] font-black uppercase tracking-wider cursor-pointer">
+            Ver Agenda
+          </button>
+          <button type="button" (click)="kinService.dismissPopupEvent(evt.id)"
+            class="px-2.5 py-1 rounded-lg bg-stone-100 hover:bg-stone-200 text-stone-600 text-[10px] font-bold cursor-pointer">
+            Cerrar
+          </button>
+        </div>
+      </div>
+      <button type="button" (click)="kinService.dismissPopupEvent(evt.id)"
+        class="w-7 h-7 rounded-full bg-stone-100 hover:bg-stone-200 text-stone-500 flex items-center justify-center shrink-0 cursor-pointer">
+        <i class="pi pi-times text-[10px]"></i>
+      </button>
+    </div>
+  }
 }
 
 <!-- DIÁLOGO GLOBAL BLOQUEANTE DE ACTUALIZACIÓN OBLIGATORIA PWA -->
