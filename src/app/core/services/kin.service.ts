@@ -2,6 +2,52 @@ import { Injectable, computed, inject, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../environments/environment';
 import { KinInfo } from './athlete.service';
+import { WorkoutLog } from '../../features/workout/models/workout.models';
+
+export interface KinAuthorSummary {
+  id: string;
+  username: string;
+  first_name?: string | null;
+  last_name?: string | null;
+  full_name: string;
+  profile_image_url?: string | null;
+  gender?: string | null;
+  sexo?: string | null;
+  genero?: string | null;
+}
+
+export interface KinWorkoutFeedItem {
+  author: KinAuthorSummary;
+  workout_log: WorkoutLog;
+}
+
+export interface KinMealPhotoItem {
+  id: string;
+  email?: string | null;
+  nombre?: string | null;
+  plato_estimado?: string | null;
+  tipo_comida?: string | null;
+  foto_url: string;
+  calorias?: number | null;
+  proteina_g?: number | null;
+  carbohidratos_g?: number | null;
+  grasas_g?: number | null;
+  timestamp?: string | null;
+  items_count?: number;
+  dishes?: string[];
+  author: KinAuthorSummary;
+}
+
+export type AwakinFeedScope = 'all' | 'following' | 'kin';
+
+export interface AwakinFeedItem {
+  id: string;
+  item_type: 'post' | 'workout';
+  sort_date: string;
+  author: KinAuthorSummary;
+  post?: KinFeedPostItem;
+  workout_log?: WorkoutLog;
+}
 
 export interface KinMemberItem {
   id: string;
@@ -42,6 +88,8 @@ export interface KinOverviewResponse {
   members_count: number;
   members: KinMemberItem[];
   feed_posts: KinFeedPostItem[];
+  workout_logs?: KinWorkoutFeedItem[];
+  meal_photos?: KinMealPhotoItem[];
   events: KinCalendarEvent[];
 }
 
@@ -55,6 +103,8 @@ export class KinService {
   public overview = signal<KinOverviewResponse | null>(null);
   public events = signal<KinCalendarEvent[]>([]);
   public isLoading = signal<boolean>(false);
+  public awakinFeedItems = signal<AwakinFeedItem[]>([]);
+  public awakinFeedLoading = signal<boolean>(false);
   private dismissedEventIds = signal<string[]>(this.readDismissedEventIds());
 
   /** Convierte la fecha del evento respetando eventos de día completo en hora local */
@@ -120,6 +170,25 @@ export class KinService {
           this.notifyUpcomingIfPermitted();
         },
         error: () => {},
+      });
+  }
+
+  public loadAwakinFeed(athleteId: string, scope: AwakinFeedScope = 'all'): void {
+    if (!athleteId) return;
+    this.awakinFeedLoading.set(true);
+    this.http
+      .get<{ scope: AwakinFeedScope; items: AwakinFeedItem[] }>(`${this.baseUrl}/awakin-feed`, {
+        params: { athlete_id: athleteId, scope },
+      })
+      .subscribe({
+        next: (res) => {
+          this.awakinFeedItems.set(res.items || []);
+          this.awakinFeedLoading.set(false);
+        },
+        error: (err) => {
+          console.error('Error cargando Awakin feed:', err);
+          this.awakinFeedLoading.set(false);
+        },
       });
   }
 
