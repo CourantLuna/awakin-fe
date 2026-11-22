@@ -173,12 +173,16 @@ export class KinService {
       });
   }
 
-  public loadAwakinFeed(athleteId: string, scope: AwakinFeedScope = 'all'): void {
+  public loadAwakinFeed(athleteId: string, scope: AwakinFeedScope = 'all', kinId?: string | null): void {
     if (!athleteId) return;
     this.awakinFeedLoading.set(true);
+    const params: Record<string, string> = { athlete_id: athleteId, scope };
+    if (kinId) {
+      params['kin_id'] = kinId;
+    }
     this.http
       .get<{ scope: AwakinFeedScope; items: AwakinFeedItem[] }>(`${this.baseUrl}/awakin-feed`, {
-        params: { athlete_id: athleteId, scope },
+        params,
       })
       .subscribe({
         next: (res) => {

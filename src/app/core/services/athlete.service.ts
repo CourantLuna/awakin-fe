@@ -86,6 +86,7 @@ export interface AthleteProfile {
   edad?: number | null;
   kin?: KinInfo | null;
   kins?: KinInfo[];
+  instructor_kins?: KinInfo[];
 }
 
 export interface NutritionMealRecord {

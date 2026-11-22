@@ -2,6 +2,7 @@ import { Component, computed, effect, inject, signal, untracked } from '@angular
 import { CommonModule } from '@angular/common';
 import { AthleteProfile, AthleteService } from '../../core/services/athlete.service';
 import { AwakinFeedScope, KinAuthorSummary, KinService } from '../../core/services/kin.service';
+import { ThemeService } from '../../core/services/theme.service';
 import { WorkoutLog } from '../workout/models/workout.models';
 import { WorkoutLogCardComponent } from '../workout/components/workout-log-card/workout-log-card.component';
 import { WorkoutLogDetailModalComponent } from '../workout/components/workout-log-detail-modal/workout-log-detail-modal.component';
@@ -25,6 +26,7 @@ import { BodyMapGender } from '../workout/components/body-map/body-map.component
 export class HomeAwakinComponent {
   public athleteService = inject(AthleteService);
   public kinService = inject(KinService);
+  public themeService = inject(ThemeService);
 
   public activeScope = signal<AwakinFeedScope>('all');
   public selectedWorkoutLog = signal<WorkoutLog | null>(null);
@@ -48,9 +50,10 @@ export class HomeAwakinComponent {
     effect(() => {
       const aid = this.currentAthleteId();
       const scope = this.activeScope();
+      const activeKinId = this.themeService.activeKin()?.id;
       if (!aid) return;
       untracked(() => {
-        this.kinService.loadAwakinFeed(aid, scope);
+        this.kinService.loadAwakinFeed(aid, scope, activeKinId);
       });
     });
   }
@@ -63,7 +66,7 @@ export class HomeAwakinComponent {
   public refreshFeed(): void {
     const aid = this.currentAthleteId();
     if (aid) {
-      this.kinService.loadAwakinFeed(aid, this.activeScope());
+      this.kinService.loadAwakinFeed(aid, this.activeScope(), this.themeService.activeKin()?.id);
     }
   }
 

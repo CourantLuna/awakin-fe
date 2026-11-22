@@ -2,6 +2,7 @@ import { Injectable, computed, effect, inject, signal } from '@angular/core';
 import { AthleteService, KinInfo } from './athlete.service';
 
 const THEME_STORAGE_KEY = 'awakin_theme_mode';
+const SELECTED_KIN_STORAGE_KEY = 'awakin_selected_kin_id';
 
 @Injectable({ providedIn: 'root' })
 export class ThemeService {
@@ -13,17 +14,46 @@ export class ThemeService {
   /** Estado reactivo del modo noche (`true`) / modo día (`false`) */
   public readonly isDarkMode = signal<boolean>(this.readInitialThemeMode());
 
-  /** Kin activo del atleta (soporta relación `kin` o lista `kins`) */
-  public readonly activeKin = computed<KinInfo | null>(() => {
+  /** ID del Kin seleccionado manualmente (para coaches/instructores con múltiples Kins) */
+  private readonly selectedKinId = signal<string | null>(this.readInitialSelectedKinId());
+
+  /** Todos los Kins disponibles para el usuario (propio + donde es instructor/coach) */
+  public readonly availableKins = computed<KinInfo[]>(() => {
     const ath = this.athleteService.currentAthlete();
-    if (!ath) return null;
-    if (ath.kin && (ath.kin.id || ath.kin.primary_color || ath.kin.secondary_color)) {
+    if (!ath) return [];
+
+    const byId = new Map<string, KinInfo>();
+    const addKin = (k?: KinInfo | null) => {
+      if (!k || (!k.id && !k.team_name)) return;
+      const key = k.id || k.team_name || '';
+      if (key && !byId.has(key)) {
+        byId.set(key, k);
+      }
+    };
+
+    addKin(ath.kin);
+    for (const k of ath.kins || []) addKin(k);
+    for (const k of ath.instructor_kins || []) addKin(k);
+
+    return Array.from(byId.values());
+  });
+
+  /** Kin activo del atleta o instructor (respeta selección manual si pertenece a sus Kins) */
+  public readonly activeKin = computed<KinInfo | null>(() => {
+    const list = this.availableKins();
+    if (list.length === 0) return null;
+
+    const selected = this.selectedKinId();
+    if (selected) {
+      const match = list.find((k) => k.id === selected);
+      if (match) return match;
+    }
+
+    const ath = this.athleteService.currentAthlete();
+    if (ath?.kin && (ath.kin.id || ath.kin.primary_color || ath.kin.secondary_color)) {
       return ath.kin;
     }
-    if (ath.kins && ath.kins.length > 0) {
-      return ath.kins[0];
-    }
-    return null;
+    return list[0];
   });
 
   /** Color primario del Kin o fallback al tema Awakin */
@@ -76,6 +106,19 @@ export class ThemeService {
     });
   }
 
+  /** Cambia el Kin activo (para instructores con múltiples Kins) */
+  public selectActiveKin(kinId: string): void {
+    if (!kinId) return;
+    this.selectedKinId.set(kinId);
+    if (typeof localStorage !== 'undefined') {
+      try {
+        localStorage.setItem(SELECTED_KIN_STORAGE_KEY, kinId);
+      } catch {
+        // Ignorar errores de almacenamiento
+      }
+    }
+  }
+
   /** Alterna entre Modo Día y Modo Noche */
   public toggleTheme(): void {
     this.isDarkMode.update((dark) => !dark);
@@ -123,6 +166,15 @@ export class ThemeService {
       return localStorage.getItem(THEME_STORAGE_KEY) === 'dark';
     } catch {
       return false;
+    }
+  }
+
+  private readInitialSelectedKinId(): string | null {
+    if (typeof localStorage === 'undefined') return null;
+    try {
+      return localStorage.getItem(SELECTED_KIN_STORAGE_KEY);
+    } catch {
+      return null;
     }
   }
 
