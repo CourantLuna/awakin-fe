@@ -5,12 +5,20 @@ import { AwakinFeedScope, KinAuthorSummary, KinService } from '../../core/servic
 import { WorkoutLog } from '../workout/models/workout.models';
 import { WorkoutLogCardComponent } from '../workout/components/workout-log-card/workout-log-card.component';
 import { WorkoutLogDetailModalComponent } from '../workout/components/workout-log-detail-modal/workout-log-detail-modal.component';
+import { WorkoutLogEditModalComponent } from '../workout/components/workout-log-edit-modal/workout-log-edit-modal.component';
+import { WorkoutStoryModalComponent } from '../workout/components/workout-story-modal/workout-story-modal.component';
 import { BodyMapGender } from '../workout/components/body-map/body-map.component';
 
 @Component({
   selector: 'app-home-awakin.component',
   standalone: true,
-  imports: [CommonModule, WorkoutLogCardComponent, WorkoutLogDetailModalComponent],
+  imports: [
+    CommonModule,
+    WorkoutLogCardComponent,
+    WorkoutLogDetailModalComponent,
+    WorkoutLogEditModalComponent,
+    WorkoutStoryModalComponent,
+  ],
   templateUrl: './home-awakin.component.html',
   styleUrl: './home-awakin.component.css',
 })
@@ -23,7 +31,17 @@ export class HomeAwakinComponent {
   public selectedWorkoutGender = signal<BodyMapGender | null>(null);
   public showWorkoutDetail = signal<boolean>(false);
 
+  public isWorkoutEditModalOpen = signal<boolean>(false);
+  public logToEdit = signal<WorkoutLog | null>(null);
+  public isShareWorkoutModalOpen = signal<boolean>(false);
+  public shareWorkoutTargetLog = signal<WorkoutLog | null>(null);
+
   public currentAthleteId = computed(() => this.athleteService.currentAthlete()?.id || '');
+  public currentAthleteGender = computed<BodyMapGender>(() => {
+    const a = this.athleteService.currentAthlete();
+    const raw = (a?.gender || a?.sexo || a?.genero || '').toLowerCase().trim();
+    return raw === 'female' || raw === 'f' || raw === 'mujer' || raw === 'femenino' ? 'female' : 'male';
+  });
   public feedItems = computed(() => this.kinService.awakinFeedItems());
 
   constructor() {
@@ -56,6 +74,23 @@ export class HomeAwakinComponent {
     this.selectedWorkoutLog.set(log);
     this.selectedWorkoutGender.set(gender);
     this.showWorkoutDetail.set(true);
+  }
+
+  public openWorkoutEditModal(log: WorkoutLog): void {
+    this.showWorkoutDetail.set(false);
+    this.logToEdit.set(log);
+    this.isWorkoutEditModalOpen.set(true);
+  }
+
+  public onWorkoutLogSaved(): void {
+    this.isWorkoutEditModalOpen.set(false);
+    this.logToEdit.set(null);
+    this.refreshFeed();
+  }
+
+  public openWorkoutStoryModal(log: WorkoutLog): void {
+    this.shareWorkoutTargetLog.set(log);
+    this.isShareWorkoutModalOpen.set(true);
   }
 
   public toAthleteProfile(author?: KinAuthorSummary): AthleteProfile | null {

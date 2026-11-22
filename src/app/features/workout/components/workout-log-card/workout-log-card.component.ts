@@ -1,6 +1,6 @@
-import { Component, computed, input, output } from '@angular/core';
+import { Component, computed, inject, input, output } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { AthleteProfile } from '../../../../core/services/athlete.service';
+import { AthleteProfile, AthleteService } from '../../../../core/services/athlete.service';
 import { WorkoutLog } from '../../models/workout.models';
 import {
   WorkoutMiniBodyMapComponent,
@@ -16,12 +16,19 @@ import { BodyMapGender } from '../body-map/body-map.component';
   templateUrl: './workout-log-card.component.html'
 })
 export class WorkoutLogCardComponent {
+  private readonly athleteService = inject(AthleteService);
+
   log = input.required<WorkoutLog>();
   athlete = input<AthleteProfile | null>(null);
 
   onDetail = output<WorkoutLog>();
   onShare = output<WorkoutLog>();
   onEdit = output<WorkoutLog>();
+
+  canManage = computed<boolean>(() => {
+    const currentId = this.athleteService.currentAthlete()?.id;
+    return !!currentId && currentId === this.log().athlete_id;
+  });
 
   athleteGender = computed<BodyMapGender>(() => {
     const a = this.athlete();

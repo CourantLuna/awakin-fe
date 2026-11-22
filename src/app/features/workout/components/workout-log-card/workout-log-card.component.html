@@ -44,6 +44,7 @@
 
     <!-- Acciones de cabecera: Compartir historia, Editar y Detalle HEVY -->
     <div class="flex items-center gap-1.5 shrink-0">
+      @if (canManage()) {
       <!-- Botón Compartir Historia 9:16 -->
       <button type="button" (click)="onShare.emit(log())"
         class="px-2.5 sm:px-3 h-8 rounded-full bg-awakin-sun hover:bg-stone-800 text-white text-[10px] font-black uppercase tracking-wider flex items-center gap-1.5 shadow-2xs active:scale-95 transition-all cursor-pointer"
@@ -58,6 +59,7 @@
         title="Editar entrenamiento">
         <i class="pi pi-pencil text-xs"></i>
       </button>
+      }
 
 
     </div>

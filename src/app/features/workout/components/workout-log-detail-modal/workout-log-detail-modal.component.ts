@@ -40,6 +40,12 @@ export class WorkoutLogDetailModalComponent {
   // Inspección de ejercicio (Instrucciones + GIF)
   inspectedExercise = signal<WorkoutLogExercise | null>(null);
 
+  canManage = computed<boolean>(() => {
+    const currentId = this.athleteService.currentAthlete()?.id;
+    const detail = this.log();
+    return !!currentId && !!detail && currentId === detail.athlete_id;
+  });
+
   athleteGender = computed<BodyMapGender>(() => {
     if (this.gender()) return this.gender()!;
     const a = this.athleteService.currentAthlete();

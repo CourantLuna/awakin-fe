@@ -13,6 +13,8 @@ import {
 import { WorkoutLog } from '../workout/models/workout.models';
 import { WorkoutLogCardComponent } from '../workout/components/workout-log-card/workout-log-card.component';
 import { WorkoutLogDetailModalComponent } from '../workout/components/workout-log-detail-modal/workout-log-detail-modal.component';
+import { WorkoutLogEditModalComponent } from '../workout/components/workout-log-edit-modal/workout-log-edit-modal.component';
+import { WorkoutStoryModalComponent } from '../workout/components/workout-story-modal/workout-story-modal.component';
 import { BodyMapGender } from '../workout/components/body-map/body-map.component';
 
 type LeaderboardMode = 'streak' | 'workouts' | 'level';
@@ -40,7 +42,13 @@ export interface CalendarDayCell {
 @Component({
   selector: 'app-kin-community.component',
   standalone: true,
-  imports: [CommonModule, WorkoutLogCardComponent, WorkoutLogDetailModalComponent],
+  imports: [
+    CommonModule,
+    WorkoutLogCardComponent,
+    WorkoutLogDetailModalComponent,
+    WorkoutLogEditModalComponent,
+    WorkoutStoryModalComponent,
+  ],
   templateUrl: './kin-community.component.html',
   styleUrl: './kin-community.component.css',
 })
@@ -60,12 +68,22 @@ export class KinCommunityComponent {
   public selectedWorkoutGender = signal<BodyMapGender | null>(null);
   public showWorkoutDetail = signal<boolean>(false);
 
+  public isWorkoutEditModalOpen = signal<boolean>(false);
+  public logToEdit = signal<WorkoutLog | null>(null);
+  public isShareWorkoutModalOpen = signal<boolean>(false);
+  public shareWorkoutTargetLog = signal<WorkoutLog | null>(null);
+
   // Estado de navegación del calendario (Mes / Semana)
   public calendarCursor = signal<Date>(new Date());
   public selectedDateKey = signal<string>(this.toDateKey(new Date()));
 
   public activeKin = computed(() => this.themeService.activeKin());
   public currentAthleteId = computed(() => this.athleteService.currentAthlete()?.id || '');
+  public currentAthleteGender = computed<BodyMapGender>(() => {
+    const a = this.athleteService.currentAthlete();
+    const raw = (a?.gender || a?.sexo || a?.genero || '').toLowerCase().trim();
+    return raw === 'female' || raw === 'f' || raw === 'mujer' || raw === 'femenino' ? 'female' : 'male';
+  });
 
   public kinSummary = computed(() => {
     return this.kinService.overview()?.kin || this.activeKin();
@@ -257,6 +275,23 @@ export class KinCommunityComponent {
     this.selectedWorkoutLog.set(log);
     this.selectedWorkoutGender.set(gender);
     this.showWorkoutDetail.set(true);
+  }
+
+  public openWorkoutEditModal(log: WorkoutLog): void {
+    this.showWorkoutDetail.set(false);
+    this.logToEdit.set(log);
+    this.isWorkoutEditModalOpen.set(true);
+  }
+
+  public onWorkoutLogSaved(): void {
+    this.isWorkoutEditModalOpen.set(false);
+    this.logToEdit.set(null);
+    this.refreshKin();
+  }
+
+  public openWorkoutStoryModal(log: WorkoutLog): void {
+    this.shareWorkoutTargetLog.set(log);
+    this.isShareWorkoutModalOpen.set(true);
   }
 
   public openWhatsAppGroup(): void {

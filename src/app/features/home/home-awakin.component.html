@@ -71,7 +71,9 @@
           <app-workout-log-card
             [log]="item.workout_log"
             [athlete]="toAthleteProfile(item.author)"
-            (onDetail)="openWorkoutDetail($event, item.author)">
+            (onDetail)="openWorkoutDetail($event, item.author)"
+            (onShare)="openWorkoutStoryModal($event)"
+            (onEdit)="openWorkoutEditModal($event)">
           </app-workout-log-card>
         } @else if (item.item_type === 'post' && item.post) {
           <div class="bg-white rounded-3xl border border-stone-200 shadow-xs overflow-hidden">
@@ -140,6 +142,23 @@
   <app-workout-log-detail-modal
     [(visible)]="showWorkoutDetail"
     [log]="selectedWorkoutLog()"
-    [gender]="selectedWorkoutGender()">
+    [gender]="selectedWorkoutGender()"
+    (shareStory)="openWorkoutStoryModal($event)"
+    (edit)="openWorkoutEditModal($event)">
   </app-workout-log-detail-modal>
+
+  <!-- Modal Editar Entrenamiento -->
+  <app-workout-log-edit-modal
+    [(visible)]="isWorkoutEditModalOpen"
+    [log]="logToEdit()"
+    (saved)="onWorkoutLogSaved()">
+  </app-workout-log-edit-modal>
+
+  <!-- Modal Compartir Historia de Entrenamiento -->
+  <app-workout-story-modal
+    [(visible)]="isShareWorkoutModalOpen"
+    [log]="shareWorkoutTargetLog()"
+    [athlete]="athleteService.currentAthlete()"
+    [gender]="currentAthleteGender()"
+    (closed)="isShareWorkoutModalOpen.set(false)" />
 </div>
