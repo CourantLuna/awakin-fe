@@ -735,6 +735,24 @@ export class AthleteService {
   }
 
   /**
+   * Lista real de seguidores de un atleta
+   */
+  public getAthleteFollowers(athleteId: string, viewerId?: string): Observable<AthleteSearchResult[]> {
+    const params: Record<string, string> = {};
+    if (viewerId) params['viewer_id'] = viewerId;
+    return this.http.get<AthleteSearchResult[]>(`${this.baseUrl}/${encodeURIComponent(athleteId)}/followers`, { params });
+  }
+
+  /**
+   * Lista real de perfiles seguidos por un atleta
+   */
+  public getAthleteFollowing(athleteId: string, viewerId?: string): Observable<AthleteSearchResult[]> {
+    const params: Record<string, string> = {};
+    if (viewerId) params['viewer_id'] = viewerId;
+    return this.http.get<AthleteSearchResult[]>(`${this.baseUrl}/${encodeURIComponent(athleteId)}/following`, { params });
+  }
+
+  /**
    * Verifica si followerId sigue a followingId
    */
   public getFollowStatus(followerId: string, followingId: string): Observable<{ is_following: boolean }> {
@@ -747,21 +765,39 @@ export class AthleteService {
    * Sigue a un atleta
    */
   public followAthlete(followerId: string, followingId: string): Observable<{ status: string; message: string }> {
-    return this.http.post<{ status: string; message: string }>(
-      `${this.baseUrl}/follow/${encodeURIComponent(followingId)}`,
-      null,
-      { params: { follower_id: followerId } }
-    );
+    return this.http
+      .post<{ status: string; message: string }>(
+        `${this.baseUrl}/follow/${encodeURIComponent(followingId)}`,
+        null,
+        { params: { follower_id: followerId } }
+      )
+      .pipe(
+        tap(() => {
+          const me = this.currentAthlete();
+          if (me && me.id === followerId) {
+            this.currentAthlete.set({ ...me, following_count: (me.following_count || 0) + 1 });
+          }
+        })
+      );
   }
 
   /**
    * Deja de seguir a un atleta
    */
   public unfollowAthlete(followerId: string, followingId: string): Observable<{ status: string; message: string }> {
-    return this.http.delete<{ status: string; message: string }>(
-      `${this.baseUrl}/follow/${encodeURIComponent(followingId)}`,
-      { params: { follower_id: followerId } }
-    );
+    return this.http
+      .delete<{ status: string; message: string }>(
+        `${this.baseUrl}/follow/${encodeURIComponent(followingId)}`,
+        { params: { follower_id: followerId } }
+      )
+      .pipe(
+        tap(() => {
+          const me = this.currentAthlete();
+          if (me && me.id === followerId) {
+            this.currentAthlete.set({ ...me, following_count: Math.max(0, (me.following_count || 0) - 1) });
+          }
+        })
+      );
   }
 }
 

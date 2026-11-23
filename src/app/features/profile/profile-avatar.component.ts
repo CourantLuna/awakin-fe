@@ -1,7 +1,7 @@
 import { Component, inject, OnInit, OnDestroy, signal, computed, effect, untracked } from '@angular/core';
 import { CommonModule, Location } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { Subscription, firstValueFrom } from 'rxjs';
 import { PrimeNGModule } from '../../shared/prime-ng.module';
 import { AuthService } from '../../core/services/auth.service';
@@ -10,6 +10,7 @@ import { supabaseClient } from '../../core/services/supabase.service';
 import {
   AthleteService,
   AthleteProfile,
+  AthleteSearchResult,
   AthleteFeedPost,
   AthleteNutritionProtocol,
   AthleteRecordsResponse,
@@ -62,8 +63,29 @@ export class ProfileAvatarComponent implements OnInit, OnDestroy {
   public workoutService = inject(WorkoutSupabaseService);
   public themeService = inject(ThemeService);
   private route = inject(ActivatedRoute);
+  private router = inject(Router);
   private location = inject(Location);
   private routeSub?: Subscription;
+
+  // Modal de Seguidores / Siguiendo
+  public isFollowListModalOpen = signal<boolean>(false);
+  public followListTab = signal<'followers' | 'following'>('followers');
+  public followListItems = signal<AthleteSearchResult[]>([]);
+  public followListLoading = signal<boolean>(false);
+  public followListFilter = signal<string>('');
+  public followListTogglingId = signal<string | null>(null);
+
+  public filteredFollowList = computed<AthleteSearchResult[]>(() => {
+    const q = this.followListFilter().trim().toLowerCase();
+    const list = this.followListItems();
+    if (!q) return list;
+    return list.filter(
+      (u) =>
+        (u.full_name || '').toLowerCase().includes(q) ||
+        (u.username || '').toLowerCase().includes(q) ||
+        (u.kin_name || '').toLowerCase().includes(q)
+    );
+  });
 
   // Modo Perfil Público (solo lectura cuando se navega a /avatar/:identifier de otro atleta)
   public routeIdentifier = signal<string | null>(null);
@@ -740,6 +762,78 @@ export class ProfileAvatarComponent implements OnInit, OnDestroy {
         this.isTogglingFollow.set(false);
       },
     });
+  }
+
+  public openFollowListModal(tab: 'followers' | 'following'): void {
+    const targetId = this.athlete()?.id;
+    if (!targetId) return;
+    this.followListTab.set(tab);
+    this.followListFilter.set('');
+    this.isFollowListModalOpen.set(true);
+    this.loadFollowList(targetId, tab);
+  }
+
+  public switchFollowListTab(tab: 'followers' | 'following'): void {
+    if (this.followListTab() === tab) return;
+    this.followListTab.set(tab);
+    const targetId = this.athlete()?.id;
+    if (targetId) {
+      this.loadFollowList(targetId, tab);
+    }
+  }
+
+  private loadFollowList(athleteId: string, tab: 'followers' | 'following'): void {
+    const viewerId = this.athleteService.currentAthlete()?.id;
+    this.followListLoading.set(true);
+    this.followListItems.set([]);
+    const req =
+      tab === 'followers'
+        ? this.athleteService.getAthleteFollowers(athleteId, viewerId)
+        : this.athleteService.getAthleteFollowing(athleteId, viewerId);
+
+    req.subscribe({
+      next: (list) => {
+        this.followListItems.set(list || []);
+        this.followListLoading.set(false);
+      },
+      error: () => {
+        this.followListLoading.set(false);
+      },
+    });
+  }
+
+  public toggleFollowInList(user: AthleteSearchResult, event: Event): void {
+    event.stopPropagation();
+    const myId = this.athleteService.currentAthlete()?.id;
+    if (!myId || myId === user.id || this.followListTogglingId()) return;
+
+    this.followListTogglingId.set(user.id);
+    const currentlyFollowing = !!user.is_following;
+    const req = currentlyFollowing
+      ? this.athleteService.unfollowAthlete(myId, user.id)
+      : this.athleteService.followAthlete(myId, user.id);
+
+    req.subscribe({
+      next: () => {
+        this.followListItems.update((list) =>
+          list.map((u) => (u.id === user.id ? { ...u, is_following: !currentlyFollowing } : u))
+        );
+        this.followListTogglingId.set(null);
+      },
+      error: () => {
+        this.followListTogglingId.set(null);
+      },
+    });
+  }
+
+  public navigateToProfileFromFollowList(user: AthleteSearchResult): void {
+    this.isFollowListModalOpen.set(false);
+    const myId = this.athleteService.currentAthlete()?.id;
+    if (myId && user.id === myId) {
+      this.router.navigate(['/avatar']);
+    } else {
+      this.router.navigate(['/avatar', user.username || user.id]);
+    }
   }
 
   // Cambiar pestaña del feed garantizando privacidad

@@ -161,6 +161,9 @@ export class HomeAwakinComponent {
           list.map((a) => (a.id === target.id ? { ...a, is_following: !a.is_following } : a))
         );
         this.togglingFollowId.set(null);
+        if (this.activeScope() === 'following') {
+          this.refreshFeed();
+        }
       },
       error: () => {
         this.togglingFollowId.set(null);

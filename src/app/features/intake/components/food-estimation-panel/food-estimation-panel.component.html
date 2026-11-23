@@ -249,8 +249,7 @@
         [ngModel]="selectedCatalogIngredientId()" (ngModelChange)="onCatalogIngredientSelected($event)"
         optionLabel="name" optionValue="id" [filter]="true" filterBy="name" [showClear]="false" appendTo="body"
         placeholder="Buscar y seleccionar ingrediente..." emptyFilterMessage="No se encontraron ingredientes"
-        emptyMessage="Cargando catálogo de ingredientes..."
-        styleClass="w-full !rounded-xl !border-stone-200 !bg-stone-50 !text-xs"
+        emptyMessage="Cargando catálogo de ingredientes..." styleClass="w-full !rounded-xl  !text-xs"
         panelStyleClass="bg-white rounded-xl shadow-2xl border border-stone-200 text-xs max-w-[340px]">
         <ng-template pTemplate="item" let-ing>
           <div class="flex items-center justify-between gap-2 py-0.5 w-full min-w-0">
