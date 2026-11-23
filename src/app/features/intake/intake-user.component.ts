@@ -2010,6 +2010,63 @@ export class IntakeUserComponent implements OnInit {
     });
   }
 
+  // Abrir historia 9:16 resumen de las comidas del día (con collage y totales acumulados)
+  openDailySummaryStory() {
+    const loggedFoods = this.foodItems().filter((f) => f.isLogged);
+    const targetFoods = loggedFoods.length > 0 ? loggedFoods : this.foodItems();
+
+    // 1. Recolectar fotos únicas de las comidas del día
+    const photos: string[] = [];
+    for (const f of targetFoods) {
+      const rec = this.registeredRecords()[f.id];
+      const pic = rec?.foto_url || f.coverImageUrl;
+      if (pic && pic.trim().length > 0 && !photos.includes(pic)) {
+        photos.push(pic);
+      }
+    }
+
+    // 2. Totales calculados de calorías y macros
+    const hasLogged = loggedFoods.length > 0;
+    const totalKcal = hasLogged
+      ? Math.round(this.totalLoggedCalories())
+      : Math.round(targetFoods.reduce((sum, f) => sum + f.kcal, 0));
+    const totalP = hasLogged
+      ? Math.round(this.totalLoggedProtein())
+      : Math.round(targetFoods.reduce((sum, f) => sum + f.protein, 0));
+    const totalC = hasLogged
+      ? Math.round(this.totalLoggedCarbs())
+      : Math.round(targetFoods.reduce((sum, f) => sum + f.carbs, 0));
+    const totalG = hasLogged
+      ? Math.round(this.totalLoggedFat())
+      : Math.round(targetFoods.reduce((sum, f) => sum + f.fat, 0));
+
+    // 3. Platos para desglose (ej: plantilla chef)
+    const dishes = targetFoods.map((f) => ({
+      name: f.name,
+      portionText: `${f.portion} ${f.unit}`,
+      kcal: f.kcal,
+    }));
+
+    const formattedIngs = this.resolveIngredientsForFoodList(targetFoods);
+    const dateFormatted = this.getStoryDateFormatted(this.selectedDate());
+
+    this.openStoryShareModal({
+      photoUrl: photos[0] || '',
+      photoUrls: photos.length > 1 ? photos : (photos.length === 1 ? [photos[0]] : undefined),
+      dateFormatted: dateFormatted,
+      mealTitle: 'Resumen Diario',
+      dishName: 'Nutrición del Día',
+      emoji: '🥗',
+      portionText: `${targetFoods.length} alimentos`,
+      kcal: totalKcal,
+      protein: totalP,
+      carbs: totalC,
+      fat: totalG,
+      ingredients: formattedIngs,
+      dishes: dishes.length > 0 ? dishes : undefined,
+    });
+  }
+
   adjustCardScale(delta: number) {
     this.cardScale.update((s) => {
       const next = Math.round((s + delta) * 10) / 10;

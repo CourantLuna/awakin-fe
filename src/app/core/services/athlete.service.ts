@@ -45,8 +45,28 @@ export interface KinInfo {
   whatsapp_group_url?: string | null;
   google_calendar_id?: string | null;
   google_calendar_ics_url?: string | null;
+  header_image_url?: string | null;
+  meals_banner_url?: string | null;
+  ranking_bg_url?: string | null;
+  agenda_bg_url?: string | null;
   role_in_kin?: string;
   instructors?: KinInstructor[];
+}
+
+export interface AthleteSearchResult {
+  id: string;
+  username: string;
+  first_name?: string | null;
+  last_name?: string | null;
+  full_name: string;
+  profile_image_url?: string | null;
+  bio_description?: string | null;
+  current_level: number;
+  streak_days: number;
+  roles?: string[];
+  kin_name?: string | null;
+  kin_logo_url?: string | null;
+  is_following?: boolean;
 }
 
 export interface AthleteFeedPost {
@@ -528,7 +548,7 @@ export class AthleteService {
    */
   public uploadMedia(
     file: File | Blob,
-    bucket: 'avatars' | 'feed_posts' | 'fotos_progreso' | 'progress_photos' | 'fotos_comidas' = 'feed_posts',
+    bucket: 'avatars' | 'feed_posts' | 'fotos_progreso' | 'progress_photos' | 'fotos_comidas' | 'kin_assets' = 'feed_posts',
     filename: string = 'media.jpg'
   ): Observable<{ status: string; bucket: string; filename: string; public_url: string }> {
     return from(compressImage(file, 1200, 0.82)).pipe(
@@ -653,6 +673,95 @@ export class AthleteService {
    */
   public getTeamAthletes(kinId: string): Observable<AthleteProfile[]> {
     return this.http.get<AthleteProfile[]>(`${this.baseUrl}/kin/${kinId}/athletes`);
+  }
+
+  // ==========================================================================
+  // BÚSQUEDA GLOBAL, PERFIL PÚBLICO (SOLO LECTURA) Y SEGUIMIENTO SOCIAL
+  // ==========================================================================
+
+  /**
+   * Búsqueda global de perfiles públicos en Awakin
+   */
+  public searchAthletes(query: string, viewerId?: string, limit: number = 25): Observable<AthleteSearchResult[]> {
+    const params: Record<string, string> = { q: query || '', limit: String(limit) };
+    if (viewerId) params['viewer_id'] = viewerId;
+    return this.http.get<AthleteSearchResult[]>(`${this.baseUrl}/search`, { params });
+  }
+
+  /**
+   * Carga un perfil público de atleta por username o UUID sin alterar el atleta autenticado
+   */
+  public getPublicAthleteProfile(identifier: string): Observable<AthleteProfile> {
+    return this.http.get<AthleteProfile>(`${this.baseUrl}/${encodeURIComponent(identifier)}`);
+  }
+
+  /**
+   * Carga registros (comidas/posts) de un perfil público sin mutar estado global
+   */
+  public getPublicAthleteRecords(athleteId: string): Observable<AthleteRecordsResponse> {
+    return this.http.get<AthleteRecordsResponse>(`${this.baseUrl}/${encodeURIComponent(athleteId)}/records`);
+  }
+
+  /**
+   * Carga publicaciones de un perfil público sin mutar estado global
+   */
+  public getPublicAthletePosts(athleteId: string): Observable<AthleteFeedPost[]> {
+    return this.http.get<AthleteFeedPost[]>(`${this.baseUrl}/${encodeURIComponent(athleteId)}/posts`);
+  }
+
+  /**
+   * Carga protocolo nutricional activo de un perfil público (solo lectura)
+   */
+  public async getPublicNutritionProtocol(athleteId: string): Promise<AthleteNutritionProtocol | null> {
+    if (!athleteId) return null;
+    try {
+      const { data, error } = await this.supabase
+        .from('athlete_nutrition_protocols')
+        .select('*, athlete_meal_macro_distributions(*)')
+        .eq('athlete_id', athleteId)
+        .eq('is_active', true)
+        .maybeSingle();
+      if (error || !data) return null;
+      const distributions = Array.isArray(data.athlete_meal_macro_distributions)
+        ? [...data.athlete_meal_macro_distributions].sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0))
+        : [];
+      return {
+        ...data,
+        athlete_meal_macro_distributions: distributions,
+      } as AthleteNutritionProtocol;
+    } catch {
+      return null;
+    }
+  }
+
+  /**
+   * Verifica si followerId sigue a followingId
+   */
+  public getFollowStatus(followerId: string, followingId: string): Observable<{ is_following: boolean }> {
+    return this.http.get<{ is_following: boolean }>(`${this.baseUrl}/follow/status`, {
+      params: { follower_id: followerId, following_id: followingId },
+    });
+  }
+
+  /**
+   * Sigue a un atleta
+   */
+  public followAthlete(followerId: string, followingId: string): Observable<{ status: string; message: string }> {
+    return this.http.post<{ status: string; message: string }>(
+      `${this.baseUrl}/follow/${encodeURIComponent(followingId)}`,
+      null,
+      { params: { follower_id: followerId } }
+    );
+  }
+
+  /**
+   * Deja de seguir a un atleta
+   */
+  public unfollowAthlete(followerId: string, followingId: string): Observable<{ status: string; message: string }> {
+    return this.http.delete<{ status: string; message: string }>(
+      `${this.baseUrl}/follow/${encodeURIComponent(followingId)}`,
+      { params: { follower_id: followerId } }
+    );
   }
 }
 

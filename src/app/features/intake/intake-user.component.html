@@ -28,7 +28,8 @@
     <app-intake-scale-widget [minA]="minBasal()" [maintC]="maintenanceLevel()" [goalKcals]="dailyGoalCalories()"
       [protocol]="currentProtocolType()" [caloriesEated]="totalLoggedCalories()" [proteinEated]="totalLoggedProtein()"
       [proteinGoal]="dailyGoalProtein()" [carbsEated]="totalLoggedCarbs()" [carbsGoal]="dailyGoalCarbs()"
-      [fatsEated]="totalLoggedFat()" [fatsGoal]="dailyGoalFats()" [burnedKcals]="0" [kinData]="athleteKin()">
+      [fatsEated]="totalLoggedFat()" [fatsGoal]="dailyGoalFats()" [burnedKcals]="0" [kinData]="athleteKin()"
+      (openDailyStory)="openDailySummaryStory()">
     </app-intake-scale-widget>
 
     <div class="px-4 mt-2 relative z-10">

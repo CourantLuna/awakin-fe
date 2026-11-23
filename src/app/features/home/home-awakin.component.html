@@ -1,16 +1,109 @@
 <div class="min-h-screen bg-awakin-base pb-24 pt-6 px-4 max-w-2xl mx-auto">
   <!-- HEADER AWAKIN -->
-  <div class="flex items-center justify-between mb-4">
+  <div class="flex items-center justify-between mb-4 gap-2">
     <h1 class="text-xl font-black text-stone-900 uppercase tracking-widest">AWAKIN</h1>
-    <button
-      type="button"
-      (click)="refreshFeed()"
-      [disabled]="kinService.awakinFeedLoading()"
-      title="Actualizar muro"
-      class="w-9 h-9 rounded-2xl bg-white border border-stone-200 text-stone-600 hover:text-stone-900 flex items-center justify-center shadow-xs transition-colors cursor-pointer">
-      <i class="pi pi-refresh text-sm" [class.animate-spin]="kinService.awakinFeedLoading()"></i>
-    </button>
+    <div class="flex items-center gap-2">
+      <button
+        type="button"
+        (click)="toggleSearch()"
+        title="Buscar perfiles en Awakin"
+        aria-label="Buscar perfiles"
+        class="h-9 px-3 rounded-2xl border flex items-center justify-center gap-1.5 shadow-xs transition-all cursor-pointer active:scale-95"
+        [ngClass]="isSearchOpen()
+          ? 'bg-stone-900 border-stone-900 text-white'
+          : 'bg-white border-stone-200 text-stone-600 hover:text-stone-900'">
+        <i class="pi text-xs" [ngClass]="isSearchOpen() ? 'pi-times' : 'pi-search'"></i>
+        <span class="text-[10px] font-black uppercase tracking-wider hidden sm:inline">Buscar</span>
+      </button>
+
+      <button
+        type="button"
+        (click)="refreshFeed()"
+        [disabled]="kinService.awakinFeedLoading()"
+        title="Actualizar muro"
+        class="w-9 h-9 rounded-2xl bg-white border border-stone-200 text-stone-600 hover:text-stone-900 flex items-center justify-center shadow-xs transition-colors cursor-pointer">
+        <i class="pi pi-refresh text-sm" [class.animate-spin]="kinService.awakinFeedLoading()"></i>
+      </button>
+    </div>
   </div>
+
+  <!-- PANEL DE BÚSQUEDA GLOBAL DE PERFILES PÚBLICOS -->
+  @if (isSearchOpen()) {
+  <div class="bg-white rounded-3xl border border-stone-200 shadow-sm p-3.5 mb-4 space-y-3">
+    <div class="relative flex items-center">
+      <i class="pi pi-search text-xs text-stone-400 absolute left-3.5 pointer-events-none"></i>
+      <input
+        type="text"
+        [ngModel]="searchQuery()"
+        (ngModelChange)="onSearchInput($event)"
+        placeholder="Buscar atleta por nombre o @usuario..."
+        autofocus
+        class="w-full bg-stone-50 border border-stone-200 rounded-2xl pl-9 pr-9 py-2.5 text-xs font-bold text-stone-900 placeholder:text-stone-400 focus:outline-none focus:border-kin-primary transition-colors" />
+      @if (searchQuery()) {
+      <button type="button" (click)="onSearchInput('')"
+        class="absolute right-2.5 w-6 h-6 rounded-full bg-stone-200/80 hover:bg-stone-300 text-stone-600 flex items-center justify-center cursor-pointer">
+        <i class="pi pi-times text-[10px]"></i>
+      </button>
+      }
+    </div>
+
+    @if (isSearching()) {
+    <div class="py-4 text-center text-xs text-stone-400 flex items-center justify-center gap-2">
+      <i class="pi pi-spin pi-spinner text-xs text-kin-primary"></i>
+      <span>Buscando atletas...</span>
+    </div>
+    } @else {
+    <div class="max-h-72 overflow-y-auto divide-y divide-stone-100">
+      @for (ath of searchResults(); track ath.id) {
+      <div (click)="openPublicProfile(ath.username || ath.id)"
+        class="py-2.5 px-1 flex items-center justify-between gap-2.5 hover:bg-stone-50 rounded-xl transition-colors cursor-pointer">
+        <div class="flex items-center gap-2.5 min-w-0">
+          <img
+            [src]="ath.profile_image_url || 'https://i.pravatar.cc/100?u=' + ath.id"
+            [alt]="ath.full_name"
+            class="w-10 h-10 rounded-full object-cover border border-stone-200 shrink-0" />
+          <div class="min-w-0">
+            <div class="flex items-center gap-1.5">
+              <span class="text-xs font-black text-stone-900 truncate">{{ ath.full_name }}</span>
+              @if (ath.id === currentAthleteId()) {
+              <span class="text-[9px] font-black uppercase text-kin-primary">(Tú)</span>
+              }
+            </div>
+            <div class="flex items-center gap-1.5 text-[10px] text-stone-400 font-semibold truncate">
+              <span>&#64;{{ ath.username }}</span>
+              @if (ath.kin_name) {
+              <span>·</span>
+              <span class="text-kin-primary font-bold truncate">{{ ath.kin_name }}</span>
+              }
+            </div>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-1.5 shrink-0">
+          @if (ath.id !== currentAthleteId()) {
+          <button
+            type="button"
+            (click)="toggleFollowFromSearch(ath, $event)"
+            [disabled]="togglingFollowId() === ath.id"
+            class="px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all cursor-pointer active:scale-95"
+            [ngClass]="ath.is_following
+              ? 'bg-stone-100 text-stone-700 border border-stone-200 hover:bg-stone-200'
+              : 'bg-kin-primary text-white shadow-2xs hover:opacity-95'">
+            {{ ath.is_following ? 'Siguiendo' : 'Seguir' }}
+          </button>
+          }
+          <i class="pi pi-chevron-right text-[10px] text-stone-300"></i>
+        </div>
+      </div>
+      } @empty {
+      <div class="py-6 text-center text-xs text-stone-400">
+        No se encontraron perfiles con "{{ searchQuery() }}"
+      </div>
+      }
+    </div>
+    }
+  </div>
+  }
 
   <!-- SELECTOR TIPO INSTAGRAM: 1. TODOS | 2. SEGUIDOS | 3. MI KIN -->
   <div class="grid grid-cols-3 gap-1 p-1 rounded-2xl bg-stone-200/70 mb-5">
@@ -78,13 +171,14 @@
         } @else if (item.item_type === 'post' && item.post) {
           <div class="bg-white rounded-3xl border border-stone-200 shadow-xs overflow-hidden">
             <div class="p-3.5 flex items-center justify-between gap-2">
-              <div class="flex items-center gap-2.5 min-w-0">
+              <div (click)="openPublicProfile(item.author.username || item.author.id)"
+                class="flex items-center gap-2.5 min-w-0 cursor-pointer group">
                 <img
                   [src]="item.author.profile_image_url || 'https://i.pravatar.cc/100?u=' + item.author.id"
                   [alt]="item.author.full_name"
-                  class="w-9 h-9 rounded-full object-cover border border-stone-200 shrink-0" />
+                  class="w-9 h-9 rounded-full object-cover border border-stone-200 shrink-0 group-hover:scale-105 transition-transform" />
                 <div class="min-w-0">
-                  <div class="text-xs font-black text-stone-900 truncate">
+                  <div class="text-xs font-black text-stone-900 truncate group-hover:text-kin-primary transition-colors">
                     {{ item.author.full_name }}
                   </div>
                   <div class="text-[10px] text-stone-400 font-medium">

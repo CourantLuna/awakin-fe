@@ -74,6 +74,13 @@ export const routes: Routes = [
     loadComponent: () =>
       import('./features/profile/profile-avatar.component').then((m) => m.ProfileAvatarComponent),
   },
+  {
+    path: 'avatar/:identifier',
+    canActivate: [authGuard, moduleEnabledGuard],
+    data: { module: 'avatar' },
+    loadComponent: () =>
+      import('./features/profile/profile-avatar.component').then((m) => m.ProfileAvatarComponent),
+  },
 
   // Comodín para redirigir rutas inexistentes
   { path: '**', redirectTo: () => resolveInitialRedirect() }

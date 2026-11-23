@@ -89,15 +89,25 @@
         </div>
     </div>
 
-    <!-- Toggle para alternar vista compacta / detallada -->
-    <div class="flex justify-center mt-3 pt-2 border-t border-stone-100">
+    <!-- Toggle para alternar vista compacta / detallada y Botón Historia Resumen del Día -->
+    <div class="flex items-center justify-between mt-3 pt-2 border-t border-stone-100 px-1 gap-2">
       <button
         type="button"
         (click)="toggleExpanded()"
-        class="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-stone-400 hover:text-stone-700 active:scale-95 transition-all py-1 px-3 rounded-full hover:bg-stone-50 cursor-pointer"
+        class="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-stone-400 hover:text-stone-700 active:scale-95 transition-all py-1.5 px-3 rounded-full hover:bg-stone-50 cursor-pointer"
       >
         <span>{{ isExpanded() ? 'Modo compacto' : 'Ver curvas y detalle' }}</span>
         <i class="pi text-[9px] transition-transform duration-300" [ngClass]="isExpanded() ? 'pi-chevron-up' : 'pi-chevron-down'"></i>
+      </button>
+
+      <button
+        type="button"
+        (click)="openDailyStory.emit()"
+        class="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-wider text-awakin-sun hover:text-awakin-sun-dim active:scale-95 transition-all py-1.5 px-3 rounded-full bg-awakin-sun/10 hover:bg-awakin-sun/15 border border-awakin-sun/25 cursor-pointer shadow-2xs"
+        title="Generar Historia 9:16 de Nutrición del Día"
+      >
+        <i class="pi pi-sparkles text-[10px]"></i>
+        <span>Historia del Día</span>
       </button>
     </div>
 </div>

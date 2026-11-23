@@ -1,15 +1,18 @@
-import { Component, inject, OnInit, signal, computed, effect, untracked } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, inject, OnInit, OnDestroy, signal, computed, effect, untracked } from '@angular/core';
+import { CommonModule, Location } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { firstValueFrom } from 'rxjs';
+import { ActivatedRoute } from '@angular/router';
+import { Subscription, firstValueFrom } from 'rxjs';
 import { PrimeNGModule } from '../../shared/prime-ng.module';
 import { AuthService } from '../../core/services/auth.service';
 import { ThemeService } from '../../core/services/theme.service';
+import { supabaseClient } from '../../core/services/supabase.service';
 import {
   AthleteService,
   AthleteProfile,
   AthleteFeedPost,
   AthleteNutritionProtocol,
+  AthleteRecordsResponse,
   KinInfo,
   NutritionMealRecord,
   ProgressMetricRecord
@@ -53,20 +56,46 @@ export type ProfileFeedTab = 'posts' | 'meals' | 'workouts' | 'progress';
   templateUrl: './profile-avatar.component.html',
   styleUrl: './profile-avatar.component.css',
 })
-export class ProfileAvatarComponent implements OnInit {
+export class ProfileAvatarComponent implements OnInit, OnDestroy {
   public authService = inject(AuthService);
   public athleteService = inject(AthleteService);
   public workoutService = inject(WorkoutSupabaseService);
   public themeService = inject(ThemeService);
+  private route = inject(ActivatedRoute);
+  private location = inject(Location);
+  private routeSub?: Subscription;
 
-  // Estado del perfil del atleta activo (conectado a la BD Supabase)
-  athlete = this.athleteService.currentAthlete;
+  // Modo Perfil Público (solo lectura cuando se navega a /avatar/:identifier de otro atleta)
+  public routeIdentifier = signal<string | null>(null);
+  private publicAthlete = signal<AthleteProfile | null>(null);
+  private publicRecords = signal<AthleteRecordsResponse | null>(null);
+  private publicPosts = signal<AthleteFeedPost[]>([]);
+  private publicWorkoutLogs = signal<WorkoutLog[]>([]);
+  private publicNutritionProtocol = signal<AthleteNutritionProtocol | null>(null);
+  private publicLoading = signal<boolean>(false);
+  public isFollowingPublic = signal<boolean>(false);
+  public isTogglingFollow = signal<boolean>(false);
+
+  public isPublicProfileMode = computed<boolean>(() => {
+    const param = (this.routeIdentifier() || '').trim().toLowerCase();
+    if (!param) return false;
+    const me = this.athleteService.currentAthlete();
+    if (me && (me.id.toLowerCase() === param || (me.username || '').toLowerCase() === param)) {
+      return false;
+    }
+    return true;
+  });
+
+  // Estado del perfil del atleta activo (propio o público en modo lectura)
+  athlete = computed(() => (this.isPublicProfileMode() ? this.publicAthlete() : this.athleteService.currentAthlete()));
   athletesList = this.athleteService.availableAthletes;
-  records = this.athleteService.currentRecords;
-  posts = this.athleteService.currentPosts;
-  workoutLogs = this.workoutService.workoutLogs;
-  isLoading = this.athleteService.isLoading;
-  nutritionProtocol = this.athleteService.currentNutritionProtocol;
+  records = computed(() => (this.isPublicProfileMode() ? this.publicRecords() : this.athleteService.currentRecords()));
+  posts = computed(() => (this.isPublicProfileMode() ? this.publicPosts() : this.athleteService.currentPosts()));
+  workoutLogs = computed(() => (this.isPublicProfileMode() ? this.publicWorkoutLogs() : this.workoutService.workoutLogs()));
+  isLoading = computed(() => (this.isPublicProfileMode() ? this.publicLoading() : this.athleteService.isLoading()));
+  nutritionProtocol = computed(() =>
+    this.isPublicProfileMode() ? this.publicNutritionProtocol() : this.athleteService.currentNutritionProtocol()
+  );
 
   // Protocolo nutricional activo formateado y tipado
   currentProtocol = computed(() => {
@@ -121,6 +150,7 @@ export class ProfileAvatarComponent implements OnInit {
 
   constructor() {
     effect(() => {
+      if (this.isPublicProfileMode()) return;
       const id = this.athlete()?.id;
       if (id && id !== this.lastLoadedWorkoutAthleteId) {
         this.lastLoadedWorkoutAthleteId = id;
@@ -260,6 +290,7 @@ export class ProfileAvatarComponent implements OnInit {
   // Solo el dueño de la cuenta puede ver sus medidas corporales y logs de progreso
   // ==========================================
   isOwner = computed(() => {
+    if (this.isPublicProfileMode()) return false;
     const current = this.athlete();
     const session = this.authService.currentSession();
     if (!current) return false;
@@ -569,27 +600,146 @@ export class ProfileAvatarComponent implements OnInit {
   activeTooltip = signal<{ type: 'weight' | 'metric'; x: number; y: number; text: string; subtext?: string } | null>(null);
 
   ngOnInit() {
-    // Cargar o refrescar el perfil, registros nutricionales, posts y logs de progreso
-    const current = this.athlete();
-    if (current?.id) {
-      if (!this.records()) {
-        this.athleteService.loadAthleteRecords(current.id);
-        this.athleteService.loadAthletePosts(current.id);
+    this.routeSub = this.route.paramMap.subscribe((params) => {
+      const identifier = params.get('identifier');
+      this.routeIdentifier.set(identifier);
+
+      if (this.isPublicProfileMode() && identifier) {
+        this.activeTab.set('posts');
+        this.loadPublicProfile(identifier);
+        return;
       }
-      this.athleteService.loadNutritionProtocol(current.id);
-      // Refrescar perfil en segundo plano para mantener altura_cm, kin y stats actualizados
-      this.athleteService.loadAthleteProfile(current.id);
-    } else {
-      const session = this.authService.currentSession();
-      if (session?.avatar?.id) {
-        this.athleteService.loadAthleteProfile(session.avatar.id);
+
+      // Modo dueño (perfil propio)
+      const current = this.athleteService.currentAthlete();
+      if (current?.id) {
+        if (!this.athleteService.currentRecords()) {
+          this.athleteService.loadAthleteRecords(current.id);
+          this.athleteService.loadAthletePosts(current.id);
+        }
+        this.athleteService.loadNutritionProtocol(current.id);
+        this.athleteService.loadAthleteProfile(current.id);
       } else {
-        const savedId = localStorage.getItem('awakin_active_athlete_id');
-        if (savedId) {
-          this.athleteService.loadAthleteProfile(savedId);
+        const session = this.authService.currentSession();
+        if (session?.avatar?.id) {
+          this.athleteService.loadAthleteProfile(session.avatar.id);
+        } else {
+          const savedId = localStorage.getItem('awakin_active_athlete_id');
+          if (savedId) {
+            this.athleteService.loadAthleteProfile(savedId);
+          }
         }
       }
+    });
+  }
+
+  ngOnDestroy(): void {
+    this.routeSub?.unsubscribe();
+  }
+
+  public goBack(): void {
+    this.location.back();
+  }
+
+  private async loadPublicProfile(identifier: string): Promise<void> {
+    this.publicLoading.set(true);
+    this.publicAthlete.set(null);
+    this.publicRecords.set(null);
+    this.publicPosts.set([]);
+    this.publicWorkoutLogs.set([]);
+    this.publicNutritionProtocol.set(null);
+    this.isFollowingPublic.set(false);
+
+    try {
+      const profile = await firstValueFrom(this.athleteService.getPublicAthleteProfile(identifier));
+      this.publicAthlete.set(profile);
+
+      if (profile?.id) {
+        // Cargar posts, comidas (sin progreso privado), protocolo y workouts en paralelo
+        this.athleteService.getPublicAthleteRecords(profile.id).subscribe({
+          next: (rec) => this.publicRecords.set({ ...rec, progress: [] }),
+          error: () => {},
+        });
+        this.athleteService.getPublicAthletePosts(profile.id).subscribe({
+          next: (p) => this.publicPosts.set(p || []),
+          error: () => {},
+        });
+        this.athleteService.getPublicNutritionProtocol(profile.id).then((proto) => {
+          this.publicNutritionProtocol.set(proto);
+        });
+        this.loadPublicWorkoutLogs(profile.id);
+
+        const myId = this.athleteService.currentAthlete()?.id;
+        if (myId && myId !== profile.id) {
+          this.athleteService.getFollowStatus(myId, profile.id).subscribe({
+            next: (res) => this.isFollowingPublic.set(!!res?.is_following),
+            error: () => {},
+          });
+        }
+      }
+    } catch (err) {
+      console.error('Error cargando perfil público:', err);
+    } finally {
+      this.publicLoading.set(false);
     }
+  }
+
+  private async loadPublicWorkoutLogs(athleteId: string): Promise<void> {
+    try {
+      const { data } = await supabaseClient
+        .from('workout_logs')
+        .select('*, workout_log_exercises(*, workout_log_sets(*))')
+        .eq('athlete_id', athleteId)
+        .order('workout_date', { ascending: false })
+        .limit(30);
+
+      const normalized: WorkoutLog[] = (data || []).map((log: any) => {
+        const exercises = (log.workout_log_exercises || [])
+          .map((ex: any) => ({
+            ...ex,
+            sets: (ex.workout_log_sets || []).sort((a: any, b: any) => (a.set_number || 0) - (b.set_number || 0)),
+          }))
+          .sort((a: any, b: any) => (a.sort_order || 0) - (b.sort_order || 0));
+        return {
+          ...log,
+          sets_by_muscle: log.sets_by_muscle || {},
+          exercises,
+        } as WorkoutLog;
+      });
+      this.publicWorkoutLogs.set(normalized);
+    } catch {
+      this.publicWorkoutLogs.set([]);
+    }
+  }
+
+  public toggleFollowPublicAthlete(): void {
+    const myId = this.athleteService.currentAthlete()?.id;
+    const target = this.publicAthlete();
+    if (!myId || !target?.id || myId === target.id || this.isTogglingFollow()) return;
+
+    this.isTogglingFollow.set(true);
+    const currentlyFollowing = this.isFollowingPublic();
+    const req = currentlyFollowing
+      ? this.athleteService.unfollowAthlete(myId, target.id)
+      : this.athleteService.followAthlete(myId, target.id);
+
+    req.subscribe({
+      next: () => {
+        this.isFollowingPublic.set(!currentlyFollowing);
+        this.publicAthlete.update((curr) =>
+          curr
+            ? {
+                ...curr,
+                followers_count: Math.max(0, (curr.followers_count || 0) + (currentlyFollowing ? -1 : 1)),
+              }
+            : null
+        );
+        this.isTogglingFollow.set(false);
+      },
+      error: () => {
+        this.isTogglingFollow.set(false);
+      },
+    });
   }
 
   // Cambiar pestaña del feed garantizando privacidad

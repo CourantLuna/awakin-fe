@@ -48,12 +48,34 @@
                   <img [src]="pList[2]" alt="Foto 3" class="w-full h-full object-cover" />
                 </div>
               </div>
-              } @else {
+              } @else if (pList.length === 4) {
               <div class="grid grid-cols-2 grid-rows-2 h-full w-full gap-0.5">
                 <img [src]="pList[0]" alt="Foto 1" class="w-full h-full object-cover" />
                 <img [src]="pList[1]" alt="Foto 2" class="w-full h-full object-cover" />
                 <img [src]="pList[2]" alt="Foto 3" class="w-full h-full object-cover" />
                 <img [src]="pList[3]" alt="Foto 4" class="w-full h-full object-cover" />
+              </div>
+              } @else if (pList.length === 5) {
+              <div class="grid grid-rows-2 h-full w-full gap-0.5">
+                <div class="grid grid-cols-2 h-full w-full gap-0.5">
+                  <img [src]="pList[0]" alt="Foto 1" class="w-full h-full object-cover" />
+                  <img [src]="pList[1]" alt="Foto 2" class="w-full h-full object-cover" />
+                </div>
+                <div class="grid grid-cols-3 h-full w-full gap-0.5">
+                  <img [src]="pList[2]" alt="Foto 3" class="w-full h-full object-cover" />
+                  <img [src]="pList[3]" alt="Foto 4" class="w-full h-full object-cover" />
+                  <img [src]="pList[4]" alt="Foto 5" class="w-full h-full object-cover" />
+                </div>
+              </div>
+              } @else {
+              <!-- 6 o más fotos: cuadrícula 2x3 -->
+              <div class="grid grid-cols-2 grid-rows-3 h-full w-full gap-0.5">
+                <img [src]="pList[0]" alt="Foto 1" class="w-full h-full object-cover" />
+                <img [src]="pList[1]" alt="Foto 2" class="w-full h-full object-cover" />
+                <img [src]="pList[2]" alt="Foto 3" class="w-full h-full object-cover" />
+                <img [src]="pList[3]" alt="Foto 4" class="w-full h-full object-cover" />
+                <img [src]="pList[4]" alt="Foto 5" class="w-full h-full object-cover" />
+                <img [src]="pList[5]" alt="Foto 6" class="w-full h-full object-cover" />
               </div>
               }
             </div>
@@ -73,9 +95,14 @@
               class="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-black/60 pointer-events-none">
             </div>
             } @else {
-            <div
-              class="absolute inset-0 bg-stone-900 flex items-center justify-center text-stone-500 text-xs font-bold">
-              Foto no disponible
+            <!-- Fondo Dark Ritual Awakin (Obsidiana con resplandor solar) -->
+            <div class="absolute inset-0 bg-[#0C0A09] pointer-events-none">
+              <div
+                class="absolute inset-0 bg-[radial-gradient(circle_at_50%_35%,rgba(254,151,10,0.22)_0%,rgba(12,10,9,0.95)_70%)]">
+              </div>
+              <div class="absolute inset-0 opacity-[0.04]"
+                style="background-image: radial-gradient(#fff 1px, transparent 1px); background-size: 16px 16px;">
+              </div>
             </div>
             }
 
@@ -441,7 +468,6 @@
                   <div class="pt-2 mt-2 border-t border-white/15 flex items-center justify-between text-left">
                     <div class="flex items-center gap-1.5">
                       <img src="/icons/intake-active.png" alt="Awakin Intake" class="w-4 h-4 object-contain shrink-0" />
-                      <span class="text-[9px] font-black uppercase tracking-wider text-white">Awakin</span>
 
                       @if (kinTeam(); as kin) {
                       <span class="text-[9px] text-stone-400 font-bold">×</span>
@@ -614,30 +640,29 @@
     </div>
 
     <!-- Footer de Acciones (Fijo abajo) -->
-    <div class="px-4 py-3 border-t border-stone-200 bg-white flex items-center shrink-0 sticky bottom-0 z-20">
-      <!-- Botón Principal: Compartir Historia -->
-      <button type="button" (click)="exportStory('share')" [disabled]="isExporting()" class="flex-1 py-3 px-4 rounded-xl bg-awakin-sun hover:bg-awakin-sun-dark active:scale-[0.98] text-white
-              font-black text-xs uppercase tracking-wider flex items-center justify-center gap-2 shadow-sm
-              transition-all cursor-pointer disabled:opacity-50">
+    <div class="p-3 border-t border-stone-100 bg-white flex items-center gap-2 shrink-0 sticky bottom-0 z-20">
+      <button type="button" (click)="exportStory('download')" [disabled]="isExporting()"
+        class="hidden sm:flex px-4 py-3 rounded-xl bg-stone-900 hover:bg-stone-800 text-white font-black text-xs uppercase tracking-wider transition-all active:scale-95 cursor-pointer items-center justify-center gap-2 disabled:opacity-50 shadow-sm"
+        title="Descargar imagen en alta resolución">
+        @if (isExporting() && exportAction() === 'download') {
+        <i class="pi pi-spin pi-spinner text-xs text-awakin-sun"></i>
+        <span>Generando...</span>
+        } @else {
+        <i class="pi pi-download text-xs"></i>
+        <span>Guardar PNG</span>
+        }
+      </button>
+
+      <button type="button" (click)="exportStory('share')" [disabled]="isExporting()"
+        class="flex-1 py-3 rounded-xl bg-awakin-sun hover:bg-awakin-sun-dim text-white font-black text-xs uppercase tracking-wider transition-all shadow-md shadow-awakin-sun/25 active:scale-95 cursor-pointer flex items-center justify-center gap-2 disabled:opacity-50">
         @if (isExporting() && exportAction() === 'share') {
         <i class="pi pi-spin pi-spinner text-xs"></i>
-        <span>Generando...</span>
+        <span>Preparando...</span>
         } @else {
         <i class="pi pi-share-alt text-xs"></i>
         <span>Compartir Historia</span>
         }
       </button>
-
-      <!-- Botón Secundario: Descargar HD -->
-      <!-- <button type="button" (click)="exportStory('download')" [disabled]="isExporting()"
-        class="py-3 px-3.5 rounded-xl bg-stone-100 hover:bg-stone-200 text-stone-800 font-bold text-xs flex items-center justify-center gap-1.5 transition-all cursor-pointer disabled:opacity-50"
-        title="Descargar imagen en alta resolución">
-        @if (isExporting() && exportAction() === 'download') {
-        <i class="pi pi-spin pi-spinner text-xs"></i>
-        } @else {
-        <i class="pi pi-download text-xs"></i>
-        }
-      </button> -->
     </div>
 
   </div>

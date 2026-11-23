@@ -1,5 +1,7 @@
 import { Component, computed, effect, inject, signal, untracked } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+import { Router } from '@angular/router';
 import { AthleteProfile, AthleteService } from '../../core/services/athlete.service';
 import { ThemeService } from '../../core/services/theme.service';
 import {
@@ -16,6 +18,8 @@ import { WorkoutLogDetailModalComponent } from '../workout/components/workout-lo
 import { WorkoutLogEditModalComponent } from '../workout/components/workout-log-edit-modal/workout-log-edit-modal.component';
 import { WorkoutStoryModalComponent } from '../workout/components/workout-story-modal/workout-story-modal.component';
 import { BodyMapGender } from '../workout/components/body-map/body-map.component';
+import { KinMealsCollageModalComponent } from './components/kin-meals-collage-modal/kin-meals-collage-modal.component';
+import { KinRankingStoryModalComponent } from './components/kin-ranking-story-modal/kin-ranking-story-modal.component';
 
 type LeaderboardMode = 'streak' | 'workouts' | 'level';
 type KinSectionTab = 'feed' | 'meals' | 'leaderboard' | 'agenda';
@@ -44,10 +48,13 @@ export interface CalendarDayCell {
   standalone: true,
   imports: [
     CommonModule,
+    FormsModule,
     WorkoutLogCardComponent,
     WorkoutLogDetailModalComponent,
     WorkoutLogEditModalComponent,
     WorkoutStoryModalComponent,
+    KinMealsCollageModalComponent,
+    KinRankingStoryModalComponent,
   ],
   templateUrl: './kin-community.component.html',
   styleUrl: './kin-community.component.css',
@@ -56,6 +63,7 @@ export class KinCommunityComponent {
   public athleteService = inject(AthleteService);
   public themeService = inject(ThemeService);
   public kinService = inject(KinService);
+  private router = inject(Router);
 
   public activeTab = signal<KinSectionTab>('feed');
   public agendaViewMode = signal<AgendaViewMode>('month');
@@ -72,6 +80,27 @@ export class KinCommunityComponent {
   public logToEdit = signal<WorkoutLog | null>(null);
   public isShareWorkoutModalOpen = signal<boolean>(false);
   public shareWorkoutTargetLog = signal<WorkoutLog | null>(null);
+
+  // Modales de Collage Comidas Kin, Podio Ranking 9:16 y Personalización Visual del Kin
+  public isMealsCollageModalOpen = signal<boolean>(false);
+  public isRankingStoryModalOpen = signal<boolean>(false);
+  public isBrandingModalOpen = signal<boolean>(false);
+  public brandingHeaderUrl = signal<string>('');
+  public brandingMealsBannerUrl = signal<string>('');
+  public brandingRankingBgUrl = signal<string>('');
+  public brandingAgendaBgUrl = signal<string>('');
+  public isSavingBranding = signal<boolean>(false);
+  public uploadingBrandingSlot = signal<'header' | 'meals' | 'ranking' | 'agenda' | null>(null);
+  public brandingError = signal<string | null>(null);
+
+  public canEditKinBranding = computed<boolean>(() => {
+    const a = this.athleteService.currentAthlete();
+    const k = this.kinSummary();
+    if (!a || !k) return false;
+    if (k.head_coach_id === a.id || k.instructor_id === a.id) return true;
+    const roles = (a.roles || []).map((r) => r.toUpperCase());
+    return roles.includes('ADMINISTRATOR') || roles.includes('INSTRUCTOR');
+  });
 
   // Estado de navegación del calendario (Mes / Semana)
   public calendarCursor = signal<Date>(new Date());
@@ -298,6 +327,72 @@ export class KinCommunityComponent {
     const url = this.kinSummary()?.whatsapp_group_url?.trim();
     if (!url || typeof window === 'undefined') return;
     window.open(url, '_blank', 'noopener,noreferrer');
+  }
+
+  public openPublicProfile(identifier?: string | null): void {
+    if (!identifier) return;
+    this.router.navigate(['/avatar', identifier]);
+  }
+
+  public openBrandingModal(): void {
+    const k = this.kinSummary();
+    this.brandingHeaderUrl.set(k?.header_image_url || '');
+    this.brandingMealsBannerUrl.set(k?.meals_banner_url || '');
+    this.brandingRankingBgUrl.set(k?.ranking_bg_url || '');
+    this.brandingAgendaBgUrl.set(k?.agenda_bg_url || '');
+    this.brandingError.set(null);
+    this.isBrandingModalOpen.set(true);
+  }
+
+  public onBrandingFileSelected(slot: 'header' | 'meals' | 'ranking' | 'agenda', event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const file = input?.files?.[0];
+    if (!file) return;
+    this.uploadingBrandingSlot.set(slot);
+    this.brandingError.set(null);
+
+    this.athleteService.uploadMedia(file, 'kin_assets', `kin_${slot}_${Date.now()}.jpg`).subscribe({
+      next: (res) => {
+        const url = res.public_url;
+        if (slot === 'header') this.brandingHeaderUrl.set(url);
+        else if (slot === 'meals') this.brandingMealsBannerUrl.set(url);
+        else if (slot === 'ranking') this.brandingRankingBgUrl.set(url);
+        else if (slot === 'agenda') this.brandingAgendaBgUrl.set(url);
+        this.uploadingBrandingSlot.set(null);
+        input.value = '';
+      },
+      error: (err) => {
+        this.brandingError.set(err?.error?.detail || 'No se pudo subir la imagen.');
+        this.uploadingBrandingSlot.set(null);
+        input.value = '';
+      },
+    });
+  }
+
+  public saveKinBranding(): void {
+    const kinId = this.kinSummary()?.id;
+    if (!kinId || this.isSavingBranding()) return;
+    this.isSavingBranding.set(true);
+    this.brandingError.set(null);
+
+    this.kinService
+      .updateKinBranding(kinId, {
+        header_image_url: this.brandingHeaderUrl().trim() || null,
+        meals_banner_url: this.brandingMealsBannerUrl().trim() || null,
+        ranking_bg_url: this.brandingRankingBgUrl().trim() || null,
+        agenda_bg_url: this.brandingAgendaBgUrl().trim() || null,
+      })
+      .subscribe({
+        next: () => {
+          this.isSavingBranding.set(false);
+          this.isBrandingModalOpen.set(false);
+          this.refreshKin();
+        },
+        error: (err) => {
+          this.brandingError.set(err?.error?.detail || 'Error al guardar la personalización visual.');
+          this.isSavingBranding.set(false);
+        },
+      });
   }
 
   public addToMyGoogleCalendar(evt: KinCalendarEvent, event?: Event): void {

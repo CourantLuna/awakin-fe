@@ -173,6 +173,18 @@ export class KinService {
       });
   }
 
+  public updateKinBranding(
+    kinId: string,
+    payload: {
+      header_image_url?: string | null;
+      meals_banner_url?: string | null;
+      ranking_bg_url?: string | null;
+      agenda_bg_url?: string | null;
+    }
+  ) {
+    return this.http.patch<{ status: string; kin: KinInfo }>(`${this.baseUrl}/${kinId}/branding`, payload);
+  }
+
   public loadAwakinFeed(athleteId: string, scope: AwakinFeedScope = 'all', kinId?: string | null): void {
     if (!athleteId) return;
     this.awakinFeedLoading.set(true);

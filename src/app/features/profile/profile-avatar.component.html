@@ -1,6 +1,23 @@
 <div class="min-h-screen bg-awakin-base pb-28 pt-8">
   <!-- BARRA SUPERIOR CON SELECTOR DE ATLETA Y ACCIONES -->
   <div class="flex justify-between items-center px-4 mb-5 relative">
+    @if (isPublicProfileMode()) {
+    <div class="flex items-center gap-2 min-w-0">
+      <button type="button" (click)="goBack()"
+        class="w-9 h-9 rounded-full bg-white border border-stone-200 hover:bg-stone-100 text-stone-800 flex items-center justify-center shadow-xs transition-all cursor-pointer active:scale-95 shrink-0"
+        title="Volver">
+        <i class="pi pi-arrow-left text-xs"></i>
+      </button>
+      <div
+        class="flex items-center gap-1.5 text-sm font-black text-stone-900 bg-stone-100/90 px-3 py-1.5 rounded-full border border-stone-200 select-none shadow-xs truncate">
+        <span class="truncate">@{{ athlete()?.username || routeIdentifier() }}</span>
+      </div>
+    </div>
+    <span
+      class="px-2.5 py-1 rounded-full bg-stone-100 border border-stone-200 text-[9px] font-black uppercase tracking-wider text-stone-500 shrink-0">
+      Perfil Público
+    </span>
+    } @else {
     <!-- Identificador de cuenta / Username bloqueado con credenciales -->
     <div
       class="flex items-center gap-1.5 text-sm font-black text-stone-900 bg-stone-100/90 px-3 py-1.5 rounded-full border border-stone-200 select-none shadow-xs">
@@ -14,6 +31,7 @@
       title="Opciones de cuenta">
       <i class="pi pi-bars text-lg"></i>
     </button>
+    }
 
     <!-- DROPDOWN: MENÚ RÁPIDO (Cerrar sesión / Editar) -->
     @if (isMenuOpen()) {
@@ -57,9 +75,9 @@
 
   <!-- CABECERA DE PERFIL: AVATAR Y ESTADÍSTICAS -->
   <div class="px-4 flex items-center justify-between mb-4">
-    <!-- FOTO CON BADGE DE NIVEL Y BOTÓN DE EDICIÓN -->
-    <div class="relative group cursor-pointer" (click)="avatarFileInput.click()"
-      title="Cambiar foto de perfil (Zoom & Recorte)">
+    <!-- FOTO CON BADGE DE NIVEL Y BOTÓN DE EDICIÓN (SOLO DUEÑO) -->
+    <div class="relative group" [class.cursor-pointer]="isOwner()" (click)="isOwner() && avatarFileInput.click()"
+      [title]="isOwner() ? 'Cambiar foto de perfil (Zoom & Recorte)' : (athlete()?.first_name || athlete()?.username || '')">
       <div class="w-24 h-24 rounded-full border-4 border-white shadow-md overflow-hidden bg-stone-200 relative">
         @if (athlete()?.profile_image_url) {
         <img loading="lazy" decoding="async" [src]="athlete()?.profile_image_url"
@@ -71,19 +89,23 @@
         </div>
         }
 
+        @if (isOwner()) {
         <!-- Overlay hover para cambiar foto -->
         <div
           class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center text-white">
           <i class="pi pi-camera text-xl"></i>
           <span class="text-[8px] font-black uppercase tracking-wider mt-0.5">Cambiar</span>
         </div>
+        }
       </div>
 
+      @if (isOwner()) {
       <!-- Icono de cámara flotante -->
       <div
         class="absolute bottom-0 right-0 w-7 h-7 bg-stone-900 border-2 border-white rounded-full flex items-center justify-center text-white text-[10px] shadow-sm">
         <i class="pi pi-camera"></i>
       </div>
+      }
 
       <!-- Badge de Nivel Calculado -->
       <div
@@ -131,7 +153,7 @@
       {{ athlete()?.first_name ? athlete()?.first_name + ' ' + (athlete()?.last_name || '') : athlete()?.username }}
     </h2>
 
-    @if (athlete()?.email) {
+    @if (isOwner() && athlete()?.email) {
     <p class="text-[11px] text-stone-500 font-mono mb-1">
       <i class="pi pi-envelope text-[10px] mr-1"></i>{{ athlete()?.email }}
     </p>
@@ -241,8 +263,9 @@
     }
   </div>
 
-  <!-- BOTONES DE ACCIÓN: EDITAR, NUEVO POST Y COMPARTIR -->
+  <!-- BOTONES DE ACCIÓN: PROPIO (EDITAR, NUEVO POST, COMPARTIR) vs PÚBLICO (SEGUIR, COMPARTIR) -->
   <div class="px-4 flex gap-2 mb-4">
+    @if (isOwner()) {
     <button (click)="openEditProfile()"
       class="flex-1 bg-stone-900 hover:bg-stone-800 text-white font-bold text-xs py-2 rounded-xl active:scale-98 transition-all cursor-pointer flex items-center justify-center gap-1.5 shadow-sm">
       <i class="pi pi-user-edit text-xs"></i>
@@ -253,6 +276,16 @@
       <i class="pi pi-plus-circle text-xs"></i>
       <span>Nuevo Post</span>
     </button>
+    } @else {
+    <button type="button" (click)="toggleFollowPublicAthlete()" [disabled]="isTogglingFollow()"
+      class="flex-1 font-black text-xs py-2.5 rounded-xl active:scale-98 transition-all cursor-pointer flex items-center justify-center gap-1.5 shadow-sm disabled:opacity-50"
+      [ngClass]="isFollowingPublic()
+        ? 'bg-stone-200 hover:bg-stone-300 text-stone-900'
+        : 'bg-kin-primary hover:opacity-95 text-white'">
+      <i class="pi text-xs" [ngClass]="isFollowingPublic() ? 'pi-check' : 'pi-user-plus'"></i>
+      <span>{{ isFollowingPublic() ? 'Siguiendo' : 'Seguir' }}</span>
+    </button>
+    }
     <button (click)="shareProfile()"
       class="w-10 bg-stone-200 hover:bg-stone-300 text-stone-900 font-bold text-xs py-2 rounded-xl active:scale-98 transition-all cursor-pointer flex items-center justify-center shadow-xs"
       title="Compartir Perfil">
@@ -387,11 +420,13 @@
       <p class="text-[11px] text-stone-500 max-w-xs mx-auto mb-4 leading-relaxed">
         Publica fotos de tus avances, disciplina o hábitos para compartirlos en el feed de la comunidad.
       </p>
+      @if (isOwner()) {
       <button (click)="openCreatePost()"
         class="inline-flex items-center gap-1.5 px-4 py-2 bg-stone-900 text-white rounded-xl text-xs font-bold hover:bg-stone-800 transition-all cursor-pointer shadow-sm active:scale-95">
         <i class="pi pi-plus text-xs"></i>
         <span>Crear Publicación</span>
       </button>
+      }
     </div>
     }
   </div>

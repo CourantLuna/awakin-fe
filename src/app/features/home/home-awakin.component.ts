@@ -1,6 +1,8 @@
 import { Component, computed, effect, inject, signal, untracked } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { AthleteProfile, AthleteService } from '../../core/services/athlete.service';
+import { FormsModule } from '@angular/forms';
+import { Router } from '@angular/router';
+import { AthleteProfile, AthleteSearchResult, AthleteService } from '../../core/services/athlete.service';
 import { AwakinFeedScope, KinAuthorSummary, KinService } from '../../core/services/kin.service';
 import { ThemeService } from '../../core/services/theme.service';
 import { WorkoutLog } from '../workout/models/workout.models';
@@ -15,6 +17,7 @@ import { BodyMapGender } from '../workout/components/body-map/body-map.component
   standalone: true,
   imports: [
     CommonModule,
+    FormsModule,
     WorkoutLogCardComponent,
     WorkoutLogDetailModalComponent,
     WorkoutLogEditModalComponent,
@@ -27,6 +30,7 @@ export class HomeAwakinComponent {
   public athleteService = inject(AthleteService);
   public kinService = inject(KinService);
   public themeService = inject(ThemeService);
+  private router = inject(Router);
 
   public activeScope = signal<AwakinFeedScope>('all');
   public selectedWorkoutLog = signal<WorkoutLog | null>(null);
@@ -37,6 +41,14 @@ export class HomeAwakinComponent {
   public logToEdit = signal<WorkoutLog | null>(null);
   public isShareWorkoutModalOpen = signal<boolean>(false);
   public shareWorkoutTargetLog = signal<WorkoutLog | null>(null);
+
+  // Búsqueda Global de Perfiles Públicos en Awakin
+  public isSearchOpen = signal<boolean>(false);
+  public searchQuery = signal<string>('');
+  public searchResults = signal<AthleteSearchResult[]>([]);
+  public isSearching = signal<boolean>(false);
+  public togglingFollowId = signal<string | null>(null);
+  private searchDebounceTimer: any = null;
 
   public currentAthleteId = computed(() => this.athleteService.currentAthlete()?.id || '');
   public currentAthleteGender = computed<BodyMapGender>(() => {
@@ -94,6 +106,66 @@ export class HomeAwakinComponent {
   public openWorkoutStoryModal(log: WorkoutLog): void {
     this.shareWorkoutTargetLog.set(log);
     this.isShareWorkoutModalOpen.set(true);
+  }
+
+  public toggleSearch(): void {
+    const next = !this.isSearchOpen();
+    this.isSearchOpen.set(next);
+    if (next) {
+      this.executeSearch(this.searchQuery());
+    }
+  }
+
+  public onSearchInput(value: string): void {
+    this.searchQuery.set(value);
+    if (this.searchDebounceTimer) {
+      clearTimeout(this.searchDebounceTimer);
+    }
+    this.searchDebounceTimer = setTimeout(() => {
+      this.executeSearch(value);
+    }, 250);
+  }
+
+  public executeSearch(query: string): void {
+    this.isSearching.set(true);
+    this.athleteService.searchAthletes(query, this.currentAthleteId()).subscribe({
+      next: (list) => {
+        this.searchResults.set(list || []);
+        this.isSearching.set(false);
+      },
+      error: () => {
+        this.isSearching.set(false);
+      },
+    });
+  }
+
+  public openPublicProfile(identifier?: string | null): void {
+    if (!identifier) return;
+    this.isSearchOpen.set(false);
+    this.router.navigate(['/avatar', identifier]);
+  }
+
+  public toggleFollowFromSearch(target: AthleteSearchResult, event: Event): void {
+    event.stopPropagation();
+    const myId = this.currentAthleteId();
+    if (!myId || myId === target.id || this.togglingFollowId()) return;
+
+    this.togglingFollowId.set(target.id);
+    const req = target.is_following
+      ? this.athleteService.unfollowAthlete(myId, target.id)
+      : this.athleteService.followAthlete(myId, target.id);
+
+    req.subscribe({
+      next: () => {
+        this.searchResults.update((list) =>
+          list.map((a) => (a.id === target.id ? { ...a, is_following: !a.is_following } : a))
+        );
+        this.togglingFollowId.set(null);
+      },
+      error: () => {
+        this.togglingFollowId.set(null);
+      },
+    });
   }
 
   public toAthleteProfile(author?: KinAuthorSummary): AthleteProfile | null {

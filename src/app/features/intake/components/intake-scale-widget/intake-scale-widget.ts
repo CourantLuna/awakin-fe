@@ -1,4 +1,4 @@
-import { Component, input, computed, ViewChild, ElementRef, signal } from '@angular/core';
+import { Component, input, computed, ViewChild, ElementRef, signal, Output, EventEmitter } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ChartModule } from 'primeng/chart';
 import { IntakeProgressWidgetComponent } from '../intake-widget/intake-progress-widget.component';
@@ -16,6 +16,9 @@ export class IntakeScaleWidgetComponent {
 
   // Control de vista compacta / expandida (por defecto detallada)
   isExpanded = signal<boolean>(true);
+
+  // Emite evento para generar historia 9:16 resumen/collage del día
+  @Output() openDailyStory = new EventEmitter<void>();
 
   toggleExpanded() {
     this.isExpanded.update((val) => !val);

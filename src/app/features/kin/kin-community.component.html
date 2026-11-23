@@ -38,12 +38,22 @@
   }
 
   <!-- 1. HEADER DE IDENTIDAD DEL KIN -->
-  <div class="bg-white rounded-3xl p-5 border border-stone-200 shadow-xs mb-5 relative overflow-hidden">
-    <div class="flex items-start justify-between gap-3">
+  <div class="rounded-3xl p-5 border shadow-xs mb-5 relative overflow-hidden transition-all"
+    [ngClass]="kinSummary()?.header_image_url ? 'bg-stone-950 border-stone-800 text-white' : 'bg-white border-stone-200'">
+    @if (kinSummary()?.header_image_url) {
+    <img [src]="kinSummary()!.header_image_url!" alt="Fondo Kin"
+      class="absolute inset-0 w-full h-full object-cover pointer-events-none select-none" />
+    <div
+      class="absolute inset-0 bg-gradient-to-b from-stone-950/75 via-stone-950/60 to-stone-950/85 backdrop-blur-[1px] pointer-events-none">
+    </div>
+    }
+
+    <div class="relative z-10 flex items-start justify-between gap-3">
       <div class="flex items-center gap-3.5 min-w-0">
         @if (kinSummary()?.team_logo_url) {
         <img [src]="kinSummary()!.team_logo_url" [alt]="kinSummary()?.team_name || 'Kin'"
-          class="w-14 h-14 rounded-2xl object-cover border border-stone-200 shrink-0 shadow-xs" />
+          class="w-14 h-14 rounded-2xl object-cover border shrink-0 shadow-xs bg-white"
+          [ngClass]="kinSummary()?.header_image_url ? 'border-white/30' : 'border-stone-200'" />
         } @else {
         <div
           class="w-14 h-14 rounded-2xl bg-kin-primary/15 border border-kin-primary/30 text-kin-primary flex items-center justify-center font-black text-xl shrink-0">
@@ -53,41 +63,56 @@
 
         <div class="min-w-0">
           <div class="flex items-center gap-2">
-            <h1 class="text-lg font-black text-stone-900 uppercase tracking-tight truncate">
+            <h1 class="text-lg font-black uppercase tracking-tight truncate"
+              [ngClass]="kinSummary()?.header_image_url ? 'text-white drop-shadow-xs' : 'text-stone-900'">
               {{ kinSummary()?.team_name || 'Mi Kin' }}
             </h1>
-            <span
-              class="px-2 py-0.5 rounded-full text-[9px] font-black uppercase bg-kin-primary/15 text-kin-primary shrink-0">
+            <span class="px-2 py-0.5 rounded-full text-[9px] font-black uppercase shrink-0"
+              [ngClass]="kinSummary()?.header_image_url ? 'bg-white/20 text-white border border-white/25 backdrop-blur-xs' : 'bg-kin-primary/15 text-kin-primary'">
               {{ kinService.overview()?.members_count || 0 }} miembros
             </span>
           </div>
           @if (kinSummary()?.manifesto) {
-          <p class="text-xs text-stone-500 mt-1 line-clamp-2 leading-relaxed">
+          <p class="text-xs mt-1 line-clamp-2 leading-relaxed"
+            [ngClass]="kinSummary()?.header_image_url ? 'text-stone-200' : 'text-stone-500'">
             "{{ kinSummary()!.manifesto }}"
           </p>
           } @else {
-          <p class="text-[11px] text-stone-400 mt-0.5">Comunidad privada de entrenamiento y disciplina</p>
+          <p class="text-[11px] mt-0.5"
+            [ngClass]="kinSummary()?.header_image_url ? 'text-stone-300' : 'text-stone-400'">
+            Comunidad privada de entrenamiento y disciplina
+          </p>
           }
         </div>
       </div>
 
-      <!-- Acciones rápidas: Botón WhatsApp del Equipo + Refrescar -->
-      <div class="flex items-center gap-2 shrink-0">
+      <!-- Acciones rápidas: WhatsApp + Personalizar (Coach) + Refrescar -->
+      <div class="flex items-center gap-1.5 shrink-0">
         @if (kinSummary()?.whatsapp_group_url) {
         <button type="button" (click)="openWhatsAppGroup()" title="Unirse al grupo de WhatsApp del Kin"
           aria-label="Grupo de WhatsApp del Kin"
-          class="w-10 h-10 rounded-2xl bg-emerald-500 hover:bg-emerald-600 text-white flex items-center justify-center shadow-sm transition-transform active:scale-95 cursor-pointer">
-          <i class="pi pi-whatsapp text-lg"></i>
+          class="w-9 h-9 rounded-2xl bg-emerald-500 hover:bg-emerald-600 text-white flex items-center justify-center shadow-sm transition-transform active:scale-95 cursor-pointer">
+          <i class="pi pi-whatsapp text-base"></i>
         </button>
         } @else {
         <button type="button" disabled title="Tu Coach aún no ha configurado el enlace de WhatsApp"
-          class="w-10 h-10 rounded-2xl bg-stone-100 text-stone-400 flex items-center justify-center cursor-not-allowed">
-          <i class="pi pi-whatsapp text-lg"></i>
+          class="w-9 h-9 rounded-2xl flex items-center justify-center cursor-not-allowed"
+          [ngClass]="kinSummary()?.header_image_url ? 'bg-white/15 text-white/50' : 'bg-stone-100 text-stone-400'">
+          <i class="pi pi-whatsapp text-base"></i>
+        </button>
+        }
+
+        @if (canEditKinBranding()) {
+        <button type="button" (click)="openBrandingModal()" title="Personalizar imágenes del Kin"
+          class="w-9 h-9 rounded-2xl flex items-center justify-center transition-colors cursor-pointer"
+          [ngClass]="kinSummary()?.header_image_url ? 'bg-white/20 hover:bg-white/30 text-white border border-white/20' : 'bg-stone-100 hover:bg-stone-200 text-stone-700'">
+          <i class="pi pi-image text-sm"></i>
         </button>
         }
 
         <button type="button" (click)="refreshKin()" [disabled]="kinService.isLoading()" title="Actualizar Kin"
-          class="w-10 h-10 rounded-2xl bg-stone-100 hover:bg-stone-200 text-stone-600 flex items-center justify-center transition-colors cursor-pointer">
+          class="w-9 h-9 rounded-2xl flex items-center justify-center transition-colors cursor-pointer"
+          [ngClass]="kinSummary()?.header_image_url ? 'bg-white/20 hover:bg-white/30 text-white border border-white/20' : 'bg-stone-100 hover:bg-stone-200 text-stone-600'">
           <i class="pi pi-refresh text-sm" [class.animate-spin]="kinService.isLoading()"></i>
         </button>
       </div>
@@ -95,13 +120,15 @@
 
     <!-- Tira rápida de Miembros & Coaches -->
     @if ((kinService.overview()?.members || []).length > 0) {
-    <div class="mt-4 pt-3.5 border-t border-stone-100 flex items-center gap-2.5 overflow-x-auto no-scrollbar">
+    <div class="relative z-10 mt-4 pt-3.5 border-t flex items-center gap-2.5 overflow-x-auto no-scrollbar"
+      [ngClass]="kinSummary()?.header_image_url ? 'border-white/20' : 'border-stone-100'">
       @for (member of kinService.overview()?.members; track member.id) {
-      <div class="flex flex-col items-center gap-1 shrink-0 w-14">
+      <button type="button" (click)="openPublicProfile(member.username || member.id)"
+        class="flex flex-col items-center gap-1 shrink-0 w-14 cursor-pointer group">
         <div class="relative">
           <img [src]="member.profile_image_url || 'https://i.pravatar.cc/100?u=' + member.id" [alt]="member.full_name"
-            class="w-10 h-10 rounded-full object-cover border-2"
-            [ngClass]="member.kin_role !== 'member' ? 'border-kin-primary' : 'border-stone-200'" />
+            class="w-10 h-10 rounded-full object-cover border-2 transition-transform group-hover:scale-105"
+            [ngClass]="member.kin_role !== 'member' ? 'border-kin-primary' : (kinSummary()?.header_image_url ? 'border-white/60' : 'border-stone-200')" />
           @if (member.kin_role === 'head_coach' || member.kin_role === 'instructor') {
           <span
             class="absolute -bottom-1 left-1/2 -translate-x-1/2 px-1.5 py-0.2 rounded-full bg-kin-primary text-white text-[7px] font-black uppercase tracking-wider shadow-xs">
@@ -109,10 +136,11 @@
           </span>
           }
         </div>
-        <span class="text-[9px] font-bold text-stone-600 truncate w-full text-center">
+        <span class="text-[9px] font-bold truncate w-full text-center"
+          [ngClass]="kinSummary()?.header_image_url ? 'text-stone-100' : 'text-stone-600'">
           {{ member.full_name.split(' ')[0] }}
         </span>
-      </div>
+      </button>
       }
     </div>
     }
@@ -215,16 +243,40 @@
   </div>
   }
 
-  <!-- TAB 2: MURAL DE COMIDAS DEL KIN (Grid 3 columnas estilo Instagram / Avatar) -->
+  <!-- TAB 2: MURAL DE COMIDAS DEL KIN (Banner Coach + Overlay Collage + Grid 3 columnas) -->
   @else if (activeTab() === 'meals') {
   <div class="space-y-3">
-    <div class="flex items-center justify-between px-1">
-      <h3 class="text-xs font-bold text-stone-400 uppercase tracking-widest">
-        Mural Nutricional del Kin
-      </h3>
-      <span class="text-[10px] font-bold text-kin-primary">
-        {{ mealPhotos().length }} fotos
-      </span>
+    <!-- Banner superior personalizable (meals_banner_url) con overlay para generar collage 9:16 / 16:9 / 4:5 / 1:1 -->
+    <div class="relative rounded-3xl overflow-hidden border border-stone-200 shadow-xs min-h-[124px] flex items-end bg-stone-950">
+      @if (kinSummary()?.meals_banner_url) {
+      <img [src]="kinSummary()!.meals_banner_url!" alt="Banner Comidas del Kin"
+        class="absolute inset-0 w-full h-full object-cover pointer-events-none select-none" />
+      <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-black/25 pointer-events-none"></div>
+      } @else {
+      <div class="absolute inset-0 bg-gradient-to-r from-stone-900 via-stone-800 to-stone-900 pointer-events-none"></div>
+      <div class="absolute inset-0 bg-[radial-gradient(circle_at_80%_20%,rgba(254,151,10,0.28),transparent_60%)] pointer-events-none"></div>
+      }
+
+      <div class="relative z-10 w-full p-4 flex items-end justify-between gap-3 text-white">
+        <div class="min-w-0">
+          <div class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-white/15 border border-white/20 backdrop-blur-xs text-[9px] font-black uppercase tracking-widest text-awakin-sun mb-1">
+            <i class="pi pi-camera text-[9px]"></i>
+            <span>{{ mealPhotos().length }} fotos del equipo</span>
+          </div>
+          <h3 class="text-sm sm:text-base font-black uppercase tracking-tight leading-tight text-white drop-shadow-xs">
+            Mural Nutricional del Kin
+          </h3>
+          <p class="text-[11px] text-stone-200/90 mt-0.5 line-clamp-1">
+            Así come {{ kinSummary()?.team_name || 'nuestro equipo' }} cada día
+          </p>
+        </div>
+
+        <button type="button" (click)="isMealsCollageModalOpen.set(true)" [disabled]="mealPhotos().length === 0"
+          class="shrink-0 px-3.5 py-2.5 rounded-2xl bg-awakin-sun hover:bg-awakin-sun-dim active:scale-95 text-white font-black text-[10px] uppercase tracking-wider flex items-center gap-1.5 shadow-md shadow-black/30 transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed">
+          <i class="pi pi-th-large text-xs"></i>
+          <span>Collage</span>
+        </button>
+      </div>
     </div>
 
     @if (mealPhotos().length > 0) {
@@ -271,71 +323,94 @@
   </div>
   }
 
-  <!-- TAB 3: RANKING -->
+  <!-- TAB 3: RANKING (Con fondo ranking_bg_url transparente + Historia Podio 9:16) -->
   @else if (activeTab() === 'leaderboard') {
-  <div class="space-y-3">
-    <div class="flex items-center justify-between gap-2 px-1">
-      <h3 class="text-xs font-bold text-stone-400 uppercase tracking-widest">Leaderboard</h3>
-      <div class="flex items-center gap-1 bg-stone-100 p-1 rounded-xl border border-stone-200">
-        <button type="button" (click)="leaderboardMode.set('streak')"
-          class="px-2.5 py-1 rounded-lg text-[10px] font-black transition-all cursor-pointer"
-          [ngClass]="leaderboardMode() === 'streak' ? 'bg-kin-primary text-white' : 'text-stone-500'">
-          Racha
-        </button>
-        <button type="button" (click)="leaderboardMode.set('workouts')"
-          class="px-2.5 py-1 rounded-lg text-[10px] font-black transition-all cursor-pointer"
-          [ngClass]="leaderboardMode() === 'workouts' ? 'bg-kin-primary text-white' : 'text-stone-500'">
-          Semana
-        </button>
-        <button type="button" (click)="leaderboardMode.set('level')"
-          class="px-2.5 py-1 rounded-lg text-[10px] font-black transition-all cursor-pointer"
-          [ngClass]="leaderboardMode() === 'level' ? 'bg-kin-primary text-white' : 'text-stone-500'">
-          Nivel
-        </button>
+  <div class="relative rounded-3xl overflow-hidden border transition-all"
+    [ngClass]="kinSummary()?.ranking_bg_url ? 'p-3.5 border-stone-200 shadow-xs bg-stone-950' : 'border-transparent'">
+    @if (kinSummary()?.ranking_bg_url) {
+    <img [src]="kinSummary()!.ranking_bg_url!" alt="Fondo Ranking Kin"
+      class="absolute inset-0 w-full h-full object-cover pointer-events-none select-none" />
+    <div class="absolute inset-0 bg-gradient-to-b from-stone-950/75 via-stone-950/60 to-stone-950/80 backdrop-blur-[1px] pointer-events-none"></div>
+    }
+
+    <div class="relative z-10 space-y-3">
+      <div class="flex flex-wrap items-center justify-between gap-2 px-1">
+        <div class="flex items-center gap-2">
+          <h3 class="text-xs font-bold uppercase tracking-widest"
+            [ngClass]="kinSummary()?.ranking_bg_url ? 'text-white' : 'text-stone-400'">
+            Leaderboard
+          </h3>
+          <button type="button" (click)="isRankingStoryModalOpen.set(true)" [disabled]="sortedLeaderboard().length === 0"
+            class="px-2.5 py-1 rounded-full bg-awakin-sun/15 hover:bg-awakin-sun/25 border border-awakin-sun/35 text-awakin-sun text-[9px] font-black uppercase tracking-wider flex items-center gap-1 cursor-pointer active:scale-95 transition-all disabled:opacity-40"
+            title="Generar Historia 9:16 de Podio">
+            <i class="pi pi-sparkles text-[9px]"></i>
+            <span>Podio 9:16</span>
+          </button>
+        </div>
+
+        <div class="flex items-center gap-1 p-1 rounded-xl border"
+          [ngClass]="kinSummary()?.ranking_bg_url ? 'bg-black/45 border-white/15 backdrop-blur-xs' : 'bg-stone-100 border-stone-200'">
+          <button type="button" (click)="leaderboardMode.set('streak')"
+            class="px-2.5 py-1 rounded-lg text-[10px] font-black transition-all cursor-pointer"
+            [ngClass]="leaderboardMode() === 'streak' ? 'bg-kin-primary text-white' : (kinSummary()?.ranking_bg_url ? 'text-stone-300' : 'text-stone-500')">
+            Racha
+          </button>
+          <button type="button" (click)="leaderboardMode.set('workouts')"
+            class="px-2.5 py-1 rounded-lg text-[10px] font-black transition-all cursor-pointer"
+            [ngClass]="leaderboardMode() === 'workouts' ? 'bg-kin-primary text-white' : (kinSummary()?.ranking_bg_url ? 'text-stone-300' : 'text-stone-500')">
+            Semana
+          </button>
+          <button type="button" (click)="leaderboardMode.set('level')"
+            class="px-2.5 py-1 rounded-lg text-[10px] font-black transition-all cursor-pointer"
+            [ngClass]="leaderboardMode() === 'level' ? 'bg-kin-primary text-white' : (kinSummary()?.ranking_bg_url ? 'text-stone-300' : 'text-stone-500')">
+            Nivel
+          </button>
+        </div>
       </div>
-    </div>
 
-    <div class="space-y-2">
-      @for (member of sortedLeaderboard(); track member.id; let idx = $index) {
-      <div class="bg-white rounded-2xl p-3.5 border shadow-xs flex items-center justify-between gap-3 transition-all"
-        [ngClass]="member.id === currentAthleteId()
-                ? 'border-kin-primary bg-kin-primary/5'
-                : 'border-stone-200'">
-        <div class="flex items-center gap-3 min-w-0">
-          <div class="w-7 h-7 rounded-xl flex items-center justify-center font-black text-xs shrink-0" [ngClass]="idx === 0
-                    ? 'bg-amber-400 text-stone-950'
-                    : idx === 1
-                    ? 'bg-stone-300 text-stone-900'
-                    : idx === 2
-                    ? 'bg-amber-700/20 text-amber-800'
-                    : 'bg-stone-100 text-stone-500'">
-            {{ idx + 1 }}
-          </div>
-
-          <img [src]="member.profile_image_url || 'https://i.pravatar.cc/100?u=' + member.id" [alt]="member.full_name"
-            class="w-10 h-10 rounded-full object-cover border border-stone-200 shrink-0" />
-
-          <div class="min-w-0">
-            <div class="flex items-center gap-1.5">
-              <span class="text-xs font-black text-stone-900 truncate">{{ member.full_name }}</span>
-              @if (member.id === currentAthleteId()) {
-              <span class="text-[9px] font-black uppercase text-kin-primary">(Tú)</span>
-              }
+      <div class="space-y-2">
+        @for (member of sortedLeaderboard(); track member.id; let idx = $index) {
+        <div (click)="openPublicProfile(member.username || member.id)"
+          class="rounded-2xl p-3.5 border shadow-xs flex items-center justify-between gap-3 transition-all cursor-pointer active:scale-[0.99]"
+          [ngClass]="member.id === currentAthleteId()
+                  ? (kinSummary()?.ranking_bg_url ? 'border-kin-primary bg-white/95 backdrop-blur-xs' : 'border-kin-primary bg-kin-primary/5')
+                  : (kinSummary()?.ranking_bg_url ? 'border-white/25 bg-white/90 backdrop-blur-xs' : 'bg-white border-stone-200')">
+          <div class="flex items-center gap-3 min-w-0">
+            <div class="w-7 h-7 rounded-xl flex items-center justify-center font-black text-xs shrink-0" [ngClass]="idx === 0
+                      ? 'bg-amber-400 text-stone-950'
+                      : idx === 1
+                      ? 'bg-stone-300 text-stone-900'
+                      : idx === 2
+                      ? 'bg-amber-700/20 text-amber-800'
+                      : 'bg-stone-100 text-stone-500'">
+              {{ idx + 1 }}
             </div>
-            <p class="text-[10px] font-semibold text-stone-400 truncate">&#64;{{ member.username }}</p>
+
+            <img [src]="member.profile_image_url || 'https://i.pravatar.cc/100?u=' + member.id" [alt]="member.full_name"
+              class="w-10 h-10 rounded-full object-cover border border-stone-200 shrink-0" />
+
+            <div class="min-w-0">
+              <div class="flex items-center gap-1.5">
+                <span class="text-xs font-black text-stone-900 truncate">{{ member.full_name }}</span>
+                @if (member.id === currentAthleteId()) {
+                <span class="text-[9px] font-black uppercase text-kin-primary">(Tú)</span>
+                }
+              </div>
+              <p class="text-[10px] font-semibold text-stone-400 truncate">&#64;{{ member.username }}</p>
+            </div>
+          </div>
+
+          <div class="text-right shrink-0">
+            <span class="text-xs font-black text-kin-primary">{{ getMetricValue(member) }}</span>
+            <p class="text-[9px] font-semibold text-stone-400">Nv. {{ member.current_level }}</p>
           </div>
         </div>
-
-        <div class="text-right shrink-0">
-          <span class="text-xs font-black text-kin-primary">{{ getMetricValue(member) }}</span>
-          <p class="text-[9px] font-semibold text-stone-400">Nv. {{ member.current_level }}</p>
+        } @empty {
+        <div class="bg-white/90 rounded-2xl border border-stone-200 p-6 text-center text-xs text-stone-400">
+          No hay miembros registrados en este Kin todavía.
         </div>
+        }
       </div>
-      } @empty {
-      <div class="bg-white rounded-2xl border border-stone-200 p-6 text-center text-xs text-stone-400">
-        No hay miembros registrados en este Kin todavía.
-      </div>
-      }
     </div>
   </div>
   }
@@ -393,12 +468,19 @@
     </div>
     }
 
-    <!-- VISTA MENSUAL INTERACTIVA -->
+    <!-- VISTA MENSUAL INTERACTIVA (Con fondo agenda_bg_url transparente) -->
     @if (agendaViewMode() === 'month') {
-    <div class="bg-white rounded-2xl border border-stone-200 p-2.5 shadow-xs">
+    <div class="bg-white rounded-2xl border border-stone-200 p-2.5 shadow-xs relative overflow-hidden">
+      @if (kinSummary()?.agenda_bg_url) {
+      <img [src]="kinSummary()!.agenda_bg_url!" alt="Fondo Calendario Kin"
+        class="absolute inset-0 w-full h-full object-cover pointer-events-none select-none opacity-25" />
+      <div class="absolute inset-0 bg-white/65 backdrop-blur-[1px] pointer-events-none"></div>
+      }
+
+      <div class="relative z-10">
       <div class="grid grid-cols-7 gap-1 mb-1.5 text-center">
         @for (dayName of ['L', 'M', 'X', 'J', 'V', 'S', 'D']; track dayName) {
-        <div class="text-[10px] font-black text-stone-400 uppercase py-1">{{ dayName }}</div>
+        <div class="text-[10px] font-black text-stone-500 uppercase py-1">{{ dayName }}</div>
         }
       </div>
 
@@ -407,9 +489,9 @@
         <button type="button" (click)="selectCalendarDay(cell)"
           class="min-h-[54px] rounded-xl p-1 flex flex-col items-center justify-start gap-1 border transition-all cursor-pointer text-left"
           [ngClass]="selectedDateKey() === cell.dateKey
-                    ? 'border-kin-primary bg-kin-primary/5'
+                    ? 'border-kin-primary bg-kin-primary/10'
                     : cell.inCurrentMonth
-                    ? 'border-stone-100 bg-white hover:border-stone-300'
+                    ? (kinSummary()?.agenda_bg_url ? 'border-stone-200/70 bg-white/80 hover:border-stone-400' : 'border-stone-100 bg-white hover:border-stone-300')
                     : 'border-transparent bg-stone-50/50 opacity-45'">
           <span class="w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-black" [ngClass]="cell.isToday
                       ? 'bg-kin-primary text-white'
@@ -434,6 +516,7 @@
           }
         </button>
         }
+      </div>
       </div>
     </div>
 
@@ -688,4 +771,117 @@
   <app-workout-story-modal [(visible)]="isShareWorkoutModalOpen" [log]="shareWorkoutTargetLog()"
     [athlete]="athleteService.currentAthlete()" [gender]="currentAthleteGender()"
     (closed)="isShareWorkoutModalOpen.set(false)" />
+
+  <!-- Modal Collage de Comidas del Kin (9:16, 16:9, 4:5, 1:1) -->
+  <app-kin-meals-collage-modal [(visible)]="isMealsCollageModalOpen" [kin]="kinSummary() || null"
+    [mealPhotos]="mealPhotos()" />
+
+  <!-- Modal Historia 9:16 Podio del Ranking Kin -->
+  <app-kin-ranking-story-modal [(visible)]="isRankingStoryModalOpen" [kin]="kinSummary() || null"
+    [members]="kinService.overview()?.members || []" [initialMode]="leaderboardMode()" />
+
+  <!-- Modal Personalización Visual del Kin (Solo Coach/Instructor) -->
+  @if (isBrandingModalOpen()) {
+  <div (click)="isBrandingModalOpen.set(false)"
+    class="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
+    <div (click)="$event.stopPropagation()"
+      class="bg-white rounded-3xl w-full max-w-md max-h-[86dvh] flex flex-col overflow-hidden shadow-2xl border border-stone-200">
+      <div class="px-5 py-3.5 border-b border-stone-100 flex items-center justify-between shrink-0">
+        <div>
+          <h3 class="text-sm font-black text-stone-900 uppercase tracking-tight">Personalizar Imágenes del Kin</h3>
+          <p class="text-[11px] text-stone-400">Pega una URL o sube una foto para cada sección</p>
+        </div>
+        <button type="button" (click)="isBrandingModalOpen.set(false)"
+          class="w-8 h-8 rounded-full bg-stone-100 hover:bg-stone-200 text-stone-600 flex items-center justify-center cursor-pointer">
+          <i class="pi pi-times text-xs"></i>
+        </button>
+      </div>
+
+      <div class="p-4 space-y-3.5 overflow-y-auto flex-1">
+        @if (brandingError()) {
+        <div class="p-2.5 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs font-bold">
+          {{ brandingError() }}
+        </div>
+        }
+
+        <!-- 1. Kin Header -->
+        <div class="space-y-1.5">
+          <label class="text-[10px] font-black uppercase tracking-wider text-stone-600">1. Fondo Kin Header</label>
+          <div class="flex gap-1.5">
+            <input type="url" [ngModel]="brandingHeaderUrl()" (ngModelChange)="brandingHeaderUrl.set($event)"
+              placeholder="https://..."
+              class="flex-1 bg-stone-50 border border-stone-200 rounded-xl px-3 py-2 text-xs text-stone-800 focus:outline-none focus:border-kin-primary" />
+            <label
+              class="px-3 py-2 rounded-xl bg-stone-900 hover:bg-stone-800 text-white text-[10px] font-black uppercase flex items-center gap-1 cursor-pointer shrink-0">
+              <i class="pi" [ngClass]="uploadingBrandingSlot() === 'header' ? 'pi-spin pi-spinner' : 'pi-upload'"></i>
+              <input type="file" accept="image/*" (change)="onBrandingFileSelected('header', $event)" class="hidden" />
+            </label>
+          </div>
+        </div>
+
+        <!-- 2. Kin Comidas Banner -->
+        <div class="space-y-1.5">
+          <label class="text-[10px] font-black uppercase tracking-wider text-stone-600">2. Banner Kin Comidas</label>
+          <div class="flex gap-1.5">
+            <input type="url" [ngModel]="brandingMealsBannerUrl()" (ngModelChange)="brandingMealsBannerUrl.set($event)"
+              placeholder="https://..."
+              class="flex-1 bg-stone-50 border border-stone-200 rounded-xl px-3 py-2 text-xs text-stone-800 focus:outline-none focus:border-kin-primary" />
+            <label
+              class="px-3 py-2 rounded-xl bg-stone-900 hover:bg-stone-800 text-white text-[10px] font-black uppercase flex items-center gap-1 cursor-pointer shrink-0">
+              <i class="pi" [ngClass]="uploadingBrandingSlot() === 'meals' ? 'pi-spin pi-spinner' : 'pi-upload'"></i>
+              <input type="file" accept="image/*" (change)="onBrandingFileSelected('meals', $event)" class="hidden" />
+            </label>
+          </div>
+        </div>
+
+        <!-- 3. Kin Ranking Background -->
+        <div class="space-y-1.5">
+          <label class="text-[10px] font-black uppercase tracking-wider text-stone-600">3. Fondo Kin Ranking / Podio</label>
+          <div class="flex gap-1.5">
+            <input type="url" [ngModel]="brandingRankingBgUrl()" (ngModelChange)="brandingRankingBgUrl.set($event)"
+              placeholder="https://..."
+              class="flex-1 bg-stone-50 border border-stone-200 rounded-xl px-3 py-2 text-xs text-stone-800 focus:outline-none focus:border-kin-primary" />
+            <label
+              class="px-3 py-2 rounded-xl bg-stone-900 hover:bg-stone-800 text-white text-[10px] font-black uppercase flex items-center gap-1 cursor-pointer shrink-0">
+              <i class="pi" [ngClass]="uploadingBrandingSlot() === 'ranking' ? 'pi-spin pi-spinner' : 'pi-upload'"></i>
+              <input type="file" accept="image/*" (change)="onBrandingFileSelected('ranking', $event)" class="hidden" />
+            </label>
+          </div>
+        </div>
+
+        <!-- 4. Kin Agenda Background -->
+        <div class="space-y-1.5">
+          <label class="text-[10px] font-black uppercase tracking-wider text-stone-600">4. Fondo Calendario Kin Agenda</label>
+          <div class="flex gap-1.5">
+            <input type="url" [ngModel]="brandingAgendaBgUrl()" (ngModelChange)="brandingAgendaBgUrl.set($event)"
+              placeholder="https://..."
+              class="flex-1 bg-stone-50 border border-stone-200 rounded-xl px-3 py-2 text-xs text-stone-800 focus:outline-none focus:border-kin-primary" />
+            <label
+              class="px-3 py-2 rounded-xl bg-stone-900 hover:bg-stone-800 text-white text-[10px] font-black uppercase flex items-center gap-1 cursor-pointer shrink-0">
+              <i class="pi" [ngClass]="uploadingBrandingSlot() === 'agenda' ? 'pi-spin pi-spinner' : 'pi-upload'"></i>
+              <input type="file" accept="image/*" (change)="onBrandingFileSelected('agenda', $event)" class="hidden" />
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <div class="p-3.5 border-t border-stone-100 bg-white flex items-center gap-2 shrink-0">
+        <button type="button" (click)="isBrandingModalOpen.set(false)"
+          class="px-4 py-2.5 rounded-xl bg-stone-100 hover:bg-stone-200 text-stone-700 font-bold text-xs cursor-pointer">
+          Cancelar
+        </button>
+        <button type="button" (click)="saveKinBranding()" [disabled]="isSavingBranding()"
+          class="flex-1 py-2.5 rounded-xl bg-kin-primary hover:opacity-95 text-white font-black text-xs uppercase tracking-wider flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50">
+          @if (isSavingBranding()) {
+            <i class="pi pi-spin pi-spinner text-xs"></i>
+            <span>Guardando...</span>
+          } @else {
+            <i class="pi pi-check text-xs"></i>
+            <span>Guardar Cambios</span>
+          }
+        </button>
+      </div>
+    </div>
+  </div>
+  }
 </div>
