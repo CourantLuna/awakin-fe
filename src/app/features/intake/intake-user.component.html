@@ -321,323 +321,278 @@
   </app-recipe-details-modal>
 
   <!-- MODAL DE REGISTRO DE COMIDA (Estilo y componentes estándar Awakin) -->
+  <!-- ========================================================= -->
+  <!-- MODAL DE REGISTRO DE COMIDA (Estilo Story sin scroll)     -->
+  <!-- ========================================================= -->
   <p-dialog [(visible)]="isRegisterModalOpen" [modal]="true" [draggable]="false" [resizable]="false"
-    [dismissableMask]="true" [focusOnShow]="false" (onHide)="onRegisterModalHide()" appendTo="body"
-    header="Registrar Comida" styleClass="w-[92vw] max-w-lg bg-white rounded-3xl overflow-hidden shadow-2xl p-0">
-    <div class="p-1 sm:p-6 space-y-4 text-stone-800">
-      <!-- 1. Alimentos incluidos en este registro (solo cuando es 100% en el plan o Adaptación) -->
-      @if (selectedAdherence() !== 'FREE') {
-      @let mealFoods = getFoodsForMeal(selectedMealType());
-      @if (mealFoods.length > 0) {
-      <div class="p-2 bg-stone-50 border border-stone-200/80 rounded-2xl space-y-3 shadow-xs">
-        <div class="flex items-center justify-between">
-          <div class="flex items-center gap-1.5">
-            <span
-              class="text-[10px] font-black uppercase tracking-wider text-kin-primary bg-kin-primary/10 px-2 py-0.5 rounded">
-              {{ mealDefinitions[selectedMealType()].title }}
-            </span>
-            <label class="text-[10px] font-bold uppercase tracking-wider text-stone-500">
-              Alimentos a registrar <span class="text-kin-primary">*</span>
-            </label>
-          </div>
+    [dismissableMask]="true" [focusOnShow]="false" (onHide)="onRegisterModalHide()" appendTo="body" [showHeader]="false"
+    styleClass="w-[94vw] max-w-md bg-white rounded-3xl overflow-hidden shadow-2xl p-0 border border-stone-200">
+    <div class="flex flex-col max-h-[92dvh] bg-white text-stone-900 select-none">
 
-          <!-- Acciones rápidas: Marcar todos / Desmarcar todos -->
-          @if (mealFoods.length > 1) {
-          <div class="flex items-center gap-2">
-            @if (selectedFoodItemsForLog().length < mealFoods.length) { <button type="button"
-              (click)="selectAllFoodsForCurrentMeal()"
-              class="text-[10px] font-bold text-kin-primary hover:underline cursor-pointer">
-              Marcar todos ({{ mealFoods.length }})
-              </button>
-              } @else {
-              <button type="button" (click)="deselectAllFoodsForCurrentMeal()"
-                class="text-[10px] font-bold text-stone-400 hover:text-stone-600 cursor-pointer">
-                Desmarcar todos
-              </button>
-              }
-          </div>
-          }
-        </div>
-
-        <!-- Lista de alimentos del tipo de comida actual con checkboxes -->
-        <div class="space-y-2 max-h-56 overflow-y-auto pr-1 awakin-scrollbar">
-          @for (food of mealFoods; track food.id) {
-          @let isSelected = isFoodSelectedForLog(food.id);
-          <div (click)="toggleFoodSelectionForLog(food)"
-            class="flex items-center justify-between p-2.5 rounded-xl border cursor-pointer transition-all active:scale-[0.99]"
-            [ngClass]="isSelected
-              ? 'bg-white border-kin-primary/80 shadow-xs ring-1 ring-kin-primary/40'
-              : 'bg-white/60 border-stone-200/70 hover:bg-white hover:border-stone-300 opacity-75'">
-
-            <div class="flex items-center gap-2.5 min-w-0 flex-1">
-              <!-- Miniatura / Icono Intake Active -->
-              <div
-                class="w-10 h-10 rounded-xl bg-stone-100 border border-stone-200 overflow-hidden flex items-center justify-center shrink-0">
-                @if (food.coverImageUrl) {
-                <img loading="lazy" decoding="async" [src]="food.coverImageUrl" [alt]="food.name"
-                  class="w-full h-full object-cover"
-                  (error)="$any($event.target).src = '/icons/intake-active.png'; $any($event.target).className = 'w-6 h-6 object-contain p-0.5'" />
-                } @else {
-                <img src="/icons/intake-active.png" alt="Awakin Intake" class="w-6 h-6 object-contain p-0.5" />
-                }
-              </div>
-
-              <!-- Nombre y macros individuales -->
-              <div class="min-w-0 flex-1 pr-2">
-                <h5 class="text-xs font-bold text-stone-900 truncate leading-snug">
-                  {{ food.name }}
-                </h5>
-                <p class="text-[10px] text-stone-500 font-medium mt-0.5">
-                  {{ formatQuantity(food.portion, food.unit) }} ·
-                  <span class="font-bold text-stone-700">{{ food.kcal }} kcal</span> ·
-                  {{ food.protein }}P · {{ food.carbs }}C · {{ food.fat }}G
-                </p>
-              </div>
-            </div>
-
-            <!-- Checkbox estilizado -->
-            <div class="w-5 h-5 rounded-lg flex items-center justify-center shrink-0 transition-all"
-              [ngClass]="isSelected ? 'bg-kin-primary text-white shadow-2xs' : 'border border-stone-300 bg-white'">
-              <i class="pi pi-check text-[10px] font-black"
-                [ngClass]="{'opacity-100': isSelected, 'opacity-0': !isSelected}"></i>
-            </div>
-          </div>
-          }
-        </div>
-
-        <!-- Totales acumulados de los alimentos seleccionados -->
-        @if (selectedFoodsTotals(); as totals) {
-        @if (totals.count > 0) {
-        <div class="pt-2 border-t border-stone-200/80">
-          <div class="flex items-center justify-between mb-1.5 text-[11px]">
-            <span class="font-bold text-stone-600">
-              Total Seleccionado ({{ totals.count }} {{ totals.count === 1 ? 'alimento' : 'alimentos' }}):
-            </span>
-            <span class="font-black text-kin-primary bg-kin-primary/10 px-2 py-0.5 rounded-lg tabular-nums">
-              {{ totals.kcal }} kcal
-            </span>
-          </div>
-          <div class="grid grid-cols-3 gap-2 text-center">
-            <div class="bg-white border border-stone-200/70 rounded-xl py-1 px-2 shadow-2xs">
-              <span class="text-[9px] font-bold text-stone-400 block uppercase tracking-wider">Proteínas</span>
-              <span class="text-xs font-black text-stone-800 tabular-nums">{{ totals.protein }}g</span>
-            </div>
-            <div class="bg-white border border-stone-200/70 rounded-xl py-1 px-2 shadow-2xs">
-              <span class="text-[9px] font-bold text-stone-400 block uppercase tracking-wider">Carbos</span>
-              <span class="text-xs font-black text-stone-800 tabular-nums">{{ totals.carbs }}g</span>
-            </div>
-            <div class="bg-white border border-stone-200/70 rounded-xl py-1 px-2 shadow-2xs">
-              <span class="text-[9px] font-bold text-stone-400 block uppercase tracking-wider">Grasas</span>
-              <span class="text-xs font-black text-stone-800 tabular-nums">{{ totals.fat }}g</span>
-            </div>
-          </div>
-        </div>
-        } @else {
-        <div
-          class="py-2 text-center text-amber-600 bg-amber-50 rounded-xl border border-amber-200/60 text-xs font-medium">
-          <i class="pi pi-exclamation-triangle mr-1"></i> Selecciona al menos un alimento para este registro.
-        </div>
-        }
-        }
-      </div>
-      } @else {
-      <!-- Sin alimentos planificados en este horario -->
-      <div class="p-3.5 bg-stone-50 border border-stone-200/70 rounded-2xl text-center text-stone-500 text-xs italic">
-        Sin alimentos planificados en {{ mealDefinitions[selectedMealType()].title }}. Tu registro se guardará como
-        comida libre/adicional.
-      </div>
-      }
-      } @else {
-      <!-- Modo Fuera del Plan: no obliga a asociar platillos/recetas -->
-      <div
-        class="p-3 bg-amber-50/70 border border-amber-200/70 rounded-2xl flex items-center gap-2.5 text-amber-900 text-xs font-medium">
-        <i class="pi pi-info-circle text-kin-primary shrink-0"></i>
-        <span>Registro libre fuera del plan: no necesitas asociar platillos ni recetas de {{
-          mealDefinitions[selectedMealType()].title }}.</span>
-      </div>
-      }
-
-      <!-- 1. Foto de la Comida o Bebida (Obligatoria) -->
-      <div>
-        <div class="flex items-center justify-between mb-1.5">
-          <label class="block text-[10px] font-bold uppercase tracking-wider text-stone-500">
-            Foto del Plato o Bebida <span class="text-kin-primary">*</span>
-          </label>
-          @if (uploadedPhotoUrl()) {
-          <span class="text-[10px] font-bold text-emerald-600 flex items-center gap-1">
-            <i class="pi pi-check text-[9px]"></i> Adjuntada
-          </span>
-          }
-        </div>
-
-        <!-- Banner de Reutilización de Foto previa de la misma comida -->
-        @if (existingMealPhotoUrl()) {
-        <div
-          class="mb-2.5 p-2.5 rounded-2xl bg-amber-500/10 border border-amber-500/25 flex items-center justify-between gap-3">
-          <div class="flex items-center gap-2.5 min-w-0">
-            <img loading="lazy" decoding="async" [src]="existingMealPhotoUrl()" alt="Foto previa"
-              class="w-10 h-10 rounded-xl object-cover border border-amber-500/30 shrink-0 shadow-2xs" />
-            <div class="min-w-0">
-              <p class="text-xs font-black text-stone-800 truncate">Foto previa en {{
-                mealDefinitions[selectedMealType()].title }}</p>
-              <p class="text-[10px] text-stone-500 truncate">Reutilizar para estos alimentos</p>
-            </div>
-          </div>
-          <button type="button" (click)="useExistingMealPhoto()"
-            class="px-2.5 py-1.5 rounded-xl text-xs font-black transition-all shrink-0 cursor-pointer flex items-center gap-1 shadow-2xs"
-            [ngClass]="uploadedPhotoUrl() === existingMealPhotoUrl() ? 'bg-kin-primary text-white font-black' : 'bg-white hover:bg-stone-50 text-stone-700 border border-stone-200'">
-            <i class="pi" [ngClass]="uploadedPhotoUrl() === existingMealPhotoUrl() ? 'pi-check' : 'pi-clone'"></i>
-            <span>{{ uploadedPhotoUrl() === existingMealPhotoUrl() ? 'Foto aplicada' : 'Usar esta foto' }}</span>
-          </button>
-        </div>
-        }
-
-        <input #fileInput type="file" accept="image/*" (change)="onPhotoSelected($event)"
-          class="hidden" />
-
-        @if (!uploadedPhotoUrl()) {
-        <div (click)="fileInput.click()"
-          class="flex flex-col items-center justify-center p-5 bg-stone-50 hover:bg-stone-100/70 border-2 border-dashed border-stone-200 hover:border-kin-primary/50 rounded-2xl cursor-pointer transition-all">
-          <div class="w-12 h-12 rounded-xl bg-kin-primary/10 text-kin-primary flex items-center justify-center mb-2">
-            <i class="pi pi-camera text-xl"></i>
-          </div>
-          <span class="text-xs font-bold text-stone-800">Tomar foto o subir imagen</span>
-          <span class="text-[11px] text-stone-400 font-medium mt-0.5">Cámara o desde tu galería (JPG, PNG)</span>
-          <button type="button" (click)="$event.stopPropagation(); useDemoPhoto()"
-            class="text-[11px] font-bold text-kin-primary hover:underline mt-2.5 cursor-pointer">
-            Usar foto de demostración
-          </button>
-        </div>
-        } @else {
-        <div class="relative rounded-2xl overflow-hidden border border-stone-200 bg-stone-100 shadow-sm group">
-          <img loading="lazy" decoding="async" [src]="uploadedPhotoUrl()" alt="Foto del plato"
-            class="w-full h-44 object-cover object-center" />
+      <!-- Header limpio acorde al tema -->
+      <div class="px-4 py-3 flex items-center justify-between border-b border-stone-100 shrink-0">
+        <div class="flex items-center gap-2.5">
           <div
-            class="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent flex items-end justify-between p-3">
-            <button type="button" (click)="fileInput.click()"
-              class="px-3 py-1.5 rounded-xl bg-white/95 hover:bg-white text-stone-800 text-[11px] font-bold flex items-center gap-1.5 shadow-md border border-stone-200/80 cursor-pointer transition-all active:scale-95">
-              <i class="pi pi-camera text-xs text-kin-primary"></i> Cambiar
-            </button>
-            <button type="button" (click)="removePhoto()"
-              class="w-8 h-8 rounded-xl bg-red-500 hover:bg-red-600 text-white flex items-center justify-center shadow-md cursor-pointer transition-all active:scale-95"
-              title="Eliminar foto">
-              <i class="pi pi-trash text-xs"></i>
-            </button>
+            class="w-7 h-7 rounded-xl bg-kin-primary/15 border border-kin-primary/25 flex items-center justify-center">
+            <img src="/icons/intake-active.png" alt="Intake" class="w-4 h-4 object-contain" />
           </div>
+          <span class="text-xs font-black uppercase tracking-wider text-stone-900">Registrar {{ selectedMealLabel() }}</span>
         </div>
-        }
-      </div>
-
-      <!-- 2. Tipo de Comida o Bebida (Distribución Chips) -->
-      <div>
-        <label class="block text-[10px] font-bold uppercase tracking-wider text-stone-500 mb-2">
-          Tipo de Comida o Bebida <span class="text-kin-primary">*</span>
-        </label>
-        <div class="grid grid-cols-6 gap-2">
-          @for (opt of modalMealOptions; track opt.type; let idx = $index) {
-          <button type="button" (click)="selectMealTypeInModal(opt.type)"
-            class="p-2.5 rounded-xl border text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer"
-            [ngClass]="[
-                idx < 3 ? 'col-span-2' : 'col-span-3',
-                selectedMealType() === opt.type
-                  ? 'bg-kin-primary text-white border-kin-primary shadow-sm'
-                  : 'bg-stone-50 hover:bg-stone-100 text-stone-600 border-stone-200 hover:text-stone-900'
-              ]">
-            <i [class]="opt.icon" class="text-xs"></i>
-            <span>{{ opt.label }}</span>
-          </button>
-          }
-        </div>
-      </div>
-
-      <!-- 3. Evaluación de Adherencia (Obligatoria usando p-radioButton estándar) -->
-      <div>
-        <div class="flex items-center justify-between mb-1.5">
-          <label class="block text-[10px] font-bold uppercase tracking-wider text-stone-500">
-            Evaluación de Adherencia <span class="text-kin-primary">*</span>
-          </label>
-          <span class="text-[10px] font-bold text-kin-secondary bg-kin-secondary/10 px-2 py-0.5 rounded-full">
-            {{ selectedAdherence() === '100' ? '+10 pts' : selectedAdherence() === 'ADAPTATION' ? '+5 pts' : '+2 pts' }}
-          </span>
-        </div>
-        <div class="space-y-2">
-          @for (adh of adherenceOptions; track adh.id) {
-          <label
-            class="flex items-center gap-3 p-3 bg-stone-50 hover:bg-stone-100/70 border rounded-2xl cursor-pointer transition-all"
-            [ngClass]="selectedAdherence() === adh.id ? 'border-kin-primary bg-kin-primary/5' : 'border-stone-200'">
-            <p-radioButton name="adherenceGroup" [value]="adh.id" [ngModel]="selectedAdherence()"
-              (ngModelChange)="onAdherenceChange($event)"></p-radioButton>
-            <div class="flex-1 min-w-0">
-              <div class="flex items-center justify-between">
-                <span class="text-xs sm:text-sm font-bold text-stone-800">{{ adh.title }}</span>
-                <span class="text-[10px] font-black text-kin-secondary bg-kin-secondary/10 px-2 py-0.5 rounded-md">
-                  +{{ adh.pts }} pts
-                </span>
-              </div>
-              <p class="text-[11px] text-stone-400 mt-0.5">{{ adh.desc }}</p>
-            </div>
-          </label>
-          }
-        </div>
-      </div>
-
-      <!-- 3.5 Estimación Nutricional por IA o Ingreso Manual (Vía A: Macros / Vía B: Ingredientes) -->
-      @if (isRegisterModalOpen() && requiresCustomNutrition()) {
-      <app-food-estimation-panel [catalogIngredients]="catalogIngredients()" [isAnalyzing]="isAnalyzingPhoto()"
-        [aiError]="photoAnalysisError()" [aiResult]="photoEstimationResult()" [hasPhoto]="!!uploadedPhotoUrl()"
-        [plannedFoods]="selectedFoodItemsForLog()"
-        [defaultDishName]="selectedFoodItemsForLog().length === 1 ? selectedFoodItemsForLog()[0].name : mealDefinitions[selectedMealType()].title"
-        (nutritionChange)="resolvedCustomNutrition.set($event)" (retryAiAnalysis)="triggerPhotoAnalysisIfNeeded(true)">
-      </app-food-estimation-panel>
-      }
-
-      <!-- 4. Notas o Ingredientes (Opcional con textarea estándar) -->
-      <div>
-        <label class="pt-2 block text-[10px] font-bold uppercase tracking-wider text-stone-500 mb-1.5">
-          Notas o Ingredientes <span class="text-stone-400 font-normal lowercase">(opcional)</span>
-        </label>
-        <textarea rows="2" [ngModel]="notesText()" (ngModelChange)="notesText.set($event)"
-          placeholder="Ej: Pollo a la plancha 150g, arroz 100g, ensalada..."
-          class="w-full bg-stone-50 border border-stone-200 rounded-xl p-3 text-xs sm:text-sm text-stone-900 placeholder-stone-400 focus:outline-none focus:border-kin-primary resize-none"></textarea>
-      </div>
-
-      <!-- Mensaje de error si falla la subida o el registro -->
-      @if (registerError()) {
-      <div
-        class="p-3 bg-red-50 border border-red-200/80 rounded-2xl flex items-start gap-2.5 text-red-700 animate-fadeIn">
-        <i class="pi pi-exclamation-triangle text-base mt-0.5 shrink-0 text-red-500"></i>
-        <div class="flex-1 min-w-0">
-          <p class="text-xs font-bold text-red-900">Error al registrar la comida</p>
-          <p class="text-[11px] font-medium leading-relaxed mt-0.5 break-words text-red-700">
-            {{ registerError() }}
-          </p>
-        </div>
-        <button type="button" (click)="registerError.set(null)"
-          class="text-red-400 hover:text-red-600 cursor-pointer p-1">
+        <button type="button" (click)="isRegisterModalOpen.set(false)"
+          class="w-8 h-8 rounded-full bg-stone-100 hover:bg-stone-200 text-stone-600 flex items-center justify-center cursor-pointer transition-colors">
           <i class="pi pi-times text-xs"></i>
         </button>
       </div>
-      }
 
-      <!-- 5. Footer solo con botón Registrar Comida/Bebida -->
-      <div class="pt-2 border-t border-stone-100">
-        <button type="button" (click)="submitRegisterFood()" [disabled]="!isRegisterFormValid() || isSubmittingFood()"
-          class="w-full py-3.5 px-4 rounded-xl font-black text-xs uppercase tracking-wider transition-all flex items-center justify-center gap-2 shadow-sm cursor-pointer"
-          [ngClass]="isRegisterFormValid() && !isSubmittingFood()
-            ? 'bg-awakin-sun hover:bg-awakin-sun-dim text-white active:scale-[0.99]'
-            : 'bg-stone-100 text-stone-400 border border-stone-200 cursor-not-allowed shadow-none opacity-60'">
-          @if (isSubmittingFood()) {
+      <!-- Canvas principal espacioso con imagen en proporción natural + overlays -->
+      <div class="p-3.5 pb-2.5 flex-1 min-h-0 flex flex-col">
+        <div
+          class="relative flex-1 aspect-[9/16] max-h-[68dvh] min-h-[460px] w-full mx-auto rounded-2xl bg-stone-100 border border-stone-200/80 flex items-center justify-center overflow-hidden shadow-inner">
+          <input #fileInput type="file" accept="image/*" (change)="onPhotoSelected($event)" class="hidden" />
+
+          <!-- Top Overlay: Select Tipo de Comida/Bebida + Acciones -->
+          <div class="absolute top-3 inset-x-3 flex items-center justify-between gap-2 z-20">
+            <div class="relative">
+              <select [ngModel]="selectedMealType()" (ngModelChange)="selectMealTypeInModal($event)"
+                aria-label="Tipo de comida o bebida"
+                class="appearance-none bg-white/90 backdrop-blur-md text-stone-900 border border-stone-200/90 rounded-full pl-3.5 pr-7 py-1.5 text-[6px]   outline-none cursor-pointer shadow-md">
+                @for (opt of modalMealOptions; track opt.type) {
+                <option [value]="opt.type">{{ opt.label }}</option>
+                }
+              </select>
+              <i
+                class="pi pi-chevron-down text-[9px] text-stone-500 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none"></i>
+            </div>
+
+            <div class="flex items-center gap-1.5">
+              @if (selectedAdherence() !== 'FREE' && getFoodsForMeal(selectedMealType()).length > 0) {
+                @let mealFoodsCount = getFoodsForMeal(selectedMealType()).length;
+                @let selItems = selectedFoodItemsForLog();
+                <button type="button" (click)="showPlannedFoodsOverlay.set(!showPlannedFoodsOverlay())"
+                  class="pl-1.5 pr-2.5 py-1 rounded-full bg-white/95 backdrop-blur-md border text-[10px] font-black flex items-center gap-1.5 cursor-pointer hover:bg-white shadow-md transition-all"
+                  [ngClass]="selItems.length > 0 ? 'border-kin-primary/60 text-stone-800' : 'border-amber-400 text-amber-700'">
+                  @if (selItems.length > 0) {
+                    <div class="flex -space-x-1.5">
+                      @for (item of selItems.slice(0, 3); track item.id) {
+                        <img [src]="item.coverImageUrl || '/icons/intake-active.png'" [alt]="item.name"
+                          (error)="$any($event.target).src = '/icons/intake-active.png'"
+                          class="w-5 h-5 rounded-full object-cover border border-white bg-stone-100 shadow-2xs" />
+                      }
+                    </div>
+                    <span>{{ selItems.length }}/{{ mealFoodsCount }} selec.</span>
+                  } @else {
+                    <i class="pi pi-exclamation-circle text-amber-500 text-xs pl-1"></i>
+                    <span>Elegir (0/{{ mealFoodsCount }})</span>
+                  }
+                  <i class="pi text-[9px] text-stone-400" [ngClass]="showPlannedFoodsOverlay() ? 'pi-chevron-up' : 'pi-chevron-down'"></i>
+                </button>
+              }
+
+              @if (uploadedPhotoUrl()) {
+                <button type="button" (click)="fileInput.click()" title="Cambiar foto"
+                  class="w-8 h-8 rounded-full bg-white/90 backdrop-blur-md border border-stone-200/90 text-stone-700 hover:bg-white flex items-center justify-center cursor-pointer shadow-md transition-colors">
+                  <i class="pi pi-camera text-xs text-kin-primary"></i>
+                </button>
+                <button type="button" (click)="removePhoto()" title="Quitar foto"
+                  class="w-8 h-8 rounded-full bg-red-500 hover:bg-red-600 text-white flex items-center justify-center cursor-pointer shadow-md transition-colors">
+                  <i class="pi pi-trash text-xs"></i>
+                </button>
+              }
+            </div>
+          </div>
+
+          <!-- Popover amigable para seleccionar recetas/ingredientes del plan -->
+          @if (showPlannedFoodsOverlay() && selectedAdherence() !== 'FREE') {
+            @let mealFoods = getFoodsForMeal(selectedMealType());
+            <div
+              class="absolute top-14 right-3 left-3 z-30 bg-white/95 backdrop-blur-xl border border-stone-200 rounded-2xl p-3 shadow-2xl space-y-2.5 max-h-60 overflow-y-auto">
+              <div class="flex items-center justify-between gap-2 pb-1.5 border-b border-stone-100">
+                <div class="min-w-0">
+                  <span class="text-[10px] font-black uppercase tracking-wider text-stone-800 block">
+                    Recetas e Ingredientes · {{ mealDefinitions[selectedMealType()].title }}
+                  </span>
+                  <span class="text-[10px] font-bold text-kin-primary">
+                    {{ selectedFoodItemsForLog().length }} de {{ mealFoods.length }} seleccionados
+                  </span>
+                </div>
+                <div class="flex items-center gap-2 shrink-0">
+                  @if (mealFoods.length > 1) {
+                    @if (selectedFoodItemsForLog().length < mealFoods.length) {
+                      <button type="button" (click)="selectAllFoodsForCurrentMeal()"
+                        class="text-[10px] font-bold text-stone-600 hover:text-kin-primary cursor-pointer">
+                        Todos
+                      </button>
+                    } @else {
+                      <button type="button" (click)="deselectAllFoodsForCurrentMeal()"
+                        class="text-[10px] font-bold text-stone-400 hover:text-stone-700 cursor-pointer">
+                        Ninguno
+                      </button>
+                    }
+                  }
+                  <button type="button" (click)="showPlannedFoodsOverlay.set(false)"
+                    class="px-2.5 py-1 rounded-lg bg-kin-primary text-white text-[10px] font-black cursor-pointer">
+                    Listo
+                  </button>
+                </div>
+              </div>
+
+              @for (food of mealFoods; track food.id) {
+                @let isSelected = isFoodSelectedForLog(food.id);
+                <div (click)="toggleFoodSelectionForLog(food)"
+                  class="flex items-center justify-between gap-2.5 p-2 rounded-xl border cursor-pointer transition-all"
+                  [ngClass]="isSelected ? 'bg-kin-primary/10 border-kin-primary/70 shadow-2xs' : 'bg-stone-50 border-stone-200 opacity-75 hover:opacity-100'">
+                  <div class="flex items-center gap-2.5 min-w-0 flex-1">
+                    <div class="w-10 h-10 rounded-xl bg-white border border-stone-200 overflow-hidden flex items-center justify-center shrink-0">
+                      <img [src]="food.coverImageUrl || '/icons/intake-active.png'" [alt]="food.name"
+                        (error)="$any($event.target).src = '/icons/intake-active.png'"
+                        class="w-full h-full object-cover" />
+                    </div>
+                    <div class="min-w-0 flex-1">
+                      <p class="text-xs font-bold text-stone-900 leading-snug line-clamp-2">{{ food.name }}</p>
+                      <p class="text-[10px] text-stone-500 mt-0.5">
+                        {{ formatQuantity(food.portion, food.unit) }} · <span class="font-bold text-stone-700">{{ food.kcal }} kcal</span> · {{ food.protein }}P · {{ food.carbs }}C · {{ food.fat }}G
+                      </p>
+                    </div>
+                  </div>
+                  <div class="w-5 h-5 rounded-lg flex items-center justify-center shrink-0"
+                    [ngClass]="isSelected ? 'bg-kin-primary text-white' : 'border border-stone-300 bg-white'">
+                    @if (isSelected) { <i class="pi pi-check text-[10px]"></i> }
+                  </div>
+                </div>
+              }
+            </div>
+          }
+
+          <!-- Imagen en tamaño/proporción natural o área de carga -->
+          @if (!uploadedPhotoUrl()) {
+          <div (click)="fileInput.click()"
+            class="w-full h-full flex flex-col items-center justify-center px-6 pt-14 pb-36 text-center cursor-pointer hover:bg-stone-200/40 transition-colors">
+            <div
+              class="w-16 h-16 rounded-2xl bg-kin-primary/15 border border-kin-primary/30 text-kin-primary flex items-center justify-center mb-3 shadow-xs">
+              <i class="pi pi-camera text-2xl"></i>
+            </div>
+            <p class="text-sm font-black text-stone-800">Sube o toma la foto del plato</p>
+            <p class="text-[11px] text-stone-500 mt-1">Desde tu cámara o galería (JPG, PNG)</p>
+
+            <div class="flex items-center gap-2 mt-4">
+              @if (existingMealPhotoUrl()) {
+              <button type="button" (click)="$event.stopPropagation(); useExistingMealPhoto()"
+                class="px-3.5 py-1.5 rounded-full bg-white border border-stone-200 hover:bg-stone-50 text-stone-700 text-[11px] font-bold flex items-center gap-1.5 cursor-pointer shadow-xs">
+                <i class="pi pi-clone text-[10px] text-kin-primary"></i>
+                <span>Usar foto previa</span>
+              </button>
+              }
+              <button type="button" (click)="$event.stopPropagation(); useDemoPhoto()"
+                class="px-3.5 py-1.5 rounded-full bg-kin-primary/15 hover:bg-kin-primary/25 text-kin-primary text-[11px] font-black cursor-pointer">
+                Usar demo
+              </button>
+            </div>
+          </div>
+          } @else {
+          <img loading="lazy" decoding="async" [src]="uploadedPhotoUrl()" alt="Foto del plato"
+            class="w-full h-full object-contain mx-auto" />
+          <div
+            class="absolute inset-x-0 bottom-0 h-44 bg-gradient-to-t from-black/45 via-black/15 to-transparent pointer-events-none">
+          </div>
+          }
+
+          <!-- Bottom Overlays: Macros + Adherencia corta + Notas -->
+          <div class="absolute bottom-3 inset-x-3 space-y-2 z-20">
+            <!-- Macros Overlay -->
+            <div class="flex items-center justify-center">
+              @if (selectedAdherence() === '100' && selectedFoodsTotals().count > 0) {
+              @let totals = selectedFoodsTotals();
+              <div
+                class="px-3.5 py-1 rounded-full bg-white/92 backdrop-blur-md border border-stone-200/90 text-[10px] font-black text-stone-800 flex items-center gap-2 shadow-md">
+                <span class="text-kin-primary">{{ totals.kcal }} kcal</span>
+                <span class="text-stone-300">|</span>
+                <span>{{ totals.protein }}P</span>
+                <span>{{ totals.carbs }}C</span>
+                <span>{{ totals.fat }}G</span>
+              </div>
+              } @else if (photoEstimationResult(); as aiRes) {
+              <div
+                class="px-3.5 py-1 rounded-full bg-white/92 backdrop-blur-md border border-emerald-400/50 text-[10px] font-black text-stone-800 flex items-center gap-2 shadow-md">
+                <i class="pi pi-sparkles text-emerald-500 text-[10px]"></i>
+                <span class="text-emerald-600">{{ aiRes.kcal }} kcal</span>
+                <span class="text-stone-300">|</span>
+                <span>{{ aiRes.protein }}P</span>
+                <span>{{ aiRes.carbs }}C</span>
+                <span>{{ aiRes.fat }}G</span>
+              </div>
+              } @else {
+              <div
+                class="px-3.5 py-1 rounded-full bg-white/90 backdrop-blur-md border border-stone-200/90 text-[10px] font-bold text-stone-700 flex items-center gap-1.5 shadow-md">
+                <i class="pi pi-sparkles text-kin-primary text-[10px]"></i>
+                <span>Los macros se calcularán con IA al registrar</span>
+              </div>
+              }
+            </div>
+
+            <!-- Evaluación de Adherencia corta sobre la imagen -->
+            <div class="grid grid-cols-3 gap-2">
+              <button type="button" (click)="onAdherenceChange('100')"
+                class="py-2 px-2 rounded-xl border text-[10px] font-black transition-all cursor-pointer text-center backdrop-blur-md shadow-sm"
+                [ngClass]="selectedAdherence() === '100'
+                  ? 'bg-kin-primary text-white border-kin-primary shadow-md'
+                  : 'bg-white/90 text-stone-700 border-stone-200/90 hover:bg-white'">
+                100% Plan
+              </button>
+              <button type="button" (click)="onAdherenceChange('ADAPTATION')"
+                class="py-2 px-2 rounded-xl border text-[10px] font-black transition-all cursor-pointer text-center backdrop-blur-md shadow-sm"
+                [ngClass]="selectedAdherence() === 'ADAPTATION'
+                  ? 'bg-kin-primary text-white border-kin-primary shadow-md'
+                  : 'bg-white/90 text-stone-700 border-stone-200/90 hover:bg-white'">
+                Adaptación
+              </button>
+              <button type="button" (click)="onAdherenceChange('FREE')"
+                class="py-2 px-2 rounded-xl border text-[10px] font-black transition-all cursor-pointer text-center backdrop-blur-md shadow-sm"
+                [ngClass]="selectedAdherence() === 'FREE'
+                  ? 'bg-kin-primary text-white border-kin-primary shadow-md'
+                  : 'bg-white/90 text-stone-700 border-stone-200/90 hover:bg-white'">
+                Libre
+              </button>
+            </div>
+
+            <!-- Notas Overlay -->
+            <input type="text" [ngModel]="notesText()" (ngModelChange)="notesText.set($event)"
+              placeholder="Notas o ingredientes (opcional)..."
+              class="w-full bg-white/92 backdrop-blur-md border border-stone-200/90 focus:border-kin-primary rounded-xl px-3.5 py-2.5 text-xs text-stone-900 placeholder:text-stone-400 outline-none shadow-md" />
+          </div>
+        </div>
+      </div>
+
+      <!-- Footer fijo del modal -->
+      <div class="px-3.5 pb-3.5 pt-1 bg-white space-y-2 shrink-0">
+        @if (registerError()) {
+        <div
+          class="px-3 py-2 rounded-xl bg-red-50 border border-red-200 text-red-700 text-[11px] flex items-center justify-between gap-2">
+          <span class="truncate">{{ registerError() }}</span>
+          <button type="button" (click)="registerError.set(null)" class="text-red-500 cursor-pointer shrink-0">
+            <i class="pi pi-times text-[10px]"></i>
+          </button>
+        </div>
+        }
+
+        <button type="button" (click)="submitRegisterFood()"
+          [disabled]="!isRegisterFormValid() || isSubmittingFood() || isAnalyzingPhoto()"
+          class="w-full py-3.5 px-4 rounded-2xl font-black text-xs uppercase tracking-wider transition-all flex items-center justify-center gap-2 shadow-sm cursor-pointer"
+          [ngClass]="isRegisterFormValid() && !isSubmittingFood() && !isAnalyzingPhoto()
+            ? 'bg-kin-primary hover:opacity-95 text-white active:scale-[0.99]'
+            : 'bg-stone-100 text-stone-400 border border-stone-200 cursor-not-allowed'">
+          @if (isAnalyzingPhoto()) {
           <i class="pi pi-spin pi-spinner text-xs"></i>
-          <span>Guardando Registro...</span>
-          } @else if (isAnalyzingPhoto()) {
+          <span>Calculando macros con IA...</span>
+          } @else if (isSubmittingFood()) {
           <i class="pi pi-spin pi-spinner text-xs"></i>
-          <span>Analizando Fotografía...</span>
+          <span>Guardando registro...</span>
           } @else {
           <i class="pi pi-check text-xs font-bold"></i>
-          <span>Registrar Comida/Bebida</span>
+          <span>Registrar {{ selectedMealLabel() }}</span>
           }
         </button>
       </div>
+
     </div>
   </p-dialog>
 
@@ -676,7 +631,8 @@
       <div
         class="p-2.5 bg-rose-50 border border-rose-200 text-rose-700 text-xs font-bold rounded-xl flex items-center gap-2">
         <i class="pi pi-exclamation-triangle shrink-0"></i>
-        <span>{{ feedPostError() || ('Has alcanzado el límite diario de ' + athleteService.dailyPostLimit + ' publicaciones por día.') }}</span>
+        <span>{{ feedPostError() || ('Has alcanzado el límite diario de ' + athleteService.dailyPostLimit + '
+          publicaciones por día.') }}</span>
       </div>
       }
 

@@ -1,0 +1,24 @@
+@keyframes marqueeLtr {
+  0% {
+    transform: translateX(-50%);
+  }
+  100% {
+    transform: translateX(0%);
+  }
+}
+
+.awakin-marquee-track {
+  display: flex;
+  width: max-content;
+  animation: marqueeLtr 22s linear infinite;
+  will-change: transform;
+}
+
+.awakin-marquee-track:hover {
+  animation-play-state: paused;
+}
+
+.awakin-marquee-mask {
+  -webkit-mask-image: linear-gradient(to right, transparent, black 12%, black 88%, transparent);
+  mask-image: linear-gradient(to right, transparent, black 12%, black 88%, transparent);
+}

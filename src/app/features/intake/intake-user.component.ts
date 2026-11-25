@@ -1,7 +1,7 @@
 import { Component, computed, OnInit, signal, ViewChild, inject, effect, untracked } from '@angular/core';
 import { DragDropModule } from '@angular/cdk/drag-drop';
 import { CommonModule } from '@angular/common';
-import { Subscription } from 'rxjs';
+import { Subscription, firstValueFrom } from 'rxjs';
 import { ChartModule } from 'primeng/chart';
 import { PrimeNGModule } from '../../shared/prime-ng.module';
 import * as htmlToImage from 'html-to-image';
@@ -846,6 +846,7 @@ export class IntakeUserComponent implements OnInit {
 
   // Estado de análisis por IA y cálculo manual (cuando Adherencia != 100% o no hay plan)
   catalogIngredients = this.intakeService.availableIngredients;
+  showPlannedFoodsOverlay = signal<boolean>(false);
   isAnalyzingPhoto = signal<boolean>(false);
   photoAnalysisError = signal<string | null>(null);
   photoEstimationResult = signal<FoodPhotoEstimationResult | null>(null);
@@ -905,7 +906,6 @@ export class IntakeUserComponent implements OnInit {
       this.uploadedPhotoUrl.set(photo);
       this.selectedFile.set(null);
       this.lastAnalyzedSignature = null;
-      this.triggerPhotoAnalysisIfNeeded();
     }
   }
 
@@ -940,14 +940,12 @@ export class IntakeUserComponent implements OnInit {
     this.selectedMealType.set(type);
     if (this.selectedAdherence() === 'FREE') {
       this.selectedFoodItemsForLog.set([]);
-      this.triggerPhotoAnalysisIfNeeded();
       return;
     }
     const unloggedFoods = this.getFoodsForMeal(type).filter((f) => !f.isLogged);
     const foodsToSelect = unloggedFoods.length > 0 ? unloggedFoods : this.getFoodsForMeal(type);
     this.selectedFoodItemsForLog.set(foodsToSelect);
     this.syncNotesWithSelectedFoods();
-    this.triggerPhotoAnalysisIfNeeded();
   }
 
   private syncNotesWithSelectedFoods() {
@@ -991,6 +989,10 @@ export class IntakeUserComponent implements OnInit {
     { type: 'DRINK', label: 'Bebida', icon: 'pi pi-filter' },
   ];
 
+  selectedMealLabel = computed(
+    () => this.modalMealOptions.find((o) => o.type === this.selectedMealType())?.label || 'Comida'
+  );
+
   // Opciones de evaluación de adherencia
   adherenceOptions = [
     {
@@ -1025,14 +1027,6 @@ export class IntakeUserComponent implements OnInit {
     if ((adh === '100' || adh === 'ADAPTATION') && mealFoods.length > 0 && this.selectedFoodItemsForLog().length === 0) {
       return false;
     }
-    if (this.requiresCustomNutrition()) {
-      if (this.isAnalyzingPhoto()) {
-        return false;
-      }
-      if (!this.resolvedCustomNutrition()?.isValid) {
-        return false;
-      }
-    }
     return true;
   });
 
@@ -1043,6 +1037,8 @@ export class IntakeUserComponent implements OnInit {
       this.selectedFoodItemsForLog.set([]);
       this.targetFoodItem.set(null);
       this.selectedDishFor100.set(null);
+      this.showPlannedFoodsOverlay.set(false);
+      this.notesText.set('');
     } else if (adh === '100' || adh === 'ADAPTATION') {
       // Al elegir Adaptación o 100% en el plan, mostrar y preseleccionar alimentos del tipo de comida actual
       const type = this.selectedMealType();
@@ -1052,11 +1048,12 @@ export class IntakeUserComponent implements OnInit {
         this.selectedFoodItemsForLog.set(foodsToSelect);
         this.targetFoodItem.set(foodsToSelect[0] || null);
         this.selectedDishFor100.set(foodsToSelect[0] || null);
+      }
+      if (adh === 'ADAPTATION') {
+        this.notesText.set('');
+      } else {
         this.syncNotesWithSelectedFoods();
       }
-    }
-    if ((adh === 'ADAPTATION' || adh === 'FREE') && this.uploadedPhotoUrl()) {
-      this.triggerPhotoAnalysisIfNeeded();
     }
   }
 
@@ -1180,14 +1177,15 @@ export class IntakeUserComponent implements OnInit {
     }
     this.selectedFile.set(null);
     this.selectedAdherence.set('100');
+    this.showPlannedFoodsOverlay.set(false);
     this.isRegisterModalOpen.set(true);
-    this.triggerPhotoAnalysisIfNeeded();
   }
 
   onRegisterModalHide() {
     this.photoAnalysisSub?.unsubscribe();
     this.photoAnalysisSub = null;
     this.isAnalyzingPhoto.set(false);
+    this.showPlannedFoodsOverlay.set(false);
   }
 
   // Manejar selección de foto desde input file
@@ -1201,7 +1199,6 @@ export class IntakeUserComponent implements OnInit {
       const reader = new FileReader();
       reader.onload = (e: any) => {
         this.uploadedPhotoUrl.set(e.target.result);
-        this.triggerPhotoAnalysisIfNeeded();
       };
       reader.readAsDataURL(file);
       input.value = '';
@@ -1224,7 +1221,6 @@ export class IntakeUserComponent implements OnInit {
     );
     this.selectedFile.set(null);
     this.lastAnalyzedSignature = null;
-    this.triggerPhotoAnalysisIfNeeded();
   }
 
   resetPhotoEstimationState() {
@@ -1324,11 +1320,50 @@ export class IntakeUserComponent implements OnInit {
         return;
       }
 
-      // 2. Determinar alimentos vinculados a registrar
+      // 2. Determinar alimentos vinculados a registrar y calcular macros con IA al registrar si es Adaptación/Libre
       const selectedItems = this.selectedFoodItemsForLog();
       const chosenMealType = this.selectedMealType();
       const adherence = this.selectedAdherence();
-      const resolvedCustom = this.resolvedCustomNutrition();
+      let resolvedCustom = this.resolvedCustomNutrition();
+
+      if (this.requiresCustomNutrition() && !resolvedCustom?.isValid) {
+        this.isAnalyzingPhoto.set(true);
+        this.photoAnalysisError.set(null);
+        try {
+          const estimation = await firstValueFrom(
+            this.intakeService.analyzeFoodPhoto({
+              file: file,
+              imageUrl: file ? null : photoUrl,
+              mealType: chosenMealType,
+              notes: this.notesText(),
+            })
+          );
+          this.photoEstimationResult.set(estimation);
+          resolvedCustom = {
+            mode: 'AI',
+            dishName: estimation.dishName || this.mealDefinitions[chosenMealType]?.title || 'Plato',
+            kcal: Math.round(Number(estimation.kcal) || 0),
+            protein: Math.round((Number(estimation.protein) || 0) * 10) / 10,
+            carbs: Math.round((Number(estimation.carbs) || 0) * 10) / 10,
+            fat: Math.round((Number(estimation.fat) || 0) * 10) / 10,
+            ingredients: estimation.ingredients || [],
+            isValid: true,
+          };
+          this.resolvedCustomNutrition.set(resolvedCustom);
+        } catch (aiErr: any) {
+          const detail =
+            aiErr?.error?.detail ||
+            aiErr?.message ||
+            'No se pudo analizar el plato con IA. Intenta de nuevo o agrega notas más claras.';
+          this.photoAnalysisError.set(String(detail));
+          this.registerError.set(String(detail));
+          this.isAnalyzingPhoto.set(false);
+          this.isSubmittingFood.set(false);
+          return;
+        } finally {
+          this.isAnalyzingPhoto.set(false);
+        }
+      }
 
       if (adherence !== 'FREE' && selectedItems.length > 0) {
         const isAdaptation = adherence === 'ADAPTATION' && !!resolvedCustom;

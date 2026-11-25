@@ -1,157 +1,112 @@
 <div
   class="min-h-screen w-full bg-awakin-base flex flex-col justify-between relative overflow-x-hidden selection:bg-amber-400 selection:text-stone-900">
 
-  <!-- Fondo ambiental sutil estilo Sunrise Tech (sin discrepancia con el body) -->
+  <!-- Fondo ambiental sutil -->
   <div class="fixed inset-0 pointer-events-none overflow-hidden">
-    <!-- Gradiente radial de luz solar superior -->
     <div
-      class="absolute -top-[25%] left-1/2 -translate-x-1/2 w-[850px] h-[520px] bg-gradient-to-b from-amber-400/12 via-orange-400/5 to-transparent blur-3xl rounded-full">
+      class="absolute -top-[20%] left-1/2 -translate-x-1/2 w-[820px] h-[480px] bg-gradient-to-b from-amber-400/12 via-orange-400/5 to-transparent blur-3xl rounded-full">
     </div>
-    <!-- Patrón geométrico sutil y limpio -->
     <div
-      class="absolute inset-0 opacity-[0.03] bg-[linear-gradient(to_right,#1c1917_1px,transparent_1px),linear-gradient(to_bottom,#1c1917_1px,transparent_1px)] bg-[size:28px_28px]">
+      class="absolute inset-0 opacity-[0.025] bg-[linear-gradient(to_right,#1c1917_1px,transparent_1px),linear-gradient(to_bottom,#1c1917_1px,transparent_1px)] bg-[size:28px_28px]">
     </div>
   </div>
 
-  <!-- Header Superior Minimalista -->
-  <header class="w-full max-w-5xl mx-auto px-4 sm:px-6 pt-6 sm:pt-8 flex items-center justify-between z-10">
-    <div class="flex items-center gap-3">
-      <div
-        class="w-9 h-9 rounded-xl bg-gradient-to-tr from-awakin-sun to-amber-400 flex items-center justify-center font-black text-black text-xs shadow-md shadow-orange-500/20">
-        𝚫𝛀
-      </div>
-      <div class="flex flex-col">
-        <span class="text-xs font-black tracking-[0.25em] text-stone-900 uppercase">AWAKIN</span>
-        <span class="text-[9px] font-mono tracking-widest text-stone-600">THE SLEEP IS OVER</span>
+  <!-- Contenido Central -->
+  <main class="w-full max-w-4xl mx-auto px-4 sm:px-6 pt-8 pb-6 my-auto z-10 space-y-6">
+
+    <!-- Carrusel infinito sin fondo con los íconos activos de los módulos Awakin -->
+    <div class="w-full overflow-hidden awakin-marquee-mask py-1 select-none" aria-hidden="true">
+      <div class="awakin-marquee-track items-center gap-8 sm:gap-10">
+        @for (pass of [0, 1]; track pass) {
+          <div class="flex items-center gap-8 sm:gap-10 pr-8 sm:pr-10 shrink-0">
+            @for (icon of moduleIcons; track icon.alt) {
+              <img
+                [src]="icon.src"
+                [alt]="icon.alt"
+                class="w-10 h-10 sm:w-11 sm:h-11 object-contain drop-shadow-xs opacity-90" />
+            }
+          </div>
+        }
       </div>
     </div>
 
-    <div
-      class="hidden sm:inline-flex items-center gap-2 px-3 py-1 rounded-full bg-stone-100 border border-stone-200/80 text-[10px] font-mono text-stone-600 tracking-wider">
-      <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-      <span>SISTEMA ACTIVO</span>
-    </div>
-  </header>
-
-  <!-- Tarjeta Central de Acceso -->
-  <main class="w-full max-w-5xl mx-auto px-4 sm:px-6 py-6 sm:py-8 my-auto z-10">
+    <!-- Tarjeta Central de Acceso -->
     <div
       class="bg-white border border-stone-200/90 rounded-3xl shadow-xl shadow-stone-200/60 overflow-hidden grid grid-cols-1 lg:grid-cols-12">
 
       <!-- PANEL LATERAL DE MARCA (Visible en Pantallas Grandes) -->
       <div
-        class="hidden lg:flex lg:col-span-5 p-10 flex-col justify-between bg-gradient-to-br from-amber-500/[0.04] via-stone-50 to-orange-500/[0.07] border-r border-stone-200/80 relative">
+        class="hidden lg:flex lg:col-span-5 p-9 flex-col justify-between bg-gradient-to-br from-amber-500/[0.04] via-stone-50 to-orange-500/[0.07] border-r border-stone-200/80">
         <div class="space-y-6">
-          <div
-            class="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-amber-500/30 bg-amber-500/10 text-amber-800 text-[10px] uppercase font-mono tracking-wider font-semibold">
-            ✦ SISTEMA OPERATIVO
+          <div class="flex items-center gap-3">
+            <img src="icons/awakin-isotipo.png" alt="Awakin" class="w-9 h-9 object-contain shrink-0" />
+            <span class="text-sm font-black tracking-[0.22em] text-stone-900 uppercase">AWAKIN</span>
           </div>
 
-          <h1 class="text-3xl font-black text-stone-900 tracking-tight leading-tight uppercase">
-            El sistema operativo <br>
-            <span class="bg-clip-text text-transparent bg-gradient-to-r from-awakin-sun via-amber-500 to-orange-600">
-              para tu vida.
-            </span>
-          </h1>
+          <div class="space-y-2.5">
+            <h1 class="text-2xl font-black text-stone-900 tracking-tight leading-snug">
+              Entrena, aliméntate y crece en
+              <span class="bg-clip-text text-transparent bg-gradient-to-r from-awakin-sun to-orange-600">
+                comunidad.
+              </span>
+            </h1>
+            <p class="text-stone-500 text-xs leading-relaxed">
+              Tu ecosistema diario de nutrición, entrenamiento, progreso físico y conexión con tu Kin.
+            </p>
+          </div>
 
-          <p class="text-stone-600 text-xs leading-relaxed">
-            Sincroniza nutrición, entrenamientos y hábitos bajo un único ecosistema inteligente diseñado para atletas e
-            instructores.
-          </p>
-
-          <!-- Badges de los Módulos Core -->
-          <div class="space-y-2.5 pt-2">
-            <div class="p-3 rounded-2xl bg-white/80 border border-stone-200/70 shadow-2xs flex items-center gap-3">
-              <div
-                class="w-8 h-8 rounded-xl bg-emerald-500/10 text-emerald-600 flex items-center justify-center shrink-0">
-                <i class="pi pi-apple text-sm"></i>
-              </div>
+          <!-- Módulos Core -->
+          <div class="space-y-2.5 pt-1">
+            <div class="p-3 rounded-2xl bg-white/85 border border-stone-200/70 shadow-2xs flex items-center gap-3">
+              <img src="icons/intake-active.png" alt="Intake" class="w-7 h-7 object-contain shrink-0" />
               <div class="min-w-0">
                 <p class="text-xs font-bold text-stone-900">Intake</p>
-                <p class="text-[11px] text-stone-600 truncate">Nutrición y listas de compra inteligentes</p>
+                <p class="text-[11px] text-stone-500 truncate">Control nutricional e historial de comidas</p>
               </div>
             </div>
 
-            <div class="p-3 rounded-2xl bg-white/80 border border-stone-200/70 shadow-2xs flex items-center gap-3">
-              <div class="w-8 h-8 rounded-xl bg-blue-500/10 text-blue-600 flex items-center justify-center shrink-0">
-                <i class="pi pi-chart-line text-sm"></i>
-              </div>
+            <div class="p-3 rounded-2xl bg-white/85 border border-stone-200/70 shadow-2xs flex items-center gap-3">
+              <img src="icons/workout-active.png" alt="Workout" class="w-7 h-7 object-contain shrink-0" />
               <div class="min-w-0">
                 <p class="text-xs font-bold text-stone-900">Workout</p>
-                <p class="text-[11px] text-stone-600 truncate">Sobrecarga y progresiones adaptativas</p>
+                <p class="text-[11px] text-stone-500 truncate">Rutinas, cargas y mapas musculares</p>
               </div>
             </div>
 
-            <div class="p-3 rounded-2xl bg-white/80 border border-stone-200/70 shadow-2xs flex items-center gap-3">
-              <div
-                class="w-8 h-8 rounded-xl bg-purple-500/10 text-purple-600 flex items-center justify-center shrink-0">
-                <i class="pi pi-users text-sm"></i>
-              </div>
+            <div class="p-3 rounded-2xl bg-white/85 border border-stone-200/70 shadow-2xs flex items-center gap-3">
+              <img src="icons/kin-active.png" alt="Kin" class="w-7 h-7 object-contain shrink-0" />
               <div class="min-w-0">
-                <p class="text-xs font-bold text-stone-900">Kin & Coach</p>
-                <p class="text-[11px] text-stone-600 truncate">Vínculo directo entre atleta e instructor</p>
+                <p class="text-xs font-bold text-stone-900">Kin</p>
+                <p class="text-[11px] text-stone-500 truncate">Comunidad privada, ranking y agenda</p>
               </div>
             </div>
           </div>
         </div>
 
-        <div
-          class="pt-6 border-t border-stone-200/60 flex items-center justify-between text-[10px] font-mono text-stone-600 tracking-wider">
-          <span>PROTOCOL: ACTIVE</span>
-          <span>BIOMETRICS: ENCRYPTED</span>
-        </div>
+        <p class="text-[11px] text-stone-400 font-medium">
+          Disciplina diaria, resultados medibles.
+        </p>
       </div>
 
-      <!-- PANEL DE FORMULARIO Y CONTROL DE ACCESO -->
+      <!-- PANEL DE FORMULARIO -->
       <div class="col-span-1 lg:col-span-7 p-6 sm:p-10 flex flex-col justify-center bg-white">
-        <div class="w-full max-w-md mx-auto space-y-6">
+        <div class="w-full max-w-sm mx-auto space-y-6">
 
-          <!-- Encabezado del Formulario -->
-          <div class="space-y-1.5 text-center sm:text-left">
-            <div class="lg:hidden flex items-center justify-center sm:justify-start gap-2.5 mb-2">
-              <div
-                class="w-8 h-8 rounded-xl bg-gradient-to-tr from-awakin-sun to-amber-400 flex items-center justify-center font-black text-black text-xs shadow-md shadow-orange-500/20">
-                𝚫𝛀
-              </div>
-              <span class="text-xs font-black tracking-widest text-stone-900 uppercase">AWAKIN OS</span>
+          <!-- Encabezado con Isotipo Real -->
+          <div class="text-center space-y-2">
+            <div class="flex flex-col items-center gap-2">
+              <img src="icons/awakin-isotipo.png" alt="Awakin" class="w-11 h-11 object-contain" />
+              <span class="text-xs font-black tracking-[0.26em] text-stone-900 uppercase">AWAKIN</span>
             </div>
-            <h2 class="text-2xl font-black text-stone-900 tracking-tight">Inicializar Vínculo</h2>
-            <p class="text-xs text-stone-600">Selecciona tu perfil de usuario e ingresa tus credenciales.</p>
-          </div>
-
-          <!-- SELECTOR DE ROL: ATLETA VS INSTRUCTOR (DEFAULT ATLETA) -->
-          <div class="space-y-2">
-            <div class="p-1 bg-stone-100 rounded-2xl flex items-center border border-stone-200/80 gap-1">
-              <button type="button" (click)="setRole('ATHLETE')"
-                [class]="selectedRole() === 'ATHLETE'
-                  ? 'flex-1 flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl bg-white text-stone-950 font-black text-xs shadow-xs border border-stone-200/80 transition-all cursor-pointer'
-                  : 'flex-1 flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl text-stone-600 hover:text-stone-900 font-bold text-xs transition-all cursor-pointer'">
-                <i class="pi pi-bolt text-xs"
-                  [class]="selectedRole() === 'ATHLETE' ? 'text-awakin-sun' : 'text-stone-400'"></i>
-                <span>Soy Atleta</span>
-              </button>
-
-              <button type="button" (click)="setRole('INSTRUCTOR')"
-                [class]="selectedRole() === 'INSTRUCTOR'
-                  ? 'flex-1 flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl bg-white text-stone-950 font-black text-xs shadow-xs border border-stone-200/80 transition-all cursor-pointer'
-                  : 'flex-1 flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl text-stone-600 hover:text-stone-900 font-bold text-xs transition-all cursor-pointer'">
-                <i class="pi pi-shield text-xs"
-                  [class]="selectedRole() === 'INSTRUCTOR' ? 'text-awakin-sun' : 'text-stone-400'"></i>
-                <span>Soy Instructor</span>
-              </button>
-            </div>
-
-            <!-- Banner Informativo del Rol Seleccionado -->
-            <div
-              class="px-3.5 py-2 rounded-xl bg-stone-50 border border-stone-200/70 flex items-center gap-2.5 text-[11px] text-stone-600">
-              <i [class]="roleConfig().icon + ' text-awakin-sun text-xs shrink-0'"></i>
-              <span class="leading-tight">{{ roleConfig().subtitle }}</span>
+            <div class="pt-1">
+              <h2 class="text-2xl font-black text-stone-900 tracking-tight">Iniciar Sesión</h2>
+              <p class="text-xs text-stone-500 mt-1">Accede con tu cuenta para continuar.</p>
             </div>
           </div>
 
-          <!-- BOTÓN GOOGLE WORKSPACE OAUTH -->
+          <!-- Botón Google OAuth -->
           <button type="button" (click)="initiateGoogleHandshake()"
-            class="w-full bg-white hover:bg-stone-50 text-stone-800 font-bold text-xs tracking-wider uppercase p-3 rounded-xl border border-stone-200/90 shadow-2xs hover:shadow-xs transition-all flex items-center justify-center gap-2.5 cursor-pointer active:scale-[0.99]">
+            class="w-full bg-white hover:bg-stone-50 text-stone-800 font-bold text-xs tracking-wide p-3.5 rounded-xl border border-stone-200 shadow-2xs hover:shadow-xs transition-all flex items-center justify-center gap-2.5 cursor-pointer active:scale-[0.99]">
             <svg class="w-4 h-4 shrink-0" viewBox="0 0 24 24">
               <path fill="#4285F4"
                 d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
@@ -165,51 +120,48 @@
             <span>Continuar con Google</span>
           </button>
 
-          <!-- Divisor Estético -->
-          <div class="relative flex items-center py-0.5">
+          <!-- Divisor -->
+          <div class="relative flex items-center">
             <div class="flex-grow border-t border-stone-200"></div>
-            <span class="flex-shrink mx-3 text-[10px] text-stone-600 uppercase tracking-widest font-mono">O CON
-              CORREO</span>
+            <span class="flex-shrink mx-3 text-[10px] text-stone-400 uppercase tracking-widest font-semibold">
+              o con correo
+            </span>
             <div class="flex-grow border-t border-stone-200"></div>
           </div>
 
-          <!-- FEEDBACK DE ERROR -->
+          <!-- Feedback de Error -->
           @if (errorMessage()) {
-          <div
-            class="p-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs font-semibold flex items-center gap-2">
-            <i class="pi pi-exclamation-circle text-red-500 shrink-0"></i>
-            <span>{{ errorMessage() }}</span>
-          </div>
+            <div
+              class="p-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs font-semibold flex items-center gap-2">
+              <i class="pi pi-exclamation-circle text-red-500 shrink-0"></i>
+              <span>{{ errorMessage() }}</span>
+            </div>
           }
 
-          <!-- FORMULARIO DE ACCESO -->
+          <!-- Formulario de Acceso -->
           <form (ngSubmit)="onSecureSubmit()" class="space-y-4">
-            <!-- Input Email -->
             <div class="space-y-1.5">
-              <label
-                class="text-[10px] uppercase font-bold tracking-widest text-stone-600 font-mono flex items-center justify-between">
-                <span>CORREO ELECTRÓNICO</span>
-                <span class="text-[9px] text-stone-500 font-normal">{{ roleConfig().badge }}</span>
+              <label class="block text-[11px] font-bold uppercase tracking-wider text-stone-600">
+                Correo electrónico
               </label>
               <div class="relative">
                 <input type="email" [ngModel]="email()" (ngModelChange)="email.set($event)" name="email"
-                  autocomplete="email" [placeholder]="roleConfig().emailPlaceholder"
-                  class="w-full bg-stone-50 border border-stone-200/90 focus:bg-white focus:border-awakin-sun focus:ring-3 focus:ring-awakin-sun/15 rounded-xl text-sm p-3.5 pr-10 text-stone-900 placeholder:text-stone-400 transition-all outline-none" />
+                  autocomplete="email" placeholder="tu@correo.com"
+                  class="w-full bg-stone-50 border border-stone-200 focus:bg-white focus:border-awakin-sun focus:ring-3 focus:ring-awakin-sun/15 rounded-xl text-sm p-3.5 pr-10 text-stone-900 placeholder:text-stone-400 transition-all outline-none" />
                 <i
                   class="pi pi-envelope absolute right-3.5 top-1/2 -translate-y-1/2 text-stone-400 text-sm pointer-events-none"></i>
               </div>
             </div>
 
-            <!-- Input Contraseña -->
             <div class="space-y-1.5">
-              <label class="text-[10px] uppercase font-bold tracking-widest text-stone-600 font-mono">
-                CLAVE DE ACCESO
+              <label class="block text-[11px] font-bold uppercase tracking-wider text-stone-600">
+                Contraseña
               </label>
               <div class="relative">
                 <input [type]="showPassword() ? 'text' : 'password'" [ngModel]="password()"
                   (ngModelChange)="password.set($event)" name="password" autocomplete="current-password"
                   placeholder="••••••••••••"
-                  class="w-full bg-stone-50 border border-stone-200/90 focus:bg-white focus:border-awakin-sun focus:ring-3 focus:ring-awakin-sun/15 rounded-xl text-sm p-3.5 pr-10 text-stone-900 placeholder:text-stone-400 transition-all outline-none" />
+                  class="w-full bg-stone-50 border border-stone-200 focus:bg-white focus:border-awakin-sun focus:ring-3 focus:ring-awakin-sun/15 rounded-xl text-sm p-3.5 pr-10 text-stone-900 placeholder:text-stone-400 transition-all outline-none" />
                 <button type="button" (click)="togglePasswordVisibility()"
                   class="absolute right-3.5 top-1/2 -translate-y-1/2 text-stone-400 hover:text-stone-700 transition-colors cursor-pointer p-0.5"
                   [title]="showPassword() ? 'Ocultar contraseña' : 'Ver contraseña'">
@@ -218,15 +170,14 @@
               </div>
             </div>
 
-            <!-- Botón Principal de Acceso -->
             <button type="submit" [disabled]="loading()"
-              class="w-full bg-gradient-to-r from-awakin-sun to-amber-500 hover:from-amber-400 hover:to-orange-500 text-stone-950 font-black text-xs tracking-widest uppercase p-3.5 rounded-xl shadow-md shadow-orange-500/20 active:scale-[0.98] transition-all cursor-pointer flex items-center justify-center gap-2 disabled:opacity-60">
+              class="w-full bg-gradient-to-r from-awakin-sun to-amber-500 hover:from-amber-400 hover:to-orange-500 text-white font-black text-xs tracking-widest uppercase p-3.5 rounded-xl shadow-md shadow-orange-500/20 active:scale-[0.98] transition-all cursor-pointer flex items-center justify-center gap-2 disabled:opacity-60">
               @if (loading()) {
-              <i class="pi pi-spin pi-spinner text-xs"></i>
-              <span>VERIFICANDO ACCESO...</span>
+                <i class="pi pi-spin pi-spinner text-xs"></i>
+                <span>Verificando...</span>
               } @else {
-              <i class="pi pi-arrow-right text-xs"></i>
-              <span>ACCEDER AL SISTEMA</span>
+                <span>Iniciar Sesión</span>
+                <i class="pi pi-arrow-right text-xs"></i>
               }
             </button>
           </form>
@@ -237,10 +188,10 @@
     </div>
   </main>
 
-  <!-- Footer Mínimo -->
+  <!-- Footer -->
   <footer
-    class="w-full max-w-5xl mx-auto px-4 sm:px-6 py-4 flex flex-col sm:flex-row items-center justify-between text-[11px] text-stone-600 gap-2 z-10">
-    <p>© {{ currentYear }} AWAKIN OS. Todos los derechos reservados.</p>
+    class="w-full max-w-4xl mx-auto px-4 sm:px-6 py-4 flex flex-col sm:flex-row items-center justify-between text-[11px] text-stone-500 gap-2 z-10">
+    <p>© {{ currentYear }} AWAKIN. Todos los derechos reservados.</p>
     <div class="flex items-center gap-4">
       <span class="hover:text-stone-700 cursor-pointer">Privacidad</span>
       <span>•</span>

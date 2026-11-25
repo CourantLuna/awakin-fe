@@ -1,4 +1,4 @@
-import { Component, inject, signal, ViewEncapsulation, OnInit, HostListener } from '@angular/core';
+import { Component, computed, inject, signal, ViewEncapsulation, OnInit, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { DockModule } from 'primeng/dock';
 import { Router, NavigationEnd } from '@angular/router';
@@ -6,6 +6,7 @@ import { filter } from 'rxjs/operators';
 
 import { ModuleConfigService } from '../../core/services/module-config.service';
 import { AuthService } from '../../core/services/auth.service';
+import { ThemeService } from '../../core/services/theme.service';
 
 // Definimos el tipo de nuestras pestañas permitidas
 type TabId = 'intake' | 'workout' | 'home' | 'kin' | 'avatar';
@@ -23,9 +24,25 @@ export class NavigationComponent implements OnInit {
   private router = inject(Router);
   private authService = inject(AuthService);
   public moduleConfig = inject(ModuleConfigService);
+  public themeService = inject(ThemeService);
 
   // Estado reactivo de pestaña activa
   activeTab = signal<TabId>('home');
+
+  // Logo del Kin cuando el usuario pertenece exactamente a 1 Kin
+  singleKinLogo = computed<string | null>(() => {
+    const kins = this.themeService.availableKins();
+    if (kins.length === 1 && kins[0]?.team_logo_url) {
+      const url = kins[0].team_logo_url.trim();
+      return url || null;
+    }
+    return null;
+  });
+
+  singleKinName = computed<string>(() => {
+    const kins = this.themeService.availableKins();
+    return kins.length === 1 ? kins[0]?.team_name || 'Kin' : 'Kin';
+  });
 
   // Control de visibilidad para ocultar/mostrar al hacer scroll
   isBarVisible = signal<boolean>(true);

@@ -73,14 +73,17 @@
     <!-- KIN -->
     <button (click)="selectModule('kin')"
       class="flex flex-col items-center justify-center transition-all duration-300 active:scale-90 cursor-pointer min-w-[52px] h-full"
-      title="Kin">
-      <img [src]="activeTab() === 'kin' ? 'icons/kin-active.png' : 'icons/kin-gray.png'"
-        class="w-11 h-11 object-contain transition-all duration-300"
-        [ngClass]="activeTab() === 'kin' ? 'scale-110 drop-shadow-sm' : 'opacity-70 hover:opacity-100'" alt="Kin" />
-      <!-- <span class="text-[9px] font-extrabold text-awakin-sun -mt-0.5 tracking-tight transition-all duration-300"
-        [class.hidden]="activeTab() !== 'kin'">
-        KIN
-      </span> -->
+      [title]="singleKinName()">
+      @if (singleKinLogo(); as kinLogo) {
+        <img [src]="kinLogo"
+          class="w-11 h-11 object-contain transition-all duration-300"
+          [ngClass]="activeTab() === 'kin' ? 'scale-110 drop-shadow-sm' : 'grayscale opacity-60 hover:opacity-100'"
+          [alt]="singleKinName()" />
+      } @else {
+        <img [src]="activeTab() === 'kin' ? 'icons/kin-active.png' : 'icons/kin-gray.png'"
+          class="w-11 h-11 object-contain transition-all duration-300"
+          [ngClass]="activeTab() === 'kin' ? 'scale-110 drop-shadow-sm' : 'opacity-70 hover:opacity-100'" alt="Kin" />
+      }
     </button>
 
     <!-- AVATAR -->

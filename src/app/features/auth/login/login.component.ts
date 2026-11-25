@@ -1,4 +1,4 @@
-import { Component, inject, signal, OnInit, computed } from '@angular/core';
+import { Component, inject, signal, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -6,20 +6,17 @@ import { AuthService } from '../../../core/services/auth.service';
 import { supabaseClient } from '../../../core/services/supabase.service';
 import { firstValueFrom } from 'rxjs';
 
-export type UserRole = 'ATHLETE' | 'INSTRUCTOR';
-
 @Component({
   selector: 'app-login',
   standalone: true,
   imports: [CommonModule, FormsModule],
-  templateUrl: './login.component.html'
+  templateUrl: './login.component.html',
+  styleUrl: './login.component.css',
 })
 export class LoginComponent implements OnInit {
   private authService = inject(AuthService);
   private router = inject(Router);
 
-  // Arquitectura del Estado con Angular Signals
-  selectedRole = signal<UserRole>('ATHLETE');
   email = signal<string>('');
   password = signal<string>('');
   showPassword = signal<boolean>(false);
@@ -27,36 +24,19 @@ export class LoginComponent implements OnInit {
   errorMessage = signal<string>('');
   currentYear = new Date().getFullYear();
 
-  // Configuración dinámica contextual según el rol seleccionado
-  roleConfig = computed(() => {
-    if (this.selectedRole() === 'INSTRUCTOR') {
-      return {
-        title: 'Acceso Instructor',
-        badge: 'Coach / Staff',
-        subtitle: 'Gestiona atletas, asigna protocolos nutricionales y supervisa progresos.',
-        emailPlaceholder: 'instructor@awakin.com',
-        icon: 'pi pi-shield'
-      };
-    }
-    return {
-      title: 'Acceso Atleta',
-      badge: 'Atleta Activo',
-      subtitle: 'Registra tus comidas diarias, planifica listas y da seguimiento a tu entrenamiento.',
-      emailPlaceholder: 'atleta@awakin.com',
-      icon: 'pi pi-bolt'
-    };
-  });
+  public readonly moduleIcons = [
+    { src: 'icons/intake-active.png', alt: 'Intake' },
+    { src: 'icons/workout-active.png', alt: 'Workout' },
+    { src: 'icons/home-active.png', alt: 'Awakin' },
+    { src: 'icons/kin-active.png', alt: 'Kin' },
+    { src: 'icons/avatar-active.png', alt: 'Avatar' },
+  ];
 
   ngOnInit(): void {
     // Si ya existe sesión activa, redirigir de inmediato a la última ruta activa
     if (this.authService.isAuthenticated()) {
       this.router.navigate([this.authService.getLastRoute()]);
     }
-  }
-
-  setRole(role: UserRole): void {
-    this.selectedRole.set(role);
-    this.errorMessage.set('');
   }
 
   togglePasswordVisibility(): void {
@@ -71,7 +51,7 @@ export class LoginComponent implements OnInit {
     const userPass = this.password().trim();
 
     if (!userEmail || !userPass) {
-      this.errorMessage.set('Por favor ingresa tu correo y clave de acceso.');
+      this.errorMessage.set('Por favor ingresa tu correo y contraseña.');
       return;
     }
 
@@ -79,22 +59,20 @@ export class LoginComponent implements OnInit {
     this.errorMessage.set('');
 
     try {
-      // 1. Intentar inicio de sesión mediante la API Gateway del backend
       await firstValueFrom(this.authService.signInWithEmail(userEmail, userPass));
-      localStorage.setItem('awakin_selected_role', this.selectedRole());
+      localStorage.setItem('awakin_selected_role', 'ATHLETE');
       this.router.navigate([this.authService.getLastRoute()]);
     } catch (backendError: any) {
-      // 2. Si el backend falla o no reconoce las credenciales, intentar Supabase Auth directo
       try {
         const { data, error } = await supabaseClient.auth.signInWithPassword({
           email: userEmail,
-          password: userPass
+          password: userPass,
         });
 
         if (error) throw error;
 
         if (data?.session) {
-          localStorage.setItem('awakin_selected_role', this.selectedRole());
+          localStorage.setItem('awakin_selected_role', 'ATHLETE');
           this.router.navigate([this.authService.getLastRoute()]);
           return;
         }
@@ -115,7 +93,7 @@ export class LoginComponent implements OnInit {
    */
   initiateGoogleHandshake(): void {
     this.errorMessage.set('');
-    localStorage.setItem('awakin_selected_role', this.selectedRole());
+    localStorage.setItem('awakin_selected_role', 'ATHLETE');
     this.authService.loginWithGoogle();
   }
 }
