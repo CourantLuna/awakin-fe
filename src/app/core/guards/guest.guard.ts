@@ -15,5 +15,10 @@ export const guestGuard: CanActivateFn = (route, state) => {
     return false;
   }
 
+  if (authService.hasRawSession() && !authService.isActiveAccount()) {
+    router.navigate(['/pending-access']);
+    return false;
+  }
+
   return true;
 };

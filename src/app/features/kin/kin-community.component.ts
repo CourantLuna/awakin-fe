@@ -93,13 +93,46 @@ export class KinCommunityComponent {
   public uploadingBrandingSlot = signal<'header' | 'meals' | 'ranking' | 'agenda' | null>(null);
   public brandingError = signal<string | null>(null);
 
+  // Gestión de Invitaciones Privadas y Solicitudes (Solo Coach/Instructor)
+  public isInvitesModalOpen = signal<boolean>(false);
+  public invitesModalTab = signal<'links' | 'requests'>('links');
+  public kinInvites = signal<any[]>([]);
+  public kinJoinRequests = signal<any[]>([]);
+  public isLoadingInvites = signal<boolean>(false);
+  public isCreatingInvite = signal<boolean>(false);
+  public newInviteLabel = signal<string>('');
+  public newInviteRequiresApproval = signal<boolean>(true);
+  public newInviteMaxUses = signal<number | null>(null);
+  public newInviteExpiresHours = signal<number | null>(168);
+  public copiedInviteId = signal<string | null>(null);
+  public reviewingRequestId = signal<string | null>(null);
+  public invitesError = signal<string | null>(null);
+
   public canEditKinBranding = computed<boolean>(() => {
     const a = this.athleteService.currentAthlete();
-    const k = this.kinSummary();
-    if (!a || !k) return false;
+    const k: any = this.kinSummary();
+    if (!a || !k?.id) return false;
+
+    // Estrictamente por pertenencia como coach de ESTE Kin:
+    // 1. Head Coach en tabla public.kin
     if (k.head_coach_id === a.id || k.instructor_id === a.id) return true;
-    const roles = (a.roles || []).map((r) => r.toUpperCase());
-    return roles.includes('ADMINISTRATOR') || roles.includes('INSTRUCTOR');
+
+    // 2. Asignación explícita en tabla public.kin_instructors para ESTE kin_id
+    if (Array.isArray(k.instructor_ids) && k.instructor_ids.includes(a.id)) return true;
+    if (Array.isArray(k.instructors) && k.instructors.some((i: any) => i.instructor_id === a.id)) return true;
+    if ((a.instructor_kins || []).some((ik) => ik.id === k.id)) return true;
+
+    const ov = this.kinService.overview();
+    if (ov && ov.kin?.id === k.id) {
+      const overviewMember = ov.members?.find((m) => m.id === a.id);
+      if (overviewMember && overviewMember.kin_role && overviewMember.kin_role !== 'member') {
+        return true;
+      }
+    }
+
+    // Si solo pertenece al Kin como miembro (athletes.kin_id), NO es coach en este Kin
+    // independientemente de sus roles globales (ADMINISTRATOR / INSTRUCTOR).
+    return false;
   });
 
   // Estado de navegación del calendario (Mes / Semana)
@@ -115,7 +148,10 @@ export class KinCommunityComponent {
   });
 
   public kinSummary = computed(() => {
-    return this.kinService.overview()?.kin || this.activeKin();
+    const active = this.activeKin();
+    const ovKin = this.kinService.overview()?.kin;
+    if (active && ovKin && ovKin.id === active.id) return ovKin;
+    return active || ovKin;
   });
 
   public sortedLeaderboard = computed<KinMemberItem[]>(() => {
@@ -259,6 +295,9 @@ export class KinCommunityComponent {
       if (!kinId) return;
       untracked(() => {
         this.kinService.loadOverview(kinId);
+        if (this.canEditKinBranding()) {
+          this.loadPendingJoinRequestsBadge(kinId);
+        }
       });
     });
   }
@@ -342,6 +381,144 @@ export class KinCommunityComponent {
     this.brandingAgendaBgUrl.set(k?.agenda_bg_url || '');
     this.brandingError.set(null);
     this.isBrandingModalOpen.set(true);
+  }
+
+  private loadPendingJoinRequestsBadge(kinId: string): void {
+    this.kinService.listKinJoinRequests(kinId, 'PENDING').subscribe({
+      next: (reqs) => this.kinJoinRequests.set(reqs || []),
+      error: () => {},
+    });
+  }
+
+  public openInvitesModal(initialTab: 'links' | 'requests' = 'links'): void {
+    const kinId = this.kinSummary()?.id;
+    if (!kinId) return;
+    this.invitesModalTab.set(initialTab);
+    this.invitesError.set(null);
+    this.isInvitesModalOpen.set(true);
+    this.refreshInvitesData(kinId);
+  }
+
+  public refreshInvitesData(kinId?: string): void {
+    const id = kinId || this.kinSummary()?.id;
+    if (!id) return;
+    this.isLoadingInvites.set(true);
+    this.kinService.listKinInvites(id).subscribe({
+      next: (list) => {
+        this.kinInvites.set(list || []);
+        this.isLoadingInvites.set(false);
+      },
+      error: () => this.isLoadingInvites.set(false),
+    });
+    this.kinService.listKinJoinRequests(id, 'PENDING').subscribe({
+      next: (reqs) => this.kinJoinRequests.set(reqs || []),
+      error: () => {},
+    });
+  }
+
+  public createNewInviteLink(): void {
+    const kinId = this.kinSummary()?.id;
+    const coachId = this.currentAthleteId();
+    if (!kinId || !coachId || this.isCreatingInvite()) return;
+
+    this.isCreatingInvite.set(true);
+    this.invitesError.set(null);
+
+    this.kinService
+      .createKinInvite(kinId, {
+        created_by: coachId,
+        label: this.newInviteLabel().trim() || null,
+        requires_approval: this.newInviteRequiresApproval(),
+        max_uses: this.newInviteMaxUses(),
+        expires_in_hours: this.newInviteExpiresHours(),
+      })
+      .subscribe({
+        next: (created) => {
+          this.kinInvites.update((list) => [created, ...list]);
+          this.newInviteLabel.set('');
+          this.isCreatingInvite.set(false);
+        },
+        error: (err) => {
+          this.invitesError.set(err?.error?.detail || 'No se pudo generar el enlace.');
+          this.isCreatingInvite.set(false);
+        },
+      });
+  }
+
+  public buildInviteUrl(token: string): string {
+    const origin = typeof window !== 'undefined' ? window.location.origin : 'https://awakin.app';
+    return `${origin}/join/${token}`;
+  }
+
+  public async copyInviteUrl(invite: any): Promise<void> {
+    const url = this.buildInviteUrl(invite.token);
+    try {
+      await navigator.clipboard.writeText(url);
+      this.copiedInviteId.set(invite.id);
+      setTimeout(() => {
+        if (this.copiedInviteId() === invite.id) this.copiedInviteId.set(null);
+      }, 2000);
+    } catch {
+      this.invitesError.set('Copia manualmente: ' + url);
+    }
+  }
+
+  public async shareInviteUrl(invite: any): Promise<void> {
+    const url = this.buildInviteUrl(invite.token);
+    const teamName = this.kinSummary()?.team_name || 'Mi Kin';
+    const text = `Te invito a unirte a ${teamName} en AWAKIN. Solicita acceso aquí: ${url}`;
+    if (typeof navigator !== 'undefined' && navigator.share) {
+      try {
+        await navigator.share({ title: `Invitación a ${teamName}`, text, url });
+        return;
+      } catch {
+        // Usuario canceló
+      }
+    }
+    this.copyInviteUrl(invite);
+  }
+
+  public toggleInviteActive(invite: any): void {
+    const next = !invite.is_active;
+    this.kinService.toggleKinInvite(invite.id, next).subscribe({
+      next: (updated) => {
+        this.kinInvites.update((list) => list.map((i) => (i.id === invite.id ? updated : i)));
+      },
+      error: () => {},
+    });
+  }
+
+  public approveJoinRequest(req: any): void {
+    const coachId = this.currentAthleteId();
+    if (!coachId || this.reviewingRequestId()) return;
+    this.reviewingRequestId.set(req.id);
+    this.kinService.approveKinJoinRequest(req.id, coachId).subscribe({
+      next: () => {
+        this.kinJoinRequests.update((list) => list.filter((r) => r.id !== req.id));
+        this.reviewingRequestId.set(null);
+        this.refreshKin();
+      },
+      error: (err) => {
+        this.invitesError.set(err?.error?.detail || 'No se pudo aprobar la solicitud.');
+        this.reviewingRequestId.set(null);
+      },
+    });
+  }
+
+  public rejectJoinRequest(req: any): void {
+    const coachId = this.currentAthleteId();
+    if (!coachId || this.reviewingRequestId()) return;
+    this.reviewingRequestId.set(req.id);
+    this.kinService.rejectKinJoinRequest(req.id, coachId).subscribe({
+      next: () => {
+        this.kinJoinRequests.update((list) => list.filter((r) => r.id !== req.id));
+        this.reviewingRequestId.set(null);
+      },
+      error: (err) => {
+        this.invitesError.set(err?.error?.detail || 'No se pudo rechazar la solicitud.');
+        this.reviewingRequestId.set(null);
+      },
+    });
   }
 
   public onBrandingFileSelected(slot: 'header' | 'meals' | 'ranking' | 'agenda', event: Event): void {

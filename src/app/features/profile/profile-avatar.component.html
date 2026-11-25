@@ -119,32 +119,32 @@
 
 
     <!-- MÉTRICAS EN VIVO: RACHA, POSTS, SEGUIDORES, SIGUIENDO -->
-    <div class="flex flex-1 justify-around text-center ml-2">
-      <div>
-        <p class="font-black text-stone-900 text-lg tracking-tight">
+    <div class="grid grid-cols-4 flex-1 items-center text-center ml-2 gap-0.5">
+      <div class="flex flex-col items-center justify-center px-1 py-1.5 rounded-xl">
+        <p class="font-black text-stone-900 text-lg tracking-tight leading-tight">
           {{ athlete()?.streak_days || 0 }}
         </p>
-        <p class="text-[9px] font-semibold text-stone-500 uppercase tracking-wider">Racha 🔥</p>
+        <p class="text-[9px] font-semibold text-stone-500 uppercase tracking-wider leading-none mt-1 whitespace-nowrap">Racha 🔥</p>
       </div>
-      <div>
-        <p class="font-black text-stone-900 text-lg tracking-tight">
+      <div class="flex flex-col items-center justify-center px-1 py-1.5 rounded-xl">
+        <p class="font-black text-stone-900 text-lg tracking-tight leading-tight">
           {{ posts().length }}
         </p>
-        <p class="text-[9px] font-semibold text-stone-500 uppercase tracking-wider">Posts</p>
+        <p class="text-[9px] font-semibold text-stone-500 uppercase tracking-wider leading-none mt-1 whitespace-nowrap">Posts</p>
       </div>
       <button type="button" (click)="openFollowListModal('followers')"
-        class="hover:bg-stone-100/80 active:scale-95 rounded-xl px-2 py-1 transition-all cursor-pointer">
-        <p class="font-black text-stone-900 text-lg tracking-tight">
+        class="flex flex-col items-center justify-center px-1 py-1.5 rounded-xl hover:bg-stone-100/80 active:scale-95 transition-all cursor-pointer">
+        <p class="font-black text-stone-900 text-lg tracking-tight leading-tight">
           {{ athlete()?.followers_count || 0 }}
         </p>
-        <p class="text-[9px] font-semibold text-stone-500 uppercase tracking-wider">Seguidores</p>
+        <p class="text-[9px] font-semibold text-stone-500 uppercase tracking-wider leading-none mt-1 whitespace-nowrap">Seguidores</p>
       </button>
       <button type="button" (click)="openFollowListModal('following')"
-        class="hover:bg-stone-100/80 active:scale-95 rounded-xl px-2 py-1 transition-all cursor-pointer">
-        <p class="font-black text-stone-900 text-lg tracking-tight">
+        class="flex flex-col items-center justify-center px-1 py-1.5 rounded-xl hover:bg-stone-100/80 active:scale-95 transition-all cursor-pointer">
+        <p class="font-black text-stone-900 text-lg tracking-tight leading-tight">
           {{ athlete()?.following_count || 0 }}
         </p>
-        <p class="text-[9px] font-semibold text-stone-500 uppercase tracking-wider">Siguiendo</p>
+        <p class="text-[9px] font-semibold text-stone-500 uppercase tracking-wider leading-none mt-1 whitespace-nowrap">Siguiendo</p>
       </button>
     </div>
   </div>

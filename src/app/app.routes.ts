@@ -29,6 +29,16 @@ export const routes: Routes = [
     loadComponent: () =>
       import('./features/auth/login/login.component').then((m) => m.LoginComponent),
   },
+  {
+    path: 'pending-access',
+    loadComponent: () =>
+      import('./features/auth/pending-access/pending-access.component').then((m) => m.PendingAccessComponent),
+  },
+  {
+    path: 'join/:token',
+    loadComponent: () =>
+      import('./features/auth/join-invite/join-invite.component').then((m) => m.JoinInviteComponent),
+  },
 
   // Vista de Módulo en Mantenimiento
   {

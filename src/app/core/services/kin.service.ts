@@ -185,6 +185,63 @@ export class KinService {
     return this.http.patch<{ status: string; kin: KinInfo }>(`${this.baseUrl}/${kinId}/branding`, payload);
   }
 
+  // =========================================================================
+  // INVITACIONES PRIVADAS Y SOLICITUDES DE INGRESO DEL KIN
+  // =========================================================================
+
+  public getInvitePreview(token: string) {
+    return this.http.get<{
+      valid: boolean;
+      invalid_reason?: string | null;
+      token: string;
+      label?: string | null;
+      requires_approval: boolean;
+      expires_at?: string | null;
+      kin?: {
+        id?: string;
+        team_name?: string;
+        team_logo_url?: string | null;
+        primary_color?: string;
+        manifesto?: string | null;
+        header_image_url?: string | null;
+        head_coach_name?: string | null;
+      };
+    }>(`${this.baseUrl}/invites/${encodeURIComponent(token)}`);
+  }
+
+  public listKinInvites(kinId: string) {
+    return this.http.get<any[]>(`${this.baseUrl}/${kinId}/invites`);
+  }
+
+  public createKinInvite(
+    kinId: string,
+    payload: {
+      created_by: string;
+      label?: string | null;
+      requires_approval: boolean;
+      max_uses?: number | null;
+      expires_in_hours?: number | null;
+    }
+  ) {
+    return this.http.post<any>(`${this.baseUrl}/${kinId}/invites`, payload);
+  }
+
+  public toggleKinInvite(inviteId: string, isActive: boolean) {
+    return this.http.patch<any>(`${this.baseUrl}/invites/${inviteId}/toggle`, { is_active: isActive });
+  }
+
+  public listKinJoinRequests(kinId: string, status: string = 'PENDING') {
+    return this.http.get<any[]>(`${this.baseUrl}/${kinId}/join-requests`, { params: { status } });
+  }
+
+  public approveKinJoinRequest(requestId: string, reviewedBy: string) {
+    return this.http.post<any>(`${this.baseUrl}/join-requests/${requestId}/approve`, { reviewed_by: reviewedBy });
+  }
+
+  public rejectKinJoinRequest(requestId: string, reviewedBy: string) {
+    return this.http.post<any>(`${this.baseUrl}/join-requests/${requestId}/reject`, { reviewed_by: reviewedBy });
+  }
+
   public loadAwakinFeed(athleteId: string, scope: AwakinFeedScope = 'all', kinId?: string | null): void {
     if (!athleteId) return;
     this.awakinFeedLoading.set(true);

@@ -680,11 +680,11 @@ export class ProfileAvatarComponent implements OnInit, OnDestroy {
         // Cargar posts, comidas (sin progreso privado), protocolo y workouts en paralelo
         this.athleteService.getPublicAthleteRecords(profile.id).subscribe({
           next: (rec) => this.publicRecords.set({ ...rec, progress: [] }),
-          error: () => {},
+          error: () => { },
         });
         this.athleteService.getPublicAthletePosts(profile.id).subscribe({
           next: (p) => this.publicPosts.set(p || []),
-          error: () => {},
+          error: () => { },
         });
         this.athleteService.getPublicNutritionProtocol(profile.id).then((proto) => {
           this.publicNutritionProtocol.set(proto);
@@ -695,7 +695,7 @@ export class ProfileAvatarComponent implements OnInit, OnDestroy {
         if (myId && myId !== profile.id) {
           this.athleteService.getFollowStatus(myId, profile.id).subscribe({
             next: (res) => this.isFollowingPublic.set(!!res?.is_following),
-            error: () => {},
+            error: () => { },
           });
         }
       }
@@ -751,9 +751,9 @@ export class ProfileAvatarComponent implements OnInit, OnDestroy {
         this.publicAthlete.update((curr) =>
           curr
             ? {
-                ...curr,
-                followers_count: Math.max(0, (curr.followers_count || 0) + (currentlyFollowing ? -1 : 1)),
-              }
+              ...curr,
+              followers_count: Math.max(0, (curr.followers_count || 0) + (currentlyFollowing ? -1 : 1)),
+            }
             : null
         );
         this.isTogglingFollow.set(false);
@@ -1589,15 +1589,15 @@ export class ProfileAvatarComponent implements OnInit, OnDestroy {
   getRoleBadgeClass(role: string): string {
     switch (role) {
       case 'INSTRUCTOR':
-        return 'bg-amber-500/20 text-amber-300 border-amber-500/40';
+        return 'bg-amber-500/20 text-amber-700 border-amber-500/40';
       case 'NUTRITIONIST':
-        return 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40';
+        return 'bg-emerald-500/20 text-emerald-700 border-emerald-500/40';
       case 'ADMINISTRATOR':
-        return 'bg-purple-500/20 text-purple-300 border-purple-500/40';
+        return 'bg-purple-500/20 text-purple-700 border-purple-500/40';
       case 'PHYSIOTHERAPIST':
-        return 'bg-cyan-500/20 text-cyan-300 border-cyan-500/40';
+        return 'bg-cyan-500/20 text-cyan-700 border-cyan-500/40';
       default:
-        return 'bg-stone-800 text-stone-300 border-stone-700';
+        return 'bg-stone-800 text-stone-700 border-stone-700';
     }
   }
 
