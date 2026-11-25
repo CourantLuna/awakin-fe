@@ -493,36 +493,27 @@
         </p>
       </div>
 
-      <div class="inline-flex p-1 bg-stone-100 rounded-xl border border-stone-200/80 self-start sm:self-auto">
-        @for (opt of analyticsRangeOptions; track opt.key) {
-        <button type="button" (click)="analyticsRange.set(opt.key)"
-          class="px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all cursor-pointer"
-          [ngClass]="analyticsRange() === opt.key
-              ? 'bg-stone-900 text-white shadow-2xs'
-              : 'text-stone-500 hover:text-stone-800'">
-          {{ opt.label }}
-          <div class="flex items-center justify-between sm:justify-end gap-2 flex-wrap">
-            <div class="inline-flex p-1 bg-stone-100 rounded-xl border border-stone-200/80">
-              @for (opt of analyticsRangeOptions; track opt.key) {
-              <button type="button" (click)="analyticsRange.set(opt.key)"
-                class="px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all cursor-pointer"
-                [ngClass]="analyticsRange() === opt.key
+      <div class="flex items-center justify-between sm:justify-end gap-2 flex-wrap">
+        <div class="inline-flex p-1 bg-stone-100 rounded-xl border border-stone-200/80">
+          @for (opt of analyticsRangeOptions; track opt.key) {
+          <button type="button" (click)="analyticsRange.set(opt.key)"
+            class="px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all cursor-pointer"
+            [ngClass]="analyticsRange() === opt.key
                 ? 'bg-stone-900 text-white shadow-2xs'
                 : 'text-stone-500 hover:text-stone-800'">
-                {{ opt.label }}
-              </button>
-              }
-            </div>
+            {{ opt.label }}
+          </button>
+          }
+        </div>
 
-            <button type="button" (click)="isMuscleLoadStoryOpen.set(true)"
-              class="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-wider text-awakin-sun hover:text-awakin-sun-dim active:scale-95 transition-all py-1.5 px-3 rounded-full bg-awakin-sun/10 hover:bg-awakin-sun/15 border border-awakin-sun/25 cursor-pointer shadow-2xs shrink-0"
-              title="Generar Historia 9:16 de Carga Muscular">
-              <i class="pi pi-sparkles text-[10px]"></i>
-              <span>Historia 9:16</span>
-            </button>
-            }
-          </div>
+        <button type="button" (click)="isMuscleLoadStoryOpen.set(true)"
+          class="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-wider text-awakin-sun hover:text-awakin-sun-dim active:scale-95 transition-all py-1.5 px-3 rounded-full bg-awakin-sun/10 hover:bg-awakin-sun/15 border border-awakin-sun/25 cursor-pointer shadow-2xs shrink-0"
+          title="Generar Historia 9:16 de Carga Muscular">
+          <i class="pi pi-sparkles text-[10px]"></i>
+          <span>Historia 9:16</span>
+        </button>
       </div>
+    </div>
 
       <!-- KPIs rápidos del rango seleccionado -->
       @let summary = analyticsSummary();

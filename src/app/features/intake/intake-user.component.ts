@@ -31,7 +31,6 @@ import { ProtocolMatrixDrawer } from './components/protocol-matrix-drawer/protoc
 import { ShoppingListDrawer } from './components/shopping-list-drawer/shopping-list-drawer';
 import { RecipeDetailsModal } from './components/recipe-details-modal/recipe-details-modal';
 import { FoodStoryModalComponent, translateMealType } from './components/food-story-modal/food-story-modal.component';
-import { FoodEstimationPanelComponent } from './components/food-estimation-panel/food-estimation-panel.component';
 import {
   WeeklyTemplate,
   MenuPlan,
@@ -161,7 +160,6 @@ export interface FoodItem {
     ShoppingListDrawer,
     RecipeDetailsModal,
     FoodStoryModalComponent,
-    FoodEstimationPanelComponent,
     FormsModule,
     IntakeTopBar,
     IntakeLoaderComponent
