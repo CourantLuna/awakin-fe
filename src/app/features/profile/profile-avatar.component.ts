@@ -1351,18 +1351,40 @@ export class ProfileAvatarComponent implements OnInit, OnDestroy {
 
   // Tribu / Kin helpers
   getKin(): KinInfo | null {
-    const ath = this.athlete();
-    if (ath?.kin) return ath.kin;
-    if (ath?.kins && ath.kins.length > 0) return ath.kins[0];
-    return null;
+    const kins = this.getKins();
+    return kins.length > 0 ? kins[0] : null;
   }
 
   getKins(): KinInfo[] {
     const ath = this.athlete();
-    if (ath?.kins && ath.kins.length > 0) {
-      return ath.kins;
-    }
-    return ath?.kin ? [ath.kin] : [];
+    if (!ath) return [];
+
+    // Combina sin duplicados priorizando los Kins donde es Coach/Instructor y luego el Kin donde es Miembro
+    const byId = new Map<string, KinInfo>();
+    const addKin = (k?: KinInfo | null, fallbackRole?: string) => {
+      if (!k || (!k.id && !k.team_name)) return;
+      const key = k.id || k.team_name || '';
+      if (!key) return;
+      if (!byId.has(key)) {
+        byId.set(key, {
+          ...k,
+          role_in_kin: k.role_in_kin || fallbackRole || 'MEMBER',
+        });
+      }
+    };
+
+    for (const k of ath.instructor_kins || []) addKin(k, 'INSTRUCTOR');
+    for (const k of ath.kins || []) addKin(k);
+    addKin(ath.kin, 'MEMBER');
+
+    return Array.from(byId.values());
+  }
+
+  getRoleBadgeForKin(kin: KinInfo): string {
+    const role = (kin?.role_in_kin || '').toUpperCase().trim();
+    if (role === 'HEAD COACH' || role === 'HEAD_COACH') return 'Líder / Head Coach';
+    if (role === 'INSTRUCTOR' || role === 'COACH') return 'Instructor / Coach';
+    return 'Miembro';
   }
 
   hasKin(): boolean {
