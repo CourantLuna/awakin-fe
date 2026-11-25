@@ -201,7 +201,7 @@
 
   <!-- TAB 1: MURO KIN (Posts + Reportes de Entrenamiento) -->
   @if (activeTab() === 'feed') {
-  <div class="space-y-4">
+  <div class="space-y-4 flex flex-col gap-3">
     @for (item of muroItems(); track item.id) {
     @if (item.item_type === 'workout' && item.workout_log) {
     <app-workout-log-card [log]="item.workout_log" [athlete]="item.author_profile || null"
@@ -832,7 +832,7 @@
       <div class="px-5 py-3.5 border-b border-stone-100 flex items-center justify-between shrink-0">
         <div>
           <h3 class="text-sm font-black text-stone-900 uppercase tracking-tight">Personalizar Imágenes del Kin</h3>
-          <p class="text-[11px] text-stone-400">Pega una URL o sube una foto para cada sección</p>
+          <p class="text-[11px] text-stone-400">Toca cada vista previa para cambiar su imagen</p>
         </div>
         <button type="button" (click)="isBrandingModalOpen.set(false)"
           class="w-8 h-8 rounded-full bg-stone-100 hover:bg-stone-200 text-stone-600 flex items-center justify-center cursor-pointer">
@@ -847,63 +847,139 @@
         </div>
         }
 
-        <!-- 1. Kin Header -->
-        <div class="space-y-1.5">
-          <label class="text-[10px] font-black uppercase tracking-wider text-stone-600">1. Fondo Kin Header</label>
-          <div class="flex gap-1.5">
-            <input type="url" [ngModel]="brandingHeaderUrl()" (ngModelChange)="brandingHeaderUrl.set($event)"
-              placeholder="https://..."
-              class="flex-1 bg-stone-50 border border-stone-200 rounded-xl px-3 py-2 text-xs text-stone-800 focus:outline-none focus:border-kin-primary" />
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <!-- 1. Kin Header -->
+          <div class="space-y-1.5">
+            <div class="flex items-center justify-between">
+              <label class="text-[10px] font-black uppercase tracking-wider text-stone-600">1. Fondo Kin Header</label>
+              @if (brandingHeaderUrl()) {
+              <button type="button" (click)="brandingHeaderUrl.set('')"
+                class="text-[10px] font-bold text-stone-400 hover:text-red-500 cursor-pointer" title="Quitar imagen">
+                <i class="pi pi-trash text-[10px]"></i>
+              </button>
+              }
+            </div>
             <label
-              class="px-3 py-2 rounded-xl bg-stone-900 hover:bg-stone-800 text-white text-[10px] font-black uppercase flex items-center gap-1 cursor-pointer shrink-0">
-              <i class="pi" [ngClass]="uploadingBrandingSlot() === 'header' ? 'pi-spin pi-spinner' : 'pi-upload'"></i>
+              class="relative block h-28 w-full rounded-2xl overflow-hidden border border-stone-200 bg-stone-100 group cursor-pointer shadow-xs">
+              @if (brandingHeaderUrl()) {
+              <img [src]="brandingHeaderUrl()" alt="Fondo Kin Header" class="w-full h-full object-cover" />
+              } @else {
+              <div class="w-full h-full flex flex-col items-center justify-center text-stone-400 gap-1">
+                <i class="pi pi-image text-xl"></i>
+                <span class="text-[10px] font-bold">Sin imagen</span>
+              </div>
+              }
+              <div
+                class="absolute inset-0 bg-black/45 group-hover:bg-black/60 transition-colors flex flex-col items-center justify-center text-white gap-1">
+                <span
+                  class="px-3 py-1.5 rounded-full bg-black/65 backdrop-blur-xs border border-white/25 text-[10px] font-black uppercase tracking-wider flex items-center gap-1.5">
+                  <i class="pi text-[11px]"
+                    [ngClass]="uploadingBrandingSlot() === 'header' ? 'pi-spin pi-spinner' : 'pi-camera'"></i>
+                  <span>{{ uploadingBrandingSlot() === 'header' ? 'Subiendo...' : 'Cambiar' }}</span>
+                </span>
+              </div>
               <input type="file" accept="image/*" (change)="onBrandingFileSelected('header', $event)" class="hidden" />
             </label>
           </div>
-        </div>
 
-        <!-- 2. Kin Comidas Banner -->
-        <div class="space-y-1.5">
-          <label class="text-[10px] font-black uppercase tracking-wider text-stone-600">2. Banner Kin Comidas</label>
-          <div class="flex gap-1.5">
-            <input type="url" [ngModel]="brandingMealsBannerUrl()" (ngModelChange)="brandingMealsBannerUrl.set($event)"
-              placeholder="https://..."
-              class="flex-1 bg-stone-50 border border-stone-200 rounded-xl px-3 py-2 text-xs text-stone-800 focus:outline-none focus:border-kin-primary" />
+          <!-- 2. Kin Comidas Banner -->
+          <div class="space-y-1.5">
+            <div class="flex items-center justify-between">
+              <label class="text-[10px] font-black uppercase tracking-wider text-stone-600">2. Banner Kin Comidas</label>
+              @if (brandingMealsBannerUrl()) {
+              <button type="button" (click)="brandingMealsBannerUrl.set('')"
+                class="text-[10px] font-bold text-stone-400 hover:text-red-500 cursor-pointer" title="Quitar imagen">
+                <i class="pi pi-trash text-[10px]"></i>
+              </button>
+              }
+            </div>
             <label
-              class="px-3 py-2 rounded-xl bg-stone-900 hover:bg-stone-800 text-white text-[10px] font-black uppercase flex items-center gap-1 cursor-pointer shrink-0">
-              <i class="pi" [ngClass]="uploadingBrandingSlot() === 'meals' ? 'pi-spin pi-spinner' : 'pi-upload'"></i>
+              class="relative block h-28 w-full rounded-2xl overflow-hidden border border-stone-200 bg-stone-100 group cursor-pointer shadow-xs">
+              @if (brandingMealsBannerUrl()) {
+              <img [src]="brandingMealsBannerUrl()" alt="Banner Kin Comidas" class="w-full h-full object-cover" />
+              } @else {
+              <div class="w-full h-full flex flex-col items-center justify-center text-stone-400 gap-1">
+                <i class="pi pi-image text-xl"></i>
+                <span class="text-[10px] font-bold">Sin imagen</span>
+              </div>
+              }
+              <div
+                class="absolute inset-0 bg-black/45 group-hover:bg-black/60 transition-colors flex flex-col items-center justify-center text-white gap-1">
+                <span
+                  class="px-3 py-1.5 rounded-full bg-black/65 backdrop-blur-xs border border-white/25 text-[10px] font-black uppercase tracking-wider flex items-center gap-1.5">
+                  <i class="pi text-[11px]"
+                    [ngClass]="uploadingBrandingSlot() === 'meals' ? 'pi-spin pi-spinner' : 'pi-camera'"></i>
+                  <span>{{ uploadingBrandingSlot() === 'meals' ? 'Subiendo...' : 'Cambiar' }}</span>
+                </span>
+              </div>
               <input type="file" accept="image/*" (change)="onBrandingFileSelected('meals', $event)" class="hidden" />
             </label>
           </div>
-        </div>
 
-        <!-- 3. Kin Ranking Background -->
-        <div class="space-y-1.5">
-          <label class="text-[10px] font-black uppercase tracking-wider text-stone-600">3. Fondo Kin Ranking /
-            Podio</label>
-          <div class="flex gap-1.5">
-            <input type="url" [ngModel]="brandingRankingBgUrl()" (ngModelChange)="brandingRankingBgUrl.set($event)"
-              placeholder="https://..."
-              class="flex-1 bg-stone-50 border border-stone-200 rounded-xl px-3 py-2 text-xs text-stone-800 focus:outline-none focus:border-kin-primary" />
+          <!-- 3. Kin Ranking Background -->
+          <div class="space-y-1.5">
+            <div class="flex items-center justify-between">
+              <label class="text-[10px] font-black uppercase tracking-wider text-stone-600">3. Fondo Ranking / Podio</label>
+              @if (brandingRankingBgUrl()) {
+              <button type="button" (click)="brandingRankingBgUrl.set('')"
+                class="text-[10px] font-bold text-stone-400 hover:text-red-500 cursor-pointer" title="Quitar imagen">
+                <i class="pi pi-trash text-[10px]"></i>
+              </button>
+              }
+            </div>
             <label
-              class="px-3 py-2 rounded-xl bg-stone-900 hover:bg-stone-800 text-white text-[10px] font-black uppercase flex items-center gap-1 cursor-pointer shrink-0">
-              <i class="pi" [ngClass]="uploadingBrandingSlot() === 'ranking' ? 'pi-spin pi-spinner' : 'pi-upload'"></i>
+              class="relative block h-28 w-full rounded-2xl overflow-hidden border border-stone-200 bg-stone-100 group cursor-pointer shadow-xs">
+              @if (brandingRankingBgUrl()) {
+              <img [src]="brandingRankingBgUrl()" alt="Fondo Ranking Podio" class="w-full h-full object-cover" />
+              } @else {
+              <div class="w-full h-full flex flex-col items-center justify-center text-stone-400 gap-1">
+                <i class="pi pi-image text-xl"></i>
+                <span class="text-[10px] font-bold">Sin imagen</span>
+              </div>
+              }
+              <div
+                class="absolute inset-0 bg-black/45 group-hover:bg-black/60 transition-colors flex flex-col items-center justify-center text-white gap-1">
+                <span
+                  class="px-3 py-1.5 rounded-full bg-black/65 backdrop-blur-xs border border-white/25 text-[10px] font-black uppercase tracking-wider flex items-center gap-1.5">
+                  <i class="pi text-[11px]"
+                    [ngClass]="uploadingBrandingSlot() === 'ranking' ? 'pi-spin pi-spinner' : 'pi-camera'"></i>
+                  <span>{{ uploadingBrandingSlot() === 'ranking' ? 'Subiendo...' : 'Cambiar' }}</span>
+                </span>
+              </div>
               <input type="file" accept="image/*" (change)="onBrandingFileSelected('ranking', $event)" class="hidden" />
             </label>
           </div>
-        </div>
 
-        <!-- 4. Kin Agenda Background -->
-        <div class="space-y-1.5">
-          <label class="text-[10px] font-black uppercase tracking-wider text-stone-600">4. Fondo Calendario Kin
-            Agenda</label>
-          <div class="flex gap-1.5">
-            <input type="url" [ngModel]="brandingAgendaBgUrl()" (ngModelChange)="brandingAgendaBgUrl.set($event)"
-              placeholder="https://..."
-              class="flex-1 bg-stone-50 border border-stone-200 rounded-xl px-3 py-2 text-xs text-stone-800 focus:outline-none focus:border-kin-primary" />
+          <!-- 4. Kin Agenda Background -->
+          <div class="space-y-1.5">
+            <div class="flex items-center justify-between">
+              <label class="text-[10px] font-black uppercase tracking-wider text-stone-600">4. Fondo Kin Agenda</label>
+              @if (brandingAgendaBgUrl()) {
+              <button type="button" (click)="brandingAgendaBgUrl.set('')"
+                class="text-[10px] font-bold text-stone-400 hover:text-red-500 cursor-pointer" title="Quitar imagen">
+                <i class="pi pi-trash text-[10px]"></i>
+              </button>
+              }
+            </div>
             <label
-              class="px-3 py-2 rounded-xl bg-stone-900 hover:bg-stone-800 text-white text-[10px] font-black uppercase flex items-center gap-1 cursor-pointer shrink-0">
-              <i class="pi" [ngClass]="uploadingBrandingSlot() === 'agenda' ? 'pi-spin pi-spinner' : 'pi-upload'"></i>
+              class="relative block h-28 w-full rounded-2xl overflow-hidden border border-stone-200 bg-stone-100 group cursor-pointer shadow-xs">
+              @if (brandingAgendaBgUrl()) {
+              <img [src]="brandingAgendaBgUrl()" alt="Fondo Kin Agenda" class="w-full h-full object-cover" />
+              } @else {
+              <div class="w-full h-full flex flex-col items-center justify-center text-stone-400 gap-1">
+                <i class="pi pi-image text-xl"></i>
+                <span class="text-[10px] font-bold">Sin imagen</span>
+              </div>
+              }
+              <div
+                class="absolute inset-0 bg-black/45 group-hover:bg-black/60 transition-colors flex flex-col items-center justify-center text-white gap-1">
+                <span
+                  class="px-3 py-1.5 rounded-full bg-black/65 backdrop-blur-xs border border-white/25 text-[10px] font-black uppercase tracking-wider flex items-center gap-1.5">
+                  <i class="pi text-[11px]"
+                    [ngClass]="uploadingBrandingSlot() === 'agenda' ? 'pi-spin pi-spinner' : 'pi-camera'"></i>
+                  <span>{{ uploadingBrandingSlot() === 'agenda' ? 'Subiendo...' : 'Cambiar' }}</span>
+                </span>
+              </div>
               <input type="file" accept="image/*" (change)="onBrandingFileSelected('agenda', $event)" class="hidden" />
             </label>
           </div>

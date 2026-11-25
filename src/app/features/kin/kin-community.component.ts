@@ -528,7 +528,7 @@ export class KinCommunityComponent {
     this.uploadingBrandingSlot.set(slot);
     this.brandingError.set(null);
 
-    this.athleteService.uploadMedia(file, 'kin_assets', `kin_${slot}_${Date.now()}.jpg`).subscribe({
+    this.athleteService.uploadMedia(file, 'brand_kin', `kin_${slot}_${Date.now()}.jpg`).subscribe({
       next: (res) => {
         const url = res.public_url;
         if (slot === 'header') this.brandingHeaderUrl.set(url);

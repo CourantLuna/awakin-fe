@@ -549,7 +549,7 @@ export class AthleteService {
    */
   public uploadMedia(
     file: File | Blob,
-    bucket: 'avatars' | 'feed_posts' | 'fotos_progreso' | 'progress_photos' | 'fotos_comidas' | 'kin_assets' = 'feed_posts',
+    bucket: 'avatars' | 'feed_posts' | 'fotos_progreso' | 'progress_photos' | 'fotos_comidas' | 'kin_assets' | 'brand_kin' = 'feed_posts',
     filename: string = 'media.jpg'
   ): Observable<{ status: string; bucket: string; filename: string; public_url: string }> {
     return from(compressImage(file, 1200, 0.82)).pipe(

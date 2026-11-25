@@ -468,7 +468,7 @@
   <!-- CONTENIDO TAB 3: WORKOUTS REGISTRADOS      -->
   <!-- ========================================== -->
   @if (activeTab() === 'workouts') {
-  <div class="mt-2 px-3 md:px-5 pb-6 space-y-3 animate-fade-in">
+  <div class="mt-2 px-3 md:px-5 pb-6 flex flex-col gap-4 animate-fade-in">
     @if (workoutLogs().length > 0) {
     @for (log of workoutLogs(); track log.id) {
     <app-workout-log-card [log]="log" [athlete]="athlete()" (onDetail)="openWorkoutDetail($event)"
