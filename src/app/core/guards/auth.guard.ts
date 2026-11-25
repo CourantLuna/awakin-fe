@@ -8,6 +8,11 @@ export const authGuard: CanActivateFn = (route, state) => {
 
   // Acceso permitido únicamente si tiene sesión Y athletes.is_active === true
   if (authService.isAuthenticated()) {
+    // Obligatorio completar onboarding antes de acceder a cualquier módulo de la app
+    if (!authService.hasCompletedOnboarding()) {
+      router.navigate(['/onboarding']);
+      return false;
+    }
     return true;
   }
 

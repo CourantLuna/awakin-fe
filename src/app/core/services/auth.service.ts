@@ -29,6 +29,8 @@ export interface PendingJoinRequestInfo {
 export interface AccessStatusResponse {
   exists: boolean;
   is_active: boolean;
+  is_instructor?: boolean;
+  has_completed_onboarding?: boolean;
   athlete_id?: string | null;
   kin_id?: string | null;
   pending_request?: PendingJoinRequestInfo | null;
@@ -38,6 +40,7 @@ export interface AccessStatusResponse {
 export interface AthleteSession {
   token: string;
   isActive?: boolean;
+  hasCompletedOnboarding?: boolean;
   avatar: {
     id: string;
     email: string;
@@ -59,11 +62,13 @@ export class AuthService {
 
   #sessionState = signal<AthleteSession | null>(null);
   #isActiveAccount = signal<boolean>(false);
+  #hasCompletedOnboarding = signal<boolean>(true);
   #pendingJoinRequest = signal<PendingJoinRequestInfo | null>(null);
 
   public currentSession = computed(() => this.#sessionState());
   public hasRawSession = computed(() => !!this.#sessionState());
   public isActiveAccount = computed(() => this.#isActiveAccount());
+  public hasCompletedOnboarding = computed(() => this.#hasCompletedOnboarding());
   public pendingJoinRequest = computed(() => this.#pendingJoinRequest());
   // Solo autenticado plenamente si tiene sesión Y athletes.is_active === true
   public isAuthenticated = computed(() => !!this.#sessionState() && this.#isActiveAccount());
@@ -104,6 +109,7 @@ export class AuthService {
         if (parsed && parsed.token && parsed.avatar) {
           this.#sessionState.set(parsed);
           this.#isActiveAccount.set(parsed.isActive === true);
+          this.#hasCompletedOnboarding.set(parsed.hasCompletedOnboarding !== false);
           return;
         }
       } catch {
@@ -112,6 +118,7 @@ export class AuthService {
     }
     this.#sessionState.set(null);
     this.#isActiveAccount.set(false);
+    this.#hasCompletedOnboarding.set(false);
   }
 
   /**
@@ -234,7 +241,7 @@ export class AuthService {
       try {
         const { data } = await this.supabase
           .from('athletes')
-          .select('id, is_active, kin_id, roles')
+          .select('id, is_active, kin_id, roles, has_completed_onboarding')
           .or(`id.eq.${sess.avatar.id},email.eq.${sess.avatar.email}`)
           .limit(1)
           .maybeSingle();
@@ -248,22 +255,25 @@ export class AuthService {
           statusRes = {
             exists: true,
             is_active: data.is_active === true || isInstructor,
+            has_completed_onboarding: data.has_completed_onboarding === true,
             athlete_id: data.id,
             kin_id: data.kin_id,
             pending_request: null,
           };
         }
       } catch {
-        statusRes = { exists: false, is_active: false, pending_request: null };
+        statusRes = { exists: false, is_active: false, has_completed_onboarding: false, pending_request: null };
       }
     }
 
     const isActive = statusRes.is_active === true;
+    const hasCompletedOnboarding = statusRes.has_completed_onboarding === true;
     this.#isActiveAccount.set(isActive);
+    this.#hasCompletedOnboarding.set(hasCompletedOnboarding);
     this.#pendingJoinRequest.set(statusRes.pending_request || null);
 
-    // Persistir bandera isActive actualizada en sesión local
-    const updatedSession: AthleteSession = { ...sess, isActive };
+    // Persistir banderas isActive y hasCompletedOnboarding actualizadas en sesión local
+    const updatedSession: AthleteSession = { ...sess, isActive, hasCompletedOnboarding };
     localStorage.setItem('awakin_session', JSON.stringify(updatedSession));
     this.#sessionState.set(updatedSession);
 
@@ -285,11 +295,16 @@ export class AuthService {
       if (!currentPath.startsWith('/pending-access') && !currentPath.startsWith('/join/')) {
         this.router.navigate(['/pending-access']);
       }
+    } else if (!hasCompletedOnboarding) {
+      if (!currentPath.startsWith('/onboarding')) {
+        this.router.navigate(['/onboarding']);
+      }
     } else if (
       redirectOnResult &&
       (currentPath.includes('/login') ||
         currentPath.includes('/callback') ||
         currentPath.startsWith('/pending-access') ||
+        currentPath.startsWith('/onboarding') ||
         currentPath.startsWith('/join/') ||
         currentPath === '/' ||
         currentPath === '')
@@ -298,6 +313,25 @@ export class AuthService {
     }
 
     return statusRes;
+  }
+
+  /**
+   * Marca el onboarding como completado tras guardar en backend, refresca el perfil y entra a la app
+   */
+  public markOnboardingCompleted(): void {
+    this.#hasCompletedOnboarding.set(true);
+    const sess = this.#sessionState();
+    if (sess) {
+      const updated: AthleteSession = { ...sess, isActive: true, hasCompletedOnboarding: true };
+      localStorage.setItem('awakin_session', JSON.stringify(updated));
+      this.#sessionState.set(updated);
+      const id = sess.avatar?.id || sess.avatar?.email;
+      if (id) {
+        this.bootstrappedAthleteId = id;
+        this.athleteService.loadAthleteProfile(id);
+      }
+    }
+    this.router.navigate([this.getLastRoute()]);
   }
 
   /**
@@ -406,6 +440,7 @@ export class AuthService {
     // 4. Limpiar estado de sesión
     this.#sessionState.set(null);
     this.#isActiveAccount.set(false);
+    this.#hasCompletedOnboarding.set(false);
     this.#pendingJoinRequest.set(null);
     this.bootstrappedAthleteId = null;
 

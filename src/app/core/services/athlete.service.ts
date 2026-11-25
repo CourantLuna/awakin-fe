@@ -94,6 +94,8 @@ export interface AthleteProfile {
   followers_count?: number;
   following_count?: number;
   email?: string | null;
+  phone?: string | null;
+  has_completed_onboarding?: boolean;
   kin_id?: string | null;
   head_coach_id?: string | null;
   instructor_id?: string | null;
