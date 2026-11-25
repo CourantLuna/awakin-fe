@@ -336,7 +336,8 @@
             class="w-7 h-7 rounded-xl bg-kin-primary/15 border border-kin-primary/25 flex items-center justify-center">
             <img src="/icons/intake-active.png" alt="Intake" class="w-4 h-4 object-contain" />
           </div>
-          <span class="text-xs font-black uppercase tracking-wider text-stone-900">Registrar {{ selectedMealLabel() }}</span>
+          <span class="text-xs font-black uppercase tracking-wider text-stone-900">Registrar {{ selectedMealLabel()
+            }}</span>
         </div>
         <button type="button" (click)="isRegisterModalOpen.set(false)"
           class="w-8 h-8 rounded-full bg-stone-100 hover:bg-stone-200 text-stone-600 flex items-center justify-center cursor-pointer transition-colors">
@@ -366,101 +367,103 @@
 
             <div class="flex items-center gap-1.5">
               @if (selectedAdherence() !== 'FREE' && getFoodsForMeal(selectedMealType()).length > 0) {
-                @let mealFoodsCount = getFoodsForMeal(selectedMealType()).length;
-                @let selItems = selectedFoodItemsForLog();
-                <button type="button" (click)="showPlannedFoodsOverlay.set(!showPlannedFoodsOverlay())"
-                  class="pl-1.5 pr-2.5 py-1 rounded-full bg-white/95 backdrop-blur-md border text-[10px] font-black flex items-center gap-1.5 cursor-pointer hover:bg-white shadow-md transition-all"
-                  [ngClass]="selItems.length > 0 ? 'border-kin-primary/60 text-stone-800' : 'border-amber-400 text-amber-700'">
-                  @if (selItems.length > 0) {
-                    <div class="flex -space-x-1.5">
-                      @for (item of selItems.slice(0, 3); track item.id) {
-                        <img [src]="item.coverImageUrl || '/icons/intake-active.png'" [alt]="item.name"
-                          (error)="$any($event.target).src = '/icons/intake-active.png'"
-                          class="w-5 h-5 rounded-full object-cover border border-white bg-stone-100 shadow-2xs" />
-                      }
-                    </div>
-                    <span>{{ selItems.length }}/{{ mealFoodsCount }} selec.</span>
-                  } @else {
-                    <i class="pi pi-exclamation-circle text-amber-500 text-xs pl-1"></i>
-                    <span>Elegir (0/{{ mealFoodsCount }})</span>
+              @let mealFoodsCount = getFoodsForMeal(selectedMealType()).length;
+              @let selItems = selectedFoodItemsForLog();
+              <button type="button" (click)="showPlannedFoodsOverlay.set(!showPlannedFoodsOverlay())"
+                class="pl-1.5 pr-2.5 py-1 rounded-full bg-white/95 backdrop-blur-md border text-[10px] font-black flex items-center gap-1.5 cursor-pointer hover:bg-white shadow-md transition-all"
+                [ngClass]="selItems.length > 0 ? 'border-kin-primary/60 text-stone-800' : 'border-amber-400 text-amber-700'">
+                @if (selItems.length > 0) {
+                <div class="flex -space-x-1.5">
+                  @for (item of selItems.slice(0, 3); track item.id) {
+                  <img [src]="item.coverImageUrl || '/icons/intake-active.png'" [alt]="item.name"
+                    (error)="$any($event.target).src = '/icons/intake-active.png'"
+                    class="w-5 h-5 rounded-full object-cover border border-white bg-stone-100 shadow-2xs" />
                   }
-                  <i class="pi text-[9px] text-stone-400" [ngClass]="showPlannedFoodsOverlay() ? 'pi-chevron-up' : 'pi-chevron-down'"></i>
-                </button>
+                </div>
+                <span>{{ selItems.length }}/{{ mealFoodsCount }} selec.</span>
+                } @else {
+                <i class="pi pi-exclamation-circle text-amber-500 text-xs pl-1"></i>
+                <span>Elegir (0/{{ mealFoodsCount }})</span>
+                }
+                <i class="pi text-[9px] text-stone-400"
+                  [ngClass]="showPlannedFoodsOverlay() ? 'pi-chevron-up' : 'pi-chevron-down'"></i>
+              </button>
               }
 
               @if (uploadedPhotoUrl()) {
-                <button type="button" (click)="fileInput.click()" title="Cambiar foto"
-                  class="w-8 h-8 rounded-full bg-white/90 backdrop-blur-md border border-stone-200/90 text-stone-700 hover:bg-white flex items-center justify-center cursor-pointer shadow-md transition-colors">
-                  <i class="pi pi-camera text-xs text-kin-primary"></i>
-                </button>
-                <button type="button" (click)="removePhoto()" title="Quitar foto"
-                  class="w-8 h-8 rounded-full bg-red-500 hover:bg-red-600 text-white flex items-center justify-center cursor-pointer shadow-md transition-colors">
-                  <i class="pi pi-trash text-xs"></i>
-                </button>
+              <button type="button" (click)="fileInput.click()" title="Cambiar foto"
+                class="w-8 h-8 rounded-full bg-white/90 backdrop-blur-md border border-stone-200/90 text-stone-700 hover:bg-white flex items-center justify-center cursor-pointer shadow-md transition-colors">
+                <i class="pi pi-camera text-xs text-kin-primary"></i>
+              </button>
+              <button type="button" (click)="removePhoto()" title="Quitar foto"
+                class="w-8 h-8 rounded-full bg-red-500 hover:bg-red-600 text-white flex items-center justify-center cursor-pointer shadow-md transition-colors">
+                <i class="pi pi-trash text-xs"></i>
+              </button>
               }
             </div>
           </div>
 
           <!-- Popover amigable para seleccionar recetas/ingredientes del plan -->
           @if (showPlannedFoodsOverlay() && selectedAdherence() !== 'FREE') {
-            @let mealFoods = getFoodsForMeal(selectedMealType());
-            <div
-              class="absolute top-14 right-3 left-3 z-30 bg-white/95 backdrop-blur-xl border border-stone-200 rounded-2xl p-3 shadow-2xl space-y-2.5 max-h-60 overflow-y-auto">
-              <div class="flex items-center justify-between gap-2 pb-1.5 border-b border-stone-100">
-                <div class="min-w-0">
-                  <span class="text-[10px] font-black uppercase tracking-wider text-stone-800 block">
-                    Recetas e Ingredientes · {{ mealDefinitions[selectedMealType()].title }}
-                  </span>
-                  <span class="text-[10px] font-bold text-kin-primary">
-                    {{ selectedFoodItemsForLog().length }} de {{ mealFoods.length }} seleccionados
-                  </span>
-                </div>
-                <div class="flex items-center gap-2 shrink-0">
-                  @if (mealFoods.length > 1) {
-                    @if (selectedFoodItemsForLog().length < mealFoods.length) {
-                      <button type="button" (click)="selectAllFoodsForCurrentMeal()"
-                        class="text-[10px] font-bold text-stone-600 hover:text-kin-primary cursor-pointer">
-                        Todos
-                      </button>
-                    } @else {
-                      <button type="button" (click)="deselectAllFoodsForCurrentMeal()"
-                        class="text-[10px] font-bold text-stone-400 hover:text-stone-700 cursor-pointer">
-                        Ninguno
-                      </button>
-                    }
+          @let mealFoods = getFoodsForMeal(selectedMealType());
+          <div
+            class="absolute top-14 right-3 left-3 z-30 bg-white/95 backdrop-blur-xl border border-stone-200 rounded-2xl p-3 shadow-2xl space-y-2.5 max-h-60 overflow-y-auto">
+            <div class="flex items-center justify-between gap-2 pb-1.5 border-b border-stone-100">
+              <div class="min-w-0">
+                <span class="text-[10px] font-black uppercase tracking-wider text-stone-800 block">
+                  Recetas e Ingredientes · {{ mealDefinitions[selectedMealType()].title }}
+                </span>
+                <span class="text-[10px] font-bold text-kin-primary">
+                  {{ selectedFoodItemsForLog().length }} de {{ mealFoods.length }} seleccionados
+                </span>
+              </div>
+              <div class="flex items-center gap-2 shrink-0">
+                @if (mealFoods.length > 1) {
+                @if (selectedFoodItemsForLog().length < mealFoods.length) { <button type="button"
+                  (click)="selectAllFoodsForCurrentMeal()"
+                  class="text-[10px] font-bold text-stone-600 hover:text-kin-primary cursor-pointer">
+                  Todos
+                  </button>
+                  } @else {
+                  <button type="button" (click)="deselectAllFoodsForCurrentMeal()"
+                    class="text-[10px] font-bold text-stone-400 hover:text-stone-700 cursor-pointer">
+                    Ninguno
+                  </button>
+                  }
                   }
                   <button type="button" (click)="showPlannedFoodsOverlay.set(false)"
                     class="px-2.5 py-1 rounded-lg bg-kin-primary text-white text-[10px] font-black cursor-pointer">
                     Listo
                   </button>
+              </div>
+            </div>
+
+            @for (food of mealFoods; track food.id) {
+            @let isSelected = isFoodSelectedForLog(food.id);
+            <div (click)="toggleFoodSelectionForLog(food)"
+              class="flex items-center justify-between gap-2.5 p-2 rounded-xl border cursor-pointer transition-all"
+              [ngClass]="isSelected ? 'bg-kin-primary/10 border-kin-primary/70 shadow-2xs' : 'bg-stone-50 border-stone-200 opacity-75 hover:opacity-100'">
+              <div class="flex items-center gap-2.5 min-w-0 flex-1">
+                <div
+                  class="w-10 h-10 rounded-xl bg-white border border-stone-200 overflow-hidden flex items-center justify-center shrink-0">
+                  <img [src]="food.coverImageUrl || '/icons/intake-active.png'" [alt]="food.name"
+                    (error)="$any($event.target).src = '/icons/intake-active.png'" class="w-full h-full object-cover" />
+                </div>
+                <div class="min-w-0 flex-1">
+                  <p class="text-xs font-bold text-stone-900 leading-snug line-clamp-2">{{ food.name }}</p>
+                  <p class="text-[10px] text-stone-500 mt-0.5">
+                    {{ formatQuantity(food.portion, food.unit) }} · <span class="font-bold text-stone-700">{{ food.kcal
+                      }} kcal</span> · {{ food.protein }}P · {{ food.carbs }}C · {{ food.fat }}G
+                  </p>
                 </div>
               </div>
-
-              @for (food of mealFoods; track food.id) {
-                @let isSelected = isFoodSelectedForLog(food.id);
-                <div (click)="toggleFoodSelectionForLog(food)"
-                  class="flex items-center justify-between gap-2.5 p-2 rounded-xl border cursor-pointer transition-all"
-                  [ngClass]="isSelected ? 'bg-kin-primary/10 border-kin-primary/70 shadow-2xs' : 'bg-stone-50 border-stone-200 opacity-75 hover:opacity-100'">
-                  <div class="flex items-center gap-2.5 min-w-0 flex-1">
-                    <div class="w-10 h-10 rounded-xl bg-white border border-stone-200 overflow-hidden flex items-center justify-center shrink-0">
-                      <img [src]="food.coverImageUrl || '/icons/intake-active.png'" [alt]="food.name"
-                        (error)="$any($event.target).src = '/icons/intake-active.png'"
-                        class="w-full h-full object-cover" />
-                    </div>
-                    <div class="min-w-0 flex-1">
-                      <p class="text-xs font-bold text-stone-900 leading-snug line-clamp-2">{{ food.name }}</p>
-                      <p class="text-[10px] text-stone-500 mt-0.5">
-                        {{ formatQuantity(food.portion, food.unit) }} · <span class="font-bold text-stone-700">{{ food.kcal }} kcal</span> · {{ food.protein }}P · {{ food.carbs }}C · {{ food.fat }}G
-                      </p>
-                    </div>
-                  </div>
-                  <div class="w-5 h-5 rounded-lg flex items-center justify-center shrink-0"
-                    [ngClass]="isSelected ? 'bg-kin-primary text-white' : 'border border-stone-300 bg-white'">
-                    @if (isSelected) { <i class="pi pi-check text-[10px]"></i> }
-                  </div>
-                </div>
-              }
+              <div class="w-5 h-5 rounded-lg flex items-center justify-center shrink-0"
+                [ngClass]="isSelected ? 'bg-kin-primary text-white' : 'border border-stone-300 bg-white'">
+                @if (isSelected) { <i class="pi pi-check text-[10px]"></i> }
+              </div>
             </div>
+            }
+          </div>
           }
 
           <!-- Imagen en tamaño/proporción natural o área de carga -->
@@ -557,7 +560,7 @@
             <!-- Notas Overlay -->
             <input type="text" [ngModel]="notesText()" (ngModelChange)="notesText.set($event)"
               placeholder="Notas o ingredientes (opcional)..."
-              class="w-full bg-white/92 backdrop-blur-md border border-stone-200/90 focus:border-kin-primary rounded-xl px-3.5 py-2.5 text-xs text-stone-900 placeholder:text-stone-400 outline-none shadow-md" />
+              class="w-full bg-white/12 backdrop-blur-md border border-stone-200/90 focus:border-kin-primary rounded-xl px-3.5 py-2.5 text-xs text-stone-900 placeholder:text-stone-400 outline-none shadow-md" />
           </div>
         </div>
       </div>
