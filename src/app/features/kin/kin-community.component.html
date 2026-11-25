@@ -494,11 +494,11 @@
 
     <!-- VISTA MENSUAL INTERACTIVA (Con fondo agenda_bg_url transparente) -->
     @if (agendaViewMode() === 'month') {
-    <div class="bg-white rounded-2xl border border-stone-200 p-2.5 shadow-xs relative overflow-hidden">
+    <div class=" rounded-2xl  p-2.5 shadow-xs relative overflow-hidden">
       @if (kinSummary()?.agenda_bg_url) {
       <img [src]="kinSummary()!.agenda_bg_url!" alt="Fondo Calendario Kin"
-        class="absolute inset-0 w-full h-full object-cover pointer-events-none select-none opacity-80" />
-      <div class="absolute inset-0 bg-white/65 backdrop-blur-[1px] pointer-events-none"></div>
+        class="absolute inset-0 w-full h-full object-cover pointer-events-none select-none opacity-30" />
+      <div class="absolute inset-0  backdrop-blur-[1px] pointer-events-none"></div>
       }
 
       <div class="relative z-10">

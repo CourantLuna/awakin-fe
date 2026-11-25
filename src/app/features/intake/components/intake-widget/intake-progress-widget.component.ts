@@ -28,6 +28,10 @@ export class IntakeProgressWidgetComponent {
     return this.kinData()?.team_name?.trim() || '';
   });
 
+  kinCoachName = computed(() => {
+    return this.kinData()?.head_coach_name?.trim() || this.kinTeamName();
+  });
+
   kinLogoUrl = computed(() => {
     return this.kinData()?.team_logo_url?.trim() || null;
   });

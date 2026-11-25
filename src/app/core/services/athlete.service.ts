@@ -41,6 +41,7 @@ export interface KinInfo {
   secondary_color?: string;
   manifesto?: string | null;
   head_coach_id?: string | null;
+  head_coach_name?: string | null;
   instructor_id?: string | null;
   whatsapp_group_url?: string | null;
   google_calendar_id?: string | null;

@@ -1,113 +1,119 @@
-<div class="bg-white rounded-3xl p-5 md:p-6 shadow-xl border border-stone-100 relative overflow-hidden mb-6 max-w-[500px] mx-auto transition-all duration-300">
-    <app-intake-progress-widget 
-      [consumed]="totalEated()"
-      [minA]="minA()" [goalB]="targetGoal()" [maintC]="maintC()"
-      [protocol]="protocol()"
-      [showCurves]="isExpanded()"
-      [kinData]="kinData()">
-    </app-intake-progress-widget>
-
-    @if (isExpanded()) {
-      <div class="flex justify-center items-center mb-2 -mt-4 transition-all duration-300">
-          <p-chart type="doughnut" [data]="macroData()" [options]="macroOptions" class="w-24 h-24 md:w-32 md:h-32"></p-chart>
-      </div>
-
-      <div class="flex justify-between items-center px-2 -mb-7 -mt-10 transition-all duration-300">
-          <div class="flex flex-col items-start">
-              <span class="text-[8px] font-black text-stone-400 uppercase tracking-widest">Eated (kcal)</span>
-              <div class="flex items-baseline gap-1">
-                  <span class="text-lg font-black text-gray-800 tabular-nums tracking-tighter">{{ totalEated() }}</span>
-                  <div class="w-1.5 h-1.5 rounded-full bg-module-intake/20 border border-module-intake/40"></div>
-              </div>
-          </div>
-
-          <div class="flex flex-col items-end">
-              <span class="text-[8px] font-black text-stone-400 uppercase tracking-widest">Burned (kcal)</span>
-              <div class="flex items-baseline gap-1">
-                  <div class="w-1.5 h-1.5 rounded-full bg-awakin-sun/20 border border-awakin-sun/40"></div>
-                  <span class="text-lg font-black text-gray-800 tabular-nums tracking-tighter">{{ burnedKcals() }}</span>
-              </div>
-          </div>
-      </div>
-
-      <div class="relative w-full flex justify-center items-center overflow-visible px-2 pt-6 pb-4 flex-col max-h-[200px] transition-all duration-300">
-          <svg viewBox="0 0 320 60" class="overflow-visible w-full h-auto drop-shadow-md" xmlns="http://www.w3.org/2000/svg">
-              <path #scalePath id="mainCurve" d="M3 10C3 10 78 40 160 40C242 40 317 10 317 10" fill="none"
-                  stroke="transparent" />
-              <path d="M3 10C3 10 78 40 160 40C242 40 317 10 317 10" fill="none" stroke="var(--app-surface-elevated)" stroke-width="8"
-                  stroke-linecap="round" />
-              <path d="M3 10C3 10 78 40 160 40C242 40 317 10 317 10" fill="none" stroke="var(--kin-primary)" stroke-width="8"
-                  stroke-linecap="round" [attr.stroke-dasharray]="getStrokeDash(totalEated())"
-                  class="transition-all duration-1000 ease-out" />
-              <path d="M3 10C3 10 78 40 160 40C242 40 317 10 317 10" fill="none" stroke="#F51212" stroke-width="4"
-                  stroke-linecap="round" [attr.stroke-dasharray]="getStrokeDash(burnedKcals())"
-                  class="transition-all duration-1000 ease-out delay-200" />
-              <g [attr.transform]="getMarkerTransform(targetGoal())" class="transition-all duration-700">
-                  <line x1="0" y1="-12" x2="0" y2="12" stroke="var(--kin-secondary)" stroke-width="2" stroke-dasharray="3 2" />
-                  <text x="0" y="24" text-anchor="middle" fill="var(--kin-secondary)"
-                      class="text-[8px] font-black uppercase tracking-tighter">Goal</text>
-              </g>
-          </svg>
-      </div>
+<div
+    class="bg-white rounded-3xl p-5 md:p-6 shadow-xl border border-stone-100 relative overflow-hidden mb-6 max-w-[500px] mx-auto transition-all duration-300">
+    @if (kinData()?.meals_banner_url) {
+    <img [src]="kinData()!.meals_banner_url!" alt="Fondo nutricional del Kin"
+        class="absolute inset-0 w-full h-full object-cover opacity-20 pointer-events-none select-none" />
+    <div class="absolute inset-0 backdrop-blur-[1px] pointer-events-none"></div>
     }
 
-    <div class="grid grid-cols-3 gap-4" [class.mt-2]="!isExpanded()">
-        <div class="flex flex-col items-center">
-            <div class="flex items-baseline h-8">
-                <span class="text-xl font-black text-gray-600 tracking-tighter tabular-nums me-1">
-                    {{ proteinEated() }}
-                </span>
-                <span class="text-xl font-bold text-stone-300">/</span>
-                <span class="text-module-intake font-black text-md">{{ proteinGoal() }}g</span>
-            </div>
-            <span class="text-[9px] text-awakin-stone uppercase font-bold tracking-wider">Proteína</span>
-            <div class="w-8 h-1 rounded-full bg-module-intake mt-1 opacity-50 transition-all duration-500"></div>
+    <div class="relative z-10">
+        <app-intake-progress-widget [consumed]="totalEated()" [minA]="minA()" [goalB]="targetGoal()" [maintC]="maintC()"
+            [protocol]="protocol()" [showCurves]="isExpanded()" [kinData]="kinData()">
+        </app-intake-progress-widget>
+
+        @if (isExpanded()) {
+        <div class="flex justify-center items-center mb-2 -mt-4 transition-all duration-300">
+            <p-chart type="doughnut" [data]="macroData()" [options]="macroOptions"
+                class="w-24 h-24 md:w-32 md:h-32"></p-chart>
         </div>
 
-        <div class="flex flex-col items-center px-2">
-            <div class="flex items-baseline h-8">
-                <span class="text-xl font-black text-gray-600 tracking-tighter tabular-nums me-1">
-                    {{ carbsEated() }}
-                </span>
-                <span class="text-xl font-bold text-stone-300">/</span>
-                <span class="text-awakin-sun font-black text-md">{{ carbsGoal() }}g</span>
+        <div class="flex justify-between items-center px-2 -mb-7 -mt-10 transition-all duration-300">
+            <div class="flex flex-col items-start">
+                <span class="text-[8px] font-black text-stone-400 uppercase tracking-widest">Eated (kcal)</span>
+                <div class="flex items-baseline gap-1">
+                    <span class="text-lg font-black text-gray-800 tabular-nums tracking-tighter">{{ totalEated()
+                        }}</span>
+                    <div class="w-1.5 h-1.5 rounded-full bg-module-intake/20 border border-module-intake/40"></div>
+                </div>
             </div>
-            <span class="text-[9px] text-awakin-stone uppercase font-bold tracking-wider">Carbos</span>
-            <div class="w-8 h-1 rounded-full bg-awakin-sun mt-1 opacity-50 transition-all duration-500"></div>
+
+            <div class="flex flex-col items-end">
+                <span class="text-[8px] font-black text-stone-400 uppercase tracking-widest">Burned (kcal)</span>
+                <div class="flex items-baseline gap-1">
+                    <div class="w-1.5 h-1.5 rounded-full bg-awakin-sun/20 border border-awakin-sun/40"></div>
+                    <span class="text-lg font-black text-gray-800 tabular-nums tracking-tighter">{{ burnedKcals()
+                        }}</span>
+                </div>
+            </div>
         </div>
 
-        <div class="flex flex-col items-center">
-            <div class="flex items-baseline h-8">
-                <span class="text-xl font-black text-gray-600 tracking-tighter tabular-nums me-1">
-                    {{ fatsEated() }}
-                </span>
-                <span class="text-xl font-bold text-stone-300">/</span>
-                <span class="text-module-avatar font-black text-md">{{ fatsGoal() }}g</span>
-            </div>
-            <span class="text-[9px] text-awakin-stone uppercase font-bold tracking-wider">Grasas</span>
-            <div class="w-8 h-1 rounded-full bg-module-avatar mt-1 opacity-50 transition-all duration-500"></div>
+        <div
+            class="relative w-full flex justify-center items-center overflow-visible px-2 pt-6 pb-4 flex-col max-h-[200px] transition-all duration-300">
+            <svg viewBox="0 0 320 60" class="overflow-visible w-full h-auto drop-shadow-md"
+                xmlns="http://www.w3.org/2000/svg">
+                <path #scalePath id="mainCurve" d="M3 10C3 10 78 40 160 40C242 40 317 10 317 10" fill="none"
+                    stroke="transparent" />
+                <path d="M3 10C3 10 78 40 160 40C242 40 317 10 317 10" fill="none" stroke="var(--app-surface-elevated)"
+                    stroke-width="8" stroke-linecap="round" />
+                <path d="M3 10C3 10 78 40 160 40C242 40 317 10 317 10" fill="none" stroke="var(--kin-primary)"
+                    stroke-width="8" stroke-linecap="round" [attr.stroke-dasharray]="getStrokeDash(totalEated())"
+                    class="transition-all duration-1000 ease-out" />
+                <path d="M3 10C3 10 78 40 160 40C242 40 317 10 317 10" fill="none" stroke="#F51212" stroke-width="4"
+                    stroke-linecap="round" [attr.stroke-dasharray]="getStrokeDash(burnedKcals())"
+                    class="transition-all duration-1000 ease-out delay-200" />
+                <g [attr.transform]="getMarkerTransform(targetGoal())" class="transition-all duration-700">
+                    <line x1="0" y1="-12" x2="0" y2="12" stroke="var(--kin-secondary)" stroke-width="2"
+                        stroke-dasharray="3 2" />
+                    <text x="0" y="24" text-anchor="middle" fill="var(--kin-secondary)"
+                        class="text-[8px] font-black uppercase tracking-tighter">Goal</text>
+                </g>
+            </svg>
         </div>
-    </div>
+        }
 
-    <!-- Toggle para alternar vista compacta / detallada y Botón Historia Resumen del Día -->
-    <div class="flex items-center justify-between mt-3 pt-2 border-t border-stone-100 px-1 gap-2">
-      <button
-        type="button"
-        (click)="toggleExpanded()"
-        class="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-stone-400 hover:text-stone-700 active:scale-95 transition-all py-1.5 px-3 rounded-full hover:bg-stone-50 cursor-pointer"
-      >
-        <span>{{ isExpanded() ? 'Modo compacto' : 'Ver curvas y detalle' }}</span>
-        <i class="pi text-[9px] transition-transform duration-300" [ngClass]="isExpanded() ? 'pi-chevron-up' : 'pi-chevron-down'"></i>
-      </button>
+        <div class="grid grid-cols-3 gap-4" [class.mt-2]="!isExpanded()">
+            <div class="flex flex-col items-center">
+                <div class="flex items-baseline h-8">
+                    <span class="text-xl font-black text-gray-600 tracking-tighter tabular-nums me-1">
+                        {{ proteinEated() }}
+                    </span>
+                    <span class="text-xl font-bold text-stone-300">/</span>
+                    <span class="text-module-intake font-black text-md">{{ proteinGoal() }}g</span>
+                </div>
+                <span class="text-[9px] text-awakin-stone uppercase font-bold tracking-wider">Proteína</span>
+                <div class="w-8 h-1 rounded-full bg-module-intake mt-1 opacity-50 transition-all duration-500"></div>
+            </div>
 
-      <button
-        type="button"
-        (click)="openDailyStory.emit()"
-        class="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-wider text-awakin-sun hover:text-awakin-sun-dim active:scale-95 transition-all py-1.5 px-3 rounded-full bg-awakin-sun/10 hover:bg-awakin-sun/15 border border-awakin-sun/25 cursor-pointer shadow-2xs"
-        title="Generar Historia 9:16 de Nutrición del Día"
-      >
-        <i class="pi pi-sparkles text-[10px]"></i>
-        <span>Historia del Día</span>
-      </button>
+            <div class="flex flex-col items-center px-2">
+                <div class="flex items-baseline h-8">
+                    <span class="text-xl font-black text-gray-600 tracking-tighter tabular-nums me-1">
+                        {{ carbsEated() }}
+                    </span>
+                    <span class="text-xl font-bold text-stone-300">/</span>
+                    <span class="text-awakin-sun font-black text-md">{{ carbsGoal() }}g</span>
+                </div>
+                <span class="text-[9px] text-awakin-stone uppercase font-bold tracking-wider">Carbos</span>
+                <div class="w-8 h-1 rounded-full bg-awakin-sun mt-1 opacity-50 transition-all duration-500"></div>
+            </div>
+
+            <div class="flex flex-col items-center">
+                <div class="flex items-baseline h-8">
+                    <span class="text-xl font-black text-gray-600 tracking-tighter tabular-nums me-1">
+                        {{ fatsEated() }}
+                    </span>
+                    <span class="text-xl font-bold text-stone-300">/</span>
+                    <span class="text-module-avatar font-black text-md">{{ fatsGoal() }}g</span>
+                </div>
+                <span class="text-[9px] text-awakin-stone uppercase font-bold tracking-wider">Grasas</span>
+                <div class="w-8 h-1 rounded-full bg-module-avatar mt-1 opacity-50 transition-all duration-500"></div>
+            </div>
+        </div>
+
+        <!-- Toggle para alternar vista compacta / detallada y Botón Historia Resumen del Día -->
+        <div class="flex items-center justify-between mt-3 pt-2 border-t border-stone-100 px-1 gap-2">
+            <button type="button" (click)="toggleExpanded()"
+                class="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-stone-400 hover:text-stone-700 active:scale-95 transition-all py-1.5 px-3 rounded-full hover:bg-stone-50 cursor-pointer">
+                <span>{{ isExpanded() ? 'Modo compacto' : 'Ver curvas y detalle' }}</span>
+                <i class="pi text-[9px] transition-transform duration-300"
+                    [ngClass]="isExpanded() ? 'pi-chevron-up' : 'pi-chevron-down'"></i>
+            </button>
+
+            <button type="button" (click)="openDailyStory.emit()"
+                class="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-wider text-awakin-sun hover:text-awakin-sun-dim active:scale-95 transition-all py-1.5 px-3 rounded-full bg-awakin-sun/10 hover:bg-awakin-sun/15 border border-awakin-sun/25 cursor-pointer shadow-2xs"
+                title="Generar Historia 9:16 de Nutrición del Día">
+                <i class="pi pi-sparkles text-[10px]"></i>
+                <span>Historia del Día</span>
+            </button>
+        </div>
     </div>
 </div>
