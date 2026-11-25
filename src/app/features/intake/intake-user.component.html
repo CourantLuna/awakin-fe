@@ -258,6 +258,12 @@
                 </div>
 
                 @if (food.isLogged) {
+                @if (canEditLoggedFood(food)) {
+                <button type="button" (click)="openEditFoodRecord(food, $event)" title="Editar macros o ingredientes"
+                  class="w-6 h-6 rounded-full bg-stone-100 hover:bg-stone-200 text-stone-500 hover:text-kin-primary flex items-center justify-center transition-all cursor-pointer">
+                  <i class="pi pi-pencil text-[10px]"></i>
+                </button>
+                }
                 <button type="button" (click)="openStoryForFood(food, $event)" title="Compartir Historia"
                   class="w-6 h-6 rounded-full bg-stone-100 hover:bg-stone-200 text-stone-500 hover:text-kin-primary flex items-center justify-center transition-all cursor-pointer">
                   <i class="pi pi-share-alt text-[10px]"></i>
@@ -466,6 +472,109 @@
           </div>
           }
 
+          <!-- Panel Overlay compacto para Ingreso Manual de Ingredientes (intake_ingredients) -->
+          @if (showManualIngredientsOverlay() && requiresCustomNutrition() && customCalcMode() === 'INGREDIENTS') {
+          <div
+            class="absolute inset-x-3 top-14 bottom-28 z-30 rounded-2xl bg-white/95 backdrop-blur-md border border-stone-200 shadow-xl p-3 flex flex-col gap-2.5 overflow-hidden">
+            <div class="flex items-center justify-between gap-2 pb-1.5 border-b border-stone-100 shrink-0">
+              <div class="min-w-0">
+                <span class="text-[10px] font-black uppercase tracking-wider text-stone-700 block truncate">
+                  Ingredientes ({{ manualIngredientRows().length }})
+                </span>
+              </div>
+              <div class="flex items-center gap-2 shrink-0">
+                @if (getFoodsForMeal(selectedMealType()).length > 0) {
+                <button type="button" (click)="loadManualIngredientsFromPlan()"
+                  class="text-[10px] font-bold text-kin-primary hover:underline cursor-pointer flex items-center gap-1">
+                  <i class="pi pi-copy text-[9px]"></i>
+                  <span>Del plan</span>
+                </button>
+                }
+                <button type="button" (click)="showManualIngredientsOverlay.set(false)"
+                  class="px-2.5 py-1 rounded-lg bg-kin-primary text-white text-[10px] font-black cursor-pointer">
+                  Listo
+                </button>
+              </div>
+            </div>
+
+            <!-- Buscador de ingredientes del catálogo intake_ingredients -->
+            <div class="shrink-0">
+              <p-select [options]="catalogIngredients()" [ngModel]="selectedCatalogIngredientId()"
+                (ngModelChange)="onManualCatalogIngredientSelected($event)" optionLabel="name" optionValue="id"
+                [filter]="true" filterBy="name" [showClear]="false" appendTo="body"
+                placeholder="Buscar ingrediente de Intake..." emptyFilterMessage="Sin resultados"
+                emptyMessage="Cargando ingredientes..." styleClass="w-full !rounded-xl !text-xs"
+                panelStyleClass="bg-white rounded-xl shadow-2xl border border-stone-200 text-xs max-w-[320px]">
+                <ng-template pTemplate="item" let-ing>
+                  <div class="flex items-center justify-between gap-2 py-0.5 w-full min-w-0">
+                    <span class="font-bold text-stone-800 truncate flex-1">{{ ing.name }}</span>
+                    <span class="text-[10px] text-stone-500 shrink-0 tabular-nums">
+                      {{ ing.calories | number:'1.0-0' }} kcal / {{ ing.serving_size }}{{ ing.unit }}
+                    </span>
+                  </div>
+                </ng-template>
+              </p-select>
+            </div>
+
+            <!-- Lista compacta de ingredientes seleccionados -->
+            <div class="flex-1 min-h-0 overflow-y-auto space-y-2 pr-0.5 awakin-scrollbar">
+              @for (row of manualIngredientRows(); track row.rowId) {
+              @let summary = getManualRowSummary(row.rowId);
+              <div class="p-2 rounded-xl bg-stone-50 border border-stone-200/80 space-y-1.5">
+                <div class="flex items-start justify-between gap-2">
+                  <div class="min-w-0 flex-1">
+                    <p class="text-[11px] font-black text-stone-900 truncate leading-tight">{{ row.ingredient.name }}</p>
+                    <p class="text-[10px] text-stone-500 font-semibold tabular-nums mt-0.5">
+                      <span class="text-kin-primary font-black">{{ summary.kcal }} kcal</span> ·
+                      {{ summary.protein }}P · {{ summary.carbs }}C · {{ summary.fat }}G
+                      @if (row.mode === 'portions' && summary.grams > 0) {
+                      <span class="text-stone-400">({{ summary.grams }}g)</span>
+                      }
+                    </p>
+                  </div>
+                  <button type="button" (click)="removeManualIngredientRow(row.rowId)" aria-label="Eliminar ingrediente"
+                    class="w-6 h-6 rounded-lg bg-white hover:bg-red-50 border border-stone-200 text-stone-400 hover:text-red-600 flex items-center justify-center shrink-0 cursor-pointer">
+                    <i class="pi pi-trash text-[10px]"></i>
+                  </button>
+                </div>
+
+                <div class="flex items-center gap-1.5">
+                  <input type="number" min="0.1" step="any" inputmode="decimal" [ngModel]="row.quantity"
+                    (ngModelChange)="updateManualRowQuantity(row.rowId, $event)"
+                    class="flex-1 min-w-0 bg-white border border-stone-200 rounded-lg px-2 py-1 text-xs font-black text-stone-900 tabular-nums focus:outline-none focus:border-kin-primary" />
+
+                  <div class="flex items-center bg-stone-200/70 rounded-lg p-0.5 shrink-0">
+                    <button type="button" (click)="updateManualRowMode(row.rowId, 'g')"
+                      class="px-2 py-1 rounded-md text-[10px] font-bold cursor-pointer transition-all"
+                      [ngClass]="row.mode === 'g' ? 'bg-white text-stone-900 shadow-2xs' : 'text-stone-600'">
+                      g/ml
+                    </button>
+                    <button type="button" (click)="updateManualRowMode(row.rowId, 'portions')"
+                      class="px-2 py-1 rounded-md text-[10px] font-bold cursor-pointer transition-all"
+                      [ngClass]="row.mode === 'portions' ? 'bg-white text-stone-900 shadow-2xs' : 'text-stone-600'">
+                      {{ hasDiscreteUnit(row.ingredient) ? row.ingredient.unit : 'porc' }}
+                    </button>
+                  </div>
+                </div>
+              </div>
+              } @empty {
+              <div class="py-6 px-3 rounded-xl bg-stone-50 border border-dashed border-stone-200 text-center text-[11px] text-stone-500">
+                Busca y agrega uno o más ingredientes arriba para calcular macros y calorías exactos.
+              </div>
+              }
+            </div>
+
+            <!-- Totales en vivo -->
+            @let mTotals = manualIngredientsTotals();
+            <div class="pt-1.5 border-t border-stone-100 flex items-center justify-between text-[10px] font-black shrink-0">
+              <span class="text-kin-primary tabular-nums">{{ mTotals.kcal }} kcal</span>
+              <span class="text-stone-600 tabular-nums">
+                {{ mTotals.protein }}P · {{ mTotals.carbs }}C · {{ mTotals.fat }}G
+              </span>
+            </div>
+          </div>
+          }
+
           <!-- Imagen en tamaño/proporción natural o área de carga -->
           @if (!uploadedPhotoUrl()) {
           <div (click)="fileInput.click()"
@@ -477,19 +586,15 @@
             <p class="text-sm font-black text-stone-800">Sube o toma la foto del plato</p>
             <p class="text-[11px] text-stone-500 mt-1">Desde tu cámara o galería (JPG, PNG)</p>
 
+            @if (existingMealPhotoUrl()) {
             <div class="flex items-center gap-2 mt-4">
-              @if (existingMealPhotoUrl()) {
               <button type="button" (click)="$event.stopPropagation(); useExistingMealPhoto()"
                 class="px-3.5 py-1.5 rounded-full bg-white border border-stone-200 hover:bg-stone-50 text-stone-700 text-[11px] font-bold flex items-center gap-1.5 cursor-pointer shadow-xs">
                 <i class="pi pi-clone text-[10px] text-kin-primary"></i>
                 <span>Usar foto previa</span>
               </button>
-              }
-              <button type="button" (click)="$event.stopPropagation(); useDemoPhoto()"
-                class="px-3.5 py-1.5 rounded-full bg-kin-primary/15 hover:bg-kin-primary/25 text-kin-primary text-[11px] font-black cursor-pointer">
-                Usar demo
-              </button>
             </div>
+            }
           </div>
           } @else {
           <img loading="lazy" decoding="async" [src]="uploadedPhotoUrl()" alt="Foto del plato"
@@ -501,8 +606,8 @@
 
           <!-- Bottom Overlays: Macros + Adherencia corta + Notas -->
           <div class="absolute bottom-3 inset-x-3 space-y-2 z-20">
-            <!-- Macros Overlay -->
-            <div class="flex items-center justify-center">
+            <!-- Macros & Selector IA / Ingredientes Manuales -->
+            <div class="flex flex-col items-center gap-1.5">
               @if (selectedAdherence() === '100' && selectedFoodsTotals().count > 0) {
               @let totals = selectedFoodsTotals();
               <div
@@ -513,7 +618,46 @@
                 <span>{{ totals.carbs }}C</span>
                 <span>{{ totals.fat }}G</span>
               </div>
-              } @else if (photoEstimationResult(); as aiRes) {
+              } @else {
+              <!-- Selector compacto: Calcular con IA (default) vs Ingredientes manuales -->
+              <div
+                class="inline-flex items-center p-0.5 rounded-full bg-white/92 backdrop-blur-md border border-stone-200/90 shadow-md">
+                <button type="button" (click)="selectCustomCalcMode('AI')"
+                  class="px-3 py-1 rounded-full text-[10px] font-black transition-all cursor-pointer flex items-center gap-1"
+                  [ngClass]="customCalcMode() === 'AI'
+                    ? 'bg-kin-primary text-white shadow-xs'
+                    : 'text-stone-600 hover:text-stone-900'">
+                  <i class="pi pi-sparkles text-[9px]"></i>
+                  <span>Calcular con IA</span>
+                </button>
+                <button type="button" (click)="selectCustomCalcMode('INGREDIENTS')"
+                  class="px-3 py-1 rounded-full text-[10px] font-black transition-all cursor-pointer flex items-center gap-1"
+                  [ngClass]="customCalcMode() === 'INGREDIENTS'
+                    ? 'bg-kin-primary text-white shadow-xs'
+                    : 'text-stone-600 hover:text-stone-900'">
+                  <i class="pi pi-list text-[9px]"></i>
+                  <span>Ingredientes</span>
+                  @if (manualIngredientRows().length > 0) {
+                  <span class="px-1.5 py-0.2 rounded-full text-[9px]"
+                    [ngClass]="customCalcMode() === 'INGREDIENTS' ? 'bg-white/25 text-white' : 'bg-stone-200 text-stone-700'">
+                    {{ manualIngredientRows().length }}
+                  </span>
+                  }
+                </button>
+              </div>
+
+              @if (customCalcMode() === 'INGREDIENTS' && manualIngredientsTotals().hasValidItems && !showManualIngredientsOverlay()) {
+              @let mTotals = manualIngredientsTotals();
+              <button type="button" (click)="showManualIngredientsOverlay.set(true)"
+                class="px-3.5 py-1 rounded-full bg-white/95 backdrop-blur-md border border-kin-primary/40 text-[10px] font-black text-stone-800 flex items-center gap-2 shadow-md cursor-pointer hover:bg-white">
+                <span class="text-kin-primary">{{ mTotals.kcal }} kcal</span>
+                <span class="text-stone-300">|</span>
+                <span>{{ mTotals.protein }}P</span>
+                <span>{{ mTotals.carbs }}C</span>
+                <span>{{ mTotals.fat }}G</span>
+                <i class="pi pi-pencil text-[9px] text-kin-primary ml-0.5"></i>
+              </button>
+              } @else if (customCalcMode() === 'AI' && photoEstimationResult(); as aiRes) {
               <div
                 class="px-3.5 py-1 rounded-full bg-white/92 backdrop-blur-md border border-emerald-400/50 text-[10px] font-black text-stone-800 flex items-center gap-2 shadow-md">
                 <i class="pi pi-sparkles text-emerald-500 text-[10px]"></i>
@@ -523,12 +667,7 @@
                 <span>{{ aiRes.carbs }}C</span>
                 <span>{{ aiRes.fat }}G</span>
               </div>
-              } @else {
-              <div
-                class="px-3.5 py-1 rounded-full bg-white/90 backdrop-blur-md border border-stone-200/90 text-[10px] font-bold text-stone-700 flex items-center gap-1.5 shadow-md">
-                <i class="pi pi-sparkles text-kin-primary text-[10px]"></i>
-                <span>Los macros se calcularán con IA al registrar</span>
-              </div>
+              }
               }
             </div>
 
@@ -655,6 +794,194 @@
           } @else {
           <i class="pi pi-bolt text-xs"></i>
           <span>Publicar en Feed</span>
+          }
+        </button>
+      </div>
+    </div>
+  </p-dialog>
+
+  <!-- MODAL COMPACTO: EDITAR MACROS / INGREDIENTES (SOLO ADAPTACIÓN / LIBRE, SIN IA) -->
+  <p-dialog [(visible)]="isEditRecordModalOpen" [modal]="true" [blockScroll]="true" [draggable]="false"
+    [resizable]="false" [closable]="false" [showHeader]="false" [dismissableMask]="true" appendTo="body"
+    [style]="{ width: '94vw', maxWidth: '420px', borderRadius: '18px' }"
+    styleClass="overflow-hidden shadow-2xl border border-stone-200 bg-white rounded-2xl [&_.p-dialog-content]:!p-0">
+    <div class="bg-white text-stone-900 flex flex-col max-h-[84dvh] w-full overflow-hidden">
+      <!-- Header Fijo -->
+      <div class="px-4 py-3 border-b border-stone-100 flex items-center justify-between shrink-0">
+        <div class="flex items-center gap-2 min-w-0">
+          <div class="w-7 h-7 rounded-xl bg-kin-primary/10 text-kin-primary flex items-center justify-center shrink-0">
+            <i class="pi pi-pencil text-xs"></i>
+          </div>
+          <div class="min-w-0">
+            <h3 class="text-xs font-black uppercase tracking-wider text-stone-900 truncate">Editar Registro</h3>
+            <p class="text-[10px] text-stone-400 font-medium truncate">Ajusta ingredientes o macros manualmente</p>
+          </div>
+        </div>
+        <button type="button" (click)="isEditRecordModalOpen.set(false)"
+          class="w-7 h-7 rounded-full bg-stone-100 hover:bg-stone-200 text-stone-600 flex items-center justify-center cursor-pointer shrink-0">
+          <i class="pi pi-times text-xs"></i>
+        </button>
+      </div>
+
+      <!-- Contenido Scrollable -->
+      <div class="p-4 space-y-3 overflow-y-auto flex-1">
+        <!-- Nombre del Plato -->
+        <div>
+          <label class="block text-[10px] font-black uppercase tracking-wider text-stone-500 mb-1">Nombre del Plato</label>
+          <input type="text" [ngModel]="editDishName()" (ngModelChange)="editDishName.set($event)"
+            placeholder="Ej: Bowl de pollo con arroz"
+            class="w-full bg-stone-50 border border-stone-200 rounded-xl px-3 py-2 text-xs font-bold text-stone-900 focus:outline-none focus:border-kin-primary focus:bg-white" />
+        </div>
+
+        <!-- Selector Modo Manual: Ingredientes vs Macros (g) (SIN IA) -->
+        <div class="grid grid-cols-2 gap-1 p-1 bg-stone-100 rounded-xl border border-stone-200">
+          <button type="button" (click)="editRecordMode.set('INGREDIENTS')"
+            class="py-1.5 px-2 rounded-lg text-[11px] font-black transition-all cursor-pointer flex items-center justify-center gap-1.5"
+            [ngClass]="editRecordMode() === 'INGREDIENTS' ? 'bg-white text-stone-900 shadow-xs' : 'text-stone-500 hover:text-stone-800'">
+            <i class="pi pi-list text-[10px] text-kin-primary"></i>
+            <span>Ingredientes</span>
+          </button>
+          <button type="button" (click)="editRecordMode.set('MACROS')"
+            class="py-1.5 px-2 rounded-lg text-[11px] font-black transition-all cursor-pointer flex items-center justify-center gap-1.5"
+            [ngClass]="editRecordMode() === 'MACROS' ? 'bg-white text-stone-900 shadow-xs' : 'text-stone-500 hover:text-stone-800'">
+            <i class="pi pi-sliders-h text-[10px] text-kin-primary"></i>
+            <span>Macros (g)</span>
+          </button>
+        </div>
+
+        <!-- MODO INGREDIENTES -->
+        @if (editRecordMode() === 'INGREDIENTS') {
+        <div class="space-y-2.5">
+          <p-select [options]="catalogIngredients()" [ngModel]="editSelectedCatalogIngredientId()"
+            (ngModelChange)="onEditCatalogIngredientSelected($event)" optionLabel="name" optionValue="id"
+            [filter]="true" filterBy="name" [showClear]="false" appendTo="body"
+            placeholder="Añadir ingrediente de Intake..." emptyFilterMessage="Sin resultados"
+            emptyMessage="Cargando ingredientes..." styleClass="w-full !rounded-xl !text-xs"
+            panelStyleClass="bg-white rounded-xl shadow-2xl border border-stone-200 text-xs max-w-[340px]">
+            <ng-template pTemplate="item" let-ing>
+              <div class="flex items-center justify-between gap-2 py-0.5 w-full min-w-0">
+                <span class="font-bold text-stone-800 truncate flex-1">{{ ing.name }}</span>
+                <span class="text-[10px] text-stone-500 shrink-0 tabular-nums">
+                  {{ ing.calories | number:'1.0-0' }} kcal / {{ ing.serving_size }}{{ ing.unit }}
+                </span>
+              </div>
+            </ng-template>
+          </p-select>
+
+          <div class="space-y-2 max-h-52 overflow-y-auto pr-0.5 awakin-scrollbar">
+            @for (row of editIngredientRows(); track row.rowId) {
+            @let summary = getEditRowSummary(row.rowId);
+            <div class="p-2.5 rounded-xl bg-stone-50 border border-stone-200/80 space-y-1.5">
+              <div class="flex items-start justify-between gap-2">
+                <div class="min-w-0 flex-1">
+                  <p class="text-xs font-black text-stone-900 truncate">{{ row.ingredient.name }}</p>
+                  <p class="text-[10px] text-stone-500 font-semibold tabular-nums">
+                    <span class="text-kin-primary font-black">{{ summary.kcal }} kcal</span> ·
+                    {{ summary.protein }}P · {{ summary.carbs }}C · {{ summary.fat }}G
+                    @if (row.mode === 'portions' && summary.grams > 0) {
+                    <span class="text-stone-400">({{ summary.grams }}g)</span>
+                    }
+                  </p>
+                </div>
+                <button type="button" (click)="removeEditIngredientRow(row.rowId)"
+                  class="w-6 h-6 rounded-lg bg-white hover:bg-red-50 border border-stone-200 text-stone-400 hover:text-red-600 flex items-center justify-center shrink-0 cursor-pointer">
+                  <i class="pi pi-trash text-[10px]"></i>
+                </button>
+              </div>
+
+              <div class="flex items-center gap-1.5">
+                <input type="number" min="0.1" step="any" inputmode="decimal" [ngModel]="row.quantity"
+                  (ngModelChange)="updateEditRowQuantity(row.rowId, $event)"
+                  class="flex-1 min-w-0 bg-white border border-stone-200 rounded-lg px-2.5 py-1.5 text-xs font-black text-stone-900 tabular-nums focus:outline-none focus:border-kin-primary" />
+
+                <div class="flex items-center bg-stone-200/70 rounded-lg p-0.5 shrink-0">
+                  <button type="button" (click)="updateEditRowMode(row.rowId, 'g')"
+                    class="px-2 py-1 rounded-md text-[10px] font-bold cursor-pointer transition-all"
+                    [ngClass]="row.mode === 'g' ? 'bg-white text-stone-900 shadow-2xs' : 'text-stone-600'">
+                    g/ml
+                  </button>
+                  <button type="button" (click)="updateEditRowMode(row.rowId, 'portions')"
+                    class="px-2 py-1 rounded-md text-[10px] font-bold cursor-pointer transition-all"
+                    [ngClass]="row.mode === 'portions' ? 'bg-white text-stone-900 shadow-2xs' : 'text-stone-600'">
+                    {{ hasDiscreteUnit(row.ingredient) ? row.ingredient.unit : 'porc' }}
+                  </button>
+                </div>
+              </div>
+            </div>
+            } @empty {
+            <div class="py-5 px-3 rounded-xl bg-stone-50 border border-dashed border-stone-200 text-center text-[11px] text-stone-500">
+              Agrega al menos un ingrediente arriba o cambia a la pestaña Macros (g).
+            </div>
+            }
+          </div>
+
+          @let eTotals = editIngredientsTotals();
+          <div class="p-2.5 rounded-xl bg-stone-50 border border-stone-200 flex items-center justify-between text-xs font-black">
+            <span class="text-kin-primary tabular-nums">{{ eTotals.kcal }} kcal</span>
+            <span class="text-stone-700 tabular-nums">{{ eTotals.protein }}P · {{ eTotals.carbs }}C · {{ eTotals.fat }}G</span>
+          </div>
+        </div>
+        } @else {
+        <!-- MODO MACROS DIRECTOS (g) -->
+        <div class="space-y-2.5">
+          <div class="flex items-center justify-between">
+            <span class="text-[10px] font-black uppercase tracking-wider text-stone-500">Macros en gramos</span>
+            <span class="text-[11px] font-black text-kin-primary bg-kin-primary/10 px-2.5 py-0.5 rounded-full tabular-nums">
+              {{ editManualKcal() }} kcal
+            </span>
+          </div>
+          <div class="grid grid-cols-3 gap-2">
+            <div>
+              <label class="block text-[10px] font-bold text-emerald-700 uppercase mb-1">Proteína (g)</label>
+              <input type="number" min="0" step="1" inputmode="decimal" [ngModel]="editManualProtein()"
+                (ngModelChange)="editManualProtein.set($event)"
+                class="w-full bg-stone-50 border border-stone-200 rounded-xl px-2.5 py-2 text-xs font-black text-stone-900 tabular-nums focus:outline-none focus:border-kin-primary focus:bg-white" />
+            </div>
+            <div>
+              <label class="block text-[10px] font-bold text-amber-700 uppercase mb-1">Carbos (g)</label>
+              <input type="number" min="0" step="1" inputmode="decimal" [ngModel]="editManualCarbs()"
+                (ngModelChange)="editManualCarbs.set($event)"
+                class="w-full bg-stone-50 border border-stone-200 rounded-xl px-2.5 py-2 text-xs font-black text-stone-900 tabular-nums focus:outline-none focus:border-kin-primary focus:bg-white" />
+            </div>
+            <div>
+              <label class="block text-[10px] font-bold text-rose-700 uppercase mb-1">Grasas (g)</label>
+              <input type="number" min="0" step="1" inputmode="decimal" [ngModel]="editManualFat()"
+                (ngModelChange)="editManualFat.set($event)"
+                class="w-full bg-stone-50 border border-stone-200 rounded-xl px-2.5 py-2 text-xs font-black text-stone-900 tabular-nums focus:outline-none focus:border-kin-primary focus:bg-white" />
+            </div>
+          </div>
+        </div>
+        }
+
+        <!-- Notas -->
+        <div>
+          <label class="block text-[10px] font-black uppercase tracking-wider text-stone-500 mb-1">Notas (opcional)</label>
+          <input type="text" [ngModel]="editNotes()" (ngModelChange)="editNotes.set($event)"
+            placeholder="Notas del plato..."
+            class="w-full bg-stone-50 border border-stone-200 rounded-xl px-3 py-2 text-xs text-stone-800 focus:outline-none focus:border-kin-primary focus:bg-white" />
+        </div>
+
+        @if (editRecordError()) {
+        <div class="p-2.5 rounded-xl bg-red-50 border border-red-200 text-red-700 text-[11px] font-bold">
+          {{ editRecordError() }}
+        </div>
+        }
+      </div>
+
+      <!-- Footer Fijo -->
+      <div class="p-3 border-t border-stone-100 bg-white flex items-center gap-2 shrink-0">
+        <button type="button" (click)="isEditRecordModalOpen.set(false)"
+          class="px-4 py-2.5 rounded-xl bg-stone-100 hover:bg-stone-200 text-stone-700 font-bold text-xs cursor-pointer">
+          Cancelar
+        </button>
+        <button type="button" (click)="saveEditedFoodRecord()" [disabled]="!isEditRecordValid() || isSavingEditRecord()"
+          class="flex-1 py-2.5 rounded-xl bg-kin-primary hover:opacity-95 text-white font-black text-xs uppercase tracking-wider flex items-center justify-center gap-2 cursor-pointer disabled:opacity-40">
+          @if (isSavingEditRecord()) {
+          <i class="pi pi-spin pi-spinner text-xs"></i>
+          <span>Guardando...</span>
+          } @else {
+          <i class="pi pi-check text-xs"></i>
+          <span>Guardar Cambios</span>
           }
         </button>
       </div>
