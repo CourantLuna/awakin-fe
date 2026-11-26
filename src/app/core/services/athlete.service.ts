@@ -325,7 +325,7 @@ export class AthleteService {
    */
   public loadAthleteProfile(identifier: string): void {
     this.isLoading.set(true);
-    this.http.get<AthleteProfile>(`${this.baseUrl}/${identifier}`).pipe(timeout(3500)).subscribe({
+    this.http.get<AthleteProfile>(`${this.baseUrl}/${identifier}`).pipe(timeout(5000)).subscribe({
       next: (athlete) => {
         this.setActiveAthlete(athlete);
         this.isLoading.set(false);
@@ -357,7 +357,7 @@ export class AthleteService {
   public loadInitialAthletes(preferredIdentifier?: string, kinId?: string): void {
     this.isLoading.set(true);
     const url = kinId ? `${this.baseUrl}?kin_id=${encodeURIComponent(kinId)}` : this.baseUrl;
-    this.http.get<AthleteProfile[]>(url).pipe(timeout(3500)).subscribe({
+    this.http.get<AthleteProfile[]>(url).pipe(timeout(5000)).subscribe({
       next: (athletes) => {
         this.processAthletesList(athletes, preferredIdentifier);
       },
