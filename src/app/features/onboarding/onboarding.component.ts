@@ -289,7 +289,7 @@ export class OnboardingComponent implements OnInit {
       if (pct <= 13) {
         return {
           label: 'Muy Lento / Ultra Sostenible',
-          colorClass: 'bg-sky-100 text-sky-800',
+          colorClass: 'bg-sky-100/20 text-sky-800',
           pros: 'Casi cero hambre, máxima energía para entrenar y preservar músculo.',
           cons: 'Resultados más graduales en la báscula.',
         };
@@ -297,7 +297,7 @@ export class OnboardingComponent implements OnInit {
       if (pct <= 21) {
         return {
           label: 'Recomendado (Óptimo)',
-          colorClass: 'bg-emerald-100 text-emerald-800',
+          colorClass: 'bg-emerald-100/20 text-emerald-800',
           pros: 'Balance ideal entre pérdida constante de grasa y retención muscular.',
           cons: 'Requiere constancia diaria con proteínas y pasos.',
         };
@@ -305,14 +305,14 @@ export class OnboardingComponent implements OnInit {
       if (pct <= 26) {
         return {
           label: 'Agresivo / Rápido',
-          colorClass: 'bg-amber-100 text-amber-800',
+          colorClass: 'bg-amber-100/20 text-amber-800',
           pros: 'Bajada más rápida en pocas semanas.',
           cons: 'Mayor sensación de hambre y fatiga; menor margen de error.',
         };
       }
       return {
         label: 'Extremo (Precaución)',
-        colorClass: 'bg-red-100 text-red-800',
+        colorClass: 'bg-red-100/20 text-red-800',
         pros: 'Máxima reducción calórica a corto plazo.',
         cons: 'Alto riesgo de pérdida muscular, fatiga hormonal y efecto rebote.',
       };
@@ -321,7 +321,7 @@ export class OnboardingComponent implements OnInit {
       if (pct <= 8) {
         return {
           label: 'Limpio / Muy Controlado',
-          colorClass: 'bg-sky-100 text-sky-800',
+          colorClass: 'bg-sky-100/20 text-sky-800',
           pros: 'Mínima ganancia de grasa corporal mientras subes marcas.',
           cons: 'Aumento de peso muy pausado.',
         };
@@ -329,14 +329,14 @@ export class OnboardingComponent implements OnInit {
       if (pct <= 14) {
         return {
           label: 'Recomendado (Lean Bulk)',
-          colorClass: 'bg-emerald-100 text-emerald-800',
+          colorClass: 'bg-emerald-100/20 text-emerald-800',
           pros: 'Ritmo óptimo de hipertrofia con grasa controlada.',
           cons: 'Requiere sobrecarga progresiva constante.',
         };
       }
       return {
         label: 'Agresivo / Volumen Rápido',
-        colorClass: 'bg-amber-100 text-amber-800',
+        colorClass: 'bg-amber-100/20 text-amber-800',
         pros: 'Máxima recuperación y subida rápida de fuerza.',
         cons: 'Mayor proporción de grasa ganada junto al músculo.',
       };
@@ -344,14 +344,14 @@ export class OnboardingComponent implements OnInit {
     if (p === 'RECOMPOSITION') {
       return {
         label: 'Recomposición Recomendada',
-        colorClass: 'bg-emerald-100 text-emerald-800',
+        colorClass: 'bg-emerald-100/20 text-emerald-800',
         pros: 'Déficit ligero que permite quemar grasa y ganar tono muscular a la vez.',
         cons: 'El peso en báscula cambia poco; el progreso se ve en medidas y fotos.',
       };
     }
     return {
       label: 'Mantenimiento Estable',
-      colorClass: 'bg-stone-200 text-stone-800',
+      colorClass: 'bg-stone-200/20 text-stone-800',
       pros: 'Calorías en equilibrio para consolidar hábitos y rendimiento.',
       cons: 'Sin cambio significativo de peso corporal.',
     };
