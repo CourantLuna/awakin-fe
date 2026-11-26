@@ -1079,7 +1079,10 @@
         <div class="p-4 rounded-2xl bg-stone-50 border border-stone-200/80 space-y-3">
           <div class="flex items-center justify-between">
             <span class="text-[11px] font-black uppercase tracking-wider text-stone-700">Crear enlace privado</span>
-            <span class="text-[10px] font-semibold text-stone-400">Token único</span>
+            <span class="px-2 py-0.5 rounded-full text-[10px] font-black"
+              [ngClass]="kinInvites().length >= 5 ? 'bg-rose-100 text-rose-700' : 'bg-stone-200/80 text-stone-600'">
+              {{ kinInvites().length }} / 5 enlaces
+            </span>
           </div>
 
           <input type="text" [ngModel]="newInviteLabel()" (ngModelChange)="newInviteLabel.set($event)"
@@ -1124,16 +1127,24 @@
             </span>
           </label>
 
-          <button type="button" (click)="createNewInviteLink()" [disabled]="isCreatingInvite()"
-            class="w-full py-2.5 rounded-xl bg-kin-primary hover:opacity-95 text-white font-black text-xs uppercase tracking-wider flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 shadow-sm">
+          <button type="button" (click)="createNewInviteLink()" [disabled]="isCreatingInvite() || kinInvites().length >= 5"
+            class="w-full py-2.5 rounded-xl bg-kin-primary hover:opacity-95 text-white font-black text-xs uppercase tracking-wider flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed shadow-sm">
             @if (isCreatingInvite()) {
             <i class="pi pi-spin pi-spinner text-xs"></i>
             <span>Generando enlace...</span>
+            } @else if (kinInvites().length >= 5) {
+            <i class="pi pi-lock text-xs"></i>
+            <span>Límite de 5 enlaces alcanzado</span>
             } @else {
             <i class="pi pi-plus-circle text-xs"></i>
             <span>Generar enlace de invitación</span>
             }
           </button>
+          @if (kinInvites().length >= 5) {
+          <p class="text-[10px] text-rose-600 font-semibold text-center">
+            Elimina alguno de tus enlaces actuales para generar uno nuevo.
+          </p>
+          }
         </div>
 
         <!-- Lista de enlaces -->
@@ -1180,6 +1191,9 @@
                   }
                 </div>
                 <p class="text-[11px] font-mono text-stone-500 truncate mt-1">{{ buildInviteUrl(inv.token) }}</p>
+                <p class="text-[10px] font-mono font-bold text-stone-700 mt-0.5">
+                  Código: <span class="px-1.5 py-0.5 rounded bg-stone-100 border border-stone-200 select-all">{{ inv.token }}</span>
+                </p>
               </div>
             </div>
 
@@ -1194,13 +1208,19 @@
                 }
               </div>
 
-              <div class="flex items-center gap-1.5">
+              <div class="flex items-center gap-1.5 flex-wrap">
                 @if (inv.is_active) {
                 <button type="button" (click)="copyInviteUrl(inv)"
                   class="px-2.5 py-1.5 rounded-lg bg-stone-100 hover:bg-stone-200 text-stone-700 text-[10px] font-bold flex items-center gap-1 cursor-pointer">
                   <i class="pi text-[10px]"
-                    [ngClass]="copiedInviteId() === inv.id ? 'pi-check text-emerald-600' : 'pi-copy'"></i>
-                  <span>{{ copiedInviteId() === inv.id ? 'Copiado' : 'Copiar' }}</span>
+                    [ngClass]="copiedInviteId() === inv.id ? 'pi-check text-emerald-600' : 'pi-link'"></i>
+                  <span>{{ copiedInviteId() === inv.id ? 'Enlace copiado' : 'Copiar enlace' }}</span>
+                </button>
+                <button type="button" (click)="copyInviteCode(inv)"
+                  class="px-2.5 py-1.5 rounded-lg bg-stone-100 hover:bg-stone-200 text-stone-700 text-[10px] font-bold flex items-center gap-1 cursor-pointer">
+                  <i class="pi text-[10px]"
+                    [ngClass]="copiedCodeId() === inv.id ? 'pi-check text-emerald-600' : 'pi-key'"></i>
+                  <span>{{ copiedCodeId() === inv.id ? 'Código copiado' : 'Copiar código' }}</span>
                 </button>
                 <button type="button" (click)="shareInviteUrl(inv)"
                   class="px-2.5 py-1.5 rounded-lg bg-kin-primary/10 hover:bg-kin-primary/20 text-kin-primary text-[10px] font-bold flex items-center gap-1 cursor-pointer">
@@ -1210,8 +1230,13 @@
                 }
                 <button type="button" (click)="toggleInviteActive(inv)"
                   class="px-2.5 py-1.5 rounded-lg text-[10px] font-bold cursor-pointer"
-                  [ngClass]="inv.is_active ? 'bg-red-50 hover:bg-red-100 text-red-600' : 'bg-emerald-50 hover:bg-emerald-100 text-emerald-700'">
+                  [ngClass]="inv.is_active ? 'bg-amber-50 hover:bg-amber-100 text-amber-700' : 'bg-emerald-50 hover:bg-emerald-100 text-emerald-700'">
                   {{ inv.is_active ? 'Revocar' : 'Reactivar' }}
+                </button>
+                <button type="button" (click)="deleteInviteLink(inv)"
+                  title="Eliminar enlace permanentemente"
+                  class="px-2 py-1.5 rounded-lg bg-red-50 hover:bg-red-100 text-red-600 text-[10px] font-bold cursor-pointer flex items-center gap-1">
+                  <i class="pi pi-trash text-[10px]"></i>
                 </button>
               </div>
             </div>

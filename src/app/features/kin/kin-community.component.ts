@@ -105,6 +105,7 @@ export class KinCommunityComponent {
   public newInviteMaxUses = signal<number | null>(null);
   public newInviteExpiresHours = signal<number | null>(168);
   public copiedInviteId = signal<string | null>(null);
+  public copiedCodeId = signal<string | null>(null);
   public reviewingRequestId = signal<string | null>(null);
   public invitesError = signal<string | null>(null);
 
@@ -497,6 +498,34 @@ export class KinCommunityComponent {
       }
     }
     this.copyInviteUrl(invite);
+  }
+
+  public async copyInviteCode(invite: any): Promise<void> {
+    const code = String(invite.token || '');
+    if (!code) return;
+    try {
+      await navigator.clipboard.writeText(code);
+      this.copiedCodeId.set(invite.id);
+      setTimeout(() => {
+        if (this.copiedCodeId() === invite.id) this.copiedCodeId.set(null);
+      }, 2000);
+    } catch {
+      this.invitesError.set('Copia manualmente el código: ' + code);
+    }
+  }
+
+  public deleteInviteLink(invite: any): void {
+    const coachId = this.currentAthleteId();
+    if (!coachId) return;
+    this.invitesError.set(null);
+    this.kinService.deleteKinInvite(invite.id, coachId).subscribe({
+      next: () => {
+        this.kinInvites.update((list) => list.filter((i) => i.id !== invite.id));
+      },
+      error: (err) => {
+        this.invitesError.set(err?.error?.detail || 'No se pudo eliminar el enlace.');
+      },
+    });
   }
 
   public toggleInviteActive(invite: any): void {

@@ -237,6 +237,12 @@ export class KinService {
     return this.http.patch<any>(`${this.baseUrl}/invites/${inviteId}/toggle`, { is_active: isActive });
   }
 
+  public deleteKinInvite(inviteId: string, deletedBy: string) {
+    return this.http.delete<{ status: string; deleted_id: string }>(`${this.baseUrl}/invites/${inviteId}`, {
+      params: { deleted_by: deletedBy },
+    });
+  }
+
   public listKinJoinRequests(kinId: string, status: string = 'PENDING') {
     return this.http.get<any[]>(`${this.baseUrl}/${kinId}/join-requests`, { params: { status } });
   }
