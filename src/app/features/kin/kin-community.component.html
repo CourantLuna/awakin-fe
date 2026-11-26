@@ -105,6 +105,15 @@
           [ngClass]="kinSummary()?.header_image_url ? 'bg-white/20 hover:bg-white/30 text-white border border-white/20' : 'bg-stone-100 hover:bg-stone-200 text-stone-600'">
           <i class="pi pi-refresh text-sm" [class.animate-spin]="kinService.isLoading()"></i>
         </button>
+
+        @if (leaveKinScope()) {
+        <button type="button" (click)="openLeaveKinModal()"
+          [title]="leaveKinScope() === 'instructor' ? 'Salir del Staff de este Kin' : 'Salir de este Kin'"
+          class="w-9 h-9 rounded-2xl flex items-center justify-center transition-colors cursor-pointer"
+          [ngClass]="kinSummary()?.header_image_url ? 'bg-rose-500/80 hover:bg-rose-600 text-white border border-white/20' : 'bg-rose-50 hover:bg-rose-100 text-rose-600'">
+          <i class="pi pi-sign-out text-sm"></i>
+        </button>
+        }
       </div>
     </div>
     <div class="">
@@ -1299,6 +1308,51 @@
           }
         </div>
         }
+      </div>
+    </div>
+  </div>
+  }
+
+  <!-- MODAL DE CONFIRMACIÓN: SALIR DEL KIN -->
+  @if (isLeaveKinModalOpen()) {
+  <div class="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4"
+    (click)="isLeaveKinModalOpen.set(false)">
+    <div class="bg-white rounded-3xl border border-stone-200 w-full max-w-md p-6 shadow-2xl space-y-4"
+      (click)="$event.stopPropagation()">
+      <div class="flex items-start gap-3">
+        <div class="w-10 h-10 rounded-2xl bg-rose-50 border border-rose-200 text-rose-600 flex items-center justify-center shrink-0">
+          <i class="pi pi-sign-out text-base"></i>
+        </div>
+        <div class="space-y-1.5">
+          <h3 class="text-sm font-black uppercase text-stone-900">
+            {{ leaveKinScope() === 'instructor' ? 'Salir del Staff del Kin' : 'Salir de ' + (kinSummary()?.team_name || 'este Kin') }}
+          </h3>
+          @if (leaveKinScope() === 'instructor') {
+          <p class="text-xs text-stone-600 leading-relaxed">
+            Dejarás de colaborar como instructor secundario en <strong>{{ kinSummary()?.team_name }}</strong>.
+          </p>
+          } @else {
+          <p class="text-xs text-stone-600 leading-relaxed">
+            Perderás acceso a la comunidad privada, rutinas y planes asignados de <strong>{{ kinSummary()?.team_name }}</strong>.
+            Tu historial personal (peso, medidas y fotos) se mantendrá intacto.
+          </p>
+          }
+          @if (leaveKinError()) {
+          <p class="text-xs font-bold text-rose-600">{{ leaveKinError() }}</p>
+          }
+        </div>
+      </div>
+
+      <div class="flex items-center justify-end gap-2 pt-2 border-t border-stone-100">
+        <button type="button" (click)="isLeaveKinModalOpen.set(false)"
+          class="px-4 py-2 rounded-xl bg-stone-100 text-stone-600 text-xs font-black cursor-pointer">
+          Cancelar
+        </button>
+        <button type="button" (click)="confirmLeaveKin()" [disabled]="isLeavingKin()"
+          class="px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-black uppercase cursor-pointer disabled:opacity-50 flex items-center gap-1.5">
+          <i class="pi" [ngClass]="isLeavingKin() ? 'pi-spin pi-spinner' : 'pi-check'"></i>
+          <span>{{ isLeavingKin() ? 'Saliendo...' : 'Sí, Salir del Kin' }}</span>
+        </button>
       </div>
     </div>
   </div>

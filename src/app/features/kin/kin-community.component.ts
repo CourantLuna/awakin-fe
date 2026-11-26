@@ -108,6 +108,27 @@ export class KinCommunityComponent {
   public reviewingRequestId = signal<string | null>(null);
   public invitesError = signal<string | null>(null);
 
+  // Salida voluntaria del Kin (Atleta o Instructor secundario; Head Coach no puede salirse directamente)
+  public isLeaveKinModalOpen = signal<boolean>(false);
+  public isLeavingKin = signal<boolean>(false);
+  public leaveKinError = signal<string | null>(null);
+
+  public isHeadCoachOfActiveKin = computed<boolean>(() => {
+    const a = this.athleteService.currentAthlete();
+    const k: any = this.kinSummary();
+    if (!a || !k?.id) return false;
+    return k.head_coach_id === a.id || k.instructor_id === a.id;
+  });
+
+  public leaveKinScope = computed<'member' | 'instructor' | null>(() => {
+    const a = this.athleteService.currentAthlete();
+    const k: any = this.kinSummary();
+    if (!a || !k?.id || this.isHeadCoachOfActiveKin()) return null;
+    if (this.canEditKinBranding()) return 'instructor';
+    if (String(a.kin_id || '') === String(k.id)) return 'member';
+    return null;
+  });
+
   public canEditKinBranding = computed<boolean>(() => {
     const a = this.athleteService.currentAthlete();
     const k: any = this.kinSummary();
@@ -638,6 +659,37 @@ export class KinCommunityComponent {
       default:
         return `${member.streak_days} 🔥`;
     }
+  }
+
+  public openLeaveKinModal(): void {
+    this.leaveKinError.set(null);
+    this.isLeaveKinModalOpen.set(true);
+  }
+
+  public confirmLeaveKin(): void {
+    const a = this.athleteService.currentAthlete();
+    const k = this.kinSummary();
+    const scope = this.leaveKinScope();
+    if (!a?.id || !k?.id || !scope) return;
+
+    this.isLeavingKin.set(true);
+    this.leaveKinError.set(null);
+    this.kinService.leaveKin(k.id, a.id, scope).subscribe({
+      next: (res) => {
+        this.isLeavingKin.set(false);
+        this.isLeaveKinModalOpen.set(false);
+        if (a.email || a.id) {
+          this.athleteService.loadAthleteProfile(a.email || a.id);
+        }
+        if (res.is_active === false) {
+          this.router.navigateByUrl('/pending-access');
+        }
+      },
+      error: (err) => {
+        this.isLeavingKin.set(false);
+        this.leaveKinError.set(err?.error?.detail || 'No se pudo salir del Kin.');
+      },
+    });
   }
 
   private toDateKey(d: Date): string {

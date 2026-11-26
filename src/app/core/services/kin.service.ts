@@ -185,6 +185,13 @@ export class KinService {
     return this.http.patch<{ status: string; kin: KinInfo }>(`${this.baseUrl}/${kinId}/branding`, payload);
   }
 
+  public leaveKin(kinId: string, athleteId: string, scope: 'member' | 'instructor' = 'member') {
+    return this.http.post<{ status: string; scope: string; left_kin_id: string; is_active: boolean }>(
+      `${this.baseUrl}/${kinId}/leave`,
+      { athlete_id: athleteId, scope }
+    );
+  }
+
   // =========================================================================
   // INVITACIONES PRIVADAS Y SOLICITUDES DE INGRESO DEL KIN
   // =========================================================================
