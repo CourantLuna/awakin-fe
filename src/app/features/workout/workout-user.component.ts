@@ -320,6 +320,27 @@ export class WorkoutUserComponent implements OnInit {
       .sort((a, b) => a.day_of_week - b.day_of_week);
   });
 
+  // Carga muscular semanal combinada (target + secundarios de todas las rutinas del plan)
+  weeklyPlanMuscleBreakdown = computed<WorkoutMuscleLegendItem[]>(() => {
+    const links = this.scheduledPlanRoutines();
+    if (!links.length) return [];
+    const map = new Map<string, number>();
+    for (const link of links) {
+      if (!link.routine) continue;
+      for (const item of this.getRoutineMuscleBreakdown(link.routine)) {
+        map.set(item.muscle, (map.get(item.muscle) || 0) + item.sets);
+      }
+    }
+    const list = Array.from(map.entries())
+      .map(([muscle, sets]) => ({ muscle, sets }))
+      .sort((a, b) => b.sets - a.sets);
+    return this.buildMuscleBreakdownWithColors(list);
+  });
+
+  weeklyPlanTotalSets = computed<number>(() =>
+    this.scheduledPlanRoutines().reduce((acc, l) => acc + (l.routine?.total_sets || 0), 0)
+  );
+
   // Rutina asignada por el calendario para el día seleccionado
   scheduledRoutineForDay = computed<WorkoutRoutine | null>(() => {
     const link = this.weeklyScheduleMap().get(this.selectedDayOfWeek());
