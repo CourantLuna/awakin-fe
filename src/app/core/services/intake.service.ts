@@ -770,6 +770,21 @@ export class IntakeService {
     );
   }
 
+  public updateFoodRecord(idOriginal: string, updates: Record<string, any>): Observable<any> {
+    return this.http.patch<any>(`${this.baseUrl}/records/${encodeURIComponent(idOriginal)}`, updates).pipe(
+      catchError(async () => {
+        const { data, error } = await this.supabase
+          .from('registros_nutricionales_pruebas')
+          .update(updates)
+          .eq('id_original', idOriginal)
+          .select()
+          .single();
+        if (error) throw error;
+        return data;
+      })
+    );
+  }
+
   public async uploadFoodReportImage(file: File, athleteId?: string): Promise<string> {
     // Compresión y redimensionamiento en el cliente para ahorro de datos y subida ultrarrápida
     const compressedBlob = await compressImage(file, 1200, 0.82);

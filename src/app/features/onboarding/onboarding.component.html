@@ -1,0 +1,1074 @@
+<div class="min-h-screen bg-awakin-base text-stone-900 pb-28">
+  <!-- TOP HEADER CON PROGRESO -->
+  <div class="sticky top-0 z-30 bg-white/90 backdrop-blur-md border-b border-stone-200/80 px-4 py-3">
+    <div class="max-w-xl mx-auto space-y-2.5">
+      <div class="flex items-center justify-between gap-2">
+        <div class="flex items-center gap-2">
+          @if (currentStep() > 1) {
+          <button type="button" (click)="prevStep()"
+            class="w-8 h-8 rounded-full bg-stone-100 hover:bg-stone-200 text-stone-700 flex items-center justify-center cursor-pointer">
+            <i class="pi pi-arrow-left text-xs"></i>
+          </button>
+          }
+          <div>
+            <p class="text-[10px] font-black uppercase tracking-widest text-kin-primary">AWAKIN Onboarding</p>
+            <p class="text-xs font-bold text-stone-600">Paso {{ currentStep() }} de {{ totalSteps }}</p>
+          </div>
+        </div>
+
+        <button type="button" (click)="authService.logout()"
+          class="text-[11px] font-bold text-stone-400 hover:text-stone-700 flex items-center gap-1 cursor-pointer">
+          <i class="pi pi-sign-out text-[11px]"></i>
+          <span>Salir</span>
+        </button>
+      </div>
+
+      <!-- Barra de progreso -->
+      <div class="w-full h-1.5 rounded-full bg-stone-200 overflow-hidden">
+        <div class="h-full bg-kin-primary rounded-full transition-all duration-300" [style.width.%]="progressPercent()">
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CONTENIDO PRINCIPAL -->
+  <div class="max-w-xl mx-auto px-4 pt-5 space-y-5">
+    @if (stepError() || submitError()) {
+    <div class="p-3 rounded-2xl bg-red-50 border border-red-200 text-red-700 text-xs font-bold flex items-center gap-2">
+      <i class="pi pi-exclamation-triangle text-xs shrink-0"></i>
+      <span>{{ stepError() || submitError() }}</span>
+    </div>
+    }
+
+    <!-- ================================================================ -->
+    <!-- PASO 1: IDENTIDAD Y CONTACTO                                     -->
+    <!-- ================================================================ -->
+    @if (currentStep() === 1) {
+    <div class="space-y-4">
+      <div>
+        <h1 class="text-xl font-black tracking-tight text-stone-900">¡Bienvenido a AWAKIN!</h1>
+        <p class="text-xs text-stone-500 mt-1">Configura tu perfil de atleta para personalizar tus calorías, macros y
+          entrenamiento.</p>
+      </div>
+
+      <div class="bg-white rounded-3xl p-4 sm:p-5 border border-stone-200/80 shadow-xs space-y-4">
+        <!-- Username único -->
+        <div>
+          <label class="block text-[10px] font-black uppercase tracking-wider text-stone-600 mb-1">Nombre de usuario
+            único *</label>
+          <div class="relative">
+            <span class="absolute left-3.5 top-1/2 -translate-y-1/2 text-stone-400 font-black text-sm">&#64;</span>
+            <input type="text" [ngModel]="username()" (ngModelChange)="onUsernameInput($event)" placeholder="tu_usuario"
+              class="w-full bg-stone-50 border rounded-xl pl-8 pr-9 py-2.5 text-sm font-bold text-stone-900 focus:outline-none"
+              [ngClass]="usernameStatus() === 'available' ? 'border-emerald-400' : usernameStatus() === 'taken' ? 'border-red-400' : 'border-stone-200 focus:border-kin-primary'" />
+            <span class="absolute right-3 top-1/2 -translate-y-1/2">
+              @if (usernameStatus() === 'checking') {
+              <i class="pi pi-spin pi-spinner text-stone-400 text-xs"></i>
+              } @else if (usernameStatus() === 'available') {
+              <i class="pi pi-check-circle text-emerald-500 text-sm"></i>
+              } @else if (usernameStatus() === 'taken') {
+              <i class="pi pi-times-circle text-red-500 text-sm"></i>
+              }
+            </span>
+          </div>
+          @if (usernameMessage()) {
+          <p class="text-[11px] font-semibold mt-1"
+            [ngClass]="usernameStatus() === 'available' ? 'text-emerald-600' : 'text-red-600'">
+            {{ usernameMessage() }}
+          </p>
+          }
+        </div>
+
+        <!-- Nombre y Apellidos -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block text-[10px] font-black uppercase tracking-wider text-stone-600 mb-1">Nombre *</label>
+            <input type="text" [ngModel]="firstName()" (ngModelChange)="firstName.set($event)" placeholder="Ej. Heydi"
+              class="w-full bg-stone-50 border border-stone-200 rounded-xl px-3.5 py-2.5 text-sm font-semibold text-stone-900 focus:outline-none focus:border-kin-primary" />
+          </div>
+          <div>
+            <label class="block text-[10px] font-black uppercase tracking-wider text-stone-600 mb-1">Apellidos *</label>
+            <input type="text" [ngModel]="lastName()" (ngModelChange)="lastName.set($event)"
+              placeholder="Ej. García Sánchez"
+              class="w-full bg-stone-50 border border-stone-200 rounded-xl px-3.5 py-2.5 text-sm font-semibold text-stone-900 focus:outline-none focus:border-kin-primary" />
+          </div>
+        </div>
+
+        <!-- Teléfono -->
+        <div>
+          <label class="block text-[10px] font-black uppercase tracking-wider text-stone-600 mb-1">Teléfono /
+            WhatsApp</label>
+          <input type="tel" [ngModel]="phone()" (ngModelChange)="phone.set($event)" placeholder="+1 809 000 0000"
+            class="w-full bg-stone-50 border border-stone-200 rounded-xl px-3.5 py-2.5 text-sm font-semibold text-stone-900 focus:outline-none focus:border-kin-primary" />
+        </div>
+
+        <!-- Género -->
+        <div>
+          <label class="block text-[10px] font-black uppercase tracking-wider text-stone-600 mb-1.5">Género *</label>
+          <div class="grid grid-cols-3 gap-2">
+            <button type="button" (click)="gender.set('FEMALE')"
+              class="py-2.5 rounded-xl border text-xs font-black transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+              [ngClass]="gender() === 'FEMALE' ? 'bg-kin-primary text-white border-kin-primary ring-2 ring-kin-primary/40 shadow-sm' : 'bg-stone-50 text-stone-700 border-stone-200 hover:border-stone-400'">
+              @if (gender() === 'FEMALE') { <i class="pi pi-check text-[10px]"></i> }
+              <span>Mujer</span>
+            </button>
+            <button type="button" (click)="gender.set('MALE')"
+              class="py-2.5 rounded-xl border text-xs font-black transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+              [ngClass]="gender() === 'MALE' ? 'bg-kin-primary text-white border-kin-primary ring-2 ring-kin-primary/40 shadow-sm' : 'bg-stone-50 text-stone-700 border-stone-200 hover:border-stone-400'">
+              @if (gender() === 'MALE') { <i class="pi pi-check text-[10px]"></i> }
+              <span>Hombre</span>
+            </button>
+            <button type="button" (click)="gender.set('UNSPECIFIED')"
+              class="py-2.5 rounded-xl border text-xs font-black transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+              [ngClass]="gender() === 'UNSPECIFIED' ? 'bg-kin-primary text-white border-kin-primary ring-2 ring-kin-primary/40 shadow-sm' : 'bg-stone-50 text-stone-700 border-stone-200 hover:border-stone-400'">
+              @if (gender() === 'UNSPECIFIED') { <i class="pi pi-check text-[10px]"></i> }
+              <span>Otro</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Fecha de nacimiento -->
+        <div>
+          <div class="flex items-center justify-between mb-1">
+            <label class="text-[10px] font-black uppercase tracking-wider text-stone-600">Fecha de nacimiento *</label>
+            @if (computedAge()) {
+            <span class="px-2 py-0.5 rounded-full bg-kin-primary/15 text-kin-primary text-[10px] font-black">
+              {{ computedAge() }} años
+            </span>
+            }
+          </div>
+          <input type="date" [ngModel]="birthDate()" (ngModelChange)="birthDate.set($event)"
+            class="w-full bg-stone-50 border border-stone-200 rounded-xl px-3.5 py-2.5 text-sm font-semibold text-stone-900 focus:outline-none focus:border-kin-primary" />
+        </div>
+      </div>
+    </div>
+    }
+
+    <!-- ================================================================ -->
+    <!-- PASO 2: BIOMETRÍA Y METABOLISMO BASE (TMB / TDEE EN VIVO)        -->
+    <!-- ================================================================ -->
+    @if (currentStep() === 2) {
+    <div class="space-y-4">
+      <div>
+        <h1 class="text-xl font-black tracking-tight text-stone-900">Tu punto de partida</h1>
+        <p class="text-xs text-stone-500 mt-1">Con estos datos calculamos tu gasto energético real (TMB y TDEE).</p>
+      </div>
+
+      <div class="bg-white rounded-3xl p-4 sm:p-5 border border-stone-200/80 shadow-xs space-y-4">
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-[10px] font-black uppercase tracking-wider text-stone-600 mb-1">Peso actual
+              *</label>
+            <div class="flex gap-1.5">
+              <input type="number" step="0.1" [ngModel]="currentWeight()"
+                (ngModelChange)="currentWeight.set($event ? +$event : null)" placeholder="Ej. 145"
+                class="w-full bg-stone-50 border border-stone-200 rounded-xl px-3 py-2.5 text-sm font-black text-stone-900 focus:outline-none focus:border-kin-primary" />
+              <div class="flex rounded-xl bg-stone-100 p-0.5 border border-stone-200 shrink-0">
+                <button type="button" (click)="weightUnit.set('lb')"
+                  class="px-2.5 py-1.5 rounded-lg text-[11px] font-black cursor-pointer transition-all"
+                  [ngClass]="weightUnit() === 'lb' ? 'bg-kin-primary text-white shadow-xs' : 'text-stone-600'">lb</button>
+                <button type="button" (click)="weightUnit.set('kg')"
+                  class="px-2.5 py-1.5 rounded-lg text-[11px] font-black cursor-pointer transition-all"
+                  [ngClass]="weightUnit() === 'kg' ? 'bg-kin-primary text-white shadow-xs' : 'text-stone-600'">kg</button>
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-[10px] font-black uppercase tracking-wider text-stone-600 mb-1">Altura (cm)
+              *</label>
+            <input type="number" step="1" [ngModel]="alturaCm()" (ngModelChange)="alturaCm.set($event ? +$event : null)"
+              placeholder="Ej. 165"
+              class="w-full bg-stone-50 border border-stone-200 rounded-xl px-3 py-2.5 text-sm font-black text-stone-900 focus:outline-none focus:border-kin-primary" />
+          </div>
+        </div>
+
+        <!-- Estilo de vida -->
+        <div>
+          <label class="block text-[10px] font-black uppercase tracking-wider text-stone-600 mb-2">Estilo de vida /
+            Nivel de actividad *</label>
+          <div class="space-y-2">
+            @for (lvl of activityLevels; track lvl.key) {
+            <button type="button" (click)="nivelActividad.set(lvl.key)"
+              class="w-full text-left p-3 rounded-2xl border transition-all flex items-center justify-between gap-2 cursor-pointer"
+              [ngClass]="nivelActividad() === lvl.key ? 'bg-kin-primary text-white border-kin-primary ring-2 ring-kin-primary/40 shadow-sm' : 'bg-stone-50 text-stone-800 border-stone-200 hover:border-stone-400'">
+              <div class="flex items-center gap-2.5">
+                @if (nivelActividad() === lvl.key) {
+                <i class="pi pi-check-circle text-white text-sm shrink-0"></i>
+                }
+                <div>
+                  <p class="text-xs font-black">{{ lvl.label }}</p>
+                  <p class="text-[11px]" [ngClass]="nivelActividad() === lvl.key ? 'text-white/85' : 'text-stone-500'">
+                    {{ lvl.desc }}</p>
+                </div>
+              </div>
+              <span class="text-[10px] font-black px-2 py-0.5 rounded-full shrink-0"
+                [ngClass]="nivelActividad() === lvl.key ? 'bg-white/20 text-white' : 'bg-stone-200 text-stone-600'">
+                ×{{ lvl.factor }}
+              </span>
+            </button>
+            }
+          </div>
+        </div>
+      </div>
+
+      <!-- TARJETA EN VIVO TMB & TDEE -->
+      @if (computedTmb() && computedTdee()) {
+      <div class="rounded-3xl p-5 bg-stone-900 text-white shadow-lg border border-stone-700 space-y-3">
+        <div class="flex items-center justify-between">
+          <span class="text-[10px] font-black uppercase tracking-widest text-amber-400">Tu Metabolismo Base
+            Actual</span>
+          <span class="text-[10px] font-semibold text-stone-400">Mifflin-St Jeor</span>
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div class="p-3.5 rounded-2xl bg-white/10 border border-white/10">
+            <p class="text-[10px] font-bold uppercase tracking-wider text-stone-300">TMB (En reposo)</p>
+            <p class="text-2xl font-black text-white mt-0.5">{{ computedTmb() }} <span
+                class="text-xs font-bold text-stone-300">kcal</span></p>
+          </div>
+          <div class="p-3.5 rounded-2xl bg-kin-primary/25 border border-kin-primary/50">
+            <p class="text-[10px] font-bold uppercase tracking-wider text-amber-200">TDEE (Mantenimiento)</p>
+            <p class="text-2xl font-black text-white mt-0.5">{{ computedTdee() }} <span
+                class="text-xs font-bold text-amber-200">kcal</span></p>
+          </div>
+        </div>
+        <p class="text-[11px] text-stone-300 leading-relaxed">
+          Con tu peso, altura, edad ({{ computedAge() }} años) y actividad, tu cuerpo quema aproximadamente <strong>{{
+            computedTdee() }} kcal/día</strong> para mantenerse estable.
+        </p>
+      </div>
+      }
+    </div>
+    }
+
+    <!-- ================================================================ -->
+    <!-- PASO 3: OBJETIVO PRINCIPAL, PESO OBJETIVO Y VELOCIDAD            -->
+    <!-- ================================================================ -->
+    @if (currentStep() === 3) {
+    <div class="space-y-4">
+      <div>
+        <h1 class="text-xl font-black tracking-tight text-stone-900">Define tu objetivo y ritmo</h1>
+        <p class="text-xs text-stone-500 mt-1">Elige tu protocolo nutricional y a qué velocidad quieres avanzar.</p>
+      </div>
+
+      <div class="bg-white rounded-3xl p-4 sm:p-5 border border-stone-200/80 shadow-xs space-y-5">
+        <div>
+          <label class="block text-[10px] font-black uppercase tracking-wider text-stone-600 mb-2">Objetivo principal
+            *</label>
+          <div class="grid grid-cols-2 gap-2.5">
+            @for (p of protocolOptions; track p.key) {
+            <button type="button" (click)="selectProtocol(p.key)"
+              class="text-left p-3.5 rounded-2xl border transition-all cursor-pointer space-y-1.5"
+              [ngClass]="protocol() === p.key ? 'bg-kin-primary text-white border-kin-primary ring-2 ring-kin-primary/40 shadow-md' : 'bg-stone-50 text-stone-800 border-stone-200 hover:border-stone-400'">
+              <div class="flex items-center justify-between">
+                <i class="pi text-sm"
+                  [ngClass]="[p.icon, protocol() === p.key ? 'text-white' : 'text-kin-primary']"></i>
+                <span class="text-[9px] font-black uppercase px-1.5 py-0.5 rounded-full"
+                  [ngClass]="protocol() === p.key ? 'bg-white/25 text-white' : 'bg-stone-200 text-stone-600'">{{ p.badge
+                  }}</span>
+              </div>
+              <p class="text-xs font-black">{{ p.title }}</p>
+              <p class="text-[10px] leading-snug" [ngClass]="protocol() === p.key ? 'text-white/85' : 'text-stone-500'">
+                {{ p.subtitle }}</p>
+            </button>
+            }
+          </div>
+        </div>
+
+        <!-- Peso objetivo opcional -->
+        <div>
+          <label class="block text-[10px] font-black uppercase tracking-wider text-stone-600 mb-1">
+            Peso objetivo ({{ weightUnit() }}) <span class="text-stone-400 font-semibold normal-case">— opcional</span>
+          </label>
+          <input type="number" step="0.5" [ngModel]="targetWeight()"
+            (ngModelChange)="targetWeight.set($event ? +$event : null)"
+            [placeholder]="'Ej. ' + (protocol() === 'SURPLUS' ? ((currentWeight() || 140) + 10) : ((currentWeight() || 140) - 12))"
+            class="w-full bg-stone-50 border border-stone-200 rounded-xl px-3.5 py-2.5 text-sm font-bold text-stone-900 focus:outline-none focus:border-kin-primary" />
+        </div>
+
+        <!-- Slider de velocidad -->
+        @if (protocol() !== 'MAINTENANCE') {
+        <div class="p-4 rounded-2xl bg-stone-50 border border-stone-200/80 space-y-3">
+          <div class="flex items-center justify-between gap-2 flex-wrap">
+            <span class="text-[10px] font-black uppercase tracking-wider text-stone-600">Velocidad del proceso</span>
+            <span class="px-2.5 py-0.5 rounded-full text-[10px] font-black" [ngClass]="paceMeta().colorClass">
+              {{ pacePercent() }}% · {{ paceMeta().label }}
+            </span>
+          </div>
+
+          <input type="range" [min]="paceRange().min" [max]="paceRange().max" [step]="paceRange().step"
+            [ngModel]="pacePercent()" (ngModelChange)="pacePercent.set(+$event)"
+            class="w-full accent-emerald-600 cursor-pointer" />
+
+          <div class="flex justify-between text-[9px] font-bold uppercase tracking-wider text-stone-400">
+            <span>Muy lento ({{ paceRange().min }}%)</span>
+            <span class="text-emerald-600">★ Recomendado</span>
+            <span>Extremo ({{ paceRange().max }}%)</span>
+          </div>
+
+          <div class="text-[11px] space-y-1.5 pt-2 border-t border-stone-200/70">
+            <p class="text-emerald-700"><strong>Pros:</strong> {{ paceMeta().pros }}</p>
+            <p class="text-stone-500"><strong>Consideración:</strong> {{ paceMeta().cons }}</p>
+            @if (estimatedWeeksToGoal()) {
+            <div
+              class="mt-2 p-2.5 rounded-xl bg-kin-primary/15 border border-kin-primary/30 text-stone-900 font-black text-xs flex items-center gap-2">
+              <i class="pi pi-clock text-kin-primary"></i>
+              <span>Tiempo estimado a tu meta: {{ estimatedWeeksToGoal() }} semanas (aprox. {{ estimatedGoalDateLabel()
+                }})</span>
+            </div>
+            }
+          </div>
+        </div>
+        }
+      </div>
+    </div>
+    }
+
+    <!-- ================================================================ -->
+    <!-- PASO 4: TIPO DE DIETA Y MODO DE CÁLCULO DE MACROS                -->
+    <!-- ================================================================ -->
+    @if (currentStep() === 4) {
+    <div class="space-y-4">
+      <div>
+        <h1 class="text-xl font-black tracking-tight text-stone-900">¿Qué tipo de dieta prefieres?</h1>
+        <p class="text-xs text-stone-500 mt-1">Elige cómo calcular tus macros (por porcentaje o por g/kg de peso) y tu
+          estilo de alimentación.</p>
+      </div>
+
+      <!-- Selector de modo de cálculo de macros -->
+      <div class="bg-white rounded-3xl p-4 border border-stone-200/80 shadow-xs space-y-2.5">
+        <label class="block text-[10px] font-black uppercase tracking-wider text-stone-600">Método de cálculo de
+          macros</label>
+        <div class="grid grid-cols-2 gap-2">
+          <button type="button" (click)="macroCalcMode.set('percentage')"
+            class="p-3 rounded-2xl border text-left transition-all cursor-pointer space-y-0.5"
+            [ngClass]="macroCalcMode() === 'percentage' ? 'bg-kin-primary text-white border-kin-primary ring-2 ring-kin-primary/40 shadow-sm' : 'bg-stone-50 text-stone-800 border-stone-200 hover:border-stone-400'">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-black">Por Porcentaje (%)</span>
+              @if (macroCalcMode() === 'percentage') { <i class="pi pi-check-circle text-white text-xs"></i> }
+            </div>
+            <p class="text-[10px]" [ngClass]="macroCalcMode() === 'percentage' ? 'text-white/85' : 'text-stone-500'">
+              Reparte kcal según % P / C / G de la dieta
+            </p>
+          </button>
+
+          <button type="button" (click)="macroCalcMode.set('g_per_kg')"
+            class="p-3 rounded-2xl border text-left transition-all cursor-pointer space-y-0.5"
+            [ngClass]="macroCalcMode() === 'g_per_kg' ? 'bg-kin-primary text-white border-kin-primary ring-2 ring-kin-primary/40 shadow-sm' : 'bg-stone-50 text-stone-800 border-stone-200 hover:border-stone-400'">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-black">Por Peso (g/kg)</span>
+              @if (macroCalcMode() === 'g_per_kg') { <i class="pi pi-check-circle text-white text-xs"></i> }
+            </div>
+            <p class="text-[10px]" [ngClass]="macroCalcMode() === 'g_per_kg' ? 'text-white/85' : 'text-stone-500'">
+              Proteína y grasa por kg; carbos = kcal restantes
+            </p>
+          </button>
+        </div>
+      </div>
+
+      <div class="bg-white rounded-3xl p-4 sm:p-5 border border-stone-200/80 shadow-xs space-y-2.5">
+        @for (diet of dietTypes(); track diet.name) {
+        <button type="button" (click)="selectedDietType.set(diet)"
+          class="w-full text-left p-4 rounded-2xl border transition-all cursor-pointer space-y-2"
+          [ngClass]="selectedDietType()?.name === diet.name ? 'bg-kin-primary text-white border-kin-primary ring-2 ring-kin-primary/40 shadow-md' : 'bg-stone-50 text-stone-800 border-stone-200 hover:border-stone-400'">
+          <div class="flex items-center justify-between gap-2 flex-wrap">
+            <div class="flex items-center gap-2">
+              @if (selectedDietType()?.name === diet.name) {
+              <i class="pi pi-check-circle text-white text-sm"></i>
+              }
+              <p class="text-sm font-black">{{ diet.name }}</p>
+            </div>
+            @if (macroCalcMode() === 'percentage') {
+            <div class="flex items-center gap-1 text-[10px] font-black">
+              <span class="px-2 py-0.5 rounded-full"
+                [ngClass]="selectedDietType()?.name === diet.name ? 'bg-white/25 text-white' : 'bg-emerald-100 text-emerald-800'">
+                {{ diet.protein_pct }}% P
+              </span>
+              <span class="px-2 py-0.5 rounded-full"
+                [ngClass]="selectedDietType()?.name === diet.name ? 'bg-white/25 text-white' : 'bg-amber-100 text-amber-800'">
+                {{ diet.carbs_pct }}% C
+              </span>
+              <span class="px-2 py-0.5 rounded-full"
+                [ngClass]="selectedDietType()?.name === diet.name ? 'bg-white/25 text-white' : 'bg-rose-100 text-rose-800'">
+                {{ diet.fats_pct }}% G
+              </span>
+            </div>
+            } @else {
+            <div class="flex items-center gap-1 text-[10px] font-black">
+              <span class="px-2 py-0.5 rounded-full"
+                [ngClass]="selectedDietType()?.name === diet.name ? 'bg-white/25 text-white' : 'bg-emerald-100 text-emerald-800'">
+                {{ diet.protein_p_kg || 1.9 }} g/kg P
+              </span>
+              <span class="px-2 py-0.5 rounded-full"
+                [ngClass]="selectedDietType()?.name === diet.name ? 'bg-white/25 text-white' : 'bg-rose-100 text-rose-800'">
+                {{ diet.fats_p_kg || 0.85 }} g/kg G
+              </span>
+              <span class="px-2 py-0.5 rounded-full"
+                [ngClass]="selectedDietType()?.name === diet.name ? 'bg-white/25 text-white' : 'bg-amber-100 text-amber-800'">
+                C: resto
+              </span>
+            </div>
+            }
+          </div>
+          @if (diet.description) {
+          <p class="text-[11px] leading-snug"
+            [ngClass]="selectedDietType()?.name === diet.name ? 'text-white/90' : 'text-stone-500'">
+            {{ diet.description }}
+          </p>
+          }
+        </button>
+        }
+      </div>
+    </div>
+    }
+
+    <!-- ================================================================ -->
+    <!-- PASO 5: CALORÍAS Y MACROS DIARIOS (RESULTADO)                    -->
+    <!-- ================================================================ -->
+    @if (currentStep() === 5) {
+    <div class="space-y-4">
+      <div>
+        <div class="flex items-center gap-1.5 flex-wrap">
+          <span class="px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-black uppercase">Tu
+            plan diario calculado</span>
+          <span class="px-2.5 py-0.5 rounded-full bg-stone-200 text-stone-700 text-[10px] font-bold">
+            {{ macroCalcMode() === 'g_per_kg' ? 'Modo g/kg (' + dailyMacros().pPerKg + 'g P · ' + dailyMacros().fPerKg +
+            'g G)' : 'Modo % dieta' }}
+          </span>
+        </div>
+        <h1 class="text-xl font-black tracking-tight text-stone-900 mt-1">Genial, estas son las calorías que necesitas
+          al día</h1>
+        <p class="text-xs text-stone-500 mt-1">Basado en tu metabolismo, objetivo ({{ protocol() }}) y dieta {{
+          selectedDietType()?.name || 'Estándar' }}.</p>
+      </div>
+
+      <!-- Tarjeta hero de calorías y macros -->
+      <div class="rounded-3xl p-6 bg-stone-900 text-white shadow-xl border border-stone-700 space-y-5">
+        <div class="text-center space-y-1">
+          <p class="text-[10px] font-black uppercase tracking-widest text-amber-400">Meta Diaria de Energía</p>
+          <div class="flex items-baseline justify-center gap-2">
+            <span class="text-5xl font-black tracking-tight text-white">{{ goalKcal() }}</span>
+            <span class="text-base font-bold text-stone-300">kcal / día</span>
+          </div>
+          <p class="text-[11px] text-stone-400">
+            TMB {{ computedTmb() }} kcal · TDEE {{ computedTdee() }} kcal
+          </p>
+        </div>
+
+        <!-- Macros en gramos y % -->
+        <div class="grid grid-cols-3 gap-2.5">
+          <div class="p-3.5 rounded-2xl bg-emerald-500/20 border border-emerald-400/40 text-center space-y-1">
+            <p class="text-[9px] font-black uppercase tracking-wider text-emerald-300">Proteína</p>
+            <p class="text-2xl font-black text-white">{{ dailyMacros().proteinG }}<span
+                class="text-xs font-bold">g</span></p>
+            <span
+              class="inline-block px-2 py-0.5 rounded-full bg-emerald-500/30 text-emerald-200 text-[10px] font-black">{{
+              dailyMacros().pPct }}%</span>
+          </div>
+          <div class="p-3.5 rounded-2xl bg-amber-500/20 border border-amber-400/40 text-center space-y-1">
+            <p class="text-[9px] font-black uppercase tracking-wider text-amber-300">Carbos</p>
+            <p class="text-2xl font-black text-white">{{ dailyMacros().carbsG }}<span class="text-xs font-bold">g</span>
+            </p>
+            <span class="inline-block px-2 py-0.5 rounded-full bg-amber-500/30 text-amber-200 text-[10px] font-black">{{
+              dailyMacros().cPct }}%</span>
+          </div>
+          <div class="p-3.5 rounded-2xl bg-rose-500/20 border border-rose-400/40 text-center space-y-1">
+            <p class="text-[9px] font-black uppercase tracking-wider text-rose-300">Grasas</p>
+            <p class="text-2xl font-black text-white">{{ dailyMacros().fatsG }}<span class="text-xs font-bold">g</span>
+            </p>
+            <span class="inline-block px-2 py-0.5 rounded-full bg-rose-500/30 text-rose-200 text-[10px] font-black">{{
+              dailyMacros().fPct }}%</span>
+          </div>
+        </div>
+
+        <!-- Barra visual de proporción -->
+        <div class="w-full h-3 rounded-full overflow-hidden flex bg-white/10">
+          <div class="bg-emerald-500 h-full" [style.width.%]="dailyMacros().pPct"></div>
+          <div class="bg-amber-400 h-full" [style.width.%]="dailyMacros().cPct"></div>
+          <div class="bg-rose-500 h-full" [style.width.%]="dailyMacros().fPct"></div>
+        </div>
+      </div>
+
+      <!-- Resumen Sobre Ti -->
+      <div class="bg-white rounded-3xl p-4 sm:p-5 border border-stone-200/80 shadow-xs space-y-3">
+        <p class="text-[10px] font-black uppercase tracking-wider text-stone-500">Resumen sobre ti</p>
+        <div class="grid grid-cols-2 gap-2.5 text-xs">
+          <div class="p-3 rounded-2xl bg-stone-50 border border-stone-200/70">
+            <p class="text-[10px] text-stone-400 font-bold uppercase">Edad / Altura</p>
+            <p class="font-black text-stone-900 mt-0.5">{{ computedAge() }} años · {{ alturaCm() }} cm</p>
+          </div>
+          <div class="p-3 rounded-2xl bg-stone-50 border border-stone-200/70">
+            <p class="text-[10px] text-stone-400 font-bold uppercase">Peso Actual</p>
+            <p class="font-black text-stone-900 mt-0.5">{{ currentWeight() }} {{ weightUnit() }}</p>
+          </div>
+          <div class="p-3 rounded-2xl bg-stone-50 border border-stone-200/70">
+            <p class="text-[10px] text-stone-400 font-bold uppercase">Estilo de Vida</p>
+            <p class="font-black text-stone-900 mt-0.5 truncate">{{ activeActivityLabel() }}</p>
+          </div>
+          <div class="p-3 rounded-2xl bg-stone-50 border border-stone-200/70">
+            <p class="text-[10px] text-stone-400 font-bold uppercase">Ritmo / Dieta</p>
+            <p class="font-black text-stone-900 mt-0.5 truncate">{{ pacePercent() }}% · {{ selectedDietType()?.name ||
+              'Balanceada' }}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+    }
+
+    <!-- ================================================================ -->
+    <!-- PASO 6: GRÁFICO DE PROYECCIÓN X (SEMANAS) vs Y (PESO ESTIMADO)   -->
+    <!-- ================================================================ -->
+    @if (currentStep() === 6) {
+    <div class="space-y-4">
+      <div>
+        <span
+          class="px-2.5 py-0.5 rounded-full bg-amber-100/20 text-amber-800 text-[10px] font-black uppercase">Tendencia
+          estimada</span>
+        <h1 class="text-xl font-black tracking-tight text-stone-900 mt-1">Así será tu progreso semana a semana</h1>
+        <p class="text-xs text-stone-500 mt-1">Proyección estimada manteniendo tu constancia diaria con {{ goalKcal() }}
+          kcal/día.</p>
+      </div>
+
+      <!-- Gráfico SVG Tendencia Peso vs Semanas -->
+      @if (projectionChart(); as chart) {
+      <div class="rounded-3xl p-5 bg-stone-900 text-white shadow-xl border border-stone-700 space-y-4">
+        <div class="flex items-center justify-between gap-2">
+          <div>
+            <p class="text-[10px] font-black uppercase tracking-wider text-amber-400">Curva de Peso ({{ weightUnit() }})
+            </p>
+            <p class="text-xs font-bold text-stone-300">
+              {{ chart.start.weight }} {{ weightUnit() }} → <span class="text-emerald-400 font-black">{{
+                chart.end.weight }} {{ weightUnit() }}</span>
+              ({{ chart.end.deltaWeight > 0 ? '+' : '' }}{{ chart.end.deltaWeight }} {{ weightUnit() }})
+            </p>
+          </div>
+          @if (estimatedGoalDateLabel()) {
+          <span
+            class="px-2.5 py-1 rounded-full bg-emerald-500/20 border border-emerald-400/30 text-emerald-300 text-[10px] font-black shrink-0">
+            Meta: {{ estimatedGoalDateLabel() }}
+          </span>
+          }
+        </div>
+
+        <svg [attr.viewBox]="'0 0 ' + chart.width + ' ' + chart.height" class="w-full h-auto overflow-visible">
+          <defs>
+            <linearGradient id="onboardingTrendGrad" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="#10b981" stop-opacity="0.45" />
+              <stop offset="100%" stop-color="#10b981" stop-opacity="0.02" />
+            </linearGradient>
+          </defs>
+
+          <!-- Líneas horizontales y etiquetas Eje Y (Peso) -->
+          @for (tick of chart.yTicks; track tick.val) {
+          <line [attr.x1]="chart.padL" [attr.x2]="chart.width - chart.padR" [attr.y1]="tick.y" [attr.y2]="tick.y"
+            stroke="rgba(255,255,255,0.12)" stroke-dasharray="3 3" stroke-width="1" />
+          <text [attr.x]="chart.padL - 6" [attr.y]="tick.y + 3" text-anchor="end" fill="#a8a29e" font-size="9"
+            font-weight="700">
+            {{ tick.val }}
+          </text>
+          }
+
+          <!-- Área y curva de tendencia -->
+          <path [attr.d]="chart.areaPath" fill="url(#onboardingTrendGrad)" />
+          <path [attr.d]="chart.linePath" fill="none" stroke="#10b981" stroke-width="3" stroke-linecap="round"
+            stroke-linejoin="round" />
+
+          <!-- Puntos y etiquetas Eje X (Semanas) -->
+          @for (pt of chart.coords; track pt.week; let i = $index; let last = $last) {
+          <circle [attr.cx]="pt.x" [attr.cy]="pt.y" [attr.r]="i === 0 || last ? 4.5 : 3"
+            [attr.fill]="i === 0 ? '#f59e0b' : '#10b981'" stroke="#1c1917" stroke-width="1.5" />
+          @if (i === 0 || last || i % 2 === 0) {
+          <text [attr.x]="pt.x" [attr.y]="chart.height - 6" text-anchor="middle" fill="#a8a29e" font-size="8.5"
+            font-weight="700">
+            S{{ pt.week }}
+          </text>
+          }
+          }
+        </svg>
+
+        <div class="flex items-center justify-between text-[10px] text-stone-400 pt-1 border-t border-white/10">
+          <span>Eje X: Semanas (S0 – S{{ chart.coords.length - 1 }})</span>
+          <span>Eje Y: Peso estimado ({{ weightUnit() }})</span>
+        </div>
+      </div>
+      }
+
+      <!-- Desglose semanal -->
+      <div class="bg-white rounded-3xl p-4 border border-stone-200/80 shadow-xs space-y-2">
+        <div class="flex items-center justify-between px-1">
+          <span class="text-[10px] font-black uppercase tracking-wider text-stone-500">Detalle por semana</span>
+          <span class="text-[10px] font-bold text-stone-400">Peso · Grasa · Músculo</span>
+        </div>
+        <div class="max-h-60 overflow-y-auto space-y-1.5 pr-1">
+          @for (pt of projectionTimeline(); track pt.week) {
+          <div
+            class="flex items-center justify-between px-3 py-2 rounded-xl bg-stone-50 border border-stone-200/70 text-xs">
+            <div class="flex items-center gap-2">
+              <span class="w-12 text-[10px] font-black uppercase text-kin-primary">{{ pt.label }}</span>
+              <span class="font-black text-stone-900">{{ pt.weight }} {{ weightUnit() }}</span>
+              @if (pt.week > 0) {
+              <span class="text-[10px] font-bold" [ngClass]="pt.deltaWeight <= 0 ? 'text-emerald-600' : 'text-sky-600'">
+                ({{ pt.deltaWeight > 0 ? '+' : '' }}{{ pt.deltaWeight }})
+              </span>
+              }
+            </div>
+            <div class="text-right text-[10px]">
+              <span class="text-stone-600 font-semibold">{{ pt.estBodyFatDeltaPct > 0 ? '+' : '' }}{{
+                pt.estBodyFatDeltaPct }}% grasa</span>
+              <span class="text-stone-300 mx-1">·</span>
+              <span class="text-emerald-600 font-bold">{{ pt.estMuscleNote }}</span>
+            </div>
+          </div>
+          }
+        </div>
+      </div>
+    </div>
+    }
+
+    <!-- ================================================================ -->
+    <!-- PASO 7: PREFERENCIAS NUTRICIONALES                               -->
+    <!-- ================================================================ -->
+    @if (currentStep() === 7) {
+    <div class="space-y-4">
+      <div>
+        <h1 class="text-xl font-black tracking-tight text-stone-900">Tus gustos de nutrición</h1>
+        <p class="text-xs text-stone-500 mt-1">Con esto adaptaremos tus comidas para que disfrutes tu plan al 100%.</p>
+      </div>
+
+      <div class="bg-white rounded-3xl p-4 sm:p-5 border border-stone-200/80 shadow-xs space-y-5">
+        <!-- Comidas al día -->
+        <div>
+          <label class="block text-[10px] font-black uppercase tracking-wider text-stone-600 mb-2">¿Qué comidas haces
+            normalmente al día? *</label>
+          <div class="flex flex-wrap gap-2">
+            @for (m of mealTypeOptions; track m.key) {
+            <button type="button" (click)="toggleArrayItem(mealTypes, m.key)"
+              class="px-3 py-2 rounded-xl border text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer"
+              [ngClass]="mealTypes().includes(m.key) ? 'bg-kin-primary text-white border-kin-primary ring-2 ring-kin-primary/40 shadow-sm' : 'bg-stone-50 text-stone-700 border-stone-200 hover:border-stone-400'">
+              <span>{{ m.icon }}</span>
+              <span>{{ m.label }}</span>
+              @if (mealTypes().includes(m.key)) { <i class="pi pi-check text-[10px]"></i> }
+            </button>
+            }
+          </div>
+        </div>
+
+        <!-- Proteínas (max 10) -->
+        <div>
+          <div class="flex items-center justify-between mb-2">
+            <label class="text-[10px] font-black uppercase tracking-wider text-stone-600">Proteínas favoritas</label>
+            <span class="text-[10px] font-black text-emerald-600">{{ favoriteProteins().length }} / 10</span>
+          </div>
+          <div class="flex flex-wrap gap-1.5">
+            @for (item of proteinOptions; track item) {
+            <button type="button" (click)="toggleArrayItem(favoriteProteins, item, 10)"
+              class="px-3 py-1.5 rounded-full border text-[11px] font-bold transition-all flex items-center gap-1 cursor-pointer"
+              [ngClass]="favoriteProteins().includes(item) ? 'bg-emerald-600 text-white border-emerald-500 ring-2 ring-emerald-400/50 shadow-xs' : 'bg-stone-50 text-stone-700 border-stone-200 hover:border-stone-400'">
+              @if (favoriteProteins().includes(item)) { <i class="pi pi-check text-[9px]"></i> }
+              <span>{{ item }}</span>
+            </button>
+            }
+          </div>
+        </div>
+
+        <!-- Carbohidratos (max 10) -->
+        <div>
+          <div class="flex items-center justify-between mb-2">
+            <label class="text-[10px] font-black uppercase tracking-wider text-stone-600">Carbohidratos
+              favoritos</label>
+            <span class="text-[10px] font-black text-amber-600">{{ favoriteCarbs().length }} / 10</span>
+          </div>
+          <div class="flex flex-wrap gap-1.5">
+            @for (item of carbOptions; track item) {
+            <button type="button" (click)="toggleArrayItem(favoriteCarbs, item, 10)"
+              class="px-3 py-1.5 rounded-full border text-[11px] font-bold transition-all flex items-center gap-1 cursor-pointer"
+              [ngClass]="favoriteCarbs().includes(item) ? 'bg-amber-500 text-stone-950 border-amber-400 ring-2 ring-amber-300/60 shadow-xs' : 'bg-stone-50 text-stone-700 border-stone-200 hover:border-stone-400'">
+              @if (favoriteCarbs().includes(item)) { <i class="pi pi-check text-[9px]"></i> }
+              <span>{{ item }}</span>
+            </button>
+            }
+          </div>
+        </div>
+
+        <!-- Grasas (max 10) -->
+        <div>
+          <div class="flex items-center justify-between mb-2">
+            <label class="text-[10px] font-black uppercase tracking-wider text-stone-600">Grasas saludables
+              favoritas</label>
+            <span class="text-[10px] font-black text-rose-600">{{ favoriteFats().length }} / 10</span>
+          </div>
+          <div class="flex flex-wrap gap-1.5">
+            @for (item of fatOptions; track item) {
+            <button type="button" (click)="toggleArrayItem(favoriteFats, item, 10)"
+              class="px-3 py-1.5 rounded-full border text-[11px] font-bold transition-all flex items-center gap-1 cursor-pointer"
+              [ngClass]="favoriteFats().includes(item) ? 'bg-rose-600 text-white border-rose-500 ring-2 ring-rose-400/50 shadow-xs' : 'bg-stone-50 text-stone-700 border-stone-200 hover:border-stone-400'">
+              @if (favoriteFats().includes(item)) { <i class="pi pi-check text-[9px]"></i> }
+              <span>{{ item }}</span>
+            </button>
+            }
+          </div>
+        </div>
+
+        <!-- Comidas libres -->
+        <div>
+          <label class="block text-[10px] font-black uppercase tracking-wider text-stone-600 mb-1">Comidas libres que te
+            encantan (¡no te cohíbas!)</label>
+          <textarea rows="2" [ngModel]="favoriteFreeMeals()" (ngModelChange)="favoriteFreeMeals.set($event)"
+            placeholder="Ej. Pizza, hamburguesas, sushi, helado de dulce de leche..."
+            class="w-full bg-stone-50 border border-stone-200 rounded-xl px-3.5 py-2.5 text-xs font-medium text-stone-900 focus:outline-none focus:border-kin-primary"></textarea>
+        </div>
+
+        <!-- Alimentos que no le gustan -->
+        <div>
+          <label class="block text-[10px] font-black uppercase tracking-wider text-stone-600 mb-1">Alimentos o comidas
+            que NO te gustan</label>
+          <textarea rows="2" [ngModel]="dislikedFoods()" (ngModelChange)="dislikedFoods.set($event)"
+            placeholder="Ej. Brócoli, hígado, mariscos, berenjena..."
+            class="w-full bg-stone-50 border border-stone-200 rounded-xl px-3.5 py-2.5 text-xs font-medium text-stone-900 focus:outline-none focus:border-kin-primary"></textarea>
+        </div>
+      </div>
+    </div>
+    }
+
+    <!-- ================================================================ -->
+    <!-- PASO 8: SALUD CLÍNICA, HÁBITOS Y LOGÍSTICA DE ENTRENAMIENTO      -->
+    <!-- ================================================================ -->
+    @if (currentStep() === 8) {
+    <div class="space-y-4">
+      <div>
+        <h1 class="text-xl font-black tracking-tight text-stone-900">Salud, hábitos y entrenamiento 🩺</h1>
+        <p class="text-xs text-stone-500 mt-1">Información confidencial clave para cuidar tu salud y adaptar tus
+          rutinas.</p>
+      </div>
+
+      <div class="bg-white rounded-3xl p-4 sm:p-5 border border-stone-200/80 shadow-xs space-y-5">
+        <!-- Condiciones médicas -->
+        <div>
+          <label class="block text-[10px] font-black uppercase tracking-wider text-stone-600 mb-2">Condición de salud o
+            física especial</label>
+          <div class="flex flex-wrap gap-1.5">
+            @for (c of medicalConditionOptions; track c) {
+            <button type="button" (click)="toggleArrayItem(medicalConditions, c, undefined, 'Ninguna')"
+              class="px-3 py-1.5 rounded-full border text-[11px] font-bold transition-all flex items-center gap-1 cursor-pointer"
+              [ngClass]="medicalConditions().includes(c) ? 'bg-kin-primary text-white border-kin-primary ring-2 ring-kin-primary/40 shadow-xs' : 'bg-stone-50 text-stone-700 border-stone-200 hover:border-stone-400'">
+              @if (medicalConditions().includes(c)) { <i class="pi pi-check text-[9px]"></i> }
+              <span>{{ c }}</span>
+            </button>
+            }
+          </div>
+          @if (medicalConditions().includes('Otro')) {
+          <input type="text" [ngModel]="medicalConditionsOther()" (ngModelChange)="medicalConditionsOther.set($event)"
+            placeholder="Especifica tu condición..."
+            class="mt-2 w-full bg-stone-50 border border-stone-200 rounded-xl px-3.5 py-2 text-xs text-stone-900 focus:outline-none focus:border-kin-primary" />
+          }
+        </div>
+
+        <!-- Lesiones, Alergias, Medicamentos -->
+        <div class="grid grid-cols-1 gap-3">
+          <div>
+            <label class="block text-[10px] font-black uppercase tracking-wider text-stone-600 mb-1">Lesiones
+              articulares o musculares (si aplica)</label>
+            <input type="text" [ngModel]="injuriesNotes()" (ngModelChange)="injuriesNotes.set($event)"
+              placeholder="Ej. Molestia en rodilla derecha, hernia lumbar..."
+              class="w-full bg-stone-50 border border-stone-200 rounded-xl px-3.5 py-2.5 text-xs text-stone-900 focus:outline-none focus:border-kin-primary" />
+          </div>
+          <div>
+            <label class="block text-[10px] font-black uppercase tracking-wider text-stone-600 mb-1">Alergias o
+              intolerancias alimentarias</label>
+            <input type="text" [ngModel]="allergiesIntolerances()" (ngModelChange)="allergiesIntolerances.set($event)"
+              placeholder="Ej. Lactosa, gluten, maní, ninguna..."
+              class="w-full bg-stone-50 border border-stone-200 rounded-xl px-3.5 py-2.5 text-xs text-stone-900 focus:outline-none focus:border-kin-primary" />
+          </div>
+          <div>
+            <label class="block text-[10px] font-black uppercase tracking-wider text-stone-600 mb-1">Medicamentos o
+              suplementos actuales</label>
+            <input type="text" [ngModel]="medicationsSupplements()" (ngModelChange)="medicationsSupplements.set($event)"
+              placeholder="Ej. Creatina, magnesio, levotiroxina..."
+              class="w-full bg-stone-50 border border-stone-200 rounded-xl px-3.5 py-2.5 text-xs text-stone-900 focus:outline-none focus:border-kin-primary" />
+          </div>
+        </div>
+
+        <!-- Nivel de estrés (1-10) & Sueño -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <div class="flex items-center justify-between mb-1">
+              <label class="text-[10px] font-black uppercase tracking-wider text-stone-600">Nivel de estrés</label>
+              <span class="text-xs font-black text-kin-primary">{{ stressLevel() }} / 10</span>
+            </div>
+            <input type="range" min="1" max="10" step="1" [ngModel]="stressLevel()"
+              (ngModelChange)="stressLevel.set(+$event)" class="w-full accent-emerald-600 cursor-pointer" />
+            <div class="flex justify-between text-[9px] font-bold text-stone-400">
+              <span>Muy bajo</span>
+              <span>Moderado</span>
+              <span>Muy alto</span>
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-[10px] font-black uppercase tracking-wider text-stone-600 mb-1">Horas de sueño
+              promedio</label>
+            <select [ngModel]="sleepHours()" (ngModelChange)="sleepHours.set($event)"
+              class="w-full bg-stone-50 border border-stone-200 rounded-xl px-3 py-2.5 text-xs font-bold text-stone-900 focus:outline-none focus:border-kin-primary">
+              @for (s of sleepOptions; track s) {
+              <option [value]="s">{{ s }}</option>
+              }
+            </select>
+          </div>
+        </div>
+
+        <!-- Salud digestiva -->
+        <div>
+          <label class="block text-[10px] font-black uppercase tracking-wider text-stone-600 mb-2">Salud digestiva
+            (síntomas frecuentes)</label>
+          <div class="flex flex-wrap gap-1.5">
+            @for (sym of digestiveSymptomOptions; track sym) {
+            <button type="button"
+              (click)="toggleArrayItem(digestiveSymptoms, sym, undefined, 'Ninguno (buena digestión)')"
+              class="px-3 py-1.5 rounded-full border text-[11px] font-bold transition-all flex items-center gap-1 cursor-pointer"
+              [ngClass]="digestiveSymptoms().includes(sym) ? 'bg-kin-primary text-white border-kin-primary ring-2 ring-kin-primary/40 shadow-xs' : 'bg-stone-50 text-stone-700 border-stone-200 hover:border-stone-400'">
+              @if (digestiveSymptoms().includes(sym)) { <i class="pi pi-check text-[9px]"></i> }
+              <span>{{ sym }}</span>
+            </button>
+            }
+          </div>
+        </div>
+
+        <!-- Salud femenina (solo mujeres) -->
+        @if (gender() === 'FEMALE') {
+        <div class="p-3.5 rounded-2xl bg-rose-50/70 border border-rose-200/80 space-y-2">
+          <label class="block text-[10px] font-black uppercase tracking-wider text-rose-800">
+            Salud Femenina: ¿Cómo es tu ciclo menstrual actual?
+          </label>
+          <select [ngModel]="menstrualCycleStatus()" (ngModelChange)="menstrualCycleStatus.set($event)"
+            class="w-full bg-white border border-rose-200 rounded-xl px-3 py-2.5 text-xs font-bold text-stone-900 focus:outline-none focus:border-rose-400">
+            <option value="">Selecciona una opción...</option>
+            @for (opt of menstrualCycleOptions; track opt) {
+            <option [value]="opt">{{ opt }}</option>
+            }
+          </select>
+        </div>
+        }
+
+        <!-- Agua y Alcohol -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block text-[10px] font-black uppercase tracking-wider text-stone-600 mb-1">¿Cuánta agua bebes
+              al día?</label>
+            <select [ngModel]="dailyWaterIntake()" (ngModelChange)="dailyWaterIntake.set($event)"
+              class="w-full bg-stone-50 border border-stone-200 rounded-xl px-3 py-2.5 text-xs font-bold text-stone-900 focus:outline-none focus:border-kin-primary">
+              @for (w of waterIntakeOptions; track w) {
+              <option [value]="w">{{ w }}</option>
+              }
+            </select>
+          </div>
+          <div>
+            <label class="block text-[10px] font-black uppercase tracking-wider text-stone-600 mb-1">¿Consumes alcohol
+              frecuentemente?</label>
+            <select [ngModel]="alcoholFrequency()" (ngModelChange)="alcoholFrequency.set($event)"
+              class="w-full bg-stone-50 border border-stone-200 rounded-xl px-3 py-2.5 text-xs font-bold text-stone-900 focus:outline-none focus:border-kin-primary">
+              @for (al of alcoholOptions; track al) {
+              <option [value]="al">{{ al }}</option>
+              }
+            </select>
+          </div>
+        </div>
+
+        <!-- Logística de Entrenamiento -->
+        <div class="pt-4 border-t border-stone-100 space-y-4">
+          <p class="text-xs font-black uppercase tracking-wider text-stone-800 flex items-center gap-1.5">
+            <i class="pi pi-bolt text-kin-primary"></i>
+            <span>Logística de Entrenamiento</span>
+          </p>
+
+          <div>
+            <label class="block text-[10px] font-black uppercase tracking-wider text-stone-600 mb-1.5">
+              ¿Cuántos días reales a la semana puedes entrenar fuerza?
+            </label>
+            <div class="grid grid-cols-7 gap-1.5">
+              @for (d of [1,2,3,4,5,6,7]; track d) {
+              <button type="button" (click)="trainingDaysPerWeek.set(d)"
+                class="py-2 rounded-xl border text-xs font-black transition-all cursor-pointer"
+                [ngClass]="trainingDaysPerWeek() === d ? 'bg-kin-primary text-white border-kin-primary ring-2 ring-kin-primary/40 shadow-sm' : 'bg-stone-50 text-stone-700 border-stone-200 hover:border-stone-400'">
+                {{ d }}
+              </button>
+              }
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-[10px] font-black uppercase tracking-wider text-stone-600 mb-1.5">¿Dónde
+              entrenarás?</label>
+            <div class="grid grid-cols-3 gap-2">
+              <button type="button" (click)="trainingLocation.set('GYM')"
+                class="py-2.5 rounded-xl border text-xs font-black transition-all cursor-pointer"
+                [ngClass]="trainingLocation() === 'GYM' ? 'bg-kin-primary text-white border-kin-primary ring-2 ring-kin-primary/40 shadow-sm' : 'bg-stone-50 text-stone-700 border-stone-200 hover:border-stone-400'">
+                🏋️ Gym
+              </button>
+              <button type="button" (click)="trainingLocation.set('HOME')"
+                class="py-2.5 rounded-xl border text-xs font-black transition-all cursor-pointer"
+                [ngClass]="trainingLocation() === 'HOME' ? 'bg-kin-primary text-white border-kin-primary ring-2 ring-kin-primary/40 shadow-sm' : 'bg-stone-50 text-stone-700 border-stone-200 hover:border-stone-400'">
+                🏠 Casa
+              </button>
+              <button type="button" (click)="trainingLocation.set('HYBRID')"
+                class="py-2.5 rounded-xl border text-xs font-black transition-all cursor-pointer"
+                [ngClass]="trainingLocation() === 'HYBRID' ? 'bg-kin-primary text-white border-kin-primary ring-2 ring-kin-primary/40 shadow-sm' : 'bg-stone-50 text-stone-700 border-stone-200 hover:border-stone-400'">
+                ⚡ Híbrido
+              </button>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label class="block text-[10px] font-black uppercase tracking-wider text-stone-600 mb-1">Tiempo por
+                sesión</label>
+              <select [ngModel]="trainingDurationMinutes()" (ngModelChange)="trainingDurationMinutes.set(+$event)"
+                class="w-full bg-stone-50 border border-stone-200 rounded-xl px-3 py-2.5 text-xs font-bold text-stone-900 focus:outline-none focus:border-kin-primary">
+                @for (min of trainingDurationOptions; track min) {
+                <option [value]="min">{{ min }} minutos</option>
+                }
+              </select>
+            </div>
+            <div>
+              <label class="block text-[10px] font-black uppercase tracking-wider text-stone-600 mb-1">Horario
+                preferido</label>
+              <select [ngModel]="trainingPreferredTime()" (ngModelChange)="trainingPreferredTime.set($event)"
+                class="w-full bg-stone-50 border border-stone-200 rounded-xl px-3 py-2.5 text-xs font-bold text-stone-900 focus:outline-none focus:border-kin-primary">
+                @for (t of trainingTimeOptions; track t) {
+                <option [value]="t">{{ t }}</option>
+                }
+              </select>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    }
+
+    <!-- ================================================================ -->
+    <!-- PASO 9: MEDIDAS CORPORALES Y FOTOS INICIALES (OPCIONAL)          -->
+    <!-- ================================================================ -->
+    @if (currentStep() === 9) {
+    <div class="space-y-4">
+      <div>
+        <span class="px-2.5 py-0.5 rounded-full bg-stone-200 text-stone-700 text-[10px] font-black uppercase">Paso
+          opcional</span>
+        <h1 class="text-xl font-black tracking-tight text-stone-900 mt-1">Medidas corporales iniciales</h1>
+        <p class="text-xs text-stone-500 mt-1">
+          Tu peso inicial ({{ currentWeight() }} {{ weightUnit() }}) ya se guardará automáticamente. Puedes añadir
+          medidas y fotos ahora o hacerlo más adelante desde tu Perfil.
+        </p>
+      </div>
+
+      <div class="bg-white rounded-3xl p-4 sm:p-5 border border-stone-200/80 shadow-xs space-y-4">
+        <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
+          <div>
+            <label class="block text-[10px] font-black uppercase tracking-wider text-stone-600 mb-1">Cintura
+              (cm)</label>
+            <input type="number" step="0.1" [ngModel]="cintura()" (ngModelChange)="cintura.set($event ? +$event : null)"
+              class="w-full bg-stone-50 border border-stone-200 rounded-xl px-3 py-2 text-xs font-bold text-stone-900" />
+          </div>
+          <div>
+            <label class="block text-[10px] font-black uppercase tracking-wider text-stone-600 mb-1">Cadera (cm)</label>
+            <input type="number" step="0.1" [ngModel]="cadera()" (ngModelChange)="cadera.set($event ? +$event : null)"
+              class="w-full bg-stone-50 border border-stone-200 rounded-xl px-3 py-2 text-xs font-bold text-stone-900" />
+          </div>
+          <div>
+            <label class="block text-[10px] font-black uppercase tracking-wider text-stone-600 mb-1">Pecho (cm)</label>
+            <input type="number" step="0.1" [ngModel]="pecho()" (ngModelChange)="pecho.set($event ? +$event : null)"
+              class="w-full bg-stone-50 border border-stone-200 rounded-xl px-3 py-2 text-xs font-bold text-stone-900" />
+          </div>
+          <div>
+            <label class="block text-[10px] font-black uppercase tracking-wider text-stone-600 mb-1">Bíceps (cm)</label>
+            <input type="number" step="0.1" [ngModel]="biceps()" (ngModelChange)="biceps.set($event ? +$event : null)"
+              class="w-full bg-stone-50 border border-stone-200 rounded-xl px-3 py-2 text-xs font-bold text-stone-900" />
+          </div>
+          <div>
+            <label class="block text-[10px] font-black uppercase tracking-wider text-stone-600 mb-1">Muslo (cm)</label>
+            <input type="number" step="0.1" [ngModel]="muslo()" (ngModelChange)="muslo.set($event ? +$event : null)"
+              class="w-full bg-stone-50 border border-stone-200 rounded-xl px-3 py-2 text-xs font-bold text-stone-900" />
+          </div>
+          <div>
+            <label class="block text-[10px] font-black uppercase tracking-wider text-stone-600 mb-1">% Grasa</label>
+            <input type="number" step="0.1" [ngModel]="porcentajeGrasa()"
+              (ngModelChange)="porcentajeGrasa.set($event ? +$event : null)"
+              class="w-full bg-stone-50 border border-stone-200 rounded-xl px-3 py-2 text-xs font-bold text-stone-900" />
+          </div>
+        </div>
+
+        <!-- Fotos iniciales opcionales -->
+        <div>
+          <label class="block text-[10px] font-black uppercase tracking-wider text-stone-600 mb-2">Fotos de progreso
+            inicial (privadas)</label>
+          <div class="grid grid-cols-3 gap-2.5">
+            <label
+              class="relative h-28 rounded-2xl border border-dashed border-stone-300 bg-stone-50 overflow-hidden flex flex-col items-center justify-center cursor-pointer">
+              @if (fotoFrontalUrl()) {
+              <img [src]="fotoFrontalUrl()!" alt="Frontal" class="w-full h-full object-cover" />
+              } @else {
+              <i class="pi text-stone-400"
+                [ngClass]="uploadingPhotoSlot() === 'frontal' ? 'pi-spin pi-spinner' : 'pi-camera'"></i>
+              <span class="text-[10px] font-bold text-stone-500 mt-1">Frontal</span>
+              }
+              <input type="file" accept="image/*" (change)="onProgressPhotoSelected('frontal', $event)"
+                class="hidden" />
+            </label>
+
+            <label
+              class="relative h-28 rounded-2xl border border-dashed border-stone-300 bg-stone-50 overflow-hidden flex flex-col items-center justify-center cursor-pointer">
+              @if (fotoLateralUrl()) {
+              <img [src]="fotoLateralUrl()!" alt="Lateral" class="w-full h-full object-cover" />
+              } @else {
+              <i class="pi text-stone-400"
+                [ngClass]="uploadingPhotoSlot() === 'lateral' ? 'pi-spin pi-spinner' : 'pi-camera'"></i>
+              <span class="text-[10px] font-bold text-stone-500 mt-1">Lateral</span>
+              }
+              <input type="file" accept="image/*" (change)="onProgressPhotoSelected('lateral', $event)"
+                class="hidden" />
+            </label>
+
+            <label
+              class="relative h-28 rounded-2xl border border-dashed border-stone-300 bg-stone-50 overflow-hidden flex flex-col items-center justify-center cursor-pointer">
+              @if (fotoEspaldaUrl()) {
+              <img [src]="fotoEspaldaUrl()!" alt="Espalda" class="w-full h-full object-cover" />
+              } @else {
+              <i class="pi text-stone-400"
+                [ngClass]="uploadingPhotoSlot() === 'espalda' ? 'pi-spin pi-spinner' : 'pi-camera'"></i>
+              <span class="text-[10px] font-bold text-stone-500 mt-1">Espalda</span>
+              }
+              <input type="file" accept="image/*" (change)="onProgressPhotoSelected('espalda', $event)"
+                class="hidden" />
+            </label>
+          </div>
+        </div>
+      </div>
+    </div>
+    }
+  </div>
+
+  <!-- BARRA INFERIOR FIJA DE ACCIONES -->
+  <div class="fixed bottom-0 inset-x-0 z-30 bg-white/95 backdrop-blur-md border-t border-stone-200 px-4 py-3">
+    <div class="max-w-xl mx-auto flex items-center gap-2.5">
+      @if (currentStep() < totalSteps) { <button type="button" (click)="nextStep()"
+        class="w-full py-3.5 rounded-2xl bg-kin-primary hover:opacity-95 text-white font-black text-xs uppercase tracking-wider flex items-center justify-center gap-2 shadow-md cursor-pointer">
+        <span>Continuar</span>
+        <i class="pi pi-arrow-right text-xs"></i>
+        </button>
+        } @else {
+        <button type="button" (click)="finishOnboarding(true)" [disabled]="isSubmitting()"
+          class="px-4 py-3.5 rounded-2xl bg-stone-100 hover:bg-stone-200 text-stone-700 font-bold text-xs cursor-pointer disabled:opacity-50 shrink-0">
+          Omitir
+        </button>
+        <button type="button" (click)="finishOnboarding(false)" [disabled]="isSubmitting()"
+          class="flex-1 py-3.5 rounded-2xl bg-kin-primary hover:opacity-95 text-white font-black text-xs uppercase tracking-wider flex items-center justify-center gap-2 shadow-md cursor-pointer disabled:opacity-50">
+          @if (isSubmitting()) {
+          <i class="pi pi-spin pi-spinner text-xs"></i>
+          <span>Guardando tu plan...</span>
+          } @else {
+          <i class="pi pi-check text-xs"></i>
+          <span>Guardar y entrar a AWAKIN</span>
+          }
+        </button>
+        }
+    </div>
+  </div>
+</div>

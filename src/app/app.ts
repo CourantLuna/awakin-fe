@@ -47,8 +47,8 @@ export class App {
     this.router.navigate(['/kin']);
   }
 
-  // Computed Signal: Se actualiza de forma automática y óptima cuando cambia la sesión de Supabase
-  isLoggedIn = computed(() => !!this.authService.currentSession());
+  // Computed Signal: Muestra navegación solo cuando está activo y completó el onboarding
+  isLoggedIn = computed(() => this.authService.isAuthenticated() && this.authService.hasCompletedOnboarding());
 
   // ACCIÓN: El Bottom Bar llama a esta función
   selectModule(moduleName: string) {

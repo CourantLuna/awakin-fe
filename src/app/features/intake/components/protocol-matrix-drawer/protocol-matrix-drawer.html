@@ -31,10 +31,12 @@
           }})</span>
       </h3>
 
+      @if (isInstructor()) {
       <button (click)="addNewTemplate()" [disabled]="!canAddMore()"
         class="flex items-center gap-1 text-[10px] font-bold text-awakin-sun bg-awakin-sun/10 px-2.5 py-1.5 rounded-lg hover:bg-awakin-sun/20 transition-colors active:scale-95 disabled:opacity-50 disabled:active:scale-100 disabled:pointer-events-none">
         <i class="pi pi-plus"></i> CREAR NUEVO
       </button>
+      }
     </div>
 
     @if (openDropdownKey() !== null) {
@@ -589,14 +591,7 @@
               }
             </div>
 
-            <!-- Botón de Acción en la esquina superior derecha (Duplicar) -->
-            <div class="absolute top-2.5 right-2.5 z-10 flex items-center gap-1">
-              <button type="button" (click)="duplicateMenu(menu, $event)"
-                class="w-7 h-7 rounded-full bg-black/50 hover:bg-black/75 text-white backdrop-blur-md flex items-center justify-center transition-all cursor-pointer shadow-md text-xs active:scale-95"
-                title="Duplicar menú">
-                <i class="pi pi-copy text-[11px]"></i>
-              </button>
-            </div>
+
           </div>
 
           <!-- CUERPO DEL CARD -->

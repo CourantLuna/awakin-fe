@@ -1,64 +1,41 @@
-<p-toolbar
-  class="!bg-transparent !border-none !border-0 !p-0 mb-1.5"
-  styleClass="!bg-transparent !border-none !border-0 !p-0 mb-1.5"
-  [style]="{ border: 'none', background: 'transparent', padding: '0' }"
->
+<p-toolbar class="!bg-transparent !border-none !border-0 !p-0 mb-1.5"
+  styleClass="!bg-transparent !border-none !border-0 !py-0 !px-2 !pb-1 mb-1"
+  [style]="{ border: 'none', background: 'transparent', padding: '0' }">
   <ng-template pTemplate="start">
-    <button
-      type="button"
-      (click)="themeService.toggleTheme()"
+    <button type="button" (click)="themeService.toggleTheme()"
       class="w-10 h-10 flex items-center justify-center rounded-full hover:bg-stone-100 active:scale-90 transition-all text-stone-700 cursor-pointer"
       [title]="themeService.isDarkMode() ? 'Cambiar a Modo Día' : 'Cambiar a Modo Noche'"
-      [attr.aria-label]="themeService.isDarkMode() ? 'Cambiar a Modo Día' : 'Cambiar a Modo Noche'"
-    >
-      <i
-        class="pi text-lg transition-transform duration-300"
-        [ngClass]="themeService.isDarkMode() ? 'pi-sun text-amber-400' : 'pi-moon text-stone-700'"
-      ></i>
+      [attr.aria-label]="themeService.isDarkMode() ? 'Cambiar a Modo Día' : 'Cambiar a Modo Noche'">
+      <i class="pi text-lg transition-transform duration-300"
+        [ngClass]="themeService.isDarkMode() ? 'pi-sun text-amber-400' : 'pi-moon text-stone-700'"></i>
     </button>
   </ng-template>
 
   <ng-template pTemplate="center">
     <div class="flex items-center gap-1">
-      <button
-        (click)="onNavigate.emit(-1)"
-        class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-stone-100 active:scale-90 transition-all text-stone-400 hover:text-black"
-      >
+      <button (click)="onNavigate.emit(-1)"
+        class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-stone-100 active:scale-90 transition-all text-stone-400 hover:text-black">
         <i class="pi pi-chevron-left text-xs"></i>
       </button>
 
-      <div
-        class="flex items-center rounded-full border border-stone-200 bg-stone-50 shadow-sm transition-all"
-      >
-        <button
-          (click)="onTodayClick.emit()"
-          class="flex items-center gap-1 pl-5 pe-2 py-2 active:bg-stone-100 transition-colors group border-r border-stone-200"
-        >
-          <i
-            class="pi pi-calendar text-sm text-kin-primary group-hover:rotate-12 transition-transform"
-          ></i>
-          <span
-            class="text-sm font-bold tracking-wide capitalize text-gray-800 min-w-[60px] text-center"
-          >
+      <div class="flex items-center rounded-full border border-stone-200 bg-stone-50 shadow-sm transition-all">
+        <button (click)="onTodayClick.emit()"
+          class="flex items-center gap-1 pl-5 pe-2 py-2 active:bg-stone-100 transition-colors group border-r border-stone-200">
+          <i class="pi pi-calendar text-sm text-kin-primary group-hover:rotate-12 transition-transform"></i>
+          <span class="text-sm font-bold tracking-wide capitalize text-gray-800 min-w-[60px] text-center">
             {{ currentLabel() }}
           </span>
         </button>
 
-        <button
-          (click)="onToggleView.emit()"
-          class="px-4 py-2 hover:bg-stone-100 active:bg-stone-200 transition-colors flex items-center justify-center group"
-        >
-          <i
-            class="pi pi-chevron-down inline-block transform transition-all duration-300 text-[10px] text-stone-400 group-hover:text-kin-primary"
-            [ngClass]="{ 'rotate-180': isMonthView() }"
-          ></i>
+        <button (click)="onToggleView.emit()"
+          class="px-4 py-2 hover:bg-stone-100 active:bg-stone-200 transition-colors flex items-center justify-center group">
+          <i class="pi pi-chevron-down inline-block transform transition-all duration-300 text-[10px] text-stone-400 group-hover:text-kin-primary"
+            [ngClass]="{ 'rotate-180': isMonthView() }"></i>
         </button>
       </div>
 
-      <button
-        (click)="onNavigate.emit(1)"
-        class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-stone-100 active:scale-90 transition-all text-stone-400 hover:text-black"
-      >
+      <button (click)="onNavigate.emit(1)"
+        class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-stone-100 active:scale-90 transition-all text-stone-400 hover:text-black">
         <i class="pi pi-chevron-right text-xs"></i>
       </button>
     </div>
@@ -66,14 +43,8 @@
 
   <ng-template pTemplate="end">
     <div class="flex items-center gap-1.5 pr-2">
-      <i
-        class="pi pi-bolt text-xl"
-        [ngClass]="streak() > 0 ? 'text-kin-primary animate-pulse' : 'text-stone-300'"
-      ></i>
-      <span
-        class="text-xl font-bold font-mono"
-        [ngClass]="streak() > 0 ? 'text-black' : 'text-stone-400'"
-      >
+      <i class="pi pi-bolt text-xl" [ngClass]="streak() > 0 ? 'text-kin-primary animate-pulse' : 'text-stone-300'"></i>
+      <span class="text-xl font-bold font-mono" [ngClass]="streak() > 0 ? 'text-black' : 'text-stone-400'">
         {{ streak() }}
       </span>
     </div>

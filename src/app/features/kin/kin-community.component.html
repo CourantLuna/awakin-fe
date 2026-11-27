@@ -22,10 +22,10 @@
     <button type="button" (click)="themeService.selectActiveKin(k.id)"
       class="px-3 py-1.5 rounded-2xl border text-xs font-black flex items-center gap-2 shrink-0 transition-all cursor-pointer shadow-2xs"
       [ngClass]="activeKin()?.id === k.id
-            ? 'bg-kin-primary text-white border-kin-primary'
+            ? 'bg-kin-primary/20 border-kin-primary text-kin-primary'
             : 'bg-white text-stone-700 border-stone-200 hover:border-stone-300'">
       @if (k.team_logo_url) {
-      <img [src]="k.team_logo_url" [alt]="k.team_name" class="w-5 h-5 rounded-lg object-cover shrink-0" />
+      <img [src]="k.team_logo_url" [alt]="k.team_name" class="w-5 h-5 object-contain shrink-0" />
       } @else {
       <span class="w-5 h-5 rounded-lg bg-black/10 flex items-center justify-center text-[10px] font-black shrink-0">
         {{ (k.team_name || 'K').slice(0, 1).toUpperCase() }}
@@ -60,29 +60,7 @@
         </div>
         }
 
-        <div class="min-w-0">
-          <div class="flex items-center gap-2">
-            <h1 class="text-lg font-black uppercase tracking-tight truncate"
-              [ngClass]="kinSummary()?.header_image_url ? 'text-white drop-shadow-xs' : 'text-stone-900'">
-              {{ kinSummary()?.team_name || 'Mi Kin' }}
-            </h1>
-            <span class="px-2 py-0.5 rounded-full text-[9px] font-black uppercase shrink-0"
-              [ngClass]="kinSummary()?.header_image_url ? 'bg-white/20 text-white border border-white/25 backdrop-blur-xs' : 'bg-kin-primary/15 text-kin-primary'">
-              {{ kinService.overview()?.members_count || 0 }} miembros
-            </span>
-          </div>
-          @if (kinSummary()?.manifesto) {
-          <p class="text-xs mt-1 line-clamp-2 leading-relaxed"
-            [ngClass]="kinSummary()?.header_image_url ? 'text-stone-200' : 'text-stone-500'">
-            "{{ kinSummary()!.manifesto }}"
-          </p>
-          } @else {
-          <p class="text-[11px] mt-0.5"
-            [ngClass]="kinSummary()?.header_image_url ? 'text-stone-300' : 'text-stone-400'">
-            Comunidad privada de entrenamiento y disciplina
-          </p>
-          }
-        </div>
+
       </div>
 
       <!-- Acciones rápidas: WhatsApp + Personalizar (Coach) + Refrescar -->
@@ -102,6 +80,19 @@
         }
 
         @if (canEditKinBranding()) {
+        <button type="button" (click)="openInvitesModal(kinJoinRequests().length > 0 ? 'requests' : 'links')"
+          title="Invitaciones y Solicitudes del Kin"
+          class="relative w-9 h-9 rounded-2xl flex items-center justify-center transition-colors cursor-pointer"
+          [ngClass]="kinSummary()?.header_image_url ? 'bg-white/20 hover:bg-white/30 text-white border border-white/20' : 'bg-stone-100 hover:bg-stone-200 text-stone-700'">
+          <i class="pi pi-user-plus text-sm"></i>
+          @if (kinJoinRequests().length > 0) {
+          <span
+            class="absolute -top-1 -right-1 min-w-[16px] h-4 px-1 rounded-full bg-awakin-sun text-white text-[9px] font-black flex items-center justify-center shadow-sm">
+            {{ kinJoinRequests().length }}
+          </span>
+          }
+        </button>
+
         <button type="button" (click)="openBrandingModal()" title="Personalizar imágenes del Kin"
           class="w-9 h-9 rounded-2xl flex items-center justify-center transition-colors cursor-pointer"
           [ngClass]="kinSummary()?.header_image_url ? 'bg-white/20 hover:bg-white/30 text-white border border-white/20' : 'bg-stone-100 hover:bg-stone-200 text-stone-700'">
@@ -114,9 +105,40 @@
           [ngClass]="kinSummary()?.header_image_url ? 'bg-white/20 hover:bg-white/30 text-white border border-white/20' : 'bg-stone-100 hover:bg-stone-200 text-stone-600'">
           <i class="pi pi-refresh text-sm" [class.animate-spin]="kinService.isLoading()"></i>
         </button>
+
+        @if (leaveKinScope()) {
+        <button type="button" (click)="openLeaveKinModal()"
+          [title]="leaveKinScope() === 'instructor' ? 'Salir del Staff de este Kin' : 'Salir de este Kin'"
+          class="w-9 h-9 rounded-2xl flex items-center justify-center transition-colors cursor-pointer"
+          [ngClass]="kinSummary()?.header_image_url ? 'bg-rose-500/80 hover:bg-rose-600 text-white border border-white/20' : 'bg-rose-50 hover:bg-rose-100 text-rose-600'">
+          <i class="pi pi-sign-out text-sm"></i>
+        </button>
+        }
       </div>
     </div>
+    <div class="">
+      <div class="flex items-center gap-2">
+        <h1 class="text-lg font-black uppercase tracking-tight "
+          [ngClass]="kinSummary()?.header_image_url ? 'text-white drop-shadow-xs' : 'text-stone-900'">
+          {{ kinSummary()?.team_name || 'Mi Kin' }}
+        </h1>
 
+      </div>
+      @if (kinSummary()?.manifesto) {
+      <p class="text-[11px] mt-0.5 line-clamp-2 leading-relaxed"
+        [ngClass]="kinSummary()?.header_image_url ? 'text-stone-200' : 'text-stone-500'">
+        "{{ kinSummary()!.manifesto }}"
+      </p>
+      } @else {
+      <p class="text-[11px] mt-0.5" [ngClass]="kinSummary()?.header_image_url ? 'text-stone-300' : 'text-stone-400'">
+        Comunidad privada de entrenamiento y disciplina
+      </p>
+      }
+      <span class="px-2 py-0.5 rounded-full text-[9px] font-black uppercase shrink-0"
+        [ngClass]="kinSummary()?.header_image_url ? 'bg-white/20 text-white border border-white/25 backdrop-blur-xs' : 'bg-kin-primary/15 text-kin-primary'">
+        {{ kinService.overview()?.members_count || 0 }} miembros
+      </span>
+    </div>
     <!-- Tira rápida de Miembros & Coaches -->
     @if ((kinService.overview()?.members || []).length > 0) {
     <div class="relative z-10 mt-4 pt-3.5 border-t flex items-center gap-2.5 overflow-x-auto no-scrollbar"
@@ -188,7 +210,7 @@
 
   <!-- TAB 1: MURO KIN (Posts + Reportes de Entrenamiento) -->
   @if (activeTab() === 'feed') {
-  <div class="space-y-4">
+  <div class="space-y-4 flex flex-col gap-3">
     @for (item of muroItems(); track item.id) {
     @if (item.item_type === 'workout' && item.workout_log) {
     <app-workout-log-card [log]="item.workout_log" [athlete]="item.author_profile || null"
@@ -494,11 +516,11 @@
 
     <!-- VISTA MENSUAL INTERACTIVA (Con fondo agenda_bg_url transparente) -->
     @if (agendaViewMode() === 'month') {
-    <div class="bg-white rounded-2xl border border-stone-200 p-2.5 shadow-xs relative overflow-hidden">
+    <div class=" rounded-2xl  p-2.5 shadow-xs relative overflow-hidden">
       @if (kinSummary()?.agenda_bg_url) {
       <img [src]="kinSummary()!.agenda_bg_url!" alt="Fondo Calendario Kin"
-        class="absolute inset-0 w-full h-full object-cover pointer-events-none select-none opacity-80" />
-      <div class="absolute inset-0 bg-white/65 backdrop-blur-[1px] pointer-events-none"></div>
+        class="absolute inset-0 w-full h-full object-cover pointer-events-none select-none opacity-30" />
+      <div class="absolute inset-0  backdrop-blur-[1px] pointer-events-none"></div>
       }
 
       <div class="relative z-10">
@@ -819,7 +841,7 @@
       <div class="px-5 py-3.5 border-b border-stone-100 flex items-center justify-between shrink-0">
         <div>
           <h3 class="text-sm font-black text-stone-900 uppercase tracking-tight">Personalizar Imágenes del Kin</h3>
-          <p class="text-[11px] text-stone-400">Pega una URL o sube una foto para cada sección</p>
+          <p class="text-[11px] text-stone-400">Toca cada vista previa para cambiar su imagen</p>
         </div>
         <button type="button" (click)="isBrandingModalOpen.set(false)"
           class="w-8 h-8 rounded-full bg-stone-100 hover:bg-stone-200 text-stone-600 flex items-center justify-center cursor-pointer">
@@ -834,63 +856,139 @@
         </div>
         }
 
-        <!-- 1. Kin Header -->
-        <div class="space-y-1.5">
-          <label class="text-[10px] font-black uppercase tracking-wider text-stone-600">1. Fondo Kin Header</label>
-          <div class="flex gap-1.5">
-            <input type="url" [ngModel]="brandingHeaderUrl()" (ngModelChange)="brandingHeaderUrl.set($event)"
-              placeholder="https://..."
-              class="flex-1 bg-stone-50 border border-stone-200 rounded-xl px-3 py-2 text-xs text-stone-800 focus:outline-none focus:border-kin-primary" />
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <!-- 1. Kin Header -->
+          <div class="space-y-1.5">
+            <div class="flex items-center justify-between">
+              <label class="text-[10px] font-black uppercase tracking-wider text-stone-600">1. Fondo Kin Header</label>
+              @if (brandingHeaderUrl()) {
+              <button type="button" (click)="brandingHeaderUrl.set('')"
+                class="text-[10px] font-bold text-stone-400 hover:text-red-500 cursor-pointer" title="Quitar imagen">
+                <i class="pi pi-trash text-[10px]"></i>
+              </button>
+              }
+            </div>
             <label
-              class="px-3 py-2 rounded-xl bg-stone-900 hover:bg-stone-800 text-white text-[10px] font-black uppercase flex items-center gap-1 cursor-pointer shrink-0">
-              <i class="pi" [ngClass]="uploadingBrandingSlot() === 'header' ? 'pi-spin pi-spinner' : 'pi-upload'"></i>
+              class="relative block h-28 w-full rounded-2xl overflow-hidden border border-stone-200 bg-stone-100 group cursor-pointer shadow-xs">
+              @if (brandingHeaderUrl()) {
+              <img [src]="brandingHeaderUrl()" alt="Fondo Kin Header" class="w-full h-full object-cover" />
+              } @else {
+              <div class="w-full h-full flex flex-col items-center justify-center text-stone-400 gap-1">
+                <i class="pi pi-image text-xl"></i>
+                <span class="text-[10px] font-bold">Sin imagen</span>
+              </div>
+              }
+              <div
+                class="absolute inset-0 bg-black/45 group-hover:bg-black/60 transition-colors flex flex-col items-center justify-center text-white gap-1">
+                <span
+                  class="px-3 py-1.5 rounded-full bg-black/65 backdrop-blur-xs border border-white/25 text-[10px] font-black uppercase tracking-wider flex items-center gap-1.5">
+                  <i class="pi text-[11px]"
+                    [ngClass]="uploadingBrandingSlot() === 'header' ? 'pi-spin pi-spinner' : 'pi-camera'"></i>
+                  <span>{{ uploadingBrandingSlot() === 'header' ? 'Subiendo...' : 'Cambiar' }}</span>
+                </span>
+              </div>
               <input type="file" accept="image/*" (change)="onBrandingFileSelected('header', $event)" class="hidden" />
             </label>
           </div>
-        </div>
 
-        <!-- 2. Kin Comidas Banner -->
-        <div class="space-y-1.5">
-          <label class="text-[10px] font-black uppercase tracking-wider text-stone-600">2. Banner Kin Comidas</label>
-          <div class="flex gap-1.5">
-            <input type="url" [ngModel]="brandingMealsBannerUrl()" (ngModelChange)="brandingMealsBannerUrl.set($event)"
-              placeholder="https://..."
-              class="flex-1 bg-stone-50 border border-stone-200 rounded-xl px-3 py-2 text-xs text-stone-800 focus:outline-none focus:border-kin-primary" />
+          <!-- 2. Kin Comidas Banner -->
+          <div class="space-y-1.5">
+            <div class="flex items-center justify-between">
+              <label class="text-[10px] font-black uppercase tracking-wider text-stone-600">2. Banner Kin Comidas</label>
+              @if (brandingMealsBannerUrl()) {
+              <button type="button" (click)="brandingMealsBannerUrl.set('')"
+                class="text-[10px] font-bold text-stone-400 hover:text-red-500 cursor-pointer" title="Quitar imagen">
+                <i class="pi pi-trash text-[10px]"></i>
+              </button>
+              }
+            </div>
             <label
-              class="px-3 py-2 rounded-xl bg-stone-900 hover:bg-stone-800 text-white text-[10px] font-black uppercase flex items-center gap-1 cursor-pointer shrink-0">
-              <i class="pi" [ngClass]="uploadingBrandingSlot() === 'meals' ? 'pi-spin pi-spinner' : 'pi-upload'"></i>
+              class="relative block h-28 w-full rounded-2xl overflow-hidden border border-stone-200 bg-stone-100 group cursor-pointer shadow-xs">
+              @if (brandingMealsBannerUrl()) {
+              <img [src]="brandingMealsBannerUrl()" alt="Banner Kin Comidas" class="w-full h-full object-cover" />
+              } @else {
+              <div class="w-full h-full flex flex-col items-center justify-center text-stone-400 gap-1">
+                <i class="pi pi-image text-xl"></i>
+                <span class="text-[10px] font-bold">Sin imagen</span>
+              </div>
+              }
+              <div
+                class="absolute inset-0 bg-black/45 group-hover:bg-black/60 transition-colors flex flex-col items-center justify-center text-white gap-1">
+                <span
+                  class="px-3 py-1.5 rounded-full bg-black/65 backdrop-blur-xs border border-white/25 text-[10px] font-black uppercase tracking-wider flex items-center gap-1.5">
+                  <i class="pi text-[11px]"
+                    [ngClass]="uploadingBrandingSlot() === 'meals' ? 'pi-spin pi-spinner' : 'pi-camera'"></i>
+                  <span>{{ uploadingBrandingSlot() === 'meals' ? 'Subiendo...' : 'Cambiar' }}</span>
+                </span>
+              </div>
               <input type="file" accept="image/*" (change)="onBrandingFileSelected('meals', $event)" class="hidden" />
             </label>
           </div>
-        </div>
 
-        <!-- 3. Kin Ranking Background -->
-        <div class="space-y-1.5">
-          <label class="text-[10px] font-black uppercase tracking-wider text-stone-600">3. Fondo Kin Ranking /
-            Podio</label>
-          <div class="flex gap-1.5">
-            <input type="url" [ngModel]="brandingRankingBgUrl()" (ngModelChange)="brandingRankingBgUrl.set($event)"
-              placeholder="https://..."
-              class="flex-1 bg-stone-50 border border-stone-200 rounded-xl px-3 py-2 text-xs text-stone-800 focus:outline-none focus:border-kin-primary" />
+          <!-- 3. Kin Ranking Background -->
+          <div class="space-y-1.5">
+            <div class="flex items-center justify-between">
+              <label class="text-[10px] font-black uppercase tracking-wider text-stone-600">3. Fondo Ranking / Podio</label>
+              @if (brandingRankingBgUrl()) {
+              <button type="button" (click)="brandingRankingBgUrl.set('')"
+                class="text-[10px] font-bold text-stone-400 hover:text-red-500 cursor-pointer" title="Quitar imagen">
+                <i class="pi pi-trash text-[10px]"></i>
+              </button>
+              }
+            </div>
             <label
-              class="px-3 py-2 rounded-xl bg-stone-900 hover:bg-stone-800 text-white text-[10px] font-black uppercase flex items-center gap-1 cursor-pointer shrink-0">
-              <i class="pi" [ngClass]="uploadingBrandingSlot() === 'ranking' ? 'pi-spin pi-spinner' : 'pi-upload'"></i>
+              class="relative block h-28 w-full rounded-2xl overflow-hidden border border-stone-200 bg-stone-100 group cursor-pointer shadow-xs">
+              @if (brandingRankingBgUrl()) {
+              <img [src]="brandingRankingBgUrl()" alt="Fondo Ranking Podio" class="w-full h-full object-cover" />
+              } @else {
+              <div class="w-full h-full flex flex-col items-center justify-center text-stone-400 gap-1">
+                <i class="pi pi-image text-xl"></i>
+                <span class="text-[10px] font-bold">Sin imagen</span>
+              </div>
+              }
+              <div
+                class="absolute inset-0 bg-black/45 group-hover:bg-black/60 transition-colors flex flex-col items-center justify-center text-white gap-1">
+                <span
+                  class="px-3 py-1.5 rounded-full bg-black/65 backdrop-blur-xs border border-white/25 text-[10px] font-black uppercase tracking-wider flex items-center gap-1.5">
+                  <i class="pi text-[11px]"
+                    [ngClass]="uploadingBrandingSlot() === 'ranking' ? 'pi-spin pi-spinner' : 'pi-camera'"></i>
+                  <span>{{ uploadingBrandingSlot() === 'ranking' ? 'Subiendo...' : 'Cambiar' }}</span>
+                </span>
+              </div>
               <input type="file" accept="image/*" (change)="onBrandingFileSelected('ranking', $event)" class="hidden" />
             </label>
           </div>
-        </div>
 
-        <!-- 4. Kin Agenda Background -->
-        <div class="space-y-1.5">
-          <label class="text-[10px] font-black uppercase tracking-wider text-stone-600">4. Fondo Calendario Kin
-            Agenda</label>
-          <div class="flex gap-1.5">
-            <input type="url" [ngModel]="brandingAgendaBgUrl()" (ngModelChange)="brandingAgendaBgUrl.set($event)"
-              placeholder="https://..."
-              class="flex-1 bg-stone-50 border border-stone-200 rounded-xl px-3 py-2 text-xs text-stone-800 focus:outline-none focus:border-kin-primary" />
+          <!-- 4. Kin Agenda Background -->
+          <div class="space-y-1.5">
+            <div class="flex items-center justify-between">
+              <label class="text-[10px] font-black uppercase tracking-wider text-stone-600">4. Fondo Kin Agenda</label>
+              @if (brandingAgendaBgUrl()) {
+              <button type="button" (click)="brandingAgendaBgUrl.set('')"
+                class="text-[10px] font-bold text-stone-400 hover:text-red-500 cursor-pointer" title="Quitar imagen">
+                <i class="pi pi-trash text-[10px]"></i>
+              </button>
+              }
+            </div>
             <label
-              class="px-3 py-2 rounded-xl bg-stone-900 hover:bg-stone-800 text-white text-[10px] font-black uppercase flex items-center gap-1 cursor-pointer shrink-0">
-              <i class="pi" [ngClass]="uploadingBrandingSlot() === 'agenda' ? 'pi-spin pi-spinner' : 'pi-upload'"></i>
+              class="relative block h-28 w-full rounded-2xl overflow-hidden border border-stone-200 bg-stone-100 group cursor-pointer shadow-xs">
+              @if (brandingAgendaBgUrl()) {
+              <img [src]="brandingAgendaBgUrl()" alt="Fondo Kin Agenda" class="w-full h-full object-cover" />
+              } @else {
+              <div class="w-full h-full flex flex-col items-center justify-center text-stone-400 gap-1">
+                <i class="pi pi-image text-xl"></i>
+                <span class="text-[10px] font-bold">Sin imagen</span>
+              </div>
+              }
+              <div
+                class="absolute inset-0 bg-black/45 group-hover:bg-black/60 transition-colors flex flex-col items-center justify-center text-white gap-1">
+                <span
+                  class="px-3 py-1.5 rounded-full bg-black/65 backdrop-blur-xs border border-white/25 text-[10px] font-black uppercase tracking-wider flex items-center gap-1.5">
+                  <i class="pi text-[11px]"
+                    [ngClass]="uploadingBrandingSlot() === 'agenda' ? 'pi-spin pi-spinner' : 'pi-camera'"></i>
+                  <span>{{ uploadingBrandingSlot() === 'agenda' ? 'Subiendo...' : 'Cambiar' }}</span>
+                </span>
+              </div>
               <input type="file" accept="image/*" (change)="onBrandingFileSelected('agenda', $event)" class="hidden" />
             </label>
           </div>
@@ -911,6 +1009,374 @@
           <i class="pi pi-check text-xs"></i>
           <span>Guardar Cambios</span>
           }
+        </button>
+      </div>
+    </div>
+  </div>
+  }
+
+  <!-- ================================================================ -->
+  <!-- MODAL: INVITACIONES PRIVADAS Y SOLICITUDES DE ACCESO (COACH)     -->
+  <!-- ================================================================ -->
+  @if (isInvitesModalOpen()) {
+  <div
+    class="fixed inset-0 z-[105] bg-black/65 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4"
+    (click)="isInvitesModalOpen.set(false)">
+    <div
+      class="bg-white w-full sm:max-w-lg rounded-t-3xl sm:rounded-3xl shadow-2xl border border-stone-100 overflow-hidden max-h-[90vh] flex flex-col"
+      (click)="$event.stopPropagation()">
+      <!-- Header -->
+      <div class="px-5 py-4 border-b border-stone-100 flex items-center justify-between gap-3 shrink-0">
+        <div class="flex items-center gap-2.5">
+          <div class="w-9 h-9 rounded-2xl bg-kin-primary/10 text-kin-primary flex items-center justify-center">
+            <i class="pi pi-user-plus text-sm"></i>
+          </div>
+          <div>
+            <h3 class="text-sm font-black uppercase tracking-tight text-stone-900">Invitaciones del Kin</h3>
+            <p class="text-[11px] text-stone-500">Genera enlaces privados y aprueba nuevos atletas</p>
+          </div>
+        </div>
+        <button type="button" (click)="isInvitesModalOpen.set(false)"
+          class="w-8 h-8 rounded-full bg-stone-100 hover:bg-stone-200 text-stone-600 flex items-center justify-center cursor-pointer">
+          <i class="pi pi-times text-xs"></i>
+        </button>
+      </div>
+
+      <!-- Tabs -->
+      <div class="px-5 pt-3 pb-2 bg-stone-50/70 border-b border-stone-100 flex gap-2 shrink-0">
+        <button type="button" (click)="invitesModalTab.set('links')"
+          class="flex-1 py-2 px-3 rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+          [ngClass]="invitesModalTab() === 'links' ? 'bg-stone-900 text-white shadow-sm' : 'bg-white text-stone-600 border border-stone-200 hover:bg-stone-100'">
+          <i class="pi pi-link text-[11px]"></i>
+          <span>Enlaces ({{ kinInvites().length }})</span>
+        </button>
+        <button type="button" (click)="invitesModalTab.set('requests')"
+          class="flex-1 py-2 px-3 rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+          [ngClass]="invitesModalTab() === 'requests' ? 'bg-stone-900 text-white shadow-sm' : 'bg-white text-stone-600 border border-stone-200 hover:bg-stone-100'">
+          <i class="pi pi-inbox text-[11px]"></i>
+          <span>Solicitudes</span>
+          @if (kinJoinRequests().length > 0) {
+          <span class="px-1.5 py-0.5 rounded-full bg-amber-400 text-stone-950 text-[10px] font-black leading-none">
+            {{ kinJoinRequests().length }}
+          </span>
+          }
+        </button>
+      </div>
+
+      <!-- Body -->
+      <div class="p-4 sm:p-5 overflow-y-auto space-y-4 flex-1">
+        @if (invitesError()) {
+        <div
+          class="p-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs font-semibold flex items-center gap-2">
+          <i class="pi pi-exclamation-triangle text-xs shrink-0"></i>
+          <span>{{ invitesError() }}</span>
+        </div>
+        }
+
+        <!-- TAB 1: ENLACES -->
+        @if (invitesModalTab() === 'links') {
+        <!-- Form crear nuevo enlace -->
+        <div class="p-4 rounded-2xl bg-stone-50 border border-stone-200/80 space-y-3">
+          <div class="flex items-center justify-between">
+            <span class="text-[11px] font-black uppercase tracking-wider text-stone-700">Crear enlace privado</span>
+            <span class="px-2 py-0.5 rounded-full text-[10px] font-black"
+              [ngClass]="kinInvites().length >= 5 ? 'bg-rose-100 text-rose-700' : 'bg-stone-200/80 text-stone-600'">
+              {{ kinInvites().length }} / 5 enlaces
+            </span>
+          </div>
+
+          <input type="text" [ngModel]="newInviteLabel()" (ngModelChange)="newInviteLabel.set($event)"
+            placeholder="Etiqueta opcional (ej: Reto Junio, Nuevo cliente VIP...)"
+            class="w-full bg-white border border-stone-200 rounded-xl px-3 py-2 text-xs text-stone-800 placeholder:text-stone-400 focus:outline-none focus:border-kin-primary" />
+
+          <div class="grid grid-cols-2 gap-2.5">
+            <div>
+              <label class="block text-[10px] font-bold uppercase tracking-wider text-stone-500 mb-1">Caducidad</label>
+              <select [ngModel]="newInviteExpiresHours()"
+                (ngModelChange)="newInviteExpiresHours.set($event === 'null' ? null : +$event)"
+                class="w-full bg-white border border-stone-200 rounded-xl px-2.5 py-2 text-xs text-stone-800 focus:outline-none focus:border-kin-primary">
+                <option [ngValue]="24">24 horas</option>
+                <option [ngValue]="72">3 días</option>
+                <option [ngValue]="168">7 días</option>
+                <option [ngValue]="720">30 días</option>
+                <option [ngValue]="null">Sin caducidad</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-[10px] font-bold uppercase tracking-wider text-stone-500 mb-1">Límite de
+                usos</label>
+              <select [ngModel]="newInviteMaxUses()"
+                (ngModelChange)="newInviteMaxUses.set($event === 'null' ? null : +$event)"
+                class="w-full bg-white border border-stone-200 rounded-xl px-2.5 py-2 text-xs text-stone-800 focus:outline-none focus:border-kin-primary">
+                <option [ngValue]="1">1 uso (individual)</option>
+                <option [ngValue]="5">5 usos</option>
+                <option [ngValue]="10">10 usos</option>
+                <option [ngValue]="50">50 usos</option>
+                <option [ngValue]="null">Ilimitado</option>
+              </select>
+            </div>
+          </div>
+
+          <label class="flex items-start gap-2.5 pt-1 cursor-pointer select-none">
+            <input type="checkbox" [ngModel]="newInviteRequiresApproval()"
+              (ngModelChange)="newInviteRequiresApproval.set($event)"
+              class="mt-0.5 rounded border-stone-300 text-kin-primary focus:ring-kin-primary" />
+            <span class="text-[11px] text-stone-600 leading-snug">
+              <strong class="text-stone-800">Requiere mi aprobación</strong> antes de activar al atleta (recomendado
+              para grupos privados).
+            </span>
+          </label>
+
+          <button type="button" (click)="createNewInviteLink()" [disabled]="isCreatingInvite() || kinInvites().length >= 5"
+            class="w-full py-2.5 rounded-xl bg-kin-primary hover:opacity-95 text-white font-black text-xs uppercase tracking-wider flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed shadow-sm">
+            @if (isCreatingInvite()) {
+            <i class="pi pi-spin pi-spinner text-xs"></i>
+            <span>Generando enlace...</span>
+            } @else if (kinInvites().length >= 5) {
+            <i class="pi pi-lock text-xs"></i>
+            <span>Límite de 5 enlaces alcanzado</span>
+            } @else {
+            <i class="pi pi-plus-circle text-xs"></i>
+            <span>Generar enlace de invitación</span>
+            }
+          </button>
+          @if (kinInvites().length >= 5) {
+          <p class="text-[10px] text-rose-600 font-semibold text-center">
+            Elimina alguno de tus enlaces actuales para generar uno nuevo.
+          </p>
+          }
+        </div>
+
+        <!-- Lista de enlaces -->
+        <div class="space-y-2.5">
+          <div class="flex items-center justify-between">
+            <span class="text-[10px] font-black uppercase tracking-wider text-stone-400">Enlaces generados</span>
+            <button type="button" (click)="refreshInvitesData()"
+              class="text-[11px] font-bold text-stone-500 hover:text-stone-800 flex items-center gap-1 cursor-pointer">
+              <i class="pi pi-refresh text-[10px]" [ngClass]="{'pi-spin': isLoadingInvites()}"></i>
+              <span>Actualizar</span>
+            </button>
+          </div>
+
+          @if (isLoadingInvites() && kinInvites().length === 0) {
+          <div class="py-8 text-center text-stone-400 text-xs">
+            <i class="pi pi-spin pi-spinner text-lg mb-2 block"></i>
+            Cargando enlaces...
+          </div>
+          } @else if (kinInvites().length === 0) {
+          <div class="py-8 px-4 text-center rounded-2xl border border-dashed border-stone-200 text-stone-400 text-xs">
+            Aún no has creado ningún enlace privado. Genera uno arriba y compártelo por WhatsApp con tus atletas.
+          </div>
+          } @else {
+          @for (inv of kinInvites(); track inv.id) {
+          <div class="p-3.5 rounded-2xl border transition-all"
+            [ngClass]="inv.is_active ? 'bg-white border-stone-200 shadow-xs' : 'bg-stone-50 border-stone-200/60 opacity-70'">
+            <div class="flex items-start justify-between gap-2 mb-2">
+              <div class="min-w-0">
+                <div class="flex items-center gap-1.5 flex-wrap">
+                  <span class="text-xs font-black text-stone-900 truncate">{{ inv.label || 'Invitación privada'
+                    }}</span>
+                  <span class="px-1.5 py-0.5 rounded-full text-[9px] font-black uppercase"
+                    [ngClass]="inv.is_active ? 'bg-emerald-100/10 text-emerald-700' : 'bg-stone-200/10 text-stone-600'">
+                    {{ inv.is_active ? 'Activo' : 'Revocado' }}
+                  </span>
+                  @if (inv.requires_approval) {
+                  <span class="px-1.5 py-0.5 rounded-full bg-amber-100/10 text-amber-800 text-[9px] font-bold">
+                    Con aprobación
+                  </span>
+                  } @else {
+                  <span class="px-1.5 py-0.5 rounded-full bg-sky-100 text-sky-800 text-[9px] font-bold">
+                    Acceso directo
+                  </span>
+                  }
+                </div>
+                <p class="text-[11px] font-mono text-stone-500 truncate mt-1">{{ buildInviteUrl(inv.token) }}</p>
+                <p class="text-[10px] font-mono font-bold text-stone-700 mt-0.5">
+                  Código: <span class="px-1.5 py-0.5 rounded bg-stone-100 border border-stone-200 select-all">{{ inv.token }}</span>
+                </p>
+              </div>
+            </div>
+
+            <div class="flex items-center justify-between gap-2 pt-2 border-t border-stone-100 flex-wrap">
+              <div class="flex items-center gap-3 text-[10px] font-semibold text-stone-500">
+                <span>Usos: <strong class="text-stone-800">{{ inv.uses_count }}{{ inv.max_uses ? ' / ' + inv.max_uses :
+                    '' }}</strong></span>
+                @if (inv.expires_at) {
+                <span>Expira: {{ inv.expires_at | date:'dd MMM, HH:mm' }}</span>
+                } @else {
+                <span>Sin caducidad</span>
+                }
+              </div>
+
+              <div class="flex items-center gap-1.5 flex-wrap">
+                @if (inv.is_active) {
+                <button type="button" (click)="copyInviteUrl(inv)"
+                  class="px-2.5 py-1.5 rounded-lg bg-stone-100 hover:bg-stone-200 text-stone-700 text-[10px] font-bold flex items-center gap-1 cursor-pointer">
+                  <i class="pi text-[10px]"
+                    [ngClass]="copiedInviteId() === inv.id ? 'pi-check text-emerald-600' : 'pi-link'"></i>
+                  <span>{{ copiedInviteId() === inv.id ? 'Enlace copiado' : 'Copiar enlace' }}</span>
+                </button>
+                <button type="button" (click)="copyInviteCode(inv)"
+                  class="px-2.5 py-1.5 rounded-lg bg-stone-100 hover:bg-stone-200 text-stone-700 text-[10px] font-bold flex items-center gap-1 cursor-pointer">
+                  <i class="pi text-[10px]"
+                    [ngClass]="copiedCodeId() === inv.id ? 'pi-check text-emerald-600' : 'pi-key'"></i>
+                  <span>{{ copiedCodeId() === inv.id ? 'Código copiado' : 'Copiar código' }}</span>
+                </button>
+                <button type="button" (click)="shareInviteUrl(inv)"
+                  class="px-2.5 py-1.5 rounded-lg bg-kin-primary/10 hover:bg-kin-primary/20 text-kin-primary text-[10px] font-bold flex items-center gap-1 cursor-pointer">
+                  <i class="pi pi-share-alt text-[10px]"></i>
+                  <span>Compartir</span>
+                </button>
+                }
+                <button type="button" (click)="toggleInviteActive(inv)"
+                  class="px-2.5 py-1.5 rounded-lg text-[10px] font-bold cursor-pointer"
+                  [ngClass]="inv.is_active ? 'bg-amber-50 hover:bg-amber-100 text-amber-700' : 'bg-emerald-50 hover:bg-emerald-100 text-emerald-700'">
+                  {{ inv.is_active ? 'Revocar' : 'Reactivar' }}
+                </button>
+                <button type="button" (click)="deleteInviteLink(inv)"
+                  title="Eliminar enlace permanentemente"
+                  class="px-2 py-1.5 rounded-lg bg-red-50 hover:bg-red-100 text-red-600 text-[10px] font-bold cursor-pointer flex items-center gap-1">
+                  <i class="pi pi-trash text-[10px]"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+          }
+          }
+        </div>
+        }
+
+        <!-- TAB 2: SOLICITUDES PENDIENTES -->
+        @if (invitesModalTab() === 'requests') {
+        <div class="space-y-3">
+          <div class="flex items-center justify-between">
+            <span class="text-[10px] font-black uppercase tracking-wider text-stone-400">Solicitudes pendientes de
+              aprobación</span>
+            <button type="button" (click)="refreshInvitesData()"
+              class="text-[11px] font-bold text-stone-500 hover:text-stone-800 flex items-center gap-1 cursor-pointer">
+              <i class="pi pi-refresh text-[10px]" [ngClass]="{'pi-spin': isLoadingInvites()}"></i>
+              <span>Actualizar</span>
+            </button>
+          </div>
+
+          @if (kinJoinRequests().length === 0) {
+          <div class="py-10 px-4 text-center rounded-2xl border border-dashed border-stone-200 space-y-2">
+            <div class="w-11 h-11 rounded-2xl bg-stone-100 text-stone-400 flex items-center justify-center mx-auto">
+              <i class="pi pi-check-circle text-lg"></i>
+            </div>
+            <p class="text-xs font-bold text-stone-700">No tienes solicitudes pendientes</p>
+            <p class="text-[11px] text-stone-400 max-w-xs mx-auto">
+              Cuando un nuevo atleta use uno de tus enlaces privados, aparecerá aquí para que puedas aprobarlo y activar
+              su cuenta.
+            </p>
+          </div>
+          } @else {
+          @for (req of kinJoinRequests(); track req.id) {
+          <div class="p-3.5 rounded-2xl bg-white border border-stone-200 shadow-xs space-y-3">
+            <div class="flex items-start gap-3">
+              @if (req.athlete_avatar) {
+              <img [src]="req.athlete_avatar" [alt]="req.athlete_name || 'Atleta'"
+                class="w-11 h-11 rounded-full object-cover border border-stone-200 shrink-0 shadow-xs" />
+              } @else {
+              <div
+                class="w-11 h-11 rounded-full bg-stone-900 text-white font-black text-sm flex items-center justify-center shrink-0">
+                {{ (req.athlete_name || req.athlete_username || req.athlete_email || 'A').charAt(0).toUpperCase() }}
+              </div>
+              }
+              <div class="min-w-0 flex-1 space-y-0.5">
+                <div class="flex items-center gap-1.5 flex-wrap">
+                  <p class="text-xs font-black text-stone-900 truncate">
+                    {{ req.athlete_name || req.athlete_username || 'Nuevo Atleta' }}
+                  </p>
+                  @if (req.athlete_username) {
+                  <span class="text-[10px] font-semibold text-stone-400 truncate">&#64;{{ req.athlete_username }}</span>
+                  }
+                </div>
+                @if (req.athlete_email) {
+                <p class="text-[11px] text-stone-600 truncate flex items-center gap-1">
+                  <i class="pi pi-envelope text-[10px] text-stone-400"></i>
+                  <span class="truncate">{{ req.athlete_email }}</span>
+                </p>
+                }
+                <div class="flex items-center gap-2 flex-wrap pt-0.5 text-[10px] text-stone-400">
+                  <span class="flex items-center gap-1">
+                    <i class="pi pi-clock text-[9px]"></i>
+                    Solicitó el {{ req.created_at | date:'dd MMM yyyy, HH:mm' }}
+                  </span>
+                  @if (req.invite_label) {
+                  <span class="px-1.5 py-0.5 rounded-full bg-stone-100 text-stone-600 font-semibold">
+                    Vía: {{ req.invite_label }}
+                  </span>
+                  }
+                </div>
+              </div>
+            </div>
+
+            <div class="flex items-center gap-2 pt-2 border-t border-stone-100">
+              <button type="button" (click)="rejectJoinRequest(req)" [disabled]="reviewingRequestId() === req.id"
+                class="px-3.5 py-2 rounded-xl bg-stone-100 hover:bg-red-50 hover:text-red-600 text-stone-600 font-bold text-xs cursor-pointer disabled:opacity-50">
+                Rechazar
+              </button>
+              <button type="button" (click)="approveJoinRequest(req)" [disabled]="reviewingRequestId() === req.id"
+                class="flex-1 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-black text-xs uppercase tracking-wider flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50">
+                @if (reviewingRequestId() === req.id) {
+                <i class="pi pi-spin pi-spinner text-xs"></i>
+                <span>Procesando...</span>
+                } @else {
+                <i class="pi pi-check text-xs"></i>
+                <span>Aprobar y Activar</span>
+                }
+              </button>
+            </div>
+          </div>
+          }
+          }
+        </div>
+        }
+      </div>
+    </div>
+  </div>
+  }
+
+  <!-- MODAL DE CONFIRMACIÓN: SALIR DEL KIN -->
+  @if (isLeaveKinModalOpen()) {
+  <div class="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4"
+    (click)="isLeaveKinModalOpen.set(false)">
+    <div class="bg-white rounded-3xl border border-stone-200 w-full max-w-md p-6 shadow-2xl space-y-4"
+      (click)="$event.stopPropagation()">
+      <div class="flex items-start gap-3">
+        <div class="w-10 h-10 rounded-2xl bg-rose-50 border border-rose-200 text-rose-600 flex items-center justify-center shrink-0">
+          <i class="pi pi-sign-out text-base"></i>
+        </div>
+        <div class="space-y-1.5">
+          <h3 class="text-sm font-black uppercase text-stone-900">
+            {{ leaveKinScope() === 'instructor' ? 'Salir del Staff del Kin' : 'Salir de ' + (kinSummary()?.team_name || 'este Kin') }}
+          </h3>
+          @if (leaveKinScope() === 'instructor') {
+          <p class="text-xs text-stone-600 leading-relaxed">
+            Dejarás de colaborar como instructor secundario en <strong>{{ kinSummary()?.team_name }}</strong>.
+          </p>
+          } @else {
+          <p class="text-xs text-stone-600 leading-relaxed">
+            Perderás acceso a la comunidad privada, rutinas y planes asignados de <strong>{{ kinSummary()?.team_name }}</strong>.
+            Tu historial personal (peso, medidas y fotos) se mantendrá intacto.
+          </p>
+          }
+          @if (leaveKinError()) {
+          <p class="text-xs font-bold text-rose-600">{{ leaveKinError() }}</p>
+          }
+        </div>
+      </div>
+
+      <div class="flex items-center justify-end gap-2 pt-2 border-t border-stone-100">
+        <button type="button" (click)="isLeaveKinModalOpen.set(false)"
+          class="px-4 py-2 rounded-xl bg-stone-100 text-stone-600 text-xs font-black cursor-pointer">
+          Cancelar
+        </button>
+        <button type="button" (click)="confirmLeaveKin()" [disabled]="isLeavingKin()"
+          class="px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-black uppercase cursor-pointer disabled:opacity-50 flex items-center gap-1.5">
+          <i class="pi" [ngClass]="isLeavingKin() ? 'pi-spin pi-spinner' : 'pi-check'"></i>
+          <span>{{ isLeavingKin() ? 'Saliendo...' : 'Sí, Salir del Kin' }}</span>
         </button>
       </div>
     </div>

@@ -33,6 +33,7 @@ import { WorkoutLogDetailModalComponent } from './components/workout-log-detail-
 import { WorkoutLogCardComponent } from './components/workout-log-card/workout-log-card.component';
 import { WorkoutLogEditModalComponent } from './components/workout-log-edit-modal/workout-log-edit-modal.component';
 import { WorkoutStoryModalComponent } from './components/workout-story-modal/workout-story-modal.component';
+import { MuscleLoadStoryModalComponent } from './components/muscle-load-story-modal/muscle-load-story-modal.component';
 import { WorkoutLoaderComponent } from '../../components/workout-loader/workout-loader-component';
 import { ChartImageExportService } from '../profile/services/chart-image-export.service';
 import { BodyMapGender } from './components/body-map/body-map.component';
@@ -77,6 +78,7 @@ const DOMINICAN_MOTIVATIONAL_TEMPLATES: string[] = [
     WorkoutLogCardComponent,
     WorkoutLogEditModalComponent,
     WorkoutStoryModalComponent,
+    MuscleLoadStoryModalComponent,
     WorkoutLoaderComponent
   ],
   templateUrl: './workout-user.component.html'
@@ -367,6 +369,7 @@ export class WorkoutUserComponent implements OnInit {
   // Analytics / Gráficos con rango temporal seleccionable
   analyticsRange = signal<'7d' | '14d' | '30d' | 'year'>('7d');
   activeChartType = signal<'heatmap' | 'radar' | 'volume' | 'trend'>('heatmap');
+  isMuscleLoadStoryOpen = signal<boolean>(false);
 
   readonly analyticsRangeOptions: Array<{ key: '7d' | '14d' | '30d' | 'year'; label: string; title: string }> = [
     { key: '7d', label: '7D', title: 'Últimos 7 días' },

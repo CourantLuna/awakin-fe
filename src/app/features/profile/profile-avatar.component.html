@@ -124,32 +124,36 @@
 
 
     <!-- MÉTRICAS EN VIVO: RACHA, POSTS, SEGUIDORES, SIGUIENDO -->
-    <div class="flex flex-1 justify-around text-center ml-2">
-      <div>
-        <p class="font-black text-stone-900 text-lg tracking-tight">
+    <div class="grid grid-cols-4 flex-1 items-center text-center ml-2 gap-0.5">
+      <div class="flex flex-col items-center justify-center px-1 py-1.5 rounded-xl">
+        <p class="font-black text-stone-900 text-lg tracking-tight leading-tight">
           {{ athlete()?.streak_days || 0 }}
         </p>
-        <p class="text-[9px] font-semibold text-stone-500 uppercase tracking-wider">Racha 🔥</p>
+        <p class="text-[9px] font-semibold text-stone-500 uppercase tracking-wider leading-none mt-1 whitespace-nowrap">
+          Racha 🔥</p>
       </div>
-      <div>
-        <p class="font-black text-stone-900 text-lg tracking-tight">
+      <div class="flex flex-col items-center justify-center px-1 py-1.5 rounded-xl">
+        <p class="font-black text-stone-900 text-lg tracking-tight leading-tight">
           {{ posts().length }}
         </p>
-        <p class="text-[9px] font-semibold text-stone-500 uppercase tracking-wider">Posts</p>
+        <p class="text-[9px] font-semibold text-stone-500 uppercase tracking-wider leading-none mt-1 whitespace-nowrap">
+          Posts</p>
       </div>
       <button type="button" (click)="openFollowListModal('followers')"
-        class="hover:bg-stone-100/80 active:scale-95 rounded-xl px-2 py-1 transition-all cursor-pointer">
-        <p class="font-black text-stone-900 text-lg tracking-tight">
+        class="flex flex-col items-center justify-center px-1 py-1.5 rounded-xl hover:bg-stone-100/80 active:scale-95 transition-all cursor-pointer">
+        <p class="font-black text-stone-900 text-lg tracking-tight leading-tight">
           {{ athlete()?.followers_count || 0 }}
         </p>
-        <p class="text-[9px] font-semibold text-stone-500 uppercase tracking-wider">Seguidores</p>
+        <p class="text-[9px] font-semibold text-stone-500 uppercase tracking-wider leading-none mt-1 whitespace-nowrap">
+          Seguidores</p>
       </button>
       <button type="button" (click)="openFollowListModal('following')"
-        class="hover:bg-stone-100/80 active:scale-95 rounded-xl px-2 py-1 transition-all cursor-pointer">
-        <p class="font-black text-stone-900 text-lg tracking-tight">
+        class="flex flex-col items-center justify-center px-1 py-1.5 rounded-xl hover:bg-stone-100/80 active:scale-95 transition-all cursor-pointer">
+        <p class="font-black text-stone-900 text-lg tracking-tight leading-tight">
           {{ athlete()?.following_count || 0 }}
         </p>
-        <p class="text-[9px] font-semibold text-stone-500 uppercase tracking-wider">Siguiendo</p>
+        <p class="text-[9px] font-semibold text-stone-500 uppercase tracking-wider leading-none mt-1 whitespace-nowrap">
+          Siguiendo</p>
       </button>
     </div>
   </div>
@@ -170,69 +174,45 @@
       {{ athlete()?.bio_description || 'Construyendo disciplina, un día a la vez.' }}
     </p>
 
-    <!-- IDENTIFICACIÓN DE TRIBU / KIN -->
+    <!-- IDENTIFICACIÓN DE TRIBU / KIN (UNA TARJETA POR KIN CON SU LOGO Y ROL REAL) -->
     <div class="mt-3">
       @if (hasKin()) {
-      <div
-        class="inline-flex bg-stone-100 drop-shadow-xs  items-center gap-2.5 px-3 py-1.5 rounded-xl shadow-xs transition-all"
-        [style.borderColor]="'var(--kin-primary)'" [title]="getKinNamesTooltip()">
-
-        @if (isMultiKin()) {
-        <!-- Stack de círculos superpuestos con badge overlay de cantidad # -->
-        <div class="relative flex items-center -space-x-2.5 shrink-0 py-0.5">
-          @for (k of getKins().slice(0, 3); track k.id; let idx = $index) {
-          <div
-            class="w-8 h-8 rounded-full bg-white flex items-center justify-center font-black text-[9px] text-white shadow-xs border-1 shrink-0 overflow-hidden"
-            [style.borderColor]="k.primary_color || 'var(--kin-primary)'" [style.zIndex]="10 - idx"
-            [title]="k.team_name">
-            @if (k.team_logo_url) {
-            <img [src]="k.team_logo_url" [alt]="k.team_name" class="w-full p-0.5 h-full object-cover" />
-            } @else {
-            <i class="pi pi-shield text-[10px] text-kin-primary"></i>
-            }
+      <div class="flex flex-wrap items-center gap-2">
+        @for (k of getKins(); track k.id) {
+        <div
+          class="inline-flex bg-stone-100 drop-shadow-xs items-center gap-2.5 px-3 py-1.5 rounded-xl shadow-xs transition-all border border-stone-200/70"
+          [style.borderColor]="k.primary_color || 'var(--kin-primary)'" [title]="k.team_name">
+          <!-- Logo real de ESTE Kin -->
+          <div class="relative shrink-0">
+            <div
+              class="w-8 h-8 rounded-full bg-white flex items-center justify-center font-black text-[9px] text-white shadow-xs border shrink-0 overflow-hidden"
+              [style.borderColor]="k.primary_color || 'var(--kin-primary)'">
+              @if (k.team_logo_url) {
+              <img [src]="k.team_logo_url" [alt]="k.team_name" class="p-0.5 w-full h-full object-contain" />
+              } @else {
+              <i class="pi pi-shield text-xs text-kin-primary"></i>
+              }
+            </div>
           </div>
-          }
-          <!-- Badge overlay sobre los círculos con el # de cantidad de kins -->
-          <span
-            class="absolute -bottom-1 -right-1 bg-kin-primary text-white text-[8px] font-black px-1.5 py-0.2 rounded-full border-1  shadow-xs z-20 flex items-center justify-center min-w-4.5 leading-tight">
-            #{{ getKins().length }}
-          </span>
-        </div>
-        } @else {
-        <!-- Logo único en forma de círculo -->
-        <div class="relative shrink-0">
-          <div
-            class="w-8 h-8 rounded-full bg-white flex items-center justify-center font-black text-[9px] text-white shadow-xs border-1  shrink-0 overflow-hidden"
-            [style.borderColor]="'var(--kin-primary)'">
-            @if (getKin()?.team_logo_url) {
-            <img [src]="getKin()?.team_logo_url" [alt]="getKin()?.team_name"
-              class=" p-0.5 w-full h-full object-cover" />
-            } @else {
-            <i class="pi pi-shield text-xs text-kin-primary"></i>
-            }
+
+          <div class="flex flex-col text-left">
+            <div class="flex items-center gap-1.5">
+
+              <span class="text-[8px] font-black uppercase px-1.5 py-0.5 rounded-md leading-none shadow-2xs"
+                [class.bg-amber-500]="k.role_in_kin === 'HEAD COACH' || k.role_in_kin === 'HEAD_COACH'"
+                [class.bg-indigo-600]="k.role_in_kin === 'INSTRUCTOR' || k.role_in_kin === 'COACH'"
+                [class.text-white]="k.role_in_kin === 'HEAD COACH' || k.role_in_kin === 'HEAD_COACH' || k.role_in_kin === 'INSTRUCTOR' || k.role_in_kin === 'COACH'"
+                [class.bg-stone-200]="k.role_in_kin !== 'HEAD COACH' && k.role_in_kin !== 'HEAD_COACH' && k.role_in_kin !== 'INSTRUCTOR' && k.role_in_kin !== 'COACH'"
+                [class.text-stone-700]="k.role_in_kin !== 'HEAD COACH' && k.role_in_kin !== 'HEAD_COACH' && k.role_in_kin !== 'INSTRUCTOR' && k.role_in_kin !== 'COACH'">
+                {{ getRoleBadgeForKin(k) }}
+              </span>
+            </div>
+            <h4 class="text-xs font-black text-stone-900 uppercase tracking-tight leading-snug">
+              {{ k.team_name }}
+            </h4>
           </div>
         </div>
         }
-
-        <div class="flex flex-col text-left">
-          <div class="flex items-center gap-1.5">
-            <span class="text-[8px] font-black tracking-widest text-stone-400 uppercase leading-none">
-              {{ isMultiKin() ? 'Tribus Kin' : 'Tribu Kin' }}
-            </span>
-            <span class="text-[8px] font-black uppercase px-1.5 py-0.5 rounded-md leading-none shadow-2xs"
-              [class.bg-amber-500]="!isMultiKin() && getKin()?.role_in_kin === 'HEAD COACH'"
-              [class.bg-indigo-600]="isMultiKin() || getKin()?.role_in_kin === 'INSTRUCTOR'"
-              [class.text-white]="isMultiKin() || getKin()?.role_in_kin === 'HEAD COACH' || getKin()?.role_in_kin === 'INSTRUCTOR'"
-              [class.bg-stone-200]="!isMultiKin() && getKin()?.role_in_kin !== 'HEAD COACH' && getKin()?.role_in_kin !== 'INSTRUCTOR'"
-              [class.text-stone-700]="!isMultiKin() && getKin()?.role_in_kin !== 'HEAD COACH' && getKin()?.role_in_kin !== 'INSTRUCTOR'">
-              {{ getKinRoleBadge() }}
-            </span>
-          </div>
-          <h4 class="text-xs font-black text-stone-900 uppercase tracking-tight leading-snug">
-            {{ getKinNamesPreview() }}
-          </h4>
-
-        </div>
       </div>
       } @else {
       <!-- Estado sin tribu asignada -->
@@ -493,7 +473,7 @@
   <!-- CONTENIDO TAB 3: WORKOUTS REGISTRADOS      -->
   <!-- ========================================== -->
   @if (activeTab() === 'workouts') {
-  <div class="mt-2 px-3 md:px-5 pb-6 space-y-3 animate-fade-in">
+  <div class="mt-2 px-3 md:px-5 pb-6 flex flex-col gap-4 animate-fade-in">
     @if (workoutLogs().length > 0) {
     @for (log of workoutLogs(); track log.id) {
     <app-workout-log-card [log]="log" [athlete]="athlete()" (onDetail)="openWorkoutDetail($event)"
@@ -1179,13 +1159,12 @@
     </div>
 
     @if (athleteService.dailyPostLimit > 0) {
-    <div
-      class="flex items-center justify-between px-3 py-2 rounded-xl border text-[11px] font-bold"
-      [ngClass]="athleteService.canCreatePostToday()
+    <div class="flex items-center justify-between px-3 py-2 rounded-xl border text-[11px] font-bold" [ngClass]="athleteService.canCreatePostToday()
         ? 'bg-stone-50 border-stone-200 text-stone-600'
         : 'bg-rose-50 border-rose-200 text-rose-700'">
       <span>Publicaciones de hoy</span>
-      <span class="font-black tabular-nums">{{ athleteService.postsTodayCount() }} / {{ athleteService.dailyPostLimit }}</span>
+      <span class="font-black tabular-nums">{{ athleteService.postsTodayCount() }} / {{ athleteService.dailyPostLimit
+        }}</span>
     </div>
     }
 
@@ -1193,7 +1172,8 @@
     <div
       class="p-2.5 bg-rose-50 border border-rose-200 text-rose-700 text-xs font-bold rounded-xl flex items-center gap-2">
       <i class="pi pi-exclamation-triangle shrink-0"></i>
-      <span>{{ createPostError() || ('Has alcanzado el límite diario de ' + athleteService.dailyPostLimit + ' publicaciones por día.') }}</span>
+      <span>{{ createPostError() || ('Has alcanzado el límite diario de ' + athleteService.dailyPostLimit + '
+        publicaciones por día.') }}</span>
     </div>
     }
 
@@ -2352,15 +2332,13 @@
     <!-- Tabs: Seguidores | Siguiendo -->
     <div class="grid grid-cols-2 border-b border-stone-100 shrink-0">
       <button type="button" (click)="switchFollowListTab('followers')"
-        class="py-2.5 text-xs font-black uppercase tracking-wider transition-all cursor-pointer border-b-2"
-        [ngClass]="followListTab() === 'followers'
+        class="py-2.5 text-xs font-black uppercase tracking-wider transition-all cursor-pointer border-b-2" [ngClass]="followListTab() === 'followers'
           ? 'border-stone-900 text-stone-900'
           : 'border-transparent text-stone-400 hover:text-stone-700'">
         Seguidores ({{ athlete()?.followers_count || 0 }})
       </button>
       <button type="button" (click)="switchFollowListTab('following')"
-        class="py-2.5 text-xs font-black uppercase tracking-wider transition-all cursor-pointer border-b-2"
-        [ngClass]="followListTab() === 'following'
+        class="py-2.5 text-xs font-black uppercase tracking-wider transition-all cursor-pointer border-b-2" [ngClass]="followListTab() === 'following'
           ? 'border-stone-900 text-stone-900'
           : 'border-transparent text-stone-400 hover:text-stone-700'">
         Siguiendo ({{ athlete()?.following_count || 0 }})

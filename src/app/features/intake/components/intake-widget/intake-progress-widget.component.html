@@ -10,10 +10,16 @@
         <span class="text-kin-primary font-black text-xs tracking-wider">{{ kinInitials() }}</span>
         }
       </div>
-      <div class="flex flex-col">
-        <span class="text-[8px] font-black tracking-[0.2em] text-kin-primary uppercase leading-none mb-1">Tu
-          Tribu</span>
-        <h3 class="text-sm font-black text-gray-900 uppercase tracking-tight">{{ kinTeamName() }}</h3>
+      <div class="flex flex-col min-w-0">
+        <span class="text-[8px] font-black tracking-[0.2em] text-kin-primary uppercase leading-none mb-0.5 truncate">
+          {{ kinTeamName() }}
+        </span>
+        <h3 class="text-xs sm:text-sm font-black text-gray-900 uppercase tracking-tight leading-tight truncate">
+          {{ kinCoachName() }}
+        </h3>
+          <span class="text-[8px] font-bold tracking-[0.14em] text-stone-500 uppercase leading-none mt-0.5">
+            Fitness Coach
+          </span>
       </div>
     </div>
     } @else {
@@ -34,7 +40,7 @@
 
   <div class="text-center flex flex-col items-center z-10 select-none mb-4" (click)="toggleDisplay()">
     <div
-      class="bg-stone-50/50 backdrop-blur-xl px-5 py-2 rounded-xl shadow-[inset_0_2px_6px_rgba(0,0,0,0.08)] border border-stone-200/60 flex flex-col items-center min-w-[140px] transition-all active:scale-95 cursor-pointer"
+      class="backdrop-blur-xs px-5 py-2 rounded-xl shadow-[inset_0_2px_6px_rgba(0,0,0,0.3)]  flex flex-col items-center min-w-[140px] transition-all active:scale-95 cursor-pointer"
       [class.border-orange-500/50]="isOverGoal() && !showTotalMode()"> <span
         class="text-[7px] font-black uppercase tracking-[0.3em] leading-none mb-1.5 transition-all"
         [class]="isOverGoal() ? 'text-orange-600' : 'text-stone-400'">

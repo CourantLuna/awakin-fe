@@ -31,13 +31,15 @@ import { ProtocolMatrixDrawer } from './components/protocol-matrix-drawer/protoc
 import { ShoppingListDrawer } from './components/shopping-list-drawer/shopping-list-drawer';
 import { RecipeDetailsModal } from './components/recipe-details-modal/recipe-details-modal';
 import { FoodStoryModalComponent, translateMealType } from './components/food-story-modal/food-story-modal.component';
-import { FoodEstimationPanelComponent } from './components/food-estimation-panel/food-estimation-panel.component';
 import {
   WeeklyTemplate,
   MenuPlan,
   DayAssignment,
   ManualMenuSelection,
   DishItem,
+  CatalogIngredient,
+  FormattedRecordIngredient,
+  ManualIngredientRow,
   FoodPhotoEstimationResult,
   ResolvedCustomNutrition,
 } from './models/intake.models';
@@ -48,6 +50,7 @@ import { AuthService } from '../../core/services/auth.service';
 import { StreakService, formatToDateKey } from '../../core/services/streak.service';
 import { IntakeTopBar } from '../../components/intake-top-bar/intake-top-bar';
 import {
+  Ingredient,
   formatQuantity,
   toFraction,
   applyOptimizationToDish,
@@ -157,7 +160,6 @@ export interface FoodItem {
     ShoppingListDrawer,
     RecipeDetailsModal,
     FoodStoryModalComponent,
-    FoodEstimationPanelComponent,
     FormsModule,
     IntakeTopBar,
     IntakeLoaderComponent
@@ -847,6 +849,10 @@ export class IntakeUserComponent implements OnInit {
   // Estado de análisis por IA y cálculo manual (cuando Adherencia != 100% o no hay plan)
   catalogIngredients = this.intakeService.availableIngredients;
   showPlannedFoodsOverlay = signal<boolean>(false);
+  customCalcMode = signal<'AI' | 'INGREDIENTS'>('AI');
+  showManualIngredientsOverlay = signal<boolean>(false);
+  selectedCatalogIngredientId = signal<string | null>(null);
+  manualIngredientRows = signal<ManualIngredientRow[]>([]);
   isAnalyzingPhoto = signal<boolean>(false);
   photoAnalysisError = signal<string | null>(null);
   photoEstimationResult = signal<FoodPhotoEstimationResult | null>(null);
@@ -1027,11 +1033,538 @@ export class IntakeUserComponent implements OnInit {
     if ((adh === '100' || adh === 'ADAPTATION') && mealFoods.length > 0 && this.selectedFoodItemsForLog().length === 0) {
       return false;
     }
+    if (this.requiresCustomNutrition() && this.customCalcMode() === 'INGREDIENTS') {
+      return this.manualIngredientsTotals().hasValidItems;
+    }
     return true;
   });
 
+  manualIngredientDetails = computed(() => {
+    return this.manualIngredientRows().map((row) => {
+      const optimizerIng = this.toOptimizerIngredient(row.ingredient);
+      const qty = Math.max(0, Number(row.quantity) || 0);
+      const grams = getGramsForQuantity(optimizerIng, qty, row.mode);
+      const macros = calculateIngredientMacros(optimizerIng, qty, row.mode);
+      const unitLabel = this.getManualRowUnitLabel(row);
+      const kcal =
+        macros.calories > 0
+          ? Math.round(macros.calories)
+          : Math.round(macros.protein * 4 + macros.carbs * 4 + macros.fat * 9);
+
+      const isSyntheticId = row.ingredient.id.startsWith('plan_');
+      const formatted: FormattedRecordIngredient = {
+        ingredient_id: isSyntheticId ? null : row.ingredient.id,
+        nombre: row.ingredient.name,
+        cantidad_display: formatQuantity(qty, unitLabel, row.mode),
+        cantidad_original: Math.round(qty * 100) / 100,
+        unidad_original: unitLabel,
+        modo: row.mode,
+        cantidad_g: Math.round(grams * 10) / 10,
+        kcals: kcal,
+        proteinas_g: Math.round(macros.protein * 10) / 10,
+        carbohidratos_g: Math.round(macros.carbs * 10) / 10,
+        grasas_g: Math.round(macros.fat * 10) / 10,
+      };
+
+      return {
+        row,
+        kcal,
+        protein: Math.round(macros.protein * 10) / 10,
+        carbs: Math.round(macros.carbs * 10) / 10,
+        fat: Math.round(macros.fat * 10) / 10,
+        grams: Math.round(grams * 10) / 10,
+        formatted,
+      };
+    });
+  });
+
+  manualIngredientsTotals = computed(() => {
+    const details = this.manualIngredientDetails();
+    const p = details.reduce((acc, d) => acc + d.protein, 0);
+    const c = details.reduce((acc, d) => acc + d.carbs, 0);
+    const f = details.reduce((acc, d) => acc + d.fat, 0);
+    const kcal = details.reduce((acc, d) => acc + d.kcal, 0);
+    return {
+      kcal: Math.round(kcal),
+      protein: Math.round(p * 10) / 10,
+      carbs: Math.round(c * 10) / 10,
+      fat: Math.round(f * 10) / 10,
+      count: details.length,
+      hasValidItems: details.some((d) => d.row.quantity > 0),
+    };
+  });
+
+  selectCustomCalcMode(mode: 'AI' | 'INGREDIENTS') {
+    this.customCalcMode.set(mode);
+    if (mode === 'INGREDIENTS') {
+      this.showPlannedFoodsOverlay.set(false);
+      this.showManualIngredientsOverlay.set(true);
+    } else {
+      this.showManualIngredientsOverlay.set(false);
+    }
+  }
+
+  onManualCatalogIngredientSelected(ingredientId: string | null) {
+    if (!ingredientId) return;
+    const found = this.catalogIngredients().find((ing) => ing.id === ingredientId);
+    if (!found) return;
+
+    const isGramUnit = this.isGramOrMlUnit(found.unit);
+    const defaultQty = isGramUnit ? Math.max(10, Math.round(found.serving_size || 100)) : 1;
+    const defaultMode: 'g' | 'portions' = isGramUnit ? 'g' : 'portions';
+
+    const newRow: ManualIngredientRow = {
+      rowId: `mrow_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
+      ingredientId: found.id,
+      ingredient: found,
+      quantity: defaultQty,
+      mode: defaultMode,
+    };
+    this.manualIngredientRows.update((rows) => [...rows, newRow]);
+    this.selectedCatalogIngredientId.set(null);
+  }
+
+  updateManualRowQuantity(rowId: string, rawVal: number | string | null) {
+    const parsed = rawVal === null || rawVal === '' ? 0 : Math.max(0, Number(rawVal) || 0);
+    this.manualIngredientRows.update((rows) =>
+      rows.map((r) => (r.rowId === rowId ? { ...r, quantity: parsed } : r))
+    );
+  }
+
+  updateManualRowMode(rowId: string, newMode: 'g' | 'portions') {
+    this.manualIngredientRows.update((rows) =>
+      rows.map((r) => {
+        if (r.rowId !== rowId || r.mode === newMode) return r;
+        const optIng = this.toOptimizerIngredient(r.ingredient);
+        if (newMode === 'portions') {
+          const gramsNow = getGramsForQuantity(optIng, r.quantity, r.mode);
+          const gramsPerPortion = getGramsForQuantity(optIng, 1, 'portions') || 100;
+          const nextPortions = Math.max(0.25, Math.round((gramsNow / gramsPerPortion) * 4) / 4);
+          return { ...r, mode: 'portions', quantity: nextPortions };
+        } else {
+          const gramsNow = Math.max(1, Math.round(getGramsForQuantity(optIng, r.quantity, r.mode)));
+          return { ...r, mode: 'g', quantity: gramsNow };
+        }
+      })
+    );
+  }
+
+  removeManualIngredientRow(rowId: string) {
+    this.manualIngredientRows.update((rows) => rows.filter((r) => r.rowId !== rowId));
+  }
+
+  loadManualIngredientsFromPlan() {
+    const foods = this.selectedFoodItemsForLog().length > 0
+      ? this.selectedFoodItemsForLog()
+      : this.getFoodsForMeal(this.selectedMealType());
+    if (foods.length === 0) return;
+
+    const catalog = this.catalogIngredients();
+    const newRows: ManualIngredientRow[] = [];
+
+    for (const food of foods) {
+      if (food.dishItem && food.dishItem.ingredients && food.dishItem.ingredients.length > 0) {
+        const activeDish =
+          food.dishItem.isOptimizerActive && food.dishItem.optimizerTargets
+            ? applyOptimizationToDish(food.dishItem)
+            : food.dishItem;
+
+        for (const di of activeDish.ingredients || []) {
+          const raw = di.rawIngredientObj || {};
+          const ingId = String(di.ingredient_id || raw.id || di.id || '');
+          const matched = catalog.find(
+            (c) => c.id === ingId || c.name.toLowerCase() === (di.name || '').toLowerCase()
+          );
+
+          const ingObj: CatalogIngredient = matched || {
+            id: ingId || `plan_${di.name}`,
+            name: di.name || raw.name || 'Ingrediente',
+            unit: di.unit || raw.unit || 'g',
+            serving_size: Number(di.serving_size ?? raw.serving_size ?? 100),
+            calories: Number(di.calories ?? raw.calories ?? 0),
+            protein: Number(di.protein ?? raw.protein ?? 0),
+            carbs: Number(di.carbs ?? raw.carbs ?? 0),
+            fats: Number(di.fats ?? raw.fats ?? 0),
+            unit_weight_grams: di.unit_weight_grams ?? raw.unit_weight_grams,
+          };
+
+          const mode: 'g' | 'portions' =
+            di.mode === 'portions' || !this.isGramOrMlUnit(ingObj.unit) ? 'portions' : 'g';
+
+          newRows.push({
+            rowId: `plan_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
+            ingredientId: ingObj.id,
+            ingredient: ingObj,
+            quantity: Number(di.quantity) || (mode === 'g' ? 100 : 1),
+            mode,
+          });
+        }
+      } else {
+        const matched = catalog.find((c) => c.name.toLowerCase() === food.name.toLowerCase());
+        const ingObj: CatalogIngredient = matched || {
+          id: `plan_${food.id}`,
+          name: food.name,
+          unit: food.unit || 'porción',
+          serving_size: 1,
+          calories: food.portion > 0 ? food.kcal / food.portion : food.kcal,
+          protein: food.portion > 0 ? food.protein / food.portion : food.protein,
+          carbs: food.portion > 0 ? food.carbs / food.portion : food.carbs,
+          fats: food.portion > 0 ? food.fat / food.portion : food.fat,
+          unit_weight_grams: 100,
+        };
+        const mode: 'g' | 'portions' = this.isGramOrMlUnit(food.unit) ? 'g' : 'portions';
+        newRows.push({
+          rowId: `plan_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
+          ingredientId: ingObj.id,
+          ingredient: ingObj,
+          quantity: Number(food.portion) || 1,
+          mode,
+        });
+      }
+    }
+
+    if (newRows.length > 0) {
+      this.manualIngredientRows.set(newRows);
+    }
+  }
+
+  getManualRowSummary(rowId: string) {
+    const found = this.manualIngredientDetails().find((d) => d.row.rowId === rowId);
+    return found || { kcal: 0, protein: 0, carbs: 0, fat: 0, grams: 0 };
+  }
+
+  hasDiscreteUnit(ing: CatalogIngredient): boolean {
+    return !this.isGramOrMlUnit(ing.unit);
+  }
+
+  private isGramOrMlUnit(unit?: string | null): boolean {
+    const u = (unit || '').toLowerCase().trim();
+    return u === '' || u === 'g' || u === 'gr' || u === 'gramo' || u === 'gramos' || u === 'ml';
+  }
+
+  private getManualRowUnitLabel(row: ManualIngredientRow): string {
+    if (row.mode === 'g') {
+      return (row.ingredient.unit || '').toLowerCase().trim() === 'ml' ? 'ml' : 'g';
+    }
+    return this.hasDiscreteUnit(row.ingredient) ? row.ingredient.unit : 'porción';
+  }
+
+  private toOptimizerIngredient(ing: CatalogIngredient): Ingredient {
+    const servingSize = Number(ing.serving_size) > 0 ? Number(ing.serving_size) : 100;
+    const unitWeightGrams =
+      Number(ing.unit_weight_grams) > 0
+        ? Number(ing.unit_weight_grams)
+        : this.isGramOrMlUnit(ing.unit)
+          ? servingSize
+          : 100;
+    return {
+      id: ing.id,
+      name: ing.name,
+      unit: ing.unit || 'g',
+      calories: Number(ing.calories) || 0,
+      protein: Number(ing.protein) || 0,
+      carbs: Number(ing.carbs) || 0,
+      fats: Number(ing.fats) || 0,
+      serving_size: servingSize,
+      unit_weight_grams: unitWeightGrams,
+    };
+  }
+
+  // Modal de Edición Manual (solo para registros en Adaptación o Libre, sin recalcular con IA)
+  isEditRecordModalOpen = signal<boolean>(false);
+  editingFoodItem = signal<FoodItem | null>(null);
+  editRecordMode = signal<'INGREDIENTS' | 'MACROS'>('INGREDIENTS');
+  editDishName = signal<string>('');
+  editNotes = signal<string>('');
+  editManualProtein = signal<number | null>(null);
+  editManualCarbs = signal<number | null>(null);
+  editManualFat = signal<number | null>(null);
+  editSelectedCatalogIngredientId = signal<string | null>(null);
+  editIngredientRows = signal<ManualIngredientRow[]>([]);
+  isSavingEditRecord = signal<boolean>(false);
+  editRecordError = signal<string | null>(null);
+
+  canEditLoggedFood(food: FoodItem): boolean {
+    if (!food.isLogged) return false;
+    const rec = this.registeredRecords()[food.id];
+    const adh = String(rec?.adherencia || '').toUpperCase().trim();
+    return adh === 'ADAPTATION' || adh === 'FREE';
+  }
+
+  editManualKcal = computed(() => {
+    const p = Math.max(0, Number(this.editManualProtein()) || 0);
+    const c = Math.max(0, Number(this.editManualCarbs()) || 0);
+    const f = Math.max(0, Number(this.editManualFat()) || 0);
+    return Math.round(p * 4 + c * 4 + f * 9);
+  });
+
+  editIngredientDetails = computed(() => {
+    return this.editIngredientRows().map((row) => {
+      const optimizerIng = this.toOptimizerIngredient(row.ingredient);
+      const qty = Math.max(0, Number(row.quantity) || 0);
+      const grams = getGramsForQuantity(optimizerIng, qty, row.mode);
+      const macros = calculateIngredientMacros(optimizerIng, qty, row.mode);
+      const unitLabel = this.getManualRowUnitLabel(row);
+      const kcal =
+        macros.calories > 0
+          ? Math.round(macros.calories)
+          : Math.round(macros.protein * 4 + macros.carbs * 4 + macros.fat * 9);
+
+      const isSyntheticId = row.ingredient.id.startsWith('plan_') || row.ingredient.id.startsWith('saved_');
+      const formatted: FormattedRecordIngredient = {
+        ingredient_id: isSyntheticId ? null : row.ingredient.id,
+        nombre: row.ingredient.name,
+        cantidad_display: formatQuantity(qty, unitLabel, row.mode),
+        cantidad_original: Math.round(qty * 100) / 100,
+        unidad_original: unitLabel,
+        modo: row.mode,
+        cantidad_g: Math.round(grams * 10) / 10,
+        kcals: kcal,
+        proteinas_g: Math.round(macros.protein * 10) / 10,
+        carbohidratos_g: Math.round(macros.carbs * 10) / 10,
+        grasas_g: Math.round(macros.fat * 10) / 10,
+      };
+
+      return {
+        row,
+        kcal,
+        protein: Math.round(macros.protein * 10) / 10,
+        carbs: Math.round(macros.carbs * 10) / 10,
+        fat: Math.round(macros.fat * 10) / 10,
+        grams: Math.round(grams * 10) / 10,
+        formatted,
+      };
+    });
+  });
+
+  editIngredientsTotals = computed(() => {
+    const details = this.editIngredientDetails();
+    const p = details.reduce((acc, d) => acc + d.protein, 0);
+    const c = details.reduce((acc, d) => acc + d.carbs, 0);
+    const f = details.reduce((acc, d) => acc + d.fat, 0);
+    const kcal = details.reduce((acc, d) => acc + d.kcal, 0);
+    return {
+      kcal: Math.round(kcal),
+      protein: Math.round(p * 10) / 10,
+      carbs: Math.round(c * 10) / 10,
+      fat: Math.round(f * 10) / 10,
+      count: details.length,
+      hasValidItems: details.some((d) => d.row.quantity > 0),
+    };
+  });
+
+  isEditRecordValid = computed(() => {
+    if (this.editRecordMode() === 'INGREDIENTS') {
+      return this.editIngredientsTotals().hasValidItems;
+    }
+    const p = Number(this.editManualProtein()) || 0;
+    const c = Number(this.editManualCarbs()) || 0;
+    const f = Number(this.editManualFat()) || 0;
+    return p >= 0 && c >= 0 && f >= 0 && p + c + f > 0;
+  });
+
+  openEditFoodRecord(food: FoodItem, event?: Event) {
+    if (event) event.stopPropagation();
+    const rec = this.registeredRecords()[food.id];
+    if (!rec) return;
+
+    this.editingFoodItem.set(food);
+    this.editRecordError.set(null);
+    this.editDishName.set(rec.plato_estimado || food.name || '');
+    this.editNotes.set(rec.notas || '');
+    this.editManualProtein.set(Math.round((Number(rec.proteinas ?? food.protein) || 0) * 10) / 10);
+    this.editManualCarbs.set(Math.round((Number(rec.carbohidratos ?? food.carbs) || 0) * 10) / 10);
+    this.editManualFat.set(Math.round((Number(rec.grasas ?? food.fat) || 0) * 10) / 10);
+    this.editSelectedCatalogIngredientId.set(null);
+
+    const catalog = this.catalogIngredients();
+    const savedIngs = Array.isArray(rec.ingredientes) ? rec.ingredientes : [];
+    const parsedRows: ManualIngredientRow[] = [];
+
+    for (let i = 0; i < savedIngs.length; i++) {
+      const si = savedIngs[i];
+      const name = String(si?.nombre || si?.name || '').trim();
+      if (!name) continue;
+
+      const matched = catalog.find(
+        (c) => (si.ingredient_id && c.id === si.ingredient_id) || c.name.toLowerCase() === name.toLowerCase()
+      );
+      const qtyOrig = Number(si.cantidad_original ?? si.cantidad_g ?? 100) || 1;
+      const gramsSaved = Number(si.cantidad_g ?? 100) || 100;
+      const unitOrig = String(si.unidad_original || 'g');
+      const mode: 'g' | 'portions' = si.modo === 'portions' ? 'portions' : 'g';
+
+      const ingObj: CatalogIngredient = matched || {
+        id: `saved_${i}_${Date.now()}`,
+        name,
+        unit: unitOrig,
+        serving_size: mode === 'g' ? gramsSaved : 1,
+        calories: Number(si.kcals || 0),
+        protein: Number(si.proteinas_g || 0),
+        carbs: Number(si.carbohidratos_g || 0),
+        fats: Number(si.grasas_g || 0),
+        unit_weight_grams: mode === 'portions' && qtyOrig > 0 ? Math.round((gramsSaved / qtyOrig) * 10) / 10 : gramsSaved,
+      };
+
+      parsedRows.push({
+        rowId: `edit_${Date.now()}_${i}`,
+        ingredientId: ingObj.id,
+        ingredient: ingObj,
+        quantity: qtyOrig,
+        mode,
+      });
+    }
+
+    this.editIngredientRows.set(parsedRows);
+    this.editRecordMode.set(parsedRows.length > 0 ? 'INGREDIENTS' : 'MACROS');
+    this.isEditRecordModalOpen.set(true);
+  }
+
+  onEditCatalogIngredientSelected(ingredientId: string | null) {
+    if (!ingredientId) return;
+    const found = this.catalogIngredients().find((ing) => ing.id === ingredientId);
+    if (!found) return;
+    const isGramUnit = this.isGramOrMlUnit(found.unit);
+    const newRow: ManualIngredientRow = {
+      rowId: `erow_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
+      ingredientId: found.id,
+      ingredient: found,
+      quantity: isGramUnit ? Math.max(10, Math.round(found.serving_size || 100)) : 1,
+      mode: isGramUnit ? 'g' : 'portions',
+    };
+    this.editIngredientRows.update((rows) => [...rows, newRow]);
+    this.editSelectedCatalogIngredientId.set(null);
+  }
+
+  updateEditRowQuantity(rowId: string, rawVal: number | string | null) {
+    const parsed = rawVal === null || rawVal === '' ? 0 : Math.max(0, Number(rawVal) || 0);
+    this.editIngredientRows.update((rows) =>
+      rows.map((r) => (r.rowId === rowId ? { ...r, quantity: parsed } : r))
+    );
+  }
+
+  updateEditRowMode(rowId: string, newMode: 'g' | 'portions') {
+    this.editIngredientRows.update((rows) =>
+      rows.map((r) => {
+        if (r.rowId !== rowId || r.mode === newMode) return r;
+        const optIng = this.toOptimizerIngredient(r.ingredient);
+        if (newMode === 'portions') {
+          const gramsNow = getGramsForQuantity(optIng, r.quantity, r.mode);
+          const gramsPerPortion = getGramsForQuantity(optIng, 1, 'portions') || 100;
+          const nextPortions = Math.max(0.25, Math.round((gramsNow / gramsPerPortion) * 4) / 4);
+          return { ...r, mode: 'portions', quantity: nextPortions };
+        } else {
+          const gramsNow = Math.max(1, Math.round(getGramsForQuantity(optIng, r.quantity, r.mode)));
+          return { ...r, mode: 'g', quantity: gramsNow };
+        }
+      })
+    );
+  }
+
+  removeEditIngredientRow(rowId: string) {
+    this.editIngredientRows.update((rows) => rows.filter((r) => r.rowId !== rowId));
+  }
+
+  getEditRowSummary(rowId: string) {
+    const found = this.editIngredientDetails().find((d) => d.row.rowId === rowId);
+    return found || { kcal: 0, protein: 0, carbs: 0, fat: 0, grams: 0 };
+  }
+
+  async saveEditedFoodRecord() {
+    const food = this.editingFoodItem();
+    if (!food || !this.isEditRecordValid() || this.isSavingEditRecord()) return;
+
+    const rec = this.registeredRecords()[food.id];
+    const curDateStr = this.formatDateYMD(this.selectedDate());
+    const idOriginal = rec?.id_original || `${curDateStr}_${food.id}`;
+
+    this.isSavingEditRecord.set(true);
+    this.editRecordError.set(null);
+
+    try {
+      let calorias = 0;
+      let proteinas = 0;
+      let carbohidratos = 0;
+      let grasas = 0;
+      let ingredientes: FormattedRecordIngredient[] | null = null;
+      let dishName = this.editDishName().trim();
+
+      if (this.editRecordMode() === 'INGREDIENTS') {
+        const totals = this.editIngredientsTotals();
+        const validDetails = this.editIngredientDetails().filter((d) => d.row.quantity > 0);
+        calorias = totals.kcal;
+        proteinas = totals.protein;
+        carbohidratos = totals.carbs;
+        grasas = totals.fat;
+        ingredientes = validDetails.map((d) => d.formatted);
+        if (!dishName) {
+          dishName = validDetails.map((d) => d.row.ingredient.name).join(' + ') || food.name;
+        }
+      } else {
+        proteinas = Math.round((Math.max(0, Number(this.editManualProtein()) || 0)) * 10) / 10;
+        carbohidratos = Math.round((Math.max(0, Number(this.editManualCarbs()) || 0)) * 10) / 10;
+        grasas = Math.round((Math.max(0, Number(this.editManualFat()) || 0)) * 10) / 10;
+        calorias = this.editManualKcal();
+        if (!dishName) dishName = food.name;
+        ingredientes = [
+          {
+            ingredient_id: null,
+            nombre: dishName,
+            cantidad_display: '1 porción',
+            cantidad_original: 1,
+            unidad_original: 'porción',
+            modo: 'portions',
+            cantidad_g: 100,
+            kcals: calorias,
+            proteinas_g: proteinas,
+            carbohidratos_g: carbohidratos,
+            grasas_g: grasas,
+          },
+        ];
+      }
+
+      const updates = {
+        plato_estimado: dishName,
+        calorias,
+        proteinas,
+        carbohidratos,
+        grasas,
+        notas: this.editNotes().trim() || null,
+        ingredientes,
+      };
+
+      await firstValueFrom(this.intakeService.updateFoodRecord(idOriginal, updates));
+
+      // Actualizar estado local inmediatamente
+      this.registeredRecords.update((curr) => ({
+        ...curr,
+        [food.id]: { ...(curr[food.id] || {}), ...updates },
+      }));
+
+      this.additionalMockFoods.update((items) =>
+        items.map((item) =>
+          item.id === food.id
+            ? { ...item, name: dishName, kcal: calorias, protein: proteinas, carbs: carbohidratos, fat: grasas }
+            : item
+        )
+      );
+
+      this.isEditRecordModalOpen.set(false);
+      this.editingFoodItem.set(null);
+      this.loadNutritionHistory();
+    } catch (err: any) {
+      this.editRecordError.set(err?.error?.detail || err?.message || 'No se pudo actualizar el registro.');
+    } finally {
+      this.isSavingEditRecord.set(false);
+    }
+  }
+
   onAdherenceChange(adh: '100' | 'ADAPTATION' | 'FREE' | null) {
     this.selectedAdherence.set(adh);
+    if (adh === '100') {
+      this.showManualIngredientsOverlay.set(false);
+      this.customCalcMode.set('AI');
+    }
     if (adh === 'FREE') {
       // Fuera del plan: no asociar ni obligar a seleccionar platillos del plan
       this.selectedFoodItemsForLog.set([]);
@@ -1128,6 +1661,10 @@ export class IntakeUserComponent implements OnInit {
     }
     this.registerError.set(null);
     this.resetPhotoEstimationState();
+    this.customCalcMode.set('AI');
+    this.showManualIngredientsOverlay.set(false);
+    this.manualIngredientRows.set([]);
+    this.selectedCatalogIngredientId.set(null);
     const isGeneralFreeRegister = !mealType && !food;
     const chosenType = food ? food.mealType : (mealType || 'LUNCH');
     this.selectedMealType.set(chosenType);
@@ -1170,11 +1707,7 @@ export class IntakeUserComponent implements OnInit {
 
     const existingPhoto = this.getExistingPhotoForMeal(chosenType);
     this.existingMealPhotoUrl.set(existingPhoto);
-    if (existingPhoto && !food) {
-      this.uploadedPhotoUrl.set(existingPhoto);
-    } else {
-      this.uploadedPhotoUrl.set(null);
-    }
+    this.uploadedPhotoUrl.set(null);
     this.selectedFile.set(null);
     this.selectedAdherence.set('100');
     this.showPlannedFoodsOverlay.set(false);
@@ -1186,6 +1719,7 @@ export class IntakeUserComponent implements OnInit {
     this.photoAnalysisSub = null;
     this.isAnalyzingPhoto.set(false);
     this.showPlannedFoodsOverlay.set(false);
+    this.showManualIngredientsOverlay.set(false);
   }
 
   // Manejar selección de foto desde input file
@@ -1326,7 +1860,22 @@ export class IntakeUserComponent implements OnInit {
       const adherence = this.selectedAdherence();
       let resolvedCustom = this.resolvedCustomNutrition();
 
-      if (this.requiresCustomNutrition() && !resolvedCustom?.isValid) {
+      if (this.requiresCustomNutrition() && this.customCalcMode() === 'INGREDIENTS') {
+        const totals = this.manualIngredientsTotals();
+        const validDetails = this.manualIngredientDetails().filter((d) => d.row.quantity > 0);
+        const joinedNames = validDetails.map((d) => d.row.ingredient.name).join(' + ');
+        resolvedCustom = {
+          mode: 'INGREDIENTS',
+          dishName: this.notesText()?.trim() || joinedNames || this.mealDefinitions[chosenMealType]?.title || 'Plato',
+          kcal: totals.kcal,
+          protein: totals.protein,
+          carbs: totals.carbs,
+          fat: totals.fat,
+          ingredients: validDetails.map((d) => d.formatted),
+          isValid: totals.hasValidItems,
+        };
+        this.resolvedCustomNutrition.set(resolvedCustom);
+      } else if (this.requiresCustomNutrition() && !resolvedCustom?.isValid) {
         this.isAnalyzingPhoto.set(true);
         this.photoAnalysisError.set(null);
         try {

@@ -6,6 +6,7 @@ import { PrimeNGModule } from '../../../../shared/prime-ng.module';
 import { SelectModule } from 'primeng/select';
 import { PopoverModule } from 'primeng/popover';
 import { IntakeService } from '../../../../core/services/intake.service';
+import { AthleteService } from '../../../../core/services/athlete.service';
 import { formatQuantity, toFraction } from '../../../../core/helpers/nutrition-optimizer';
 import { RecipeDetailsModal } from '../recipe-details-modal/recipe-details-modal';
 
@@ -18,6 +19,7 @@ import { RecipeDetailsModal } from '../recipe-details-modal/recipe-details-modal
 })
 export class ProtocolMatrixDrawer {
   private intakeService = inject(IntakeService);
+  private athleteService = inject(AthleteService);
 
   isOpen = model<boolean>(false);
   athleteId = input<string | null>(null);
@@ -36,6 +38,10 @@ export class ProtocolMatrixDrawer {
   isSaving = signal<boolean>(false);
   openDropdownKey = signal<string | null>(null);
   canAddMore = computed(() => this.weeklyTemplates().length < this.maxTemplates());
+  isInstructor = computed(() => {
+    const roles = this.athleteService.currentAthlete()?.roles;
+    return Array.isArray(roles) && roles.some((r) => String(r).toUpperCase().trim() === 'INSTRUCTOR');
+  });
 
   // Catálogo filtrado: solo menús asignados en la semana/planes Y aquellos creados por el atleta logueado
   catalogMenus = computed(() => {

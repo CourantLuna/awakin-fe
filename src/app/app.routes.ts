@@ -2,6 +2,7 @@ import { Routes } from '@angular/router';
 import { authGuard } from './core/guards/auth.guard';
 import { guestGuard } from './core/guards/guest.guard';
 import { moduleEnabledGuard } from './core/guards/module-enabled.guard';
+import { onboardingGuard } from './core/guards/onboarding.guard';
 import { LAST_ROUTE_STORAGE_KEY, VALID_APP_MODULES } from './core/services/auth.service';
 
 export function resolveInitialRedirect(): string {
@@ -28,6 +29,22 @@ export const routes: Routes = [
     canActivate: [guestGuard],
     loadComponent: () =>
       import('./features/auth/login/login.component').then((m) => m.LoginComponent),
+  },
+  {
+    path: 'pending-access',
+    loadComponent: () =>
+      import('./features/auth/pending-access/pending-access.component').then((m) => m.PendingAccessComponent),
+  },
+  {
+    path: 'join/:token',
+    loadComponent: () =>
+      import('./features/auth/join-invite/join-invite.component').then((m) => m.JoinInviteComponent),
+  },
+  {
+    path: 'onboarding',
+    canActivate: [onboardingGuard],
+    loadComponent: () =>
+      import('./features/onboarding/onboarding.component').then((m) => m.OnboardingComponent),
   },
 
   // Vista de Módulo en Mantenimiento

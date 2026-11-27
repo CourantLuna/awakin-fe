@@ -41,6 +41,7 @@ export interface KinInfo {
   secondary_color?: string;
   manifesto?: string | null;
   head_coach_id?: string | null;
+  head_coach_name?: string | null;
   instructor_id?: string | null;
   whatsapp_group_url?: string | null;
   google_calendar_id?: string | null;
@@ -93,6 +94,8 @@ export interface AthleteProfile {
   followers_count?: number;
   following_count?: number;
   email?: string | null;
+  phone?: string | null;
+  has_completed_onboarding?: boolean;
   kin_id?: string | null;
   head_coach_id?: string | null;
   instructor_id?: string | null;
@@ -324,7 +327,7 @@ export class AthleteService {
    */
   public loadAthleteProfile(identifier: string): void {
     this.isLoading.set(true);
-    this.http.get<AthleteProfile>(`${this.baseUrl}/${identifier}`).pipe(timeout(3500)).subscribe({
+    this.http.get<AthleteProfile>(`${this.baseUrl}/${identifier}`).pipe(timeout(5000)).subscribe({
       next: (athlete) => {
         this.setActiveAthlete(athlete);
         this.isLoading.set(false);
@@ -356,7 +359,7 @@ export class AthleteService {
   public loadInitialAthletes(preferredIdentifier?: string, kinId?: string): void {
     this.isLoading.set(true);
     const url = kinId ? `${this.baseUrl}?kin_id=${encodeURIComponent(kinId)}` : this.baseUrl;
-    this.http.get<AthleteProfile[]>(url).pipe(timeout(3500)).subscribe({
+    this.http.get<AthleteProfile[]>(url).pipe(timeout(5000)).subscribe({
       next: (athletes) => {
         this.processAthletesList(athletes, preferredIdentifier);
       },
@@ -571,7 +574,7 @@ export class AthleteService {
    */
   public uploadMedia(
     file: File | Blob,
-    bucket: 'avatars' | 'feed_posts' | 'fotos_progreso' | 'progress_photos' | 'fotos_comidas' | 'kin_assets' = 'feed_posts',
+    bucket: 'avatars' | 'feed_posts' | 'fotos_progreso' | 'progress_photos' | 'fotos_comidas' | 'kin_assets' | 'brand_kin' = 'feed_posts',
     filename: string = 'media.jpg'
   ): Observable<{ status: string; bucket: string; filename: string; public_url: string }> {
     return from(compressImage(file, 1200, 0.82)).pipe(
