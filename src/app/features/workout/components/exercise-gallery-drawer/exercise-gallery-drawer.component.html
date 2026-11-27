@@ -208,9 +208,10 @@
       <!-- Card del Body Map -->
       <div class="bg-white rounded-3xl border border-stone-200/80 shadow-sm p-4 overflow-hidden relative">
         @if (bodyMapBgUrl(); as bgUrl) {
+        <div class="absolute inset-0 bg-white/10  pointer-events-none"></div>
         <img [src]="bgUrl" alt="" aria-hidden="true"
           class="absolute inset-0 w-full h-full object-cover pointer-events-none select-none opacity-30" />
-        <div class="absolute inset-0 bg-white/55 dark:bg-stone-950/60 pointer-events-none"></div>
+
         }
         <div class="relative z-10 flex items-center justify-between mb-2">
           <div class="flex items-center gap-2">
