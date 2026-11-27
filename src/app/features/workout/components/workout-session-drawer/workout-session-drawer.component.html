@@ -349,7 +349,7 @@
 
 <!-- PICKER DE BIBLIOTECA CON BODY MAP MULTI-FILTRO -->
 <app-exercise-gallery-drawer [(isOpen)]="isBodyMapPickerOpen" [selectionMode]="true"
-  (exercisePicked)="onBodyMapExercisePicked($event)" />
+  (exercisesPicked)="onBodyMapExercisesPicked($event)" />
 
 <!-- MODAL: INSTRUCCIONES Y GIF DEL EJERCICIO -->
 <p-dialog [visible]="!!inspectedExercise()" (visibleChange)="$event ? null : inspectedExercise.set(null)" [modal]="true"

@@ -277,8 +277,16 @@
         <!-- Grid de Tarjetas de Ejercicios Reales desde la API -->
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
           @for (ex of exercises(); track ex.id) {
+          @let isSelected = selectionMode() && isExerciseSelected(ex.id);
           <article (click)="openExerciseDetail(ex)"
-            class="bg-white rounded-2xl border border-stone-200 p-3 shadow-2xs hover:shadow-md transition-all flex flex-col justify-between group cursor-pointer active:scale-[0.98]">
+            class="bg-white rounded-2xl border p-3 shadow-2xs hover:shadow-md transition-all flex flex-col justify-between group cursor-pointer active:scale-[0.98] relative"
+            [ngClass]="isSelected ? 'border-awakin-sun ring-2 ring-awakin-sun/25 bg-amber-50/40' : 'border-stone-200'">
+            @if (selectionMode()) {
+            <span class="absolute top-2.5 right-2.5 w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-black z-10"
+              [ngClass]="isSelected ? 'bg-awakin-sun text-white shadow-xs' : 'bg-stone-100 text-stone-400 border border-stone-200'">
+              <i class="pi" [ngClass]="isSelected ? 'pi-check' : 'pi-plus'"></i>
+            </span>
+            }
             <div class="flex gap-3">
               <!-- Thumbnail de imagen servida desde CDN con fallback -->
               <div
@@ -460,8 +468,16 @@
       } @else if (exercises().length > 0) {
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
         @for (ex of exercises(); track ex.id) {
+        @let isSelected = selectionMode() && isExerciseSelected(ex.id);
         <article (click)="openExerciseDetail(ex)"
-          class="bg-white rounded-2xl border border-stone-200 p-3 shadow-2xs hover:shadow-md transition-all flex flex-col justify-between group cursor-pointer active:scale-[0.98]">
+          class="bg-white rounded-2xl border p-3 shadow-2xs hover:shadow-md transition-all flex flex-col justify-between group cursor-pointer active:scale-[0.98] relative"
+          [ngClass]="isSelected ? 'border-awakin-sun ring-2 ring-awakin-sun/25 bg-amber-50/40' : 'border-stone-200'">
+          @if (selectionMode()) {
+          <span class="absolute top-2.5 right-2.5 w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-black z-10"
+            [ngClass]="isSelected ? 'bg-awakin-sun text-white shadow-xs' : 'bg-stone-100 text-stone-400 border border-stone-200'">
+            <i class="pi" [ngClass]="isSelected ? 'pi-check' : 'pi-plus'"></i>
+          </span>
+          }
           <div class="flex gap-3">
             <div
               class="w-20 h-20 rounded-xl bg-stone-100 border border-stone-200/60 overflow-hidden shrink-0 flex items-center justify-center relative">
@@ -617,6 +633,28 @@
     title="Volver arriba">
     <i class="pi pi-arrow-up text-sm font-black"></i>
   </button>
+  }
+  @if (selectionMode() && selectedExercises().length > 0) {
+  <div class="sticky bottom-3 mx-4 z-40 bg-stone-900 text-white rounded-2xl p-3 shadow-2xl border border-stone-700 flex items-center justify-between gap-3 max-w-4xl sm:mx-auto">
+    <div class="flex items-center gap-2 min-w-0">
+      <span class="w-7 h-7 rounded-xl bg-awakin-sun text-white text-xs font-black flex items-center justify-center shrink-0">
+        {{ selectedExercises().length }}
+      </span>
+      <span class="text-xs font-bold truncate">
+        {{ selectedExercises().length === 1 ? 'ejercicio seleccionado' : 'ejercicios seleccionados' }}
+      </span>
+    </div>
+    <div class="flex items-center gap-2 shrink-0">
+      <button type="button" (click)="clearSelectedExercises()"
+        class="px-3 py-2 rounded-xl bg-stone-800 hover:bg-stone-700 text-stone-300 text-[11px] font-bold cursor-pointer">
+        Limpiar
+      </button>
+      <button type="button" (click)="confirmSelectedExercises()"
+        class="px-4 py-2 rounded-xl bg-awakin-sun hover:bg-amber-600 text-white text-[11px] font-black uppercase tracking-wider cursor-pointer shadow-sm">
+        Agregar ({{ selectedExercises().length }})
+      </button>
+    </div>
+  </div>
   }
 </p-drawer>
 

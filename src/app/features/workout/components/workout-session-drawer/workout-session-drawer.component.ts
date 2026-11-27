@@ -97,7 +97,13 @@ export class WorkoutSessionDrawerComponent {
   });
 
   async onBodyMapExercisePicked(summary: ExerciseSummary): Promise<void> {
-    await this.activeSession.addLibraryExercise(summary);
+    await this.onBodyMapExercisesPicked([summary]);
+  }
+
+  async onBodyMapExercisesPicked(summaries: ExerciseSummary[]): Promise<void> {
+    for (const s of summaries) {
+      await this.activeSession.addLibraryExercise(s);
+    }
     this.isBodyMapPickerOpen.set(false);
   }
 

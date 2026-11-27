@@ -34,6 +34,8 @@ export class ExerciseGalleryDrawerComponent implements OnInit, OnDestroy {
   isOpen = model<boolean>(false);
   selectionMode = input<boolean>(false);
   exercisePicked = output<ExerciseSummary>();
+  exercisesPicked = output<ExerciseSummary[]>();
+  selectedExercises = signal<ExerciseSummary[]>([]);
 
   // Estados de Búsqueda y Filtros
   searchQuery = signal<string>('');
@@ -438,11 +440,30 @@ export class ExerciseGalleryDrawerComponent implements OnInit, OnDestroy {
     this.fetchExercises();
   }
 
+  isExerciseSelected(id: string): boolean {
+    return this.selectedExercises().some((e) => e.id === id);
+  }
+
+  clearSelectedExercises(): void {
+    this.selectedExercises.set([]);
+  }
+
+  confirmSelectedExercises(): void {
+    const list = this.selectedExercises();
+    if (list.length === 0) return;
+    this.exercisesPicked.emit(list);
+    this.selectedExercises.set([]);
+    this.close();
+  }
+
   // Detalle del Ejercicio
   openExerciseDetail(exercise: ExerciseSummary): void {
     if (this.selectionMode()) {
-      this.exercisePicked.emit(exercise);
-      this.close();
+      const current = [...this.selectedExercises()];
+      const idx = current.findIndex((e) => e.id === exercise.id);
+      if (idx >= 0) current.splice(idx, 1);
+      else current.push(exercise);
+      this.selectedExercises.set(current);
       return;
     }
     this.isLoadingDetail.set(true);
