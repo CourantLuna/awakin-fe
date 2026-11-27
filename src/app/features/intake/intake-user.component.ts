@@ -31,6 +31,7 @@ import { ProtocolMatrixDrawer } from './components/protocol-matrix-drawer/protoc
 import { ShoppingListDrawer } from './components/shopping-list-drawer/shopping-list-drawer';
 import { RecipeDetailsModal } from './components/recipe-details-modal/recipe-details-modal';
 import { FoodStoryModalComponent, translateMealType } from './components/food-story-modal/food-story-modal.component';
+import { openMacroExchangePdf } from '../../core/helpers/macro-exchange-pdf.helper';
 import {
   WeeklyTemplate,
   MenuPlan,
@@ -581,12 +582,107 @@ export class IntakeUserComponent implements OnInit {
     return `Plan del ${capitalized}`;
   });
 
-  // 2. CONTROL DE DRAWERS
+  // 2. CONTROL DE DRAWERS Y ACCIONES RÁPIDAS
   isMatrixOpen = signal<boolean>(false);
   isShoppingListModalOpen = signal<boolean>(false);
+  generatingMacroPdf = signal<boolean>(false);
+  quickActionToast = signal<string | null>(null);
 
   openFuelMatrix() {
     this.isMatrixOpen.set(true);
+  }
+
+  openRecipeBookComingSoon() {
+    this.quickActionToast.set('Recetario disponible muy pronto.');
+    setTimeout(() => this.quickActionToast.set(null), 2600);
+  }
+
+  async generateMacroExchangePdf() {
+    if (this.generatingMacroPdf()) return;
+    const athlete = this.athleteService.currentAthlete();
+    if (!athlete?.id) return;
+
+    this.generatingMacroPdf.set(true);
+    try {
+      let ingredients = this.catalogIngredients();
+      if (!ingredients || ingredients.length === 0) {
+        ingredients = await firstValueFrom(this.intakeService.loadCatalogIngredients());
+      }
+
+      const prefs = await firstValueFrom(this.athleteService.getNutritionPreferences(athlete.id));
+      const proto = this.activeNutritionProtocol();
+      const totalP = this.dailyGoalProtein();
+      const totalC = this.dailyGoalCarbs();
+      const totalF = this.dailyGoalFats();
+
+      const rawDist = [...(proto?.athlete_meal_macro_distributions || [])].sort(
+        (a, b) => Number(a.sort_order || 0) - Number(b.sort_order || 0)
+      );
+      const dist =
+        rawDist.length > 0
+          ? rawDist
+          : [
+              { meal_type: 'DESAYUNO', protein_pct: 25, carbs_pct: 25, fats_pct: 25, sort_order: 1 },
+              { meal_type: 'ALMUERZO', protein_pct: 30, carbs_pct: 35, fats_pct: 30, sort_order: 2 },
+              { meal_type: 'MERIENDA_PM', protein_pct: 15, carbs_pct: 15, fats_pct: 15, sort_order: 3 },
+              { meal_type: 'CENA', protein_pct: 30, carbs_pct: 25, fats_pct: 30, sort_order: 4 },
+            ];
+
+      const meals = dist.map((row) => {
+        const p = Math.round(totalP * (Number(row.protein_pct || 0) / 100));
+        const c = Math.round(totalC * (Number(row.carbs_pct || 0) / 100));
+        const f = Math.round(totalF * (Number(row.fats_pct || 0) / 100));
+        return {
+          meal_type: row.meal_type,
+          label: translateMealType(row.meal_type),
+          protein_g: p,
+          carbs_g: c,
+          fats_g: f,
+          kcal: p * 4 + c * 4 + f * 9,
+        };
+      });
+
+      const protocolKey = (proto?.protocol || 'MAINTENANCE').toUpperCase();
+      const protocolLabelMap: Record<string, string> = {
+        DEFICIT: 'Déficit Calórico',
+        SURPLUS: 'Superávit (Volumen)',
+        RECOMPOSITION: 'Recomposición',
+        MAINTENANCE: 'Mantenimiento',
+      };
+
+      const opened = openMacroExchangePdf({
+        kin: {
+          team_name: athlete.kin?.team_name || 'AWAKIN',
+          team_logo_url: athlete.kin?.team_logo_url || null,
+          primary_color: athlete.kin?.primary_color || '#FE970A',
+          secondary_color: athlete.kin?.secondary_color || '#1c1917',
+        },
+        athlete: {
+          full_name: `${athlete.first_name || ''} ${athlete.last_name || ''}`.trim() || athlete.username,
+          username: athlete.username,
+          protocol_key: protocolKey,
+          protocol_label: protocolLabelMap[protocolKey] || protocolKey,
+          diet_name: 'Personalizada',
+        },
+        meals,
+        onboarding: {
+          favorite_proteins: prefs.favorite_proteins || [],
+          favorite_carbs: prefs.favorite_carbs || [],
+          favorite_fats: prefs.favorite_fats || [],
+        },
+        ingredients: ingredients || [],
+      });
+
+      if (!opened) {
+        this.quickActionToast.set('Permite ventanas emergentes para ver la tabla PDF.');
+        setTimeout(() => this.quickActionToast.set(null), 3200);
+      }
+    } catch {
+      this.quickActionToast.set('No se pudo generar la tabla de macros en este momento.');
+      setTimeout(() => this.quickActionToast.set(null), 3000);
+    } finally {
+      this.generatingMacroPdf.set(false);
+    }
   }
 
   // ==========================================
@@ -767,6 +863,29 @@ export class IntakeUserComponent implements OnInit {
       }));
 
     items.push(...extra);
+
+    // Reconstruir cualquier registro guardado en BD (ej. dish_ o loose_ de un menú/plan anterior) que no esté en el menú actual
+    const existingIds = new Set(items.map((it) => it.id));
+    for (const [fid, rec] of Object.entries(recordsMap)) {
+      if (!rec || rec.is_active === false || existingIds.has(fid)) continue;
+      const mt: MealType = (rec.tipo_comida?.toUpperCase() as MealType) || 'SNACK_PM';
+      const name = rec.plato_estimado || rec.notas || `Registro de ${mt}`;
+      items.push({
+        id: fid,
+        name,
+        emoji: determineCoverIcon(name, [mt]),
+        coverImageUrl: rec.foto_url || null,
+        mealType: mt,
+        portion: 1,
+        unit: 'porción',
+        kcal: Math.round(Number(rec.calorias || 0)),
+        protein: Math.round(Number(rec.proteinas || 0)),
+        carbs: Math.round(Number(rec.carbohidratos || 0)),
+        fat: Math.round(Number(rec.grasas || 0)),
+        isLogged: this.isFoodLogged(fid),
+      });
+    }
+
     return items;
   });
 

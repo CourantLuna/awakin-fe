@@ -1764,7 +1764,7 @@ export class ProfileAvatarComponent implements OnInit, OnDestroy {
       case 'PHYSIOTHERAPIST':
         return 'bg-cyan-500/20 text-cyan-700 border-cyan-500/40';
       default:
-        return 'bg-stone-800 text-stone-700 border-stone-700';
+        return 'bg-stone-800/20 text-stone-700 border-stone-700';
     }
   }
 

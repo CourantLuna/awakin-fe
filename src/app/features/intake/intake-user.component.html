@@ -32,36 +32,76 @@
       (openDailyStory)="openDailySummaryStory()">
     </app-intake-scale-widget>
 
-    <div class="px-4 mt-2 relative z-10">
-      <button (click)="openFuelMatrix()"
-        class="w-full relative overflow-hidden bg-white border border-stone-200 rounded-2xl p-4 flex items-center justify-between group transition-all active:scale-[0.98] shadow-[0_4px_20px_rgb(0,0,0,0.03)] hover:shadow-[0_4px_20px_rgb(0,0,0,0.06)] hover:border-kin-primary/30">
-        <div class="absolute inset-0 bg-gradient-to-r from-stone-50/70 to-transparent"></div>
-
-        <div
-          class="absolute inset-0 bg-gradient-to-r from-kin-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500">
-        </div>
-
-        <div class="flex items-center gap-3 relative z-10">
-          <div
-            class="w-10 h-10 rounded-xl bg-kin-primary/10 border border-kin-primary/20 flex items-center justify-center text-kin-primary group-hover:scale-105 transition-transform duration-300">
-            <i class="pi pi-map text-lg"></i>
+    <!-- ACCIONES RÁPIDAS DE NUTRICIÓN -->
+    <div class="px-4 mt-2 relative z-10 space-y-2">
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+        <!-- 1. Plan de Menú Semanal -->
+        <button type="button" (click)="openFuelMatrix()"
+          class="bg-white border border-stone-200 rounded-2xl p-3 flex items-center gap-2.5 text-left group transition-all active:scale-[0.98] shadow-[0_4px_20px_rgb(0,0,0,0.03)] hover:border-kin-primary/40 cursor-pointer">
+          <div class="w-9 h-9 rounded-xl bg-kin-primary/10 border border-kin-primary/20 flex items-center justify-center text-kin-primary shrink-0">
+            <i class="pi pi-map text-sm"></i>
           </div>
-
-          <div class="text-left">
-            <h3 class="text-stone-900 font-black text-sm uppercase tracking-widest leading-tight">
-              Plan de Menu Semanal
+          <div class="min-w-0">
+            <h3 class="text-stone-900 font-black text-[11px] uppercase tracking-wider leading-tight truncate">
+              Plan Semanal
             </h3>
-            <p class="text-stone-500 text-[10px] font-medium mt-0.5">
-              Gestiona tus planes de alimentación
+            <p class="text-stone-400 text-[9px] font-medium truncate mt-0.5">Menús y días</p>
+          </div>
+        </button>
+
+        <!-- 2. Recetario (Próximamente) -->
+        <button type="button" (click)="openRecipeBookComingSoon()"
+          class="bg-white border border-stone-200 rounded-2xl p-3 flex items-center gap-2.5 text-left group transition-all active:scale-[0.98] shadow-[0_4px_20px_rgb(0,0,0,0.03)] hover:border-stone-300 cursor-pointer">
+          <div class="w-9 h-9 rounded-xl bg-amber-50 border border-amber-200/70 flex items-center justify-center text-amber-600 shrink-0">
+            <i class="pi pi-book text-sm"></i>
+          </div>
+          <div class="min-w-0">
+            <div class="flex items-center gap-1">
+              <h3 class="text-stone-900 font-black text-[11px] uppercase tracking-wider leading-tight truncate">
+                Recetario
+              </h3>
+            </div>
+            <p class="text-stone-400 text-[9px] font-medium truncate mt-0.5">Próximamente</p>
+          </div>
+        </button>
+
+        <!-- 3. Lista de Compras -->
+        <button type="button" (click)="openShoppingListModal()"
+          class="bg-white border border-stone-200 rounded-2xl p-3 flex items-center gap-2.5 text-left group transition-all active:scale-[0.98] shadow-[0_4px_20px_rgb(0,0,0,0.03)] hover:border-kin-primary/40 cursor-pointer">
+          <div class="w-9 h-9 rounded-xl bg-emerald-50 border border-emerald-200/70 flex items-center justify-center text-emerald-600 shrink-0">
+            <i class="pi pi-shopping-cart text-sm"></i>
+          </div>
+          <div class="min-w-0">
+            <h3 class="text-stone-900 font-black text-[11px] uppercase tracking-wider leading-tight truncate">
+              Lista Compras
+            </h3>
+            <p class="text-stone-400 text-[9px] font-medium truncate mt-0.5">Supermercado</p>
+          </div>
+        </button>
+
+        <!-- 4. Tabla de Alimentos por Macros PDF -->
+        <button type="button" (click)="generateMacroExchangePdf()" [disabled]="generatingMacroPdf()"
+          class="bg-stone-900 border border-stone-900 rounded-2xl p-3 flex items-center gap-2.5 text-left group transition-all active:scale-[0.98] shadow-sm hover:bg-stone-800 cursor-pointer disabled:opacity-60">
+          <div class="w-9 h-9 rounded-xl bg-amber-400/15 border border-amber-400/30 flex items-center justify-center text-amber-400 shrink-0">
+            <i class="pi text-sm" [ngClass]="generatingMacroPdf() ? 'pi-spin pi-spinner' : 'pi-file-pdf'"></i>
+          </div>
+          <div class="min-w-0">
+            <h3 class="text-white font-black text-[11px] uppercase tracking-wider leading-tight truncate">
+              Tabla Macros
+            </h3>
+            <p class="text-stone-300 text-[9px] font-medium truncate mt-0.5">
+              {{ generatingMacroPdf() ? 'Generando...' : 'Crudo / Cocido' }}
             </p>
           </div>
-        </div>
+        </button>
+      </div>
 
-        <div
-          class="relative z-10 w-8 h-8 rounded-full bg-stone-100 flex items-center justify-center text-stone-400 group-hover:text-kin-primary group-hover:bg-kin-primary/10 transition-all">
-          <i class="pi pi-arrow-right text-xs"></i>
+      @if (quickActionToast()) {
+        <div class="px-3 py-2 rounded-xl bg-stone-900 text-white text-[11px] font-bold flex items-center gap-2">
+          <i class="pi pi-info-circle text-amber-400 text-xs"></i>
+          <span>{{ quickActionToast() }}</span>
         </div>
-      </button>
+      }
     </div>
 
     <div class="mt-6 px-4">
