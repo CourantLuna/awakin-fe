@@ -189,6 +189,7 @@ export class ProfileAvatarComponent implements OnInit, OnDestroy {
 
   // Control de modales y menús
   isEditModalOpen = signal<boolean>(false);
+  isSettingsModalOpen = signal<boolean>(false);
   isSwitcherOpen = signal<boolean>(false);
   isMenuOpen = signal<boolean>(false);
   selectedMeal = signal<NutritionMealRecord | null>(null);
@@ -1417,6 +1418,150 @@ export class ProfileAvatarComponent implements OnInit, OnDestroy {
       ath.profile_image_url || undefined
     );
     this.isSwitcherOpen.set(false);
+  }
+
+  // Settings: Notificaciones y Preferencias Nutricionales (Onboarding)
+  settingsLoading = signal<boolean>(false);
+  settingsSaving = signal<boolean>(false);
+  settingsToast = signal<string | null>(null);
+  settingsError = signal<string | null>(null);
+  notificationsEnabled = signal<boolean>(true);
+  togglingNotifications = signal<boolean>(false);
+  prefProteins = signal<string[]>([]);
+  prefCarbs = signal<string[]>([]);
+  prefFats = signal<string[]>([]);
+  customPrefProtein = signal<string>('');
+  customPrefCarb = signal<string>('');
+  customPrefFat = signal<string>('');
+
+  readonly proteinPresets = [
+    'Pechuga de pollo',
+    'Huevos enteros / claras',
+    'Carne de res magra',
+    'Atún',
+    'Lomo de cerdo',
+    'Pechuga de pavo',
+    'Pescado blanco',
+    'Camarones',
+    'Proteína Whey / Vegetal',
+    'Queso cottage / Ricotta',
+    'Yogurt griego',
+    'Jamón de pavo',
+  ];
+
+  readonly carbPresets = [
+    'Arroz blanco / integral',
+    'Avena',
+    'Papa / Patata',
+    'Camote / Boniato',
+    'Plátano maduro / verde',
+    'Yuca',
+    'Yautía',
+    'Pasta / Fideos',
+    'Pan integral / Masa madre',
+    'Tortillas',
+    'Tortita de arroz',
+  ];
+
+  readonly fatPresets = [
+    'Aguacate',
+    'Aceite de oliva',
+    'Aceite de coco',
+    'Almendras',
+    'Pistachos',
+    'Nueces',
+    'Chía / Linaza',
+    'Mantequilla de maní',
+    'Chocolate negro',
+    'Bacon',
+  ];
+
+  mergedPrefOptions(presets: string[], selected: string[]): string[] {
+    return Array.from(new Set([...presets, ...(selected || [])]));
+  }
+
+  openSettingsModal(): void {
+    const current = this.athlete();
+    if (!current) return;
+    this.notificationsEnabled.set(current.notifications_enabled ?? true);
+    this.settingsError.set(null);
+    this.settingsToast.set(null);
+    this.settingsLoading.set(true);
+    this.isSettingsModalOpen.set(true);
+
+    this.athleteService.getNutritionPreferences(current.id).subscribe({
+      next: (res) => {
+        this.prefProteins.set(res.favorite_proteins || []);
+        this.prefCarbs.set(res.favorite_carbs || []);
+        this.prefFats.set(res.favorite_fats || []);
+        this.settingsLoading.set(false);
+      },
+      error: () => {
+        this.settingsLoading.set(false);
+      },
+    });
+  }
+
+  toggleNotifications(enabled: boolean): void {
+    const current = this.athlete();
+    if (!current || this.togglingNotifications()) return;
+    this.notificationsEnabled.set(enabled);
+    this.togglingNotifications.set(true);
+    this.athleteService.updateProfile(current.id, { notifications_enabled: enabled }).subscribe({
+      next: () => {
+        this.togglingNotifications.set(false);
+        this.settingsToast.set(enabled ? 'Notificaciones activadas' : 'Notificaciones desactivadas');
+        setTimeout(() => this.settingsToast.set(null), 2500);
+      },
+      error: () => {
+        this.notificationsEnabled.set(!enabled);
+        this.togglingNotifications.set(false);
+        this.settingsError.set('No se pudo actualizar la preferencia de notificaciones.');
+      },
+    });
+  }
+
+  togglePrefChip(group: 'p' | 'c' | 'f', item: string): void {
+    const sig = group === 'p' ? this.prefProteins : group === 'c' ? this.prefCarbs : this.prefFats;
+    const curr = sig();
+    sig.set(curr.includes(item) ? curr.filter((x) => x !== item) : [...curr, item]);
+  }
+
+  addCustomPrefChip(group: 'p' | 'c' | 'f'): void {
+    const inputSig = group === 'p' ? this.customPrefProtein : group === 'c' ? this.customPrefCarb : this.customPrefFat;
+    const listSig = group === 'p' ? this.prefProteins : group === 'c' ? this.prefCarbs : this.prefFats;
+    const val = inputSig().trim();
+    if (!val) return;
+    if (!listSig().includes(val)) listSig.set([...listSig(), val]);
+    inputSig.set('');
+  }
+
+  saveNutritionPreferences(): void {
+    const current = this.athlete();
+    if (!current || this.settingsSaving()) return;
+    this.settingsSaving.set(true);
+    this.settingsError.set(null);
+
+    this.athleteService
+      .updateNutritionPreferences(current.id, {
+        favorite_proteins: this.prefProteins(),
+        favorite_carbs: this.prefCarbs(),
+        favorite_fats: this.prefFats(),
+      })
+      .subscribe({
+        next: () => {
+          this.settingsSaving.set(false);
+          this.settingsToast.set('Preferencias guardadas');
+          setTimeout(() => {
+            this.settingsToast.set(null);
+            this.isSettingsModalOpen.set(false);
+          }, 800);
+        },
+        error: () => {
+          this.settingsSaving.set(false);
+          this.settingsError.set('Error al guardar tus preferencias nutricionales.');
+        },
+      });
   }
 
   // Abrir modal de edición con los datos actuales

@@ -42,6 +42,11 @@
         <i class="pi pi-user-edit text-stone-500"></i>
         <span>Editar Perfil</span>
       </button>
+      <button (click)="openSettingsModal(); isMenuOpen.set(false)"
+        class="w-full flex items-center gap-2 px-3 py-2 text-xs font-bold text-stone-800 hover:bg-stone-100 rounded-xl transition-all cursor-pointer">
+        <i class="pi pi-cog text-stone-500"></i>
+        <span>Configuración y Preferencias</span>
+      </button>
       <button (click)="openCreatePost(); isMenuOpen.set(false)"
         class="w-full flex items-center gap-2 px-3 py-2 text-xs font-bold text-stone-800 hover:bg-stone-100 rounded-xl transition-all cursor-pointer">
         <i class="pi pi-plus-circle text-stone-500"></i>
@@ -1489,6 +1494,118 @@
         } @else {
         <span>Guardar Cambios</span>
         }
+      </button>
+    </div>
+  </div>
+</p-dialog>
+
+<!-- ========================================== -->
+<!-- MODAL: CONFIGURACIÓN Y PREFERENCIAS        -->
+<!-- ========================================== -->
+<p-dialog [(visible)]="isSettingsModalOpen" [modal]="true" [draggable]="false" [resizable]="false"
+  header="Configuración y Preferencias" styleClass="w-[94vw] max-w-lg bg-white rounded-3xl overflow-hidden shadow-2xl p-0">
+  <div class="p-5 space-y-5 max-h-[78vh] overflow-y-auto text-xs">
+    <!-- Switch de Notificaciones -->
+    <div class="flex items-center justify-between p-3.5 rounded-2xl bg-stone-50 border border-stone-200">
+      <div>
+        <p class="font-black text-stone-900 uppercase tracking-tight text-xs">Notificaciones</p>
+        <p class="text-[11px] text-stone-500">Recibir recordatorios y avisos de tu Kin</p>
+      </div>
+      <label class="relative inline-flex items-center cursor-pointer">
+        <input type="checkbox" class="sr-only peer"
+          [checked]="notificationsEnabled()"
+          [disabled]="togglingNotifications()"
+          (change)="toggleNotifications($any($event.target).checked)" />
+        <div class="w-11 h-6 bg-stone-300 peer-focus:outline-none rounded-full peer peer-checked:bg-amber-500 transition-colors after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-5"></div>
+      </label>
+    </div>
+
+    @if (settingsLoading()) {
+      <div class="py-6 text-center text-stone-400 font-semibold">
+        <i class="pi pi-spin pi-spinner mr-1.5"></i> Cargando preferencias...
+      </div>
+    } @else {
+      <div class="space-y-4">
+        <div>
+          <p class="text-[10px] font-black uppercase tracking-wider text-emerald-700 mb-2">Proteínas Favoritas</p>
+          <div class="flex flex-wrap gap-1.5 mb-2">
+            @for (opt of mergedPrefOptions(proteinPresets, prefProteins()); track opt) {
+              <button type="button" (click)="togglePrefChip('p', opt)"
+                class="px-2.5 py-1 rounded-full text-[11px] font-bold border transition-all cursor-pointer"
+                [ngClass]="prefProteins().includes(opt)
+                  ? 'bg-emerald-600 text-white border-emerald-600'
+                  : 'bg-stone-50 text-stone-600 border-stone-200'">
+                {{ opt }}
+              </button>
+            }
+          </div>
+          <div class="flex gap-2">
+            <input type="text" [ngModel]="customPrefProtein()" (ngModelChange)="customPrefProtein.set($event)"
+              (keydown.enter)="$event.preventDefault(); addCustomPrefChip('p')"
+              placeholder="Otra proteína..." class="flex-1 bg-stone-50 border border-stone-200 rounded-xl px-3 py-1.5 text-xs" />
+            <button type="button" (click)="addCustomPrefChip('p')" class="px-3 py-1.5 rounded-xl bg-stone-800 text-white font-bold text-xs cursor-pointer">+</button>
+          </div>
+        </div>
+
+        <div>
+          <p class="text-[10px] font-black uppercase tracking-wider text-amber-700 mb-2">Carbohidratos Favoritos</p>
+          <div class="flex flex-wrap gap-1.5 mb-2">
+            @for (opt of mergedPrefOptions(carbPresets, prefCarbs()); track opt) {
+              <button type="button" (click)="togglePrefChip('c', opt)"
+                class="px-2.5 py-1 rounded-full text-[11px] font-bold border transition-all cursor-pointer"
+                [ngClass]="prefCarbs().includes(opt)
+                  ? 'bg-amber-600 text-white border-amber-600'
+                  : 'bg-stone-50 text-stone-600 border-stone-200'">
+                {{ opt }}
+              </button>
+            }
+          </div>
+          <div class="flex gap-2">
+            <input type="text" [ngModel]="customPrefCarb()" (ngModelChange)="customPrefCarb.set($event)"
+              (keydown.enter)="$event.preventDefault(); addCustomPrefChip('c')"
+              placeholder="Otro carbohidrato..." class="flex-1 bg-stone-50 border border-stone-200 rounded-xl px-3 py-1.5 text-xs" />
+            <button type="button" (click)="addCustomPrefChip('c')" class="px-3 py-1.5 rounded-xl bg-stone-800 text-white font-bold text-xs cursor-pointer">+</button>
+          </div>
+        </div>
+
+        <div>
+          <p class="text-[10px] font-black uppercase tracking-wider text-rose-700 mb-2">Grasas Favoritas</p>
+          <div class="flex flex-wrap gap-1.5 mb-2">
+            @for (opt of mergedPrefOptions(fatPresets, prefFats()); track opt) {
+              <button type="button" (click)="togglePrefChip('f', opt)"
+                class="px-2.5 py-1 rounded-full text-[11px] font-bold border transition-all cursor-pointer"
+                [ngClass]="prefFats().includes(opt)
+                  ? 'bg-rose-600 text-white border-rose-600'
+                  : 'bg-stone-50 text-stone-600 border-stone-200'">
+                {{ opt }}
+              </button>
+            }
+          </div>
+          <div class="flex gap-2">
+            <input type="text" [ngModel]="customPrefFat()" (ngModelChange)="customPrefFat.set($event)"
+              (keydown.enter)="$event.preventDefault(); addCustomPrefChip('f')"
+              placeholder="Otra grasa..." class="flex-1 bg-stone-50 border border-stone-200 rounded-xl px-3 py-1.5 text-xs" />
+            <button type="button" (click)="addCustomPrefChip('f')" class="px-3 py-1.5 rounded-xl bg-stone-800 text-white font-bold text-xs cursor-pointer">+</button>
+          </div>
+        </div>
+      </div>
+    }
+
+    @if (settingsError()) {
+      <p class="text-xs font-bold text-red-600">{{ settingsError() }}</p>
+    }
+    @if (settingsToast()) {
+      <p class="text-xs font-bold text-emerald-600">{{ settingsToast() }}</p>
+    }
+
+    <div class="flex gap-2 pt-2">
+      <button type="button" (click)="isSettingsModalOpen.set(false)"
+        class="flex-1 bg-stone-100 hover:bg-stone-200 text-stone-700 font-bold text-xs py-3 rounded-xl cursor-pointer">
+        Cerrar
+      </button>
+      <button type="button" (click)="saveNutritionPreferences()" [disabled]="settingsSaving() || settingsLoading()"
+        class="flex-1 bg-amber-500 hover:bg-amber-600 disabled:opacity-50 text-white font-black text-xs py-3 rounded-xl cursor-pointer shadow-sm">
+        {{ settingsSaving() ? 'Guardando...' : 'Guardar Preferencias' }}
       </button>
     </div>
   </div>

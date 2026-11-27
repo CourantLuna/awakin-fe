@@ -100,6 +100,7 @@ export interface AthleteProfile {
   gender?: string | null;
   birth_date?: string | null;
   nivel_actividad?: string | null;
+  notifications_enabled?: boolean;
   sexo?: string | null;
   genero?: string | null;
   fecha_nacimiento?: string | null;
@@ -187,6 +188,7 @@ export interface AthleteProfileUpdate {
   bio_description?: string;
   profile_image_url?: string;
   nivel_actividad?: string;
+  notifications_enabled?: boolean;
 }
 
 
@@ -496,6 +498,27 @@ export class AthleteService {
         );
       })
     );
+  }
+
+  public getNutritionPreferences(athleteId: string): Observable<{
+    athlete_id: string;
+    favorite_proteins: string[];
+    favorite_carbs: string[];
+    favorite_fats: string[];
+  }> {
+    return this.http.get<{
+      athlete_id: string;
+      favorite_proteins: string[];
+      favorite_carbs: string[];
+      favorite_fats: string[];
+    }>(`${this.baseUrl}/${athleteId}/nutrition-preferences`);
+  }
+
+  public updateNutritionPreferences(
+    athleteId: string,
+    payload: { favorite_proteins: string[]; favorite_carbs: string[]; favorite_fats: string[] }
+  ): Observable<any> {
+    return this.http.patch(`${this.baseUrl}/${athleteId}/nutrition-preferences`, payload);
   }
 
   /**
