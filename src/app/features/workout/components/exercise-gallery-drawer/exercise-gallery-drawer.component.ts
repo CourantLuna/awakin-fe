@@ -61,6 +61,10 @@ export class ExerciseGalleryDrawerComponent implements OnInit, OnDestroy {
   ]);
   isLoadingEquipment = signal<boolean>(false);
 
+  bodyMapBgUrl(): string | null {
+    return this.athleteService.currentAthlete()?.kin?.body_map_bg_url || null;
+  }
+
   // Temporizador para debounce de búsqueda y scroll listener
   private searchTimer: any = null;
   private scrollListenerRemover: (() => void) | null = null;

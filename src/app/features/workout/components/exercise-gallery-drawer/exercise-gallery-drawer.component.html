@@ -207,7 +207,12 @@
 
       <!-- Card del Body Map -->
       <div class="bg-white rounded-3xl border border-stone-200/80 shadow-sm p-4 overflow-hidden relative">
-        <div class="flex items-center justify-between mb-2">
+        @if (bodyMapBgUrl(); as bgUrl) {
+          <img [src]="bgUrl" alt="" aria-hidden="true"
+            class="absolute inset-0 w-full h-full object-cover pointer-events-none select-none" />
+          <div class="absolute inset-0 bg-white/55 dark:bg-stone-950/60 pointer-events-none"></div>
+        }
+        <div class="relative z-10 flex items-center justify-between mb-2">
           <div class="flex items-center gap-2">
             <span class="w-2 h-2 rounded-full bg-awakin-sun animate-pulse"></span>
             <span class="text-[10px] font-black uppercase tracking-widest text-stone-500">
@@ -220,10 +225,12 @@
         </div>
 
         <!-- Renderizado del BodyMapComponent -->
-        <app-body-map [defaultGender]="bodyMapGender()" [initialView]="'front'" [anatomyMode]="bodyMapAnatomy()"
-          [selectedMuscleId]="selectedMuscle()?.id || null" (muscleSelected)="onMuscleSelected($event)"
-          (selectionCleared)="onMuscleSelectionCleared()">
-        </app-body-map>
+        <div class="relative z-10">
+          <app-body-map [defaultGender]="bodyMapGender()" [initialView]="'front'" [anatomyMode]="bodyMapAnatomy()"
+            [selectedMuscleId]="selectedMuscle()?.id || null" (muscleSelected)="onMuscleSelected($event)"
+            (selectionCleared)="onMuscleSelectionCleared()">
+          </app-body-map>
+        </div>
       </div>
 
       <!-- Sección de Resultados Rápidos al seleccionar un músculo -->

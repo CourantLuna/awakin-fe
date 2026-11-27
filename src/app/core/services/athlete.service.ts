@@ -50,6 +50,7 @@ export interface KinInfo {
   meals_banner_url?: string | null;
   ranking_bg_url?: string | null;
   agenda_bg_url?: string | null;
+  body_map_bg_url?: string | null;
   role_in_kin?: string;
   instructors?: KinInstructor[];
 }
