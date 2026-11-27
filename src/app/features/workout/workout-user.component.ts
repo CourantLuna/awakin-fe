@@ -1056,6 +1056,17 @@ export class WorkoutUserComponent implements OnInit {
         const target = ex.target_muscle || ex.apiDetail?.target || 'General';
         const muscleKey = this.translateMuscleName(target);
         muscleMap.set(muscleKey, (muscleMap.get(muscleKey) || 0) + setsCount);
+
+        const secondaries = ex.secondary_muscles?.length
+          ? ex.secondary_muscles
+          : (ex.apiDetail?.secondary_muscles || []);
+        const secWeight = Math.max(1, Math.round(setsCount * 0.5));
+        for (const sec of secondaries) {
+          const secKey = this.translateMuscleName(sec);
+          if (secKey && secKey !== 'General' && secKey !== muscleKey) {
+            muscleMap.set(secKey, (muscleMap.get(secKey) || 0) + secWeight);
+          }
+        }
       }
     }
 
