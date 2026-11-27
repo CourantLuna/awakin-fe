@@ -28,6 +28,7 @@ import {
 import { ExerciseGalleryDrawerComponent } from './components/exercise-gallery-drawer/exercise-gallery-drawer.component';
 import { CustomExerciseModalComponent } from './components/custom-exercise-modal/custom-exercise-modal.component';
 import { getEquipmentMeta } from './components/exercise-gallery-drawer/equipment-icons';
+import { getCompactSetDisplay } from './components/set-type-sheet/set-type-sheet.component';
 import { WorkoutMiniBodyMapComponent, WorkoutMuscleLegendItem, getAwakinSunTone } from './components/body-map/workout-mini-body-map.component';
 import { WorkoutLogDetailModalComponent } from './components/workout-log-detail-modal/workout-log-detail-modal.component';
 import { WorkoutLogCardComponent } from './components/workout-log-card/workout-log-card.component';
@@ -871,19 +872,25 @@ export class WorkoutUserComponent implements OnInit {
     }
   }
 
+  isVideoMediaUrl(url?: string | null): boolean {
+    if (!url) return false;
+    return /\.(mp4|webm|mov|m4v|ogg)(\?.*)?$/i.test(url) || url.includes('video');
+  }
+
   getExerciseThumbnail(ex: WorkoutRoutineExercise): string | null {
-    if (ex.apiDetail?.image) {
-      return this.exerciseApi.getMediaUrl(ex.apiDetail.image);
-    }
     if (ex.media_urls && ex.media_urls.length > 0) {
       return this.exerciseApi.getMediaUrl(ex.media_urls[0]);
+    }
+    if (ex.apiDetail?.image) {
+      return this.exerciseApi.getMediaUrl(ex.apiDetail.image);
     }
     return null;
   }
 
   async inspectRoutineExercise(ex: WorkoutRoutineExercise): Promise<void> {
+    const customMedia = (ex.media_urls || []).slice(0, 2).map((u) => this.exerciseApi.getMediaUrl(u));
     if (ex.apiDetail) {
-      this.inspectedExerciseDetail.set(ex.apiDetail);
+      this.inspectedExerciseDetail.set({ ...ex.apiDetail, custom_media_urls: customMedia } as any);
       this.isExerciseDetailModalOpen.set(true);
       return;
     }
@@ -894,7 +901,7 @@ export class WorkoutUserComponent implements OnInit {
         const cached = await this.workoutService.getCachedExerciseDetail(ex.exercise_api_id);
         if (cached) {
           ex.apiDetail = cached;
-          this.inspectedExerciseDetail.set(cached);
+          this.inspectedExerciseDetail.set({ ...cached, custom_media_urls: customMedia } as any);
           this.isExerciseDetailModalOpen.set(true);
           return;
         }
@@ -916,8 +923,9 @@ export class WorkoutUserComponent implements OnInit {
       gif_url: '',
       attribution: '',
       created_at: new Date().toISOString(),
-      instruction: ex.notes || undefined
-    });
+      instruction: ex.notes || undefined,
+      custom_media_urls: customMedia
+    } as any);
     this.isExerciseDetailModalOpen.set(true);
   }
 
@@ -1111,6 +1119,8 @@ export class WorkoutUserComponent implements OnInit {
       return dateStr;
     }
   }
+
+  getCompactSetDisplay = getCompactSetDisplay;
 
   getSetTypeInfo(setType?: string): { label: string; short: string; badgeClass: string } {
     if (!setType) {

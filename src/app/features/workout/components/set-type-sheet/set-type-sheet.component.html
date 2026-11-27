@@ -1,0 +1,53 @@
+@if (visible()) {
+  <div (click)="visible.set(false)" class="fixed inset-0 z-[120] bg-black/60 backdrop-blur-xs flex items-end justify-center">
+    <div (click)="$event.stopPropagation()"
+      class="bg-stone-900 text-white w-full max-w-lg rounded-t-3xl border-t border-stone-700/80 shadow-2xl pb-6 pt-3 px-4 space-y-3 animate-fade-in">
+      <div class="w-10 h-1 rounded-full bg-stone-600 mx-auto"></div>
+
+      <div class="flex items-center justify-between px-1">
+        <h3 class="text-sm font-black tracking-tight text-white">Seleccionar Tipo de Serie</h3>
+        <button type="button" (click)="visible.set(false)"
+          class="w-7 h-7 rounded-full bg-stone-800 hover:bg-stone-700 text-stone-400 flex items-center justify-center cursor-pointer">
+          <i class="pi pi-times text-[10px]"></i>
+        </button>
+      </div>
+
+      <div class="bg-stone-800/80 rounded-2xl divide-y divide-stone-700/60 overflow-hidden border border-stone-700/60">
+        @for (opt of options; track opt.type) {
+          <div class="transition-colors" [ngClass]="currentType() === opt.type ? 'bg-stone-700/60' : 'hover:bg-stone-700/40'">
+            <div (click)="select(opt.type)" class="flex items-center justify-between px-4 py-3 cursor-pointer">
+              <div class="flex items-center gap-3.5 min-w-0">
+                <span class="w-6 text-center text-sm font-black"
+                  [ngClass]="opt.type === 'WORKING' ? 'text-white' : opt.colorClass">
+                  {{ opt.type === 'WORKING' ? setNumber() : opt.letter }}
+                </span>
+                <span class="text-xs font-bold text-stone-100 truncate">{{ opt.label }}</span>
+                @if (currentType() === opt.type) {
+                  <i class="pi pi-check text-[10px] text-amber-400"></i>
+                }
+              </div>
+              <button type="button" (click)="toggleInfo(opt.type, $event)"
+                class="w-6 h-6 rounded-full bg-stone-700 hover:bg-stone-600 text-stone-300 flex items-center justify-center text-[10px] font-black cursor-pointer shrink-0"
+                title="Información">
+                <i class="pi pi-info text-[9px]"></i>
+              </button>
+            </div>
+            @if (expandedInfo() === opt.type) {
+              <div class="px-4 pb-3 pt-0.5 text-[11px] text-stone-300 leading-snug bg-stone-900/40">
+                {{ opt.description }}
+              </div>
+            }
+          </div>
+        }
+
+        @if (canDelete()) {
+          <button type="button" (click)="remove()"
+            class="w-full flex items-center gap-3.5 px-4 py-3 text-left text-rose-400 hover:bg-rose-500/10 cursor-pointer">
+            <span class="w-6 text-center"><i class="pi pi-times text-xs"></i></span>
+            <span class="text-xs font-bold">Eliminar Serie</span>
+          </button>
+        }
+      </div>
+    </div>
+  </div>
+}

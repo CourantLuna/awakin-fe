@@ -138,9 +138,9 @@
             class="text-xs sm:text-sm font-black text-white uppercase tracking-tight leading-tight truncate drop-shadow-xs">
             {{ kin.head_coach_name || kin.team_name }}
           </span>
-            <span class="text-[8px] font-bold tracking-[0.16em] text-stone-300 uppercase leading-none mt-0.5">
-              Fitness Coach
-            </span>
+          <span class="text-[8px] font-bold tracking-[0.16em] text-stone-300 uppercase leading-none mt-0.5">
+            Fitness Coach
+          </span>
         </div>
       </div>
       }
@@ -515,888 +515,923 @@
       </div>
     </div>
 
-      <!-- KPIs rápidos del rango seleccionado -->
-      @let summary = analyticsSummary();
-      <div class="grid grid-cols-4 gap-2">
-        <div class="bg-stone-50 border border-stone-200/70 rounded-2xl px-2.5 py-2 text-center">
-          <span class="text-[9px] font-black uppercase text-stone-400 block">Sesiones</span>
-          <span class="text-sm font-black text-stone-900">{{ summary.sessions }}</span>
-        </div>
-        <div class="bg-stone-50 border border-stone-200/70 rounded-2xl px-2.5 py-2 text-center">
-          <span class="text-[9px] font-black uppercase text-stone-400 block">Series</span>
-          <span class="text-sm font-black text-kin-primary">{{ summary.totalSets }}</span>
-        </div>
-        <div class="bg-stone-50 border border-stone-200/70 rounded-2xl px-2.5 py-2 text-center">
-          <span class="text-[9px] font-black uppercase text-stone-400 block">Volumen</span>
-          <span class="text-xs sm:text-sm font-black text-emerald-600">{{ summary.totalVolume | number:'1.0-0' }} <span
-              class="text-[9px] text-stone-500">{{ summary.unit }}</span></span>
-        </div>
-        <div class="bg-stone-50 border border-stone-200/70 rounded-2xl px-2.5 py-2 text-center">
-          <span class="text-[9px] font-black uppercase text-stone-400 block">Tiempo</span>
-          <span class="text-sm font-black text-stone-900">{{ summary.totalMinutes }}m</span>
-        </div>
+    <!-- KPIs rápidos del rango seleccionado -->
+    @let summary = analyticsSummary();
+    <div class="grid grid-cols-4 gap-2">
+      <div class="bg-stone-50 border border-stone-200/70 rounded-2xl px-2.5 py-2 text-center">
+        <span class="text-[9px] font-black uppercase text-stone-400 block">Sesiones</span>
+        <span class="text-sm font-black text-stone-900">{{ summary.sessions }}</span>
       </div>
+      <div class="bg-stone-50 border border-stone-200/70 rounded-2xl px-2.5 py-2 text-center">
+        <span class="text-[9px] font-black uppercase text-stone-400 block">Series</span>
+        <span class="text-sm font-black text-kin-primary">{{ summary.totalSets }}</span>
+      </div>
+      <div class="bg-stone-50 border border-stone-200/70 rounded-2xl px-2.5 py-2 text-center">
+        <span class="text-[9px] font-black uppercase text-stone-400 block">Volumen</span>
+        <span class="text-xs sm:text-sm font-black text-emerald-600">{{ summary.totalVolume | number:'1.0-0' }} <span
+            class="text-[9px] text-stone-500">{{ summary.unit }}</span></span>
+      </div>
+      <div class="bg-stone-50 border border-stone-200/70 rounded-2xl px-2.5 py-2 text-center">
+        <span class="text-[9px] font-black uppercase text-stone-400 block">Tiempo</span>
+        <span class="text-sm font-black text-stone-900">{{ summary.totalMinutes }}m</span>
+      </div>
+    </div>
 
-      <!-- Selector de Tipo de Gráfico -->
-      <div class="grid grid-cols-4 gap-1.5 bg-stone-50 p-1 rounded-2xl border border-stone-200/70">
-        @for (ct of chartTypeOptions; track ct.key) {
-        <button type="button" (click)="activeChartType.set(ct.key)"
-          class="py-2 px-2 rounded-xl text-[0.5rem] font-black uppercase tracking-wider flex items-center justify-center gap-1.5 transition-all cursor-pointer"
-          [ngClass]="activeChartType() === ct.key
+    <!-- Selector de Tipo de Gráfico -->
+    <div class="grid grid-cols-4 gap-1.5 bg-stone-50 p-1 rounded-2xl border border-stone-200/70">
+      @for (ct of chartTypeOptions; track ct.key) {
+      <button type="button" (click)="activeChartType.set(ct.key)"
+        class="py-2 px-2 rounded-xl text-[0.5rem] font-black uppercase tracking-wider flex items-center justify-center gap-1.5 transition-all cursor-pointer"
+        [ngClass]="activeChartType() === ct.key
             ? 'bg-white text-stone-900 shadow-xs border border-stone-200/80'
             : 'text-stone-500 hover:text-stone-800'">
-          <i class="pi text-[11px]" [ngClass]="[ct.icon, activeChartType() === ct.key ? 'text-kin-primary' : '']"></i>
-          <span class="truncate">{{ ct.label }}</span>
-        </button>
+        <i class="pi text-[11px]" [ngClass]="[ct.icon, activeChartType() === ct.key ? 'text-kin-primary' : '']"></i>
+        <span class="truncate">{{ ct.label }}</span>
+      </button>
+      }
+    </div>
+
+    <!-- Contenido del Gráfico Activo -->
+    @if (summary.sessions === 0) {
+    <div class="py-10 text-center bg-stone-50/70 rounded-2xl border border-dashed border-stone-200">
+      <i class="pi pi-chart-bar text-stone-300 text-2xl mb-2"></i>
+      <p class="text-xs font-bold text-stone-500">Sin entrenamientos registrados en {{ analyticsRangeTitle() |
+        lowercase
+        }}.</p>
+    </div>
+    } @else {
+    @if (activeChartType() === 'heatmap') {
+    @let heatMuscles = rangeMuscleBreakdownWithColors();
+    <div
+      class="grid grid-cols-1 sm:grid-cols-12 gap-4 items-center bg-kin-primary/5 border border-kin-primary/20 rounded-2xl p-3.5">
+      <div class="sm:col-span-5 flex items-center justify-center">
+        <div class="h-60 sm:h-64 w-full flex items-stretch justify-center">
+          <app-workout-mini-body-map variant="light" [showLabels]="true" [gender]="athleteGender()"
+            [muscleBreakdown]="heatMuscles" />
+        </div>
+      </div>
+
+      <div class="sm:col-span-7 flex flex-col gap-2 pr-0.5">
+        @for (m of heatMuscles; track m.muscle) {
+        <div
+          class="flex items-center justify-between p-2.5 px-3 rounded-xl bg-white border border-kin-primary/20 text-xs font-bold text-stone-900 shadow-2xs">
+          <div class="flex items-center gap-2 min-w-0">
+            <span class="w-3 h-3 rounded-full shrink-0 border border-white shadow-2xs"
+              [style.background-color]="m.color"></span>
+            <span class="font-black text-stone-900 truncate capitalize">{{ m.muscle }}</span>
+          </div>
+          <div class="flex items-center gap-2 shrink-0">
+            @if (m.levelLabel) {
+            <span
+              class="text-[9px] font-bold px-2 py-0.5 rounded-md text-kin-secondary bg-kin-primary/10 uppercase tracking-wide">
+              {{ m.levelLabel }}
+            </span>
+            }
+            <strong class="font-black text-kin-primary">
+              {{ m.sets }} {{ m.sets === 1 ? 'serie' : 'series' }}
+            </strong>
+          </div>
+        </div>
+        } @empty {
+        <p class="text-xs text-stone-500 text-center py-4">Sin desglose muscular en este periodo.</p>
         }
       </div>
-
-      <!-- Contenido del Gráfico Activo -->
-      @if (summary.sessions === 0) {
-      <div class="py-10 text-center bg-stone-50/70 rounded-2xl border border-dashed border-stone-200">
-        <i class="pi pi-chart-bar text-stone-300 text-2xl mb-2"></i>
-        <p class="text-xs font-bold text-stone-500">Sin entrenamientos registrados en {{ analyticsRangeTitle() |
-          lowercase
-          }}.</p>
-      </div>
-      } @else {
-      @if (activeChartType() === 'heatmap') {
-      @let heatMuscles = rangeMuscleBreakdownWithColors();
-      <div
-        class="grid grid-cols-1 sm:grid-cols-12 gap-4 items-center bg-kin-primary/5 border border-kin-primary/20 rounded-2xl p-3.5">
-        <div class="sm:col-span-5 flex items-center justify-center">
-          <div class="h-60 sm:h-64 w-full flex items-stretch justify-center">
-            <app-workout-mini-body-map variant="light" [showLabels]="true" [gender]="athleteGender()"
-              [muscleBreakdown]="heatMuscles" />
-          </div>
-        </div>
-
-        <div class="sm:col-span-7 flex flex-col gap-2 pr-0.5">
-          @for (m of heatMuscles; track m.muscle) {
-          <div
-            class="flex items-center justify-between p-2.5 px-3 rounded-xl bg-white border border-kin-primary/20 text-xs font-bold text-stone-900 shadow-2xs">
-            <div class="flex items-center gap-2 min-w-0">
-              <span class="w-3 h-3 rounded-full shrink-0 border border-white shadow-2xs"
-                [style.background-color]="m.color"></span>
-              <span class="font-black text-stone-900 truncate capitalize">{{ m.muscle }}</span>
-            </div>
-            <div class="flex items-center gap-2 shrink-0">
-              @if (m.levelLabel) {
-              <span
-                class="text-[9px] font-bold px-2 py-0.5 rounded-md text-kin-secondary bg-kin-primary/10 uppercase tracking-wide">
-                {{ m.levelLabel }}
-              </span>
-              }
-              <strong class="font-black text-kin-primary">
-                {{ m.sets }} {{ m.sets === 1 ? 'serie' : 'series' }}
-              </strong>
-            </div>
-          </div>
-          } @empty {
-          <p class="text-xs text-stone-500 text-center py-4">Sin desglose muscular en este periodo.</p>
-          }
-        </div>
-      </div>
-      } @else if (activeChartType() === 'radar') {
-      <div class="w-full h-[230px] relative">
-        <p-chart type="radar" [data]="radarData()" [options]="radarOptions" height="100%"></p-chart>
-      </div>
-      } @else if (activeChartType() === 'volume') {
-      <div class="w-full h-[220px] relative">
-        <p-chart type="bar" [data]="volumeChartData()" [options]="cartesianChartOptions" height="100%"></p-chart>
-      </div>
-      } @else if (activeChartType() === 'trend') {
-      <div class="w-full h-[220px] relative">
-        <p-chart type="line" [data]="setsTrendChartData()" [options]="cartesianChartOptions" height="100%"></p-chart>
-      </div>
-      }
-      }
     </div>
-
-    <!-- LIBRERÍA AWAKIN -->
-    <div class="mb-6">
-      <div class="flex justify-between items-center mb-4">
-        <h3 class="text-xs font-bold text-stone-800 uppercase tracking-widest">Librería Awakin</h3>
-        <button (click)="openExerciseGallery()"
-          class="text-[10px] font-bold text-kin-primary hover:underline uppercase tracking-wider cursor-pointer">
-          Ver Todo
-        </button>
-      </div>
-
-      <div class="flex flex-col gap-3">
-        <button (click)="openExerciseGallery()"
-          class="w-full bg-white border border-stone-200 rounded-2xl p-4 flex items-center gap-4 shadow-sm active:scale-[0.98] transition-all group cursor-pointer">
-          <div
-            class="w-12 h-12 rounded-xl bg-stone-50 flex items-center justify-center text-stone-400 group-hover:text-kin-primary group-hover:bg-kin-primary/10 transition-colors">
-            <i class="pi pi-images text-xl"></i>
-          </div>
-          <div class="flex-1 text-left">
-            <h4
-              class="text-sm font-bold text-stone-800 uppercase tracking-wider group-hover:text-kin-primary transition-colors">
-              Ejercicios
-            </h4>
-            <p class="text-[10px] font-medium text-stone-500 mt-0.5">Mapa anatómico + catálogo completo en HD</p>
-          </div>
-          <i class="pi pi-angle-right text-stone-300 group-hover:text-kin-primary"></i>
-        </button>
-      </div>
+    } @else if (activeChartType() === 'radar') {
+    <div class="w-full h-[230px] relative">
+      <p-chart type="radar" [data]="radarData()" [options]="radarOptions" height="100%"></p-chart>
     </div>
+    } @else if (activeChartType() === 'volume') {
+    <div class="w-full h-[220px] relative">
+      <p-chart type="bar" [data]="volumeChartData()" [options]="cartesianChartOptions" height="100%"></p-chart>
+    </div>
+    } @else if (activeChartType() === 'trend') {
+    <div class="w-full h-[220px] relative">
+      <p-chart type="line" [data]="setsTrendChartData()" [options]="cartesianChartOptions" height="100%"></p-chart>
+    </div>
+    }
+    }
   </div>
 
-  <!-- ========================================================================= -->
-  <!-- DRAWER: PLAN DE ENTRENAMIENTO SEMANAL (PERMITIR INICIAR CUALQUIER DÍA)    -->
-  <!-- ========================================================================= -->
-  <p-drawer [(visible)]="isWeeklyPlanDrawerOpen" position="bottom" appendTo="body"
-    [style]="{ height: '90dvh', maxHeight: '90dvh', width: '100%', borderTopLeftRadius: '24px', borderTopRightRadius: '24px' }"
-    header="Plan Semanal de Entrenamientos">
-    <div class="max-w-4xl mx-auto space-y-4 pb-12">
-      @if (activePlan(); as plan) {
-      <!-- CABECERA RESUMEN DEL PLAN -->
-      <div
-        class="bg-white border border-stone-200/90 rounded-3xl p-4 sm:p-5 shadow-sm flex items-center justify-between gap-4 flex-wrap">
-        <div>
-          <div class="flex items-center gap-2">
-            <span
-              class="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-kin-primary/15 text-kin-primary border border-kin-primary/30">
-              Plan Activo
-            </span>
-            <span class="text-[11px] font-bold text-stone-500">
-              {{ plan.start_date }} ~ {{ plan.end_date }}
-            </span>
-          </div>
-          <h4 class="text-base sm:text-lg font-black text-stone-900 uppercase tracking-tight mt-1">{{ plan.name }}</h4>
-          @if (plan.description) {
-          <p class="text-xs text-stone-500 mt-0.5 max-w-xl">{{ plan.description }}</p>
-          }
-        </div>
+  <!-- LIBRERÍA AWAKIN -->
+  <div class="mb-6">
+    <div class="flex justify-between items-center mb-4">
+      <h3 class="text-xs font-bold text-stone-800 uppercase tracking-widest">Librería Awakin</h3>
+      <button (click)="openExerciseGallery()"
+        class="text-[10px] font-bold text-kin-primary hover:underline uppercase tracking-wider cursor-pointer">
+        Ver Todo
+      </button>
+    </div>
 
+    <div class="flex flex-col gap-3">
+      <button (click)="openExerciseGallery()"
+        class="w-full bg-white border border-stone-200 rounded-2xl p-4 flex items-center gap-4 shadow-sm active:scale-[0.98] transition-all group cursor-pointer">
+        <div
+          class="w-12 h-12 rounded-xl bg-stone-50 flex items-center justify-center text-stone-400 group-hover:text-kin-primary group-hover:bg-kin-primary/10 transition-colors">
+          <i class="pi pi-images text-xl"></i>
+        </div>
+        <div class="flex-1 text-left">
+          <h4
+            class="text-sm font-bold text-stone-800 uppercase tracking-wider group-hover:text-kin-primary transition-colors">
+            Ejercicios
+          </h4>
+          <p class="text-[10px] font-medium text-stone-500 mt-0.5">Mapa anatómico + catálogo completo en HD</p>
+        </div>
+        <i class="pi pi-angle-right text-stone-300 group-hover:text-kin-primary"></i>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ========================================================================= -->
+<!-- DRAWER: PLAN DE ENTRENAMIENTO SEMANAL (PERMITIR INICIAR CUALQUIER DÍA)    -->
+<!-- ========================================================================= -->
+<p-drawer [(visible)]="isWeeklyPlanDrawerOpen" position="bottom" appendTo="body"
+  [style]="{ height: '90dvh', maxHeight: '90dvh', width: '100%', borderTopLeftRadius: '24px', borderTopRightRadius: '24px' }"
+  header="Plan Semanal de Entrenamientos">
+  <div class="max-w-4xl mx-auto space-y-4 pb-12">
+    @if (activePlan(); as plan) {
+    <!-- CABECERA RESUMEN DEL PLAN -->
+    <div
+      class="bg-white border border-stone-200/90 rounded-3xl p-4 sm:p-5 shadow-sm flex items-center justify-between gap-4 flex-wrap">
+      <div>
         <div class="flex items-center gap-2">
-          <span class="text-xs font-bold text-stone-500">
-            {{ scheduledPlanRoutines().length }} días de entrenamiento
+          <span
+            class="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-kin-primary/15 text-kin-primary border border-kin-primary/30">
+            Plan Activo
           </span>
+          <span class="text-[11px] font-bold text-stone-500">
+            {{ plan.start_date }} ~ {{ plan.end_date }}
+          </span>
+        </div>
+        <h4 class="text-base sm:text-lg font-black text-stone-900 uppercase tracking-tight mt-1">{{ plan.name }}</h4>
+        @if (plan.description) {
+        <p class="text-xs text-stone-500 mt-0.5 max-w-xl">{{ plan.description }}</p>
+        }
+      </div>
+
+      <div class="flex items-center gap-2">
+        <span class="text-xs font-bold text-stone-500">
+          {{ scheduledPlanRoutines().length }} días de entrenamiento
+        </span>
+      </div>
+    </div>
+
+    <!-- GRID DE TARJETAS MODERNAS DE RUTINA -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      @for (dayNum of weekDays; track dayNum) {
+      @let link = weeklyScheduleMap().get(dayNum);
+      @let r = link?.routine;
+      @if (r) {
+      <div (click)="openRoutineDetailModal(r, dayNum)"
+        class="relative w-full rounded-3xl overflow-hidden shadow-md hover:shadow-xl border border-stone-200/90 bg-stone-950 text-white cursor-pointer group active:scale-[0.99] transition-all duration-300 flex flex-col justify-between min-h-[350px]"
+        [ngClass]="selectedDayOfWeek() === dayNum ? 'ring-2 ring-kin-primary shadow-kin-primary/20' : ''">
+
+        <!-- FONDO DE LA RUTINA URL O DEGRADADO AWAKIN -->
+        @if (r.banner_url) {
+        <img [src]="r.banner_url" [alt]="r.name"
+          class="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 pointer-events-none select-none opacity-85" />
+        <div
+          class="absolute inset-0 bg-gradient-to-t from-stone-950 via-stone-950/80 to-stone-900/60 pointer-events-none">
+        </div>
+        } @else {
+        <div class="absolute inset-0 bg-gradient-to-br from-stone-900 via-stone-950 to-stone-900 pointer-events-none">
+        </div>
+        <div class="absolute -right-8 -top-8 w-44 h-44 bg-kin-primary/20 rounded-full blur-3xl pointer-events-none">
+        </div>
+        <i
+          class="pi pi-bolt absolute right-[-15px] top-[-15px] text-[100px] text-white/5 pointer-events-none rotate-12"></i>
+        }
+
+        <!-- CONTENIDO OVERLAY DE LA CARD -->
+        <div class="relative z-10 p-4 sm:p-5 flex flex-col justify-between h-full space-y-3">
+          <div>
+            <!-- FILA SUPERIOR: DÍA + DURACIÓN + BADGE SELECCIONADO -->
+            <div class="flex items-center justify-between gap-2 mb-2 flex-wrap">
+              <div class="flex items-center gap-1.5 flex-wrap">
+                <span
+                  class="px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider backdrop-blur-md flex items-center gap-1 shadow-xs"
+                  [ngClass]="selectedDayOfWeek() === dayNum ? 'bg-kin-primary text-white font-black ring-1 ring-white/30' : 'bg-white/20 text-white border border-white/20'">
+                  <i class="pi pi-calendar text-[9px]"></i>
+                  {{ weekDayLabels[dayNum].name }}
+                </span>
+                @if (selectedDayOfWeek() === dayNum) {
+                <span
+                  class="text-[9px] font-black text-kin-secondary uppercase tracking-wider bg-black/45 px-2 py-0.5 rounded-full border border-kin-secondary/40 backdrop-blur-xs">
+                  Día Seleccionado
+                </span>
+                }
+              </div>
+
+              <span
+                class="px-2.5 py-0.5 rounded-full text-[10px] font-bold text-stone-200 bg-black/45 border border-white/10 backdrop-blur-md flex items-center gap-1">
+                <i class="pi pi-clock text-[9px] text-kin-primary"></i>
+                ~{{ r.estimated_minutes || 45 }} min
+              </span>
+            </div>
+
+            <!-- TÍTULO DE LA RUTINA -->
+            <h4
+              class="text-base sm:text-lg font-black text-white uppercase italic tracking-tight leading-tight line-clamp-2 drop-shadow-md group-hover:text-kin-primary transition-colors">
+              {{ r.name }}
+            </h4>
+
+            <!-- # EJERCICIOS Y # SERIES -->
+            <div class="flex items-center gap-2 mt-1.5 text-[11px] font-bold text-stone-300 flex-wrap">
+              <span class="flex items-center gap-1">
+                <i class="pi pi-list text-[10px] text-kin-primary"></i>
+                {{ r.exercises.length }} ejercicios
+              </span>
+              <span class="text-stone-500">•</span>
+              <span class="flex items-center gap-1">
+                <i class="pi pi-sync text-[10px] text-kin-primary"></i>
+                {{ r.total_sets || 0 }} series
+              </span>
+            </div>
+
+            <!-- DESCRIPCIÓN -->
+            @if (r.description) {
+            <p class="text-xs text-stone-300/90 font-medium line-clamp-2 mt-2 leading-snug drop-shadow-xs">
+              {{ r.description }}
+            </p>
+            }
+          </div>
+
+          <!-- MINIMAP BODY CON LOS MÚSCULOS A TRABAJAR + ACCIONES -->
+          <div class="pt-3 border-t border-white/15 flex items-center justify-between gap-3">
+            <!-- Mini Body Map -->
+            <div
+              class="h-28 sm:h-32 w-28 sm:w-32 shrink-0 flex items-center justify-center bg-black/40 backdrop-blur-md rounded-2xl p-1.5 border border-white/10 shadow-inner">
+              <app-workout-mini-body-map variant="transparent" [showLabels]="false" [gender]="athleteGender()"
+                [muscleBreakdown]="getRoutineMuscleBreakdownWithColors(r)" />
+            </div>
+
+            <!-- Músculos foco + Botones -->
+            <div class="flex-1 min-w-0 flex flex-col justify-between py-1 h-28 sm:h-32">
+              <div class="space-y-1">
+                <span class="text-[9px] font-black uppercase tracking-wider text-kin-secondary block">
+                  Enfoque Muscular
+                </span>
+                <div class="flex flex-wrap gap-1 max-h-14 overflow-hidden">
+                  @for (muscle of (r.focus_muscles || []).slice(0, 3); track muscle) {
+                  <span
+                    class="px-2 py-0.5 rounded-md bg-white/15 text-[9px] font-bold text-stone-100 uppercase tracking-tight backdrop-blur-xs">
+                    {{ translateMuscleName(muscle) }}
+                  </span>
+                  } @empty {
+                  <span class="text-[10px] text-stone-400 italic">General</span>
+                  }
+                </div>
+              </div>
+
+              <!-- Botones de acción rápida -->
+              <div class="flex items-center gap-1.5 pt-2" (click)="$event.stopPropagation()">
+                <button type="button" (click)="openRoutineDetailModal(r, dayNum)"
+                  class="flex-1 py-2 px-2.5 rounded-xl bg-white/20 hover:bg-white/30 text-white text-[11px] font-black uppercase tracking-wider backdrop-blur-md transition-all cursor-pointer text-center active:scale-95">
+                  Ver
+                </button>
+                <button type="button" (click)="isWeeklyPlanDrawerOpen.set(false); startWorkout(r)"
+                  class="flex-1 py-2 px-2.5 rounded-xl bg-awakin-sun hover:bg-awakin-sun-dim text-white text-[11px] font-black uppercase tracking-wider shadow-sm transition-all cursor-pointer text-center flex items-center justify-center gap-1 active:scale-95">
+                  <i class="pi pi-play text-[9px]"></i>
+                  <span>Iniciar</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      } @else {
+      <!-- DÍA DE DESCANSO -->
+      <div
+        class="bg-white border border-stone-200/90 rounded-3xl p-5 shadow-2xs flex items-center justify-between gap-3">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-2xl bg-kin-primary/10 text-kin-primary flex items-center justify-center">
+            <i class="pi pi-sun text-lg"></i>
+          </div>
+          <div>
+            <span class="text-[10px] font-black uppercase tracking-wider text-stone-400 block">
+              {{ weekDayLabels[dayNum].name }}
+            </span>
+            <h5 class="text-xs sm:text-sm font-bold text-stone-700">Día de Descanso / Recuperación</h5>
+          </div>
+        </div>
+        <span
+          class="text-[10px] font-bold text-stone-400 uppercase tracking-wider bg-stone-100 px-2.5 py-1 rounded-full">
+          Descanso
+        </span>
+      </div>
+      }
+      }
+    </div>
+    } @else {
+    <div class="py-12 text-center text-stone-400 text-xs bg-white rounded-3xl border border-dashed border-stone-200">
+      No tienes un plan de entrenamiento activo asignado todavía.
+    </div>
+    }
+  </div>
+</p-drawer>
+
+<!-- ========================================================================= -->
+<!-- DRAWER: HISTORIAL DE ENTRENAMIENTOS (WORKOUT LOGS)                        -->
+<!-- ========================================================================= -->
+<p-drawer [(visible)]="isHistoryDrawerOpen" position="bottom" appendTo="body"
+  [style]="{ height: '90dvh', maxHeight: '90dvh', width: '100%', borderTopLeftRadius: '24px', borderTopRightRadius: '24px', backgroundColor: 'var(--app-bg)' }"
+  [header]="'Entrenamientos (' + currentLabel() + ')'">
+  <div class="max-w-3xl mx-auto space-y-3 pb-10">
+    @for (log of selectedDayLogs(); track log.id) {
+    <app-workout-log-card [log]="log" [athlete]="athlete()" (onDetail)="openWorkoutDetail($event)"
+      (onShare)="openWorkoutStoryModal($event)" (onEdit)="openWorkoutEditModal($event)">
+    </app-workout-log-card>
+    } @empty {
+    <div class="py-12 text-center bg-white border border-dashed border-stone-300 rounded-3xl">
+      <i class="pi pi-history text-stone-300 text-2xl mb-2"></i>
+      <p class="text-xs font-bold text-stone-500">No hay entrenamientos completados para {{ currentLabel() }}.</p>
+    </div>
+    }
+  </div>
+</p-drawer>
+
+<!-- ========================================================================= -->
+<!-- MODAL: DETALLE DEL ENTRENAMIENTO ESTILO HEVY (HISTORIAL)                  -->
+<!-- ========================================================================= -->
+<app-workout-log-detail-modal [(visible)]="isWorkoutDetailOpen" [log]="selectedWorkoutDetail()"
+  [gender]="athleteGender()" (edit)="openWorkoutEditModal($event)" (shareStory)="openWorkoutStoryModal($event)">
+</app-workout-log-detail-modal>
+
+<!-- ========================================================================= -->
+<!-- MODAL: EDITAR ENTRENAMIENTO (WORKOUT LOG)                                 -->
+<!-- ========================================================================= -->
+<app-workout-log-edit-modal [(visible)]="isWorkoutEditModalOpen" [log]="logToEdit()"
+  (saved)="onWorkoutLogSaved($event)">
+</app-workout-log-edit-modal>
+
+<!-- ========================================================================= -->
+<!-- MODAL: HISTORIA INTERACTIVA DE ENTRENAMIENTO                              -->
+<!-- ========================================================================= -->
+<app-workout-story-modal [(visible)]="isShareWorkoutModalOpen" [log]="shareWorkoutTargetLog()" [athlete]="athlete()"
+  [gender]="athleteGender()" (closed)="closeWorkoutStoryModal()" />
+
+<!-- ========================================================================= -->
+<!-- MODAL: CREAR NUEVA RUTINA                                                 -->
+<!-- ========================================================================= -->
+<p-dialog [(visible)]="isCreateRoutineModalOpen" [modal]="true" [draggable]="false" [resizable]="false"
+  [closable]="false" [showHeader]="false" [dismissableMask]="true" appendTo="body"
+  [style]="{ width: '95vw', maxWidth: '540px', borderRadius: '24px' }"
+  styleClass="overflow-hidden shadow-2xl border border-stone-200 [&_.p-dialog-content]:!p-0">
+  <div class="bg-white flex flex-col max-h-[90vh]">
+    <div class="px-5 py-4 border-b border-stone-100 bg-stone-50/80 flex items-center justify-between">
+      <div>
+        <h3 class="text-base font-black text-stone-900">Crear Nueva Rutina</h3>
+        <p class="text-[11px] text-stone-500 font-medium">Combina ejercicios de la librería o personalizados</p>
+      </div>
+      <button type="button" (click)="isCreateRoutineModalOpen.set(false)"
+        class="w-8 h-8 rounded-full bg-stone-100 hover:bg-stone-200 text-stone-600 flex items-center justify-center cursor-pointer">
+        <i class="pi pi-times text-xs"></i>
+      </button>
+    </div>
+
+    <div class="p-5 space-y-4 overflow-y-auto flex-1">
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <div class="sm:col-span-2">
+          <label class="block text-[10px] font-black uppercase tracking-wider text-stone-500 mb-1">Nombre *</label>
+          <input type="text" [ngModel]="newRoutineName()" (ngModelChange)="newRoutineName.set($event)"
+            placeholder="Ej: Día 4: Torso Fuerza"
+            class="w-full h-10 bg-stone-50 border border-stone-200 focus:border-awakin-sun rounded-xl px-3 text-xs font-bold text-stone-900 outline-hidden" />
+        </div>
+        <div>
+          <label class="block text-[10px] font-black uppercase tracking-wider text-stone-500 mb-1">Día (Plan)</label>
+          <select [ngModel]="newRoutineDay()" (ngModelChange)="newRoutineDay.set($event)"
+            class="w-full h-10 bg-stone-50 border border-stone-200 focus:border-awakin-sun rounded-xl px-2.5 text-xs font-bold text-stone-900 outline-hidden cursor-pointer">
+            <option [ngValue]="null">Sin asignar</option>
+            @for (d of weekDays; track d) {
+            <option [ngValue]="d">{{ weekDayLabels[d].name }}</option>
+            }
+          </select>
         </div>
       </div>
 
-      <!-- GRID DE TARJETAS MODERNAS DE RUTINA -->
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-        @for (dayNum of weekDays; track dayNum) {
-        @let link = weeklyScheduleMap().get(dayNum);
-        @let r = link?.routine;
-        @if (r) {
-        <div (click)="openRoutineDetailModal(r, dayNum)"
-          class="relative w-full rounded-3xl overflow-hidden shadow-md hover:shadow-xl border border-stone-200/90 bg-stone-950 text-white cursor-pointer group active:scale-[0.99] transition-all duration-300 flex flex-col justify-between min-h-[350px]"
-          [ngClass]="selectedDayOfWeek() === dayNum ? 'ring-2 ring-kin-primary shadow-kin-primary/20' : ''">
+      <div>
+        <label class="block text-[10px] font-black uppercase tracking-wider text-stone-500 mb-1">Descripción</label>
+        <input type="text" [ngModel]="newRoutineDescription()" (ngModelChange)="newRoutineDescription.set($event)"
+          placeholder="Objetivo o enfoque de la rutina"
+          class="w-full h-10 bg-stone-50 border border-stone-200 focus:border-awakin-sun rounded-xl px-3 text-xs font-bold text-stone-900 outline-hidden" />
+      </div>
 
-          <!-- FONDO DE LA RUTINA URL O DEGRADADO AWAKIN -->
-          @if (r.banner_url) {
-          <img [src]="r.banner_url" [alt]="r.name"
-            class="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 pointer-events-none select-none opacity-85" />
-          <div
-            class="absolute inset-0 bg-gradient-to-t from-stone-950 via-stone-950/80 to-stone-900/60 pointer-events-none">
-          </div>
-          } @else {
-          <div class="absolute inset-0 bg-gradient-to-br from-stone-900 via-stone-950 to-stone-900 pointer-events-none">
-          </div>
-          <div class="absolute -right-8 -top-8 w-44 h-44 bg-kin-primary/20 rounded-full blur-3xl pointer-events-none">
-          </div>
-          <i
-            class="pi pi-bolt absolute right-[-15px] top-[-15px] text-[100px] text-white/5 pointer-events-none rotate-12"></i>
-          }
-
-          <!-- CONTENIDO OVERLAY DE LA CARD -->
-          <div class="relative z-10 p-4 sm:p-5 flex flex-col justify-between h-full space-y-3">
-            <div>
-              <!-- FILA SUPERIOR: DÍA + DURACIÓN + BADGE SELECCIONADO -->
-              <div class="flex items-center justify-between gap-2 mb-2 flex-wrap">
-                <div class="flex items-center gap-1.5 flex-wrap">
-                  <span
-                    class="px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider backdrop-blur-md flex items-center gap-1 shadow-xs"
-                    [ngClass]="selectedDayOfWeek() === dayNum ? 'bg-kin-primary text-white font-black ring-1 ring-white/30' : 'bg-white/20 text-white border border-white/20'">
-                    <i class="pi pi-calendar text-[9px]"></i>
-                    {{ weekDayLabels[dayNum].name }}
-                  </span>
-                  @if (selectedDayOfWeek() === dayNum) {
-                  <span
-                    class="text-[9px] font-black text-kin-secondary uppercase tracking-wider bg-black/45 px-2 py-0.5 rounded-full border border-kin-secondary/40 backdrop-blur-xs">
-                    Día Seleccionado
-                  </span>
-                  }
-                </div>
-
-                <span
-                  class="px-2.5 py-0.5 rounded-full text-[10px] font-bold text-stone-200 bg-black/45 border border-white/10 backdrop-blur-md flex items-center gap-1">
-                  <i class="pi pi-clock text-[9px] text-kin-primary"></i>
-                  ~{{ r.estimated_minutes || 45 }} min
-                </span>
-              </div>
-
-              <!-- TÍTULO DE LA RUTINA -->
-              <h4
-                class="text-base sm:text-lg font-black text-white uppercase italic tracking-tight leading-tight line-clamp-2 drop-shadow-md group-hover:text-kin-primary transition-colors">
-                {{ r.name }}
-              </h4>
-
-              <!-- # EJERCICIOS Y # SERIES -->
-              <div class="flex items-center gap-2 mt-1.5 text-[11px] font-bold text-stone-300 flex-wrap">
-                <span class="flex items-center gap-1">
-                  <i class="pi pi-list text-[10px] text-kin-primary"></i>
-                  {{ r.exercises.length }} ejercicios
-                </span>
-                <span class="text-stone-500">•</span>
-                <span class="flex items-center gap-1">
-                  <i class="pi pi-sync text-[10px] text-kin-primary"></i>
-                  {{ r.total_sets || 0 }} series
-                </span>
-              </div>
-
-              <!-- DESCRIPCIÓN -->
-              @if (r.description) {
-              <p class="text-xs text-stone-300/90 font-medium line-clamp-2 mt-2 leading-snug drop-shadow-xs">
-                {{ r.description }}
-              </p>
-              }
-            </div>
-
-            <!-- MINIMAP BODY CON LOS MÚSCULOS A TRABAJAR + ACCIONES -->
-            <div class="pt-3 border-t border-white/15 flex items-center justify-between gap-3">
-              <!-- Mini Body Map -->
-              <div
-                class="h-28 sm:h-32 w-28 sm:w-32 shrink-0 flex items-center justify-center bg-black/40 backdrop-blur-md rounded-2xl p-1.5 border border-white/10 shadow-inner">
-                <app-workout-mini-body-map variant="transparent" [showLabels]="false" [gender]="athleteGender()"
-                  [muscleBreakdown]="getRoutineMuscleBreakdownWithColors(r)" />
-              </div>
-
-              <!-- Músculos foco + Botones -->
-              <div class="flex-1 min-w-0 flex flex-col justify-between py-1 h-28 sm:h-32">
-                <div class="space-y-1">
-                  <span class="text-[9px] font-black uppercase tracking-wider text-kin-secondary block">
-                    Enfoque Muscular
-                  </span>
-                  <div class="flex flex-wrap gap-1 max-h-14 overflow-hidden">
-                    @for (muscle of (r.focus_muscles || []).slice(0, 3); track muscle) {
-                    <span
-                      class="px-2 py-0.5 rounded-md bg-white/15 text-[9px] font-bold text-stone-100 uppercase tracking-tight backdrop-blur-xs">
-                      {{ translateMuscleName(muscle) }}
-                    </span>
-                    } @empty {
-                    <span class="text-[10px] text-stone-400 italic">General</span>
-                    }
-                  </div>
-                </div>
-
-                <!-- Botones de acción rápida -->
-                <div class="flex items-center gap-1.5 pt-2" (click)="$event.stopPropagation()">
-                  <button type="button" (click)="openRoutineDetailModal(r, dayNum)"
-                    class="flex-1 py-2 px-2.5 rounded-xl bg-white/20 hover:bg-white/30 text-white text-[11px] font-black uppercase tracking-wider backdrop-blur-md transition-all cursor-pointer text-center active:scale-95">
-                    Ver
-                  </button>
-                  <button type="button" (click)="isWeeklyPlanDrawerOpen.set(false); startWorkout(r)"
-                    class="flex-1 py-2 px-2.5 rounded-xl bg-awakin-sun hover:bg-awakin-sun-dim text-white text-[11px] font-black uppercase tracking-wider shadow-sm transition-all cursor-pointer text-center flex items-center justify-center gap-1 active:scale-95">
-                    <i class="pi pi-play text-[9px]"></i>
-                    <span>Iniciar</span>
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
+      <div>
+        <label class="block text-[10px] font-black uppercase tracking-wider text-stone-500 mb-1">Banner de Rutina
+          (opcional)</label>
+        <input #newRoutineBannerInput type="file" accept="image/*" (change)="onNewRoutineBannerSelected($event)"
+          class="hidden" />
+        @if (!newRoutineBannerPreview()) {
+        <button type="button" (click)="newRoutineBannerInput.click()"
+          class="w-full py-2.5 px-3 rounded-xl border-2 border-dashed border-stone-200 hover:border-awakin-sun bg-stone-50 text-stone-500 hover:text-awakin-sun text-xs font-bold flex items-center justify-center gap-2 transition-all cursor-pointer">
+          <i class="pi pi-image"></i>
+          <span>Subir imagen banner</span>
+        </button>
         } @else {
-        <!-- DÍA DE DESCANSO -->
-        <div
-          class="bg-white border border-stone-200/90 rounded-3xl p-5 shadow-2xs flex items-center justify-between gap-3">
-          <div class="flex items-center gap-3">
-            <div class="w-10 h-10 rounded-2xl bg-kin-primary/10 text-kin-primary flex items-center justify-center">
-              <i class="pi pi-sun text-lg"></i>
-            </div>
-            <div>
-              <span class="text-[10px] font-black uppercase tracking-wider text-stone-400 block">
-                {{ weekDayLabels[dayNum].name }}
-              </span>
-              <h5 class="text-xs sm:text-sm font-bold text-stone-700">Día de Descanso / Recuperación</h5>
-            </div>
-          </div>
-          <span
-            class="text-[10px] font-bold text-stone-400 uppercase tracking-wider bg-stone-100 px-2.5 py-1 rounded-full">
-            Descanso
-          </span>
+        <div class="relative rounded-2xl overflow-hidden border border-stone-200 h-28">
+          <img [src]="newRoutineBannerPreview()" alt="Preview banner" class="w-full h-full object-cover" />
+          <button type="button" (click)="clearNewRoutineBanner()"
+            class="absolute top-2 right-2 w-7 h-7 rounded-full bg-stone-900/75 text-white flex items-center justify-center cursor-pointer">
+            <i class="pi pi-times text-xs"></i>
+          </button>
         </div>
         }
+      </div>
+
+      <!-- Ejercicios añadidos -->
+      @if (newRoutineExercises().length > 0) {
+      <div class="space-y-1.5">
+        <label class="block text-[10px] font-black uppercase tracking-wider text-stone-500">
+          Ejercicios en esta rutina ({{ newRoutineExercises().length }})
+        </label>
+        @for (ex of newRoutineExercises(); track ex.tempId; let idx = $index) {
+        <div class="flex items-center justify-between p-2.5 bg-stone-50 border border-stone-200 rounded-xl">
+          <div class="min-w-0 pr-2">
+            <div class="text-xs font-black text-stone-900 truncate">{{ idx + 1 }}. {{ ex.exercise_name }}</div>
+            <div class="text-[10px] text-stone-500 capitalize">{{ ex.target_muscle }} • {{ ex.sets.length }} series
+            </div>
+          </div>
+          <button type="button" (click)="removeBuilderExercise(idx)"
+            class="text-stone-400 hover:text-rose-600 p-1 cursor-pointer">
+            <i class="pi pi-trash text-xs"></i>
+          </button>
+        </div>
+        }
+      </div>
+      }
+
+      <!-- Buscador rápido librería + Botón personalizado -->
+      <div class="border-t border-stone-100 pt-3 space-y-2.5">
+        <div class="flex items-center justify-between gap-2">
+          <span class="text-[10px] font-black uppercase tracking-wider text-stone-500">Añadir Ejercicios</span>
+          <button type="button" (click)="isCustomExForBuilderOpen.set(true)"
+            class="text-[11px] font-black text-awakin-sun hover:underline flex items-center gap-1 cursor-pointer">
+            <i class="pi pi-user-plus text-[10px]"></i> Personalizado (BodyMap)
+          </button>
+        </div>
+
+        <input type="text" [ngModel]="builderSearchQuery()"
+          (ngModelChange)="builderSearchQuery.set($event); onBuilderSearchInput()"
+          placeholder="Buscar en librería de ejercicios..."
+          class="w-full h-9 bg-stone-100 focus:bg-white border border-stone-200 focus:border-awakin-sun rounded-xl px-3 text-xs font-bold text-stone-900 outline-hidden" />
+
+        <div class="max-h-44 overflow-y-auto space-y-1.5 pr-1">
+          @for (item of builderSearchResults(); track item.id) {
+          <button type="button" (click)="addBuilderLibraryExercise(item)"
+            class="w-full text-left p-2 rounded-xl border border-stone-200 hover:border-awakin-sun hover:bg-awakin-sun/5 flex items-center justify-between gap-2 transition-all cursor-pointer">
+            <div class="min-w-0">
+              <div class="text-xs font-bold text-stone-900 truncate uppercase">{{ item.name }}</div>
+              <div class="text-[10px] text-stone-500 capitalize">{{ item.target }} • {{ item.equipment }}</div>
+            </div>
+            <i class="pi pi-plus text-awakin-sun text-xs shrink-0"></i>
+          </button>
+          }
+        </div>
+      </div>
+    </div>
+
+    <div class="px-5 py-3.5 border-t border-stone-100 bg-stone-50/80 flex items-center gap-2">
+      <button type="button" (click)="isCreateRoutineModalOpen.set(false)"
+        class="px-4 py-3 rounded-2xl bg-white border border-stone-200 text-stone-600 font-bold text-xs cursor-pointer">
+        Cancelar
+      </button>
+      <button type="button" (click)="saveNewRoutine()"
+        [disabled]="!newRoutineName().trim() || newRoutineExercises().length === 0 || isSavingRoutine()"
+        class="flex-1 py-3 px-4 rounded-2xl bg-awakin-sun hover:bg-awakin-sun-dim disabled:bg-stone-200 disabled:text-stone-400 text-white font-black text-xs uppercase tracking-wider cursor-pointer">
+        {{ isSavingRoutine() ? 'Guardando...' : 'Guardar Rutina' }}
+      </button>
+    </div>
+  </div>
+</p-dialog>
+
+<app-custom-exercise-modal [(isOpen)]="isCustomExForBuilderOpen" (onCreated)="onBuilderCustomExerciseCreated($event)">
+</app-custom-exercise-modal>
+
+<!-- ========================================================================= -->
+<!-- SHEET FULLSCREEN: GALERÍA DE EJERCICIOS + BODY MAP + FILTRO EQUIPAMIENTOS -->
+<!-- ========================================================================= -->
+<app-exercise-gallery-drawer [(isOpen)]="isExerciseGalleryOpen"></app-exercise-gallery-drawer>
+
+<!-- ========================================================================= -->
+<!-- MODAL: DETALLE COMPLETO DE RUTINA (DESDE PLAN SEMANAL)                   -->
+<!-- ========================================================================= -->
+<p-dialog [(visible)]="isRoutineDetailModalOpen" [modal]="true" [draggable]="false" [resizable]="false"
+  [closable]="false" [showHeader]="false" [dismissableMask]="true" appendTo="body"
+  [style]="{ width: '95vw', maxWidth: '680px', borderRadius: '28px' }"
+  styleClass="overflow-hidden shadow-2xl border border-stone-200 [&_.p-dialog-content]:!p-0">
+  @if (selectedRoutineDetailModal(); as routine) {
+  <div class="bg-white flex flex-col max-h-[90vh] overflow-hidden">
+    <!-- BANNER HERO CON FOTO DE LA RUTINA O FONDO AWAKIN DARK -->
+    <div class="relative w-full h-48 sm:h-56 overflow-hidden bg-stone-900 shrink-0 select-none">
+      @if (routine.banner_url) {
+      <img [src]="routine.banner_url" [alt]="routine.name"
+        class="absolute inset-0 w-full h-full object-cover pointer-events-none" />
+      <div class="absolute inset-0 bg-gradient-to-t from-stone-950 via-stone-950/65 to-black/35 backdrop-blur-[0.5px]">
+      </div>
+      } @else {
+      <div class="absolute inset-0 bg-gradient-to-br from-stone-900 via-stone-950 to-stone-900"></div>
+      <div class="absolute -right-8 -top-8 w-44 h-44 bg-awakin-sun/20 rounded-full blur-3xl pointer-events-none">
+      </div>
+      <i
+        class="pi pi-bolt absolute right-[-10px] bottom-[-10px] text-[100px] text-white/5 pointer-events-none rotate-12"></i>
+      }
+
+      <!-- BOTÓN DE CERRAR FLOTANTE SOBRE EL BANNER -->
+      <button type="button" (click)="closeRoutineDetailModal()"
+        class="absolute top-3.5 right-3.5 w-8 h-8 rounded-full bg-black/45 hover:bg-black/70 text-white backdrop-blur-md flex items-center justify-center transition-all cursor-pointer z-30 shadow-md">
+        <i class="pi pi-times text-xs"></i>
+      </button>
+
+      <!-- CONTENIDO OVERLAY DEL BANNER -->
+      <div class="relative z-10 h-full p-4 sm:p-5 flex flex-col justify-between">
+        <!-- Badges superiores -->
+        <div class="flex items-center gap-1.5 flex-wrap pr-10">
+          @if (routine.day_of_week) {
+          <span
+            class="bg-awakin-sun text-white text-[9px] font-black uppercase tracking-widest px-2.5 py-1 rounded-md shadow-2xs">
+            {{ weekDayLabels[routine.day_of_week].name }}
+          </span>
+          }
+          <span
+            class="text-stone-200 text-[10px] font-bold uppercase tracking-wider flex items-center gap-1 bg-black/40 backdrop-blur-xs px-2.5 py-1 rounded-md border border-white/10">
+            <i class="pi pi-clock text-[9px]"></i> ~{{ routine.estimated_minutes || 45 }} min
+          </span>
+          <span
+            class="text-stone-200 text-[10px] font-bold uppercase tracking-wider bg-black/40 backdrop-blur-xs px-2.5 py-1 rounded-md border border-white/10">
+            • {{ routine.exercises.length }} ej. • {{ routine.total_sets || 0 }} series
+          </span>
+        </div>
+
+        <!-- Título y descripción de la rutina en el overlay -->
+        <div>
+          <h2 class="text-xl sm:text-2xl font-black text-white uppercase italic leading-tight drop-shadow-md">
+            {{ routine.name }}
+          </h2>
+          @if (routine.description) {
+          <p class="text-stone-300 text-xs font-medium mt-1 line-clamp-2 drop-shadow-xs">
+            {{ routine.description }}
+          </p>
+          }
+          @if (routine.focus_muscles && routine.focus_muscles.length > 0) {
+          <div class="flex flex-wrap gap-1.5 mt-2.5">
+            @for (focus of routine.focus_muscles; track focus) {
+            <span
+              class="bg-white/15 border border-white/20 text-white text-[9px] uppercase tracking-wider px-2 py-0.5 rounded-full font-bold backdrop-blur-xs">
+              {{ focus }}
+            </span>
+            }
+          </div>
+          }
+        </div>
+      </div>
+    </div>
+
+    <!-- CUERPO CON SCROLL -->
+    <div class="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4">
+      <!-- 1. DESGLOSE POR GRUPO MUSCULAR CON MINI BODY-MAP Y LEYENDA HEAT MAP (2 COLUMNAS) -->
+      @let muscleBreakdown = getRoutineMuscleBreakdownWithColors(routine);
+      @if (muscleBreakdown.length > 0) {
+      <div class="p-3.5 sm:p-4 rounded-2xl  space-y-3">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-1.5 text-xs font-black  uppercase tracking-tight">
+            <i class="pi pi-chart-pie text-kin-primary"></i>
+            <span>Desglose por Músculo Objetivo</span>
+          </div>
+
+        </div>
+
+        <!-- 2 COLUMNAS: COLUMNA IZQUIERDA BODY-MAP | COLUMNA DERECHA LEYENDA DE SERIES -->
+        <div class="grid grid-cols-1 sm:grid-cols-12 gap-3.5 sm:gap-4 items-center">
+          <!-- Columna izquierda: Body Map adaptado -->
+          <div class="sm:col-span-5 flex items-center justify-center p-2 rounded-2xl shadow-2xs">
+            <div class="h-60 sm:h-72 w-full flex items-stretch justify-center">
+              <app-workout-mini-body-map variant="light" [showLabels]="true" [gender]="athleteGender()"
+                [muscleBreakdown]="muscleBreakdown" />
+            </div>
+          </div>
+
+          <!-- Columna derecha: Leyenda de series por músculo -->
+          <div class="sm:col-span-7 flex flex-col gap-2">
+            @for (m of muscleBreakdown; track m.muscle) {
+            <div
+              class="flex items-center justify-between p-2.5 sm:p-3 px-3.5 rounded-2xl border border-kin-primary/25 bg-white text-xs sm:text-sm font-bold text-kin-primary shadow-2xs">
+              <div class="flex items-center gap-2.5 min-w-0">
+                <span class="w-3 h-3 rounded-full shrink-0 shadow-2xs border border-white"
+                  [style.background-color]="m.color"></span>
+                <span class="font-black text-stone-900 truncate capitalize">{{ m.muscle }}</span>
+              </div>
+              <div class="flex items-center gap-2 shrink-0">
+                @if (m.levelLabel) {
+                <span
+                  class="text-[9px] font-bold px-2 py-0.5 rounded-md text-kin-secondary bg-kin-primary/10 uppercase tracking-wide">
+                  {{ m.levelLabel }}
+                </span>
+                }
+                <strong class="font-black text-kin-secondary">
+                  {{ m.sets }} {{ m.sets === 1 ? 'serie' : 'series' }}
+                </strong>
+              </div>
+            </div>
+            }
+          </div>
+        </div>
+      </div>
+      }
+
+      <!-- 2. DETALLE DE EJERCICIOS Y SERIES -->
+      <div class="space-y-3 pt-1">
+        <div class="flex items-center justify-between">
+          <h4 class="text-xs font-black uppercase tracking-wider text-stone-600 flex items-center gap-2">
+            <i class="pi pi-list text-awakin-sun"></i>
+            <span>Ejercicios y Series de la Rutina</span>
+          </h4>
+          <span class="text-[11px] font-bold text-stone-400">
+            {{ routine.exercises.length }} {{ routine.exercises.length === 1 ? 'ejercicio' : 'ejercicios' }}
+          </span>
+        </div>
+
+        @if (routine.exercises.length > 0) {
+        @for (ex of routine.exercises; track ex.id || $index) {
+        @let thumb = getExerciseThumbnail(ex);
+        <div class="bg-kin-primary/20 border border-stone-200/90 rounded-2xl p-3.5 space-y-3">
+          <!-- Encabezado del ejercicio: Miniatura interactiva + Nombre y Badges en Español -->
+          <div class="flex items-start gap-3">
+            <!-- Miniatura del ejercicio que abre el modal de detalle de biblioteca -->
+            <button type="button" (click)="inspectRoutineExercise(ex)"
+              class="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-white overflow-hidden shrink-0 flex items-center justify-center relative group cursor-pointer shadow-2xs hover:border-awakin-sun/50 transition-all"
+              [title]="'Ver detalle de ' + (ex.exercise_name || 'ejercicio')">
+              @if (thumb) {
+              @if (isVideoMediaUrl(thumb)) {
+              <video [src]="thumb" muted playsinline preload="metadata" class="w-full h-full object-cover"></video>
+              } @else {
+              <img [src]="thumb" [alt]="ex.exercise_name" class="w-full h-full object-contain " />
+              }
+              <div
+                class="absolute inset-0 bg-stone-900/30 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                <i class="pi pi-search-plus text-white text-xs"></i>
+              </div>
+              } @else {
+              <div class="flex flex-col items-center justify-center text-awakin-sun">
+                <i class="pi pi-bolt text-lg"></i>
+              </div>
+              }
+            </button>
+
+            <!-- Lado derecho: Nombre del ejercicio y características debajo -->
+            <div class="flex-1 min-w-0">
+              <h5 (click)="inspectRoutineExercise(ex)"
+                class="text-xs sm:text-sm font-black text-stone-900 uppercase tracking-tight leading-snug hover:text-awakin-sun transition-colors cursor-pointer">
+                {{ $index + 1 }}. {{ ex.exercise_name || ('Ejercicio #' + ($index + 1)) }}
+              </h5>
+
+              <!-- Debajo: Músculo objetivo, secundarios y equipo en español -->
+              <div class="flex items-center gap-1.5 flex-wrap mt-1.5">
+                @if (ex.target_muscle || ex.apiDetail?.target) {
+                <span
+                  class="px-2 py-0.5 rounded-md bg-kin-secondary text-amber-800 text-[10px] font-black uppercase tracking-wider">
+                  {{ translateMuscleName(ex.target_muscle || ex.apiDetail?.target) }}
+                </span>
+                }
+                @for (sec of (ex.secondary_muscles || ex.apiDetail?.secondary_muscles || []); track sec) {
+                <span
+                  class="px-1.5 py-0.5 rounded-md bg-stone-100 text-stone-600 text-[9px] font-bold uppercase tracking-wider">
+                  {{ translateMuscleName(sec) }}
+                </span>
+                }
+                @if (ex.equipment || ex.apiDetail?.equipment) {
+                <span
+                  class="px-2 py-0.5 rounded-md bg-stone-100 text-stone-700 text-[9px] font-bold uppercase tracking-wider border border-stone-200/80">
+                  {{ translateEquipmentName(ex.equipment || ex.apiDetail?.equipment) }}
+                </span>
+                }
+                @if (ex.rest_seconds) {
+                <span class="text-[10px] font-bold text-stone-400 inline-flex items-center gap-1">
+                  <i class="pi pi-clock text-[9px]"></i> {{ ex.rest_seconds }}s descanso
+                </span>
+                }
+              </div>
+            </div>
+          </div>
+
+          <!-- Notas ocupando todo el ancho (width) con padding lateral -->
+          @if (ex.notes) {
+          <div
+            class="w-full px-3.5 py-2.5 rounded-xl bg-amber-500/5 border border-amber-500/20 text-stone-700 text-xs font-medium flex items-center gap-2 shadow-2xs">
+            <i class="pi pi-info-circle text-amber-500 text-xs shrink-0"></i>
+            <span class="italic leading-relaxed break-words">{{ ex.notes }}</span>
+          </div>
+          }
+
+          <!-- Series programadas -->
+          @if (ex.sets && ex.sets.length > 0) {
+          <div class="rounded-xl border border-stone-200/80 overflow-hidden bg-white">
+            <div
+              class="grid grid-cols-12 bg-stone-100/90 px-3 py-1.5 text-[9px] font-black text-stone-500 uppercase tracking-wider text-center">
+              <span class="col-span-2">Serie</span>
+              <span class="col-span-4">Objetivo</span>
+              <span class="col-span-3">Peso</span>
+              <span class="col-span-3">RPE</span>
+            </div>
+            <div class="divide-y divide-stone-100 text-xs">
+              @for (s of ex.sets; track s.id || s.set_number) {
+              @let badge = getCompactSetDisplay(s.set_type, s.set_number);
+              <div class="grid grid-cols-12 px-3 py-2 items-center text-center">
+                <div class="col-span-2 flex justify-center" [title]="badge.title">
+                  <span class="w-6 h-6 rounded-md bg-stone-100 flex items-center justify-center text-[11px] font-black"
+                    [ngClass]="badge.colorClass">
+                    {{ badge.text }}
+                  </span>
+                </div>
+                <span class="col-span-4 font-black text-stone-800">{{ s.target_reps || '10-12' }} reps</span>
+                <span class="col-span-3 font-semibold text-stone-600">
+                  {{ s.target_weight ? (s.target_weight + ' ' + (s.weight_unit || 'lb')) : '-' }}
+                </span>
+                <span class="col-span-3 font-bold text-stone-500 text-[10px]">
+                  {{ s.rpe ? ('RPE ' + s.rpe) : '-' }}
+                </span>
+              </div>
+              }
+            </div>
+          </div>
+          }
+
+          <!-- Descanso sugerido -->
+          @if (ex.rest_seconds) {
+          <div class="flex items-center gap-1.5 text-[10px] text-stone-400 font-medium pl-1">
+            <i class="pi pi-stopwatch text-awakin-sun"></i>
+            <span>Descanso sugerido: <strong class="text-stone-700 font-bold">{{ ex.rest_seconds }}
+                segundos</strong></span>
+          </div>
+          }
+        </div>
+        }
+        } @else {
+        <div
+          class="p-6 text-center text-stone-400 text-xs bg-stone-50 rounded-2xl border border-dashed border-stone-200">
+          Esta rutina no tiene ejercicios asignados aún.
+        </div>
+        }
+      </div>
+    </div>
+
+    <!-- FOOTER: BOTÓN DE INICIAR SESIÓN CON ESTA RUTINA -->
+    <div class="p-4 sm:p-5 border-t border-stone-100 bg-stone-50/80 shrink-0 flex items-center gap-2">
+      <button type="button" (click)="closeRoutineDetailModal()"
+        class="px-4 py-3 rounded-2xl bg-white border border-stone-200 text-stone-600 font-bold text-xs cursor-pointer hover:bg-stone-100 transition-all">
+        Cerrar
+      </button>
+      <button type="button" (click)="startWorkoutFromModal(routine)"
+        class="flex-1 py-3 px-4 rounded-2xl bg-awakin-sun hover:bg-awakin-sun-dim text-white font-black text-xs uppercase tracking-wider cursor-pointer shadow-md shadow-awakin-sun/30 flex items-center justify-center gap-2 transition-all active:scale-[0.98]">
+        <i class="pi pi-play-circle text-base"></i>
+        <span>Iniciar Rutina Ahora</span>
+      </button>
+    </div>
+  </div>
+  }
+</p-dialog>
+
+<!-- ========================================================================= -->
+<!-- MODAL: DETALLE DEL EJERCICIO (DESDE MINIATURA DE LA RUTINA)             -->
+<!-- ========================================================================= -->
+<p-dialog [(visible)]="isExerciseDetailModalOpen" [modal]="true" appendTo="body" [dismissableMask]="true"
+  [draggable]="false" [resizable]="false" [style]="{ width: '95vw', maxWidth: '520px', borderRadius: '24px' }"
+  styleClass="overflow-hidden shadow-2xl border border-stone-200 [&_.p-dialog-content]:!p-0" [closable]="false"
+  [showHeader]="false">
+  @if (inspectedExerciseDetail(); as detail) {
+  <div class="bg-white flex flex-col max-h-[95vh] overflow-hidden">
+    <!-- Top Bar con botón cerrar -->
+    <div class="flex items-center justify-between p-4 border-b border-stone-100 bg-stone-50/80">
+      <div class="min-w-0 flex-1 pr-2">
+        <span
+          class="px-2 py-0.5 rounded-md bg-stone-200/70 text-stone-700 text-[9px] font-bold uppercase tracking-wider">
+          {{ translateEquipmentName(detail.equipment) }}
+        </span>
+        <h3 class="text-sm font-black text-stone-900 uppercase tracking-tight mt-1 truncate">
+          {{ detail.name }}
+        </h3>
+      </div>
+      <button type="button" (click)="isExerciseDetailModalOpen.set(false)"
+        class="w-8 h-8 rounded-full bg-white border border-stone-200 text-stone-500 hover:bg-stone-100 flex items-center justify-center transition-all cursor-pointer shrink-0">
+        <i class="pi pi-times text-xs"></i>
+      </button>
+    </div>
+
+    <div class="overflow-y-auto p-4 flex flex-col gap-4">
+      <!-- Media: Collage 1-2 Videos/GIFs personalizados o fallback GIF/Imagen API -->
+      @let customMedia = $any(detail).custom_media_urls || [];
+      @if (customMedia.length > 1) {
+      <div class="w-full h-90 sm:h-100 rounded-2xl  overflow-hidden grid grid-cols-2 shadow-2xl shrink-0">
+        @for (mUrl of customMedia.slice(0, 2); track mUrl) {
+        @if (isVideoMediaUrl(mUrl)) {
+        <video [src]="mUrl" autoplay loop muted playsinline class="w-full h-full object-cover"></video>
+        } @else {
+        <img [src]="mUrl" [alt]="detail.name" class="w-full h-full object-cover" />
+        }
+        }
+      </div>
+      } @else if (customMedia.length === 1) {
+      <div
+        class="w-full h-72 sm:h-80 rounded-2xl bg-stone-950 border border-stone-200/80 overflow-hidden flex items-center justify-center shrink-0">
+        @if (isVideoMediaUrl(customMedia[0])) {
+        <video [src]="customMedia[0]" autoplay loop muted playsinline class="w-full h-full object-cover"></video>
+        } @else {
+        <img [src]="customMedia[0]" [alt]="detail.name" class="w-full h-full object-cover" />
         }
       </div>
       } @else {
-      <div class="py-12 text-center text-stone-400 text-xs bg-white rounded-3xl border border-dashed border-stone-200">
-        No tienes un plan de entrenamiento activo asignado todavía.
-      </div>
-      }
-    </div>
-  </p-drawer>
-
-  <!-- ========================================================================= -->
-  <!-- DRAWER: HISTORIAL DE ENTRENAMIENTOS (WORKOUT LOGS)                        -->
-  <!-- ========================================================================= -->
-  <p-drawer [(visible)]="isHistoryDrawerOpen" position="bottom" appendTo="body"
-    [style]="{ height: '90dvh', maxHeight: '90dvh', width: '100%', borderTopLeftRadius: '24px', borderTopRightRadius: '24px', backgroundColor: 'var(--app-bg)' }"
-    [header]="'Entrenamientos (' + currentLabel() + ')'">
-    <div class="max-w-3xl mx-auto space-y-3 pb-10">
-      @for (log of selectedDayLogs(); track log.id) {
-      <app-workout-log-card [log]="log" [athlete]="athlete()" (onDetail)="openWorkoutDetail($event)"
-        (onShare)="openWorkoutStoryModal($event)" (onEdit)="openWorkoutEditModal($event)">
-      </app-workout-log-card>
-      } @empty {
-      <div class="py-12 text-center bg-white border border-dashed border-stone-300 rounded-3xl">
-        <i class="pi pi-history text-stone-300 text-2xl mb-2"></i>
-        <p class="text-xs font-bold text-stone-500">No hay entrenamientos completados para {{ currentLabel() }}.</p>
-      </div>
-      }
-    </div>
-  </p-drawer>
-
-  <!-- ========================================================================= -->
-  <!-- MODAL: DETALLE DEL ENTRENAMIENTO ESTILO HEVY (HISTORIAL)                  -->
-  <!-- ========================================================================= -->
-  <app-workout-log-detail-modal [(visible)]="isWorkoutDetailOpen" [log]="selectedWorkoutDetail()"
-    [gender]="athleteGender()" (edit)="openWorkoutEditModal($event)" (shareStory)="openWorkoutStoryModal($event)">
-  </app-workout-log-detail-modal>
-
-  <!-- ========================================================================= -->
-  <!-- MODAL: EDITAR ENTRENAMIENTO (WORKOUT LOG)                                 -->
-  <!-- ========================================================================= -->
-  <app-workout-log-edit-modal [(visible)]="isWorkoutEditModalOpen" [log]="logToEdit()"
-    (saved)="onWorkoutLogSaved($event)">
-  </app-workout-log-edit-modal>
-
-  <!-- ========================================================================= -->
-  <!-- MODAL: HISTORIA INTERACTIVA DE ENTRENAMIENTO                              -->
-  <!-- ========================================================================= -->
-  <app-workout-story-modal [(visible)]="isShareWorkoutModalOpen" [log]="shareWorkoutTargetLog()" [athlete]="athlete()"
-    [gender]="athleteGender()" (closed)="closeWorkoutStoryModal()" />
-
-  <!-- ========================================================================= -->
-  <!-- MODAL: CREAR NUEVA RUTINA                                                 -->
-  <!-- ========================================================================= -->
-  <p-dialog [(visible)]="isCreateRoutineModalOpen" [modal]="true" [draggable]="false" [resizable]="false"
-    [closable]="false" [showHeader]="false" [dismissableMask]="true" appendTo="body"
-    [style]="{ width: '95vw', maxWidth: '540px', borderRadius: '24px' }"
-    styleClass="overflow-hidden shadow-2xl border border-stone-200 [&_.p-dialog-content]:!p-0">
-    <div class="bg-white flex flex-col max-h-[90vh]">
-      <div class="px-5 py-4 border-b border-stone-100 bg-stone-50/80 flex items-center justify-between">
-        <div>
-          <h3 class="text-base font-black text-stone-900">Crear Nueva Rutina</h3>
-          <p class="text-[11px] text-stone-500 font-medium">Combina ejercicios de la librería o personalizados</p>
-        </div>
-        <button type="button" (click)="isCreateRoutineModalOpen.set(false)"
-          class="w-8 h-8 rounded-full bg-stone-100 hover:bg-stone-200 text-stone-600 flex items-center justify-center cursor-pointer">
-          <i class="pi pi-times text-xs"></i>
-        </button>
-      </div>
-
-      <div class="p-5 space-y-4 overflow-y-auto flex-1">
-        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
-          <div class="sm:col-span-2">
-            <label class="block text-[10px] font-black uppercase tracking-wider text-stone-500 mb-1">Nombre *</label>
-            <input type="text" [ngModel]="newRoutineName()" (ngModelChange)="newRoutineName.set($event)"
-              placeholder="Ej: Día 4: Torso Fuerza"
-              class="w-full h-10 bg-stone-50 border border-stone-200 focus:border-awakin-sun rounded-xl px-3 text-xs font-bold text-stone-900 outline-hidden" />
-          </div>
-          <div>
-            <label class="block text-[10px] font-black uppercase tracking-wider text-stone-500 mb-1">Día (Plan)</label>
-            <select [ngModel]="newRoutineDay()" (ngModelChange)="newRoutineDay.set($event)"
-              class="w-full h-10 bg-stone-50 border border-stone-200 focus:border-awakin-sun rounded-xl px-2.5 text-xs font-bold text-stone-900 outline-hidden cursor-pointer">
-              <option [ngValue]="null">Sin asignar</option>
-              @for (d of weekDays; track d) {
-              <option [ngValue]="d">{{ weekDayLabels[d].name }}</option>
-              }
-            </select>
-          </div>
-        </div>
-
-        <div>
-          <label class="block text-[10px] font-black uppercase tracking-wider text-stone-500 mb-1">Descripción</label>
-          <input type="text" [ngModel]="newRoutineDescription()" (ngModelChange)="newRoutineDescription.set($event)"
-            placeholder="Objetivo o enfoque de la rutina"
-            class="w-full h-10 bg-stone-50 border border-stone-200 focus:border-awakin-sun rounded-xl px-3 text-xs font-bold text-stone-900 outline-hidden" />
-        </div>
-
-        <div>
-          <label class="block text-[10px] font-black uppercase tracking-wider text-stone-500 mb-1">Banner de Rutina
-            (opcional)</label>
-          <input #newRoutineBannerInput type="file" accept="image/*" (change)="onNewRoutineBannerSelected($event)"
-            class="hidden" />
-          @if (!newRoutineBannerPreview()) {
-          <button type="button" (click)="newRoutineBannerInput.click()"
-            class="w-full py-2.5 px-3 rounded-xl border-2 border-dashed border-stone-200 hover:border-awakin-sun bg-stone-50 text-stone-500 hover:text-awakin-sun text-xs font-bold flex items-center justify-center gap-2 transition-all cursor-pointer">
-            <i class="pi pi-image"></i>
-            <span>Subir imagen banner</span>
-          </button>
-          } @else {
-          <div class="relative rounded-2xl overflow-hidden border border-stone-200 h-28">
-            <img [src]="newRoutineBannerPreview()" alt="Preview banner" class="w-full h-full object-cover" />
-            <button type="button" (click)="clearNewRoutineBanner()"
-              class="absolute top-2 right-2 w-7 h-7 rounded-full bg-stone-900/75 text-white flex items-center justify-center cursor-pointer">
-              <i class="pi pi-times text-xs"></i>
-            </button>
-          </div>
-          }
-        </div>
-
-        <!-- Ejercicios añadidos -->
-        @if (newRoutineExercises().length > 0) {
-        <div class="space-y-1.5">
-          <label class="block text-[10px] font-black uppercase tracking-wider text-stone-500">
-            Ejercicios en esta rutina ({{ newRoutineExercises().length }})
-          </label>
-          @for (ex of newRoutineExercises(); track ex.tempId; let idx = $index) {
-          <div class="flex items-center justify-between p-2.5 bg-stone-50 border border-stone-200 rounded-xl">
-            <div class="min-w-0 pr-2">
-              <div class="text-xs font-black text-stone-900 truncate">{{ idx + 1 }}. {{ ex.exercise_name }}</div>
-              <div class="text-[10px] text-stone-500 capitalize">{{ ex.target_muscle }} • {{ ex.sets.length }} series
-              </div>
-            </div>
-            <button type="button" (click)="removeBuilderExercise(idx)"
-              class="text-stone-400 hover:text-rose-600 p-1 cursor-pointer">
-              <i class="pi pi-trash text-xs"></i>
-            </button>
-          </div>
-          }
-        </div>
-        }
-
-        <!-- Buscador rápido librería + Botón personalizado -->
-        <div class="border-t border-stone-100 pt-3 space-y-2.5">
-          <div class="flex items-center justify-between gap-2">
-            <span class="text-[10px] font-black uppercase tracking-wider text-stone-500">Añadir Ejercicios</span>
-            <button type="button" (click)="isCustomExForBuilderOpen.set(true)"
-              class="text-[11px] font-black text-awakin-sun hover:underline flex items-center gap-1 cursor-pointer">
-              <i class="pi pi-user-plus text-[10px]"></i> Personalizado (BodyMap)
-            </button>
-          </div>
-
-          <input type="text" [ngModel]="builderSearchQuery()"
-            (ngModelChange)="builderSearchQuery.set($event); onBuilderSearchInput()"
-            placeholder="Buscar en librería de ejercicios..."
-            class="w-full h-9 bg-stone-100 focus:bg-white border border-stone-200 focus:border-awakin-sun rounded-xl px-3 text-xs font-bold text-stone-900 outline-hidden" />
-
-          <div class="max-h-44 overflow-y-auto space-y-1.5 pr-1">
-            @for (item of builderSearchResults(); track item.id) {
-            <button type="button" (click)="addBuilderLibraryExercise(item)"
-              class="w-full text-left p-2 rounded-xl border border-stone-200 hover:border-awakin-sun hover:bg-awakin-sun/5 flex items-center justify-between gap-2 transition-all cursor-pointer">
-              <div class="min-w-0">
-                <div class="text-xs font-bold text-stone-900 truncate uppercase">{{ item.name }}</div>
-                <div class="text-[10px] text-stone-500 capitalize">{{ item.target }} • {{ item.equipment }}</div>
-              </div>
-              <i class="pi pi-plus text-awakin-sun text-xs shrink-0"></i>
-            </button>
-            }
-          </div>
-        </div>
-      </div>
-
-      <div class="px-5 py-3.5 border-t border-stone-100 bg-stone-50/80 flex items-center gap-2">
-        <button type="button" (click)="isCreateRoutineModalOpen.set(false)"
-          class="px-4 py-3 rounded-2xl bg-white border border-stone-200 text-stone-600 font-bold text-xs cursor-pointer">
-          Cancelar
-        </button>
-        <button type="button" (click)="saveNewRoutine()"
-          [disabled]="!newRoutineName().trim() || newRoutineExercises().length === 0 || isSavingRoutine()"
-          class="flex-1 py-3 px-4 rounded-2xl bg-awakin-sun hover:bg-awakin-sun-dim disabled:bg-stone-200 disabled:text-stone-400 text-white font-black text-xs uppercase tracking-wider cursor-pointer">
-          {{ isSavingRoutine() ? 'Guardando...' : 'Guardar Rutina' }}
-        </button>
-      </div>
-    </div>
-  </p-dialog>
-
-  <app-custom-exercise-modal [(isOpen)]="isCustomExForBuilderOpen" (onCreated)="onBuilderCustomExerciseCreated($event)">
-  </app-custom-exercise-modal>
-
-  <!-- ========================================================================= -->
-  <!-- SHEET FULLSCREEN: GALERÍA DE EJERCICIOS + BODY MAP + FILTRO EQUIPAMIENTOS -->
-  <!-- ========================================================================= -->
-  <app-exercise-gallery-drawer [(isOpen)]="isExerciseGalleryOpen"></app-exercise-gallery-drawer>
-
-  <!-- ========================================================================= -->
-  <!-- MODAL: DETALLE COMPLETO DE RUTINA (DESDE PLAN SEMANAL)                   -->
-  <!-- ========================================================================= -->
-  <p-dialog [(visible)]="isRoutineDetailModalOpen" [modal]="true" [draggable]="false" [resizable]="false"
-    [closable]="false" [showHeader]="false" [dismissableMask]="true" appendTo="body"
-    [style]="{ width: '95vw', maxWidth: '680px', borderRadius: '28px' }"
-    styleClass="overflow-hidden shadow-2xl border border-stone-200 [&_.p-dialog-content]:!p-0">
-    @if (selectedRoutineDetailModal(); as routine) {
-    <div class="bg-white flex flex-col max-h-[90vh] overflow-hidden">
-      <!-- BANNER HERO CON FOTO DE LA RUTINA O FONDO AWAKIN DARK -->
-      <div class="relative w-full h-48 sm:h-56 overflow-hidden bg-stone-900 shrink-0 select-none">
-        @if (routine.banner_url) {
-        <img [src]="routine.banner_url" [alt]="routine.name"
-          class="absolute inset-0 w-full h-full object-cover pointer-events-none" />
-        <div
-          class="absolute inset-0 bg-gradient-to-t from-stone-950 via-stone-950/65 to-black/35 backdrop-blur-[0.5px]">
-        </div>
+      <div
+        class="w-full h-64 sm:h-72 rounded-2xl bg-stone-50 border border-stone-200/80 overflow-hidden flex items-center justify-center relative shrink-0">
+        @if (detail.gif_url || detail.image) {
+        <img [src]="exerciseApi.getMediaUrl(detail.gif_url || detail.image)" [alt]="detail.name"
+          class="w-full h-full object-contain p-2" />
         } @else {
-        <div class="absolute inset-0 bg-gradient-to-br from-stone-900 via-stone-950 to-stone-900"></div>
-        <div class="absolute -right-8 -top-8 w-44 h-44 bg-awakin-sun/20 rounded-full blur-3xl pointer-events-none">
+        <div class="flex flex-col items-center justify-center gap-2 text-stone-300">
+          <i class="pi pi-image text-3xl"></i>
+          <span class="text-[10px] font-bold uppercase tracking-wider">Sin vista previa</span>
         </div>
-        <i
-          class="pi pi-bolt absolute right-[-10px] bottom-[-10px] text-[100px] text-white/5 pointer-events-none rotate-12"></i>
         }
-
-        <!-- BOTÓN DE CERRAR FLOTANTE SOBRE EL BANNER -->
-        <button type="button" (click)="closeRoutineDetailModal()"
-          class="absolute top-3.5 right-3.5 w-8 h-8 rounded-full bg-black/45 hover:bg-black/70 text-white backdrop-blur-md flex items-center justify-center transition-all cursor-pointer z-30 shadow-md">
-          <i class="pi pi-times text-xs"></i>
-        </button>
-
-        <!-- CONTENIDO OVERLAY DEL BANNER -->
-        <div class="relative z-10 h-full p-4 sm:p-5 flex flex-col justify-between">
-          <!-- Badges superiores -->
-          <div class="flex items-center gap-1.5 flex-wrap pr-10">
-            @if (routine.day_of_week) {
-            <span
-              class="bg-awakin-sun text-white text-[9px] font-black uppercase tracking-widest px-2.5 py-1 rounded-md shadow-2xs">
-              {{ weekDayLabels[routine.day_of_week].name }}
-            </span>
-            }
-            <span
-              class="text-stone-200 text-[10px] font-bold uppercase tracking-wider flex items-center gap-1 bg-black/40 backdrop-blur-xs px-2.5 py-1 rounded-md border border-white/10">
-              <i class="pi pi-clock text-[9px]"></i> ~{{ routine.estimated_minutes || 45 }} min
-            </span>
-            <span
-              class="text-stone-200 text-[10px] font-bold uppercase tracking-wider bg-black/40 backdrop-blur-xs px-2.5 py-1 rounded-md border border-white/10">
-              • {{ routine.exercises.length }} ej. • {{ routine.total_sets || 0 }} series
-            </span>
-          </div>
-
-          <!-- Título y descripción de la rutina en el overlay -->
-          <div>
-            <h2 class="text-xl sm:text-2xl font-black text-white uppercase italic leading-tight drop-shadow-md">
-              {{ routine.name }}
-            </h2>
-            @if (routine.description) {
-            <p class="text-stone-300 text-xs font-medium mt-1 line-clamp-2 drop-shadow-xs">
-              {{ routine.description }}
-            </p>
-            }
-            @if (routine.focus_muscles && routine.focus_muscles.length > 0) {
-            <div class="flex flex-wrap gap-1.5 mt-2.5">
-              @for (focus of routine.focus_muscles; track focus) {
-              <span
-                class="bg-white/15 border border-white/20 text-white text-[9px] uppercase tracking-wider px-2 py-0.5 rounded-full font-bold backdrop-blur-xs">
-                {{ focus }}
-              </span>
-              }
-            </div>
-            }
-          </div>
-        </div>
       </div>
+      }
 
-      <!-- CUERPO CON SCROLL -->
-      <div class="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4">
-        <!-- 1. DESGLOSE POR GRUPO MUSCULAR CON MINI BODY-MAP Y LEYENDA HEAT MAP (2 COLUMNAS) -->
-        @let muscleBreakdown = getRoutineMuscleBreakdownWithColors(routine);
-        @if (muscleBreakdown.length > 0) {
-        <div class="p-3.5 sm:p-4 rounded-2xl  space-y-3">
-          <div class="flex items-center justify-between">
-            <div class="flex items-center gap-1.5 text-xs font-black  uppercase tracking-tight">
-              <i class="pi pi-chart-pie text-kin-primary"></i>
-              <span>Desglose por Músculo Objetivo</span>
-            </div>
-
-          </div>
-
-          <!-- 2 COLUMNAS: COLUMNA IZQUIERDA BODY-MAP | COLUMNA DERECHA LEYENDA DE SERIES -->
-          <div class="grid grid-cols-1 sm:grid-cols-12 gap-3.5 sm:gap-4 items-center">
-            <!-- Columna izquierda: Body Map adaptado -->
-            <div class="sm:col-span-5 flex items-center justify-center p-2 rounded-2xl shadow-2xs">
-              <div class="h-60 sm:h-72 w-full flex items-stretch justify-center">
-                <app-workout-mini-body-map variant="light" [showLabels]="true" [gender]="athleteGender()"
-                  [muscleBreakdown]="muscleBreakdown" />
-              </div>
-            </div>
-
-            <!-- Columna derecha: Leyenda de series por músculo -->
-            <div class="sm:col-span-7 flex flex-col gap-2">
-              @for (m of muscleBreakdown; track m.muscle) {
-              <div
-                class="flex items-center justify-between p-2.5 sm:p-3 px-3.5 rounded-2xl border border-kin-primary/25 bg-white text-xs sm:text-sm font-bold text-kin-primary shadow-2xs">
-                <div class="flex items-center gap-2.5 min-w-0">
-                  <span class="w-3 h-3 rounded-full shrink-0 shadow-2xs border border-white"
-                    [style.background-color]="m.color"></span>
-                  <span class="font-black text-stone-900 truncate capitalize">{{ m.muscle }}</span>
-                </div>
-                <div class="flex items-center gap-2 shrink-0">
-                  @if (m.levelLabel) {
-                  <span
-                    class="text-[9px] font-bold px-2 py-0.5 rounded-md text-kin-secondary bg-kin-primary/10 uppercase tracking-wide">
-                    {{ m.levelLabel }}
-                  </span>
-                  }
-                  <strong class="font-black text-kin-secondary">
-                    {{ m.sets }} {{ m.sets === 1 ? 'serie' : 'series' }}
-                  </strong>
-                </div>
-              </div>
-              }
-            </div>
+      <!-- Resumen Anatómico y Equipo en Español -->
+      <div class="grid grid-cols-2 gap-2 bg-stone-50 p-3 rounded-2xl border border-stone-200/70 text-xs">
+        <div>
+          <span class="text-[10px] font-black uppercase text-stone-400 block tracking-wider">Objetivo Primario</span>
+          <span class="font-bold text-amber-900 capitalize">{{ translateMuscleName(detail.target) }}</span>
+        </div>
+        <div>
+          <span class="text-[10px] font-black uppercase text-stone-400 block tracking-wider">Equipamiento</span>
+          <span class="font-bold text-stone-800 capitalize">{{ translateEquipmentName(detail.equipment) }}</span>
+        </div>
+        @if (detail.secondary_muscles && detail.secondary_muscles.length > 0) {
+        <div class="col-span-2 pt-1 border-t border-stone-200/50">
+          <span class="text-[10px] font-black uppercase text-stone-400 block tracking-wider mb-1">Músculos
+            Secundarios</span>
+          <div class="flex flex-wrap gap-1">
+            @for (sec of detail.secondary_muscles; track sec) {
+            <span class="px-2 py-0.5 rounded-md bg-stone-200/60 text-stone-700 text-[10px] font-bold capitalize">
+              {{ translateMuscleName(sec) }}
+            </span>
+            }
           </div>
         </div>
         }
-
-        <!-- 2. DETALLE DE EJERCICIOS Y SERIES -->
-        <div class="space-y-3 pt-1">
-          <div class="flex items-center justify-between">
-            <h4 class="text-xs font-black uppercase tracking-wider text-stone-600 flex items-center gap-2">
-              <i class="pi pi-list text-awakin-sun"></i>
-              <span>Ejercicios y Series de la Rutina</span>
-            </h4>
-            <span class="text-[11px] font-bold text-stone-400">
-              {{ routine.exercises.length }} {{ routine.exercises.length === 1 ? 'ejercicio' : 'ejercicios' }}
-            </span>
-          </div>
-
-          @if (routine.exercises.length > 0) {
-          @for (ex of routine.exercises; track ex.id || $index) {
-          @let thumb = getExerciseThumbnail(ex);
-          <div class="bg-kin-primary/20 border border-stone-200/90 rounded-2xl p-3.5 space-y-3">
-            <!-- Encabezado del ejercicio: Miniatura interactiva + Nombre y Badges en Español -->
-            <div class="flex items-start gap-3">
-              <!-- Miniatura del ejercicio que abre el modal de detalle de biblioteca -->
-              <button type="button" (click)="inspectRoutineExercise(ex)"
-                class="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-white border border-stone-200 overflow-hidden shrink-0 flex items-center justify-center relative group cursor-pointer shadow-2xs hover:border-awakin-sun/50 transition-all"
-                [title]="'Ver detalle de ' + (ex.exercise_name || 'ejercicio')">
-                @if (thumb) {
-                <img [src]="thumb" [alt]="ex.exercise_name" class="w-full h-full object-contain p-1" />
-                <div
-                  class="absolute inset-0 bg-stone-900/30 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                  <i class="pi pi-search-plus text-white text-xs"></i>
-                </div>
-                } @else {
-                <div class="flex flex-col items-center justify-center text-awakin-sun">
-                  <i class="pi pi-bolt text-lg"></i>
-                </div>
-                }
-              </button>
-
-              <!-- Lado derecho: Nombre del ejercicio y características debajo -->
-              <div class="flex-1 min-w-0">
-                <h5 (click)="inspectRoutineExercise(ex)"
-                  class="text-xs sm:text-sm font-black text-stone-900 uppercase tracking-tight leading-snug hover:text-awakin-sun transition-colors cursor-pointer">
-                  {{ $index + 1 }}. {{ ex.exercise_name || ('Ejercicio #' + ($index + 1)) }}
-                </h5>
-
-                <!-- Debajo: Músculo objetivo, secundarios y equipo en español -->
-                <div class="flex items-center gap-1.5 flex-wrap mt-1.5">
-                  @if (ex.target_muscle || ex.apiDetail?.target) {
-                  <span
-                    class="px-2 py-0.5 rounded-md bg-kin-secondary text-amber-800 text-[10px] font-black uppercase tracking-wider">
-                    {{ translateMuscleName(ex.target_muscle || ex.apiDetail?.target) }}
-                  </span>
-                  }
-                  @for (sec of (ex.secondary_muscles || ex.apiDetail?.secondary_muscles || []); track sec) {
-                  <span
-                    class="px-1.5 py-0.5 rounded-md bg-stone-100 text-stone-600 text-[9px] font-bold uppercase tracking-wider">
-                    {{ translateMuscleName(sec) }}
-                  </span>
-                  }
-                  @if (ex.equipment || ex.apiDetail?.equipment) {
-                  <span
-                    class="px-2 py-0.5 rounded-md bg-stone-100 text-stone-700 text-[9px] font-bold uppercase tracking-wider border border-stone-200/80">
-                    {{ translateEquipmentName(ex.equipment || ex.apiDetail?.equipment) }}
-                  </span>
-                  }
-                  @if (ex.rest_seconds) {
-                  <span class="text-[10px] font-bold text-stone-400 inline-flex items-center gap-1">
-                    <i class="pi pi-clock text-[9px]"></i> {{ ex.rest_seconds }}s descanso
-                  </span>
-                  }
-                </div>
-              </div>
-            </div>
-
-            <!-- Notas ocupando todo el ancho (width) con padding lateral -->
-            @if (ex.notes) {
-            <div
-              class="w-full px-3.5 py-2.5 rounded-xl bg-amber-500/5 border border-amber-500/20 text-stone-700 text-xs font-medium flex items-center gap-2 shadow-2xs">
-              <i class="pi pi-info-circle text-amber-500 text-xs shrink-0"></i>
-              <span class="italic leading-relaxed break-words">{{ ex.notes }}</span>
-            </div>
-            }
-
-            <!-- Series programadas -->
-            @if (ex.sets && ex.sets.length > 0) {
-            <div class="rounded-xl border border-stone-200/80 overflow-hidden bg-white">
-              <div
-                class="grid grid-cols-12 bg-stone-100/90 px-3 py-1.5 text-[9px] font-black text-stone-500 uppercase tracking-wider text-center">
-                <span class="col-span-2 text-left">Set</span>
-                <span class="col-span-3 text-left">Tipo</span>
-                <span class="col-span-3">Objetivo</span>
-                <span class="col-span-2">Peso</span>
-                <span class="col-span-2">RPE</span>
-              </div>
-              <div class="divide-y divide-stone-100 text-xs">
-                @for (s of ex.sets; track s.id || s.set_number) {
-                @let typeInfo = getSetTypeInfo(s.set_type);
-                <div class="grid grid-cols-12 px-3 py-2 items-center text-center">
-                  <span class="col-span-2 text-left font-black text-stone-700">{{ s.set_number }}</span>
-                  <div class="col-span-3 text-left">
-                    <span class="px-1.5 py-0.5 rounded text-[9px] font-bold border inline-block"
-                      [ngClass]="typeInfo.badgeClass">
-                      {{ typeInfo.label }}
-                    </span>
-                  </div>
-                  <span class="col-span-3 font-black text-stone-800">{{ s.target_reps || '10-12' }} reps</span>
-                  <span class="col-span-2 font-semibold text-stone-600">
-                    {{ s.target_weight ? (s.target_weight + ' ' + (s.weight_unit || 'lb')) : '-' }}
-                  </span>
-                  <span class="col-span-2 font-bold text-stone-500 text-[10px]">
-                    {{ s.rpe ? ('RPE ' + s.rpe) : '-' }}
-                  </span>
-                </div>
-                }
-              </div>
-            </div>
-            }
-
-            <!-- Descanso sugerido -->
-            @if (ex.rest_seconds) {
-            <div class="flex items-center gap-1.5 text-[10px] text-stone-400 font-medium pl-1">
-              <i class="pi pi-stopwatch text-awakin-sun"></i>
-              <span>Descanso sugerido: <strong class="text-stone-700 font-bold">{{ ex.rest_seconds }}
-                  segundos</strong></span>
-            </div>
-            }
-          </div>
-          }
-          } @else {
-          <div
-            class="p-6 text-center text-stone-400 text-xs bg-stone-50 rounded-2xl border border-dashed border-stone-200">
-            Esta rutina no tiene ejercicios asignados aún.
-          </div>
-          }
-        </div>
       </div>
 
-      <!-- FOOTER: BOTÓN DE INICIAR SESIÓN CON ESTA RUTINA -->
-      <div class="p-4 sm:p-5 border-t border-stone-100 bg-stone-50/80 shrink-0 flex items-center gap-2">
-        <button type="button" (click)="closeRoutineDetailModal()"
-          class="px-4 py-3 rounded-2xl bg-white border border-stone-200 text-stone-600 font-bold text-xs cursor-pointer hover:bg-stone-100 transition-all">
-          Cerrar
-        </button>
-        <button type="button" (click)="startWorkoutFromModal(routine)"
-          class="flex-1 py-3 px-4 rounded-2xl bg-awakin-sun hover:bg-awakin-sun-dim text-white font-black text-xs uppercase tracking-wider cursor-pointer shadow-md shadow-awakin-sun/30 flex items-center justify-center gap-2 transition-all active:scale-[0.98]">
-          <i class="pi pi-play-circle text-base"></i>
-          <span>Iniciar Rutina Ahora</span>
-        </button>
-      </div>
-    </div>
-    }
-  </p-dialog>
-
-  <!-- ========================================================================= -->
-  <!-- MODAL: DETALLE DEL EJERCICIO (DESDE MINIATURA DE LA RUTINA)             -->
-  <!-- ========================================================================= -->
-  <p-dialog [(visible)]="isExerciseDetailModalOpen" [modal]="true" appendTo="body" [dismissableMask]="true"
-    [draggable]="false" [resizable]="false" [style]="{ width: '92vw', maxWidth: '520px', borderRadius: '24px' }"
-    styleClass="overflow-hidden shadow-2xl border border-stone-200 [&_.p-dialog-content]:!p-0" [closable]="false"
-    [showHeader]="false">
-    @if (inspectedExerciseDetail(); as detail) {
-    <div class="bg-white flex flex-col max-h-[85vh] overflow-hidden">
-      <!-- Top Bar con botón cerrar -->
-      <div class="flex items-center justify-between p-4 border-b border-stone-100 bg-stone-50/80">
-        <div class="min-w-0 flex-1 pr-2">
-          <span
-            class="px-2 py-0.5 rounded-md bg-stone-200/70 text-stone-700 text-[9px] font-bold uppercase tracking-wider">
-            {{ translateEquipmentName(detail.equipment) }}
+      <!-- Instrucciones de ejecución -->
+      <div class="space-y-2.5">
+        <h4 class="text-xs font-black uppercase tracking-wider text-stone-700 flex items-center gap-1.5">
+          <i class="pi pi-info-circle text-awakin-sun"></i>
+          <span>Instrucciones de Ejecución</span>
+        </h4>
+        @if (customMedia.length > 0 && (detail.gif_url || detail.image)) {
+        <div class="rounded-2xl bg-stone-50 border border-stone-200/80 p-2.5 space-y-1.5">
+          <span class="text-[9px] font-black uppercase tracking-wider text-stone-400 block px-1">
+            Referencia técnica (Biblioteca)
           </span>
-          <h3 class="text-sm font-black text-stone-900 uppercase tracking-tight mt-1 truncate">
-            {{ detail.name }}
-          </h3>
-        </div>
-        <button type="button" (click)="isExerciseDetailModalOpen.set(false)"
-          class="w-8 h-8 rounded-full bg-white border border-stone-200 text-stone-500 hover:bg-stone-100 flex items-center justify-center transition-all cursor-pointer shrink-0">
-          <i class="pi pi-times text-xs"></i>
-        </button>
-      </div>
-
-      <div class="overflow-y-auto p-4 flex flex-col gap-4">
-        <!-- Media GIF / Imagen con relación de aspecto -->
-        <div
-          class="w-full h-64 sm:h-72 rounded-2xl bg-stone-50 border border-stone-200/80 overflow-hidden flex items-center justify-center relative shrink-0">
-          @if (detail.gif_url || detail.image) {
-          <img [src]="exerciseApi.getMediaUrl(detail.gif_url || detail.image)" [alt]="detail.name"
-            class="w-full h-full object-contain p-2" />
-          } @else {
-          <div class="flex flex-col items-center justify-center gap-2 text-stone-300">
-            <i class="pi pi-image text-3xl"></i>
-            <span class="text-[10px] font-bold uppercase tracking-wider">Sin vista previa</span>
+          <div
+            class="w-full h-48 rounded-xl bg-white border border-stone-200/70 overflow-hidden flex items-center justify-center">
+            <img [src]="exerciseApi.getMediaUrl(detail.gif_url || detail.image)" [alt]="detail.name"
+              class="w-full h-full object-contain p-1.5" />
           </div>
+        </div>
+        }
+        @if (detail.instruction_steps && detail.instruction_steps.length > 0) {
+        <ol class="flex flex-col gap-2 text-xs text-stone-600 pl-1">
+          @for (step of detail.instruction_steps; track step; let idx = $index) {
+          <li class="flex items-start gap-2.5">
+            <span
+              class="w-5 h-5 rounded-full bg-awakin-sun/15 text-stone-900 font-black text-[10px] flex items-center justify-center shrink-0 mt-0.5">
+              {{ idx + 1 }}
+            </span>
+            <span class="leading-relaxed">{{ step }}</span>
+          </li>
           }
-        </div>
-
-        <!-- Resumen Anatómico y Equipo en Español -->
-        <div class="grid grid-cols-2 gap-2 bg-stone-50 p-3 rounded-2xl border border-stone-200/70 text-xs">
-          <div>
-            <span class="text-[10px] font-black uppercase text-stone-400 block tracking-wider">Objetivo Primario</span>
-            <span class="font-bold text-amber-900 capitalize">{{ translateMuscleName(detail.target) }}</span>
-          </div>
-          <div>
-            <span class="text-[10px] font-black uppercase text-stone-400 block tracking-wider">Equipamiento</span>
-            <span class="font-bold text-stone-800 capitalize">{{ translateEquipmentName(detail.equipment) }}</span>
-          </div>
-          @if (detail.secondary_muscles && detail.secondary_muscles.length > 0) {
-          <div class="col-span-2 pt-1 border-t border-stone-200/50">
-            <span class="text-[10px] font-black uppercase text-stone-400 block tracking-wider mb-1">Músculos
-              Secundarios</span>
-            <div class="flex flex-wrap gap-1">
-              @for (sec of detail.secondary_muscles; track sec) {
-              <span class="px-2 py-0.5 rounded-md bg-stone-200/60 text-stone-700 text-[10px] font-bold capitalize">
-                {{ translateMuscleName(sec) }}
-              </span>
-              }
-            </div>
-          </div>
-          }
-        </div>
-
-        <!-- Instrucciones de ejecución -->
-        <div class="space-y-2">
-          <h4 class="text-xs font-black uppercase tracking-wider text-stone-700 flex items-center gap-1.5">
-            <i class="pi pi-info-circle text-awakin-sun"></i>
-            <span>Instrucciones de Ejecución</span>
-          </h4>
-          @if (detail.instruction_steps && detail.instruction_steps.length > 0) {
-          <ol class="flex flex-col gap-2 text-xs text-stone-600 pl-1">
-            @for (step of detail.instruction_steps; track step; let idx = $index) {
-            <li class="flex items-start gap-2.5">
-              <span
-                class="w-5 h-5 rounded-full bg-awakin-sun/15 text-stone-900 font-black text-[10px] flex items-center justify-center shrink-0 mt-0.5">
-                {{ idx + 1 }}
-              </span>
-              <span class="leading-relaxed">{{ step }}</span>
-            </li>
-            }
-          </ol>
-          } @else if (detail.instruction) {
-          <p class="text-xs text-stone-600 leading-relaxed bg-stone-50 p-3 rounded-xl border border-stone-100">
-            {{ detail.instruction }}
-          </p>
-          } @else {
-          <p class="text-xs text-stone-400 italic">
-            Sin instrucciones detalladas registradas para este movimiento.
-          </p>
-          }
-        </div>
-      </div>
-
-      <!-- Botón Entendido -->
-      <div class="p-3 border-t border-stone-100 bg-stone-50/50 flex justify-end">
-        <button type="button" (click)="isExerciseDetailModalOpen.set(false)"
-          class="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-stone-900 text-white font-bold text-xs uppercase tracking-wider hover:bg-stone-800 transition-all cursor-pointer">
-          Entendido
-        </button>
+        </ol>
+        } @else if (detail.instruction) {
+        <p class="text-xs text-stone-600 leading-relaxed bg-stone-50 p-3 rounded-xl border border-stone-100">
+          {{ detail.instruction }}
+        </p>
+        } @else {
+        <p class="text-xs text-stone-400 italic">
+          Sin instrucciones detalladas registradas para este movimiento.
+        </p>
+        }
       </div>
     </div>
-    }
-  </p-dialog>
 
-  <!-- MODAL: HISTORIA 9:16 REPORTE DE CARGA MUSCULAR (MAPA, RADAR, VOLUMEN, SERIES) -->
-  <app-muscle-load-story-modal [(visible)]="isMuscleLoadStoryOpen" [logs]="workoutLogs()" [athlete]="athlete()"
-    [gender]="athleteGender()" [initialRange]="analyticsRange()" [initialTemplate]="activeChartType()" />
+    <!-- Botón Entendido -->
+    <div class="p-3 border-t border-stone-100 bg-stone-50/50 flex justify-end">
+      <button type="button" (click)="isExerciseDetailModalOpen.set(false)"
+        class="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-stone-900 text-white font-bold text-xs uppercase tracking-wider hover:bg-stone-800 transition-all cursor-pointer">
+        Entendido
+      </button>
+    </div>
+  </div>
+  }
+</p-dialog>
+
+<!-- MODAL: HISTORIA 9:16 REPORTE DE CARGA MUSCULAR (MAPA, RADAR, VOLUMEN, SERIES) -->
+<app-muscle-load-story-modal [(visible)]="isMuscleLoadStoryOpen" [logs]="workoutLogs()" [athlete]="athlete()"
+  [gender]="athleteGender()" [initialRange]="analyticsRange()" [initialTemplate]="activeChartType()" />

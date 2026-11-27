@@ -191,40 +191,34 @@
               <div class="space-y-1.5 pt-1">
                 <div
                   class="grid grid-cols-12 gap-1.5 px-2 text-[9px] font-black uppercase tracking-wider text-stone-400 text-center">
-                  <div class="col-span-1">#</div>
-                  <div class="col-span-3">Tipo</div>
-                  <div class="col-span-3">Peso ({{ editVolumeUnit().toUpperCase() }})</div>
-                  <div class="col-span-3">Reps</div>
+                  <div class="col-span-2">Serie</div>
+                  <div class="col-span-4">Peso ({{ editVolumeUnit().toUpperCase() }})</div>
+                  <div class="col-span-4">Reps</div>
                   <div class="col-span-2">Hecho</div>
                 </div>
 
                 @for (set of ex.sets; track set.set_number; let setIdx = $index) {
+                @let badge = getCompactSetDisplay(set.set_type, set.set_number);
                 <div class="grid grid-cols-12 gap-1.5 items-center p-1.5 rounded-xl border transition-all" [ngClass]="set.is_completed
                 ? 'bg-emerald-50/70 border-emerald-200'
                 : 'bg-stone-50/70 border-stone-200/70'">
-                  <!-- # Serie -->
-                  <div class="col-span-1 text-center text-xs font-black text-stone-600">
-                    {{ set.set_number }}
-                  </div>
-
-                  <!-- Tipo Serie -->
-                  <div class="col-span-3">
-                    <select [(ngModel)]="set.set_type"
-                      class="w-full h-8 bg-white border border-stone-200 rounded-lg text-[10px] font-bold px-1.5 text-stone-700 outline-hidden cursor-pointer">
-                      @for (st of setTypes; track st) {
-                      <option [value]="st">{{ setTypeLabels[st].label }}</option>
-                      }
-                    </select>
+                  <!-- Serie + Tipo (estilo Hevy) -->
+                  <div class="col-span-2 flex justify-center">
+                    <button type="button" (click)="openSetTypeSheet(exIdx, setIdx)" [title]="badge.title"
+                      class="w-9 h-8 rounded-lg bg-white border border-stone-200 hover:border-awakin-sun flex items-center justify-center text-xs font-black cursor-pointer transition-all active:scale-95"
+                      [ngClass]="badge.colorClass">
+                      {{ badge.text }}
+                    </button>
                   </div>
 
                   <!-- Peso -->
-                  <div class="col-span-3">
+                  <div class="col-span-4">
                     <input type="number" step="any" min="0" inputmode="decimal" [(ngModel)]="set.weight_used"
                       class="w-full h-8 bg-white border border-stone-200 focus:border-awakin-sun rounded-lg text-xs text-center font-black text-stone-900 outline-hidden" />
                   </div>
 
                   <!-- Reps -->
-                  <div class="col-span-3">
+                  <div class="col-span-4">
                     <input type="number" min="0" inputmode="numeric" pattern="[0-9]*" [(ngModel)]="set.reps_completed"
                       class="w-full h-8 bg-white border border-stone-200 focus:border-awakin-sun rounded-lg text-xs text-center font-black text-stone-900 outline-hidden" />
                   </div>
@@ -359,3 +353,10 @@
   </div>
   }
 </p-dialog>
+
+<app-set-type-sheet [(visible)]="setSheetVisible"
+  [currentType]="setSheetTarget()?.setType || 'WORKING'"
+  [setNumber]="setSheetTarget()?.setNumber || 1"
+  [canDelete]="setSheetTarget()?.canDelete || false"
+  (typeSelected)="onSetTypeSelected($event)"
+  (deleteSet)="onSetDeletedFromSheet()" />

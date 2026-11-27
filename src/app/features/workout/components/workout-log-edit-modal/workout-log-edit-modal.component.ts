@@ -9,6 +9,7 @@ import {
 } from '../../models/workout.models';
 import { WorkoutSupabaseService } from '../../services/workout-supabase.service';
 import { getEquipmentMeta } from '../exercise-gallery-drawer/equipment-icons';
+import { SetTypeSheetComponent, getCompactSetDisplay } from '../set-type-sheet/set-type-sheet.component';
 
 export interface EditableLogSet {
   set_number: number;
@@ -40,7 +41,7 @@ export interface EditableLogExercise {
 @Component({
   selector: 'app-workout-log-edit-modal',
   standalone: true,
-  imports: [CommonModule, FormsModule, DialogModule],
+  imports: [CommonModule, FormsModule, DialogModule, SetTypeSheetComponent],
   templateUrl: './workout-log-edit-modal.component.html'
 })
 export class WorkoutLogEditModalComponent {
@@ -68,6 +69,45 @@ export class WorkoutLogEditModalComponent {
 
   readonly setTypeLabels = WORKOUT_SET_TYPE_LABELS;
   readonly setTypes: WorkoutSetType[] = ['WARMUP', 'WORKING', 'DROPSET', 'FAILURE', 'AMRAP', 'SUPERSET'];
+  setSheetVisible = signal<boolean>(false);
+  setSheetTarget = signal<{ exIdx: number; setIdx: number; setType: WorkoutSetType; setNumber: number; canDelete: boolean } | null>(null);
+  getCompactSetDisplay = getCompactSetDisplay;
+
+  openSetTypeSheet(exIdx: number, setIdx: number): void {
+    const ex = this.editExercises()[exIdx];
+    const s = ex?.sets?.[setIdx];
+    if (!s) return;
+    this.setSheetTarget.set({
+      exIdx,
+      setIdx,
+      setType: s.set_type || 'WORKING',
+      setNumber: s.set_number,
+      canDelete: ex.sets.length > 1,
+    });
+    this.setSheetVisible.set(true);
+  }
+
+  onSetTypeSelected(type: WorkoutSetType): void {
+    const t = this.setSheetTarget();
+    if (!t) return;
+    const list = [...this.editExercises()];
+    if (list[t.exIdx]?.sets?.[t.setIdx]) {
+      list[t.exIdx].sets[t.setIdx].set_type = type;
+      this.editExercises.set([...list]);
+    }
+  }
+
+  onSetDeletedFromSheet(): void {
+    const t = this.setSheetTarget();
+    if (!t) return;
+    const list = [...this.editExercises()];
+    const ex = list[t.exIdx];
+    if (ex && ex.sets.length > 1) {
+      ex.sets.splice(t.setIdx, 1);
+      ex.sets = ex.sets.map((s, i) => ({ ...s, set_number: i + 1 }));
+      this.editExercises.set([...list]);
+    }
+  }
 
   constructor() {
     effect(

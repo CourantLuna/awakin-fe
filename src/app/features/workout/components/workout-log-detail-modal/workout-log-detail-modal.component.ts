@@ -15,6 +15,7 @@ import {
 import { BodyMapGender } from '../body-map/body-map.component';
 import { AthleteService } from '../../../../core/services/athlete.service';
 import { getEquipmentMeta } from '../exercise-gallery-drawer/equipment-icons';
+import { getCompactSetDisplay } from '../set-type-sheet/set-type-sheet.component';
 
 @Component({
   selector: 'app-workout-log-detail-modal',
@@ -32,6 +33,7 @@ export class WorkoutLogDetailModalComponent {
   // Evento opcional para compartir en historia (si la vista padre lo implementa)
   shareStory = output<WorkoutLog>();
   edit = output<WorkoutLog>();
+  getCompactSetDisplay = getCompactSetDisplay;
 
   // Lightbox interno para ampliar la foto del entrenamiento
   isLightboxOpen = signal<boolean>(false);

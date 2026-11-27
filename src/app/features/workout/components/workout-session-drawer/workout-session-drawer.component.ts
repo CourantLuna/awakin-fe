@@ -15,6 +15,7 @@ import {
 } from '../../models/workout.models';
 import { CustomExerciseModalComponent } from '../custom-exercise-modal/custom-exercise-modal.component';
 import { ExerciseGalleryDrawerComponent } from '../exercise-gallery-drawer/exercise-gallery-drawer.component';
+import { SetTypeSheetComponent, getCompactSetDisplay } from '../set-type-sheet/set-type-sheet.component';
 import {
   WorkoutMiniBodyMapComponent,
   WorkoutMuscleLegendItem,
@@ -32,7 +33,8 @@ import { getEquipmentMeta } from '../exercise-gallery-drawer/equipment-icons';
     DialogModule,
     CustomExerciseModalComponent,
     ExerciseGalleryDrawerComponent,
-    WorkoutMiniBodyMapComponent
+    WorkoutMiniBodyMapComponent,
+    SetTypeSheetComponent
   ],
   templateUrl: './workout-session-drawer.component.html'
 })
@@ -50,6 +52,40 @@ export class WorkoutSessionDrawerComponent {
   isCustomModalOpen = signal<boolean>(false);
   isBodyMapPickerOpen = signal<boolean>(false);
   isLibraryPickerOpen = signal<boolean>(false);
+  setSheetVisible = signal<boolean>(false);
+  setSheetTarget = signal<{ exIdx: number; setIdx: number; setType: WorkoutSetType; setNumber: number; canDelete: boolean } | null>(null);
+
+  getCompactSetDisplay = getCompactSetDisplay;
+
+  openSetTypeSheet(exIdx: number, setIdx: number): void {
+    const ex = this.activeSession.sessionExercises()[exIdx];
+    const s = ex?.sets?.[setIdx];
+    if (!s) return;
+    this.setSheetTarget.set({
+      exIdx,
+      setIdx,
+      setType: s.set_type || 'WORKING',
+      setNumber: s.set_number,
+      canDelete: ex.sets.length > 1,
+    });
+    this.setSheetVisible.set(true);
+  }
+
+  onSetTypeSelected(type: WorkoutSetType): void {
+    const t = this.setSheetTarget();
+    if (!t) return;
+    const ex = this.activeSession.sessionExercises()[t.exIdx];
+    if (ex?.sets?.[t.setIdx]) {
+      ex.sets[t.setIdx].set_type = type;
+      this.activeSession.touchExercises();
+    }
+  }
+
+  onSetDeletedFromSheet(): void {
+    const t = this.setSheetTarget();
+    if (!t) return;
+    this.activeSession.removeSet(t.exIdx, t.setIdx);
+  }
   librarySearchQuery = signal<string>('');
   librarySearchResults = signal<ExerciseSummary[]>([]);
   isSearchingLibrary = signal<boolean>(false);
