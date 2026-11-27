@@ -691,7 +691,9 @@
           </div>
         </div>
         <div class="sm:col-span-7 flex flex-col gap-2">
-          @for (m of weeklyPlanMuscleBreakdown(); track m.muscle) {
+          @let allMuscles = weeklyPlanMuscleBreakdown();
+          @let visibleMuscles = showAllWeeklyPlanMuscles() ? allMuscles : allMuscles.slice(0, 3);
+          @for (m of visibleMuscles; track m.muscle) {
           <div
             class="flex items-center justify-between p-2.5 px-3.5 rounded-2xl border border-kin-primary/25 bg-white text-xs font-bold shadow-2xs">
             <div class="flex items-center gap-2.5 min-w-0">
@@ -710,6 +712,13 @@
               </strong>
             </div>
           </div>
+          }
+          @if (allMuscles.length > 3) {
+          <button type="button" (click)="showAllWeeklyPlanMuscles.set(!showAllWeeklyPlanMuscles())"
+            class="w-full py-2 px-3 rounded-2xl border border-stone-200/90 bg-stone-50 hover:bg-stone-100 text-xs font-black text-stone-600 flex items-center justify-center gap-1.5 cursor-pointer transition-colors">
+            <span>{{ showAllWeeklyPlanMuscles() ? 'Ver menos' : 'Ver más (' + (allMuscles.length - 3) + ' más)' }}</span>
+            <i class="pi text-[10px]" [ngClass]="showAllWeeklyPlanMuscles() ? 'pi-chevron-up' : 'pi-chevron-down'"></i>
+          </button>
           }
         </div>
       </div>

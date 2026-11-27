@@ -135,6 +135,7 @@ export class WorkoutUserComponent implements OnInit {
   // Drawers y modales
   isExerciseGalleryOpen = signal<boolean>(false);
   isWeeklyPlanDrawerOpen = signal<boolean>(false);
+  showAllWeeklyPlanMuscles = signal<boolean>(false);
   isHistoryDrawerOpen = signal<boolean>(false);
   isCreateRoutineModalOpen = signal<boolean>(false);
   isCustomExForBuilderOpen = signal<boolean>(false);
