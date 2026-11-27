@@ -309,6 +309,16 @@ export class ActiveWorkoutSessionService {
     this.sessionExercises.update((list) => list.filter((_, i) => i !== exIndex));
   }
 
+  public moveExercise(exIndex: number, delta: number): void {
+    this.sessionExercises.update((list) => {
+      const target = exIndex + delta;
+      if (target < 0 || target >= list.length) return list;
+      const next = [...list];
+      [next[exIndex], next[target]] = [next[target], next[exIndex]];
+      return next;
+    });
+  }
+
   public addExercise(ex: ActiveSessionExercise): void {
     this.sessionExercises.update((list) => [...list, ex]);
   }

@@ -183,6 +183,7 @@ export class WorkoutSupabaseService {
             id: rawPlan.id,
             name: rawPlan.name,
             description: rawPlan.description,
+            banner_url: rawPlan.banner_url || null,
             start_date: rawPlan.start_date,
             end_date: rawPlan.end_date,
             created_by: rawPlan.created_by,

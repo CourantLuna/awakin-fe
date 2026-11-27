@@ -150,7 +150,7 @@ type MuscleLoadTool = 'template' | 'range' | 'photo' | 'ratio' | 'contrast' | 'o
                           <div
                             class="inline-flex items-center gap-1.5 text-[9px] font-black uppercase px-2.5 py-0.5 rounded-full bg-black/55 text-stone-100 border border-white/15">
                             <span class="w-2 h-2 rounded-full shrink-0" [style.backgroundColor]="m.color || '#FE970A'"></span>
-                            <span class="tracking-wider">{{ m.muscle }}: <span class="text-awakin-sun">{{ m.sets }}S</span></span>
+                            <span class="tracking-wider">{{ m.muscle }}: <span class="text-awakin-sun">{{ m.sets }} Series</span></span>
                           </div>
                           }
                         </div>

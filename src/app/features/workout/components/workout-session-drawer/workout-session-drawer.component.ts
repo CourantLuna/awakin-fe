@@ -143,6 +143,24 @@ export class WorkoutSessionDrawerComponent {
     this.isBodyMapPickerOpen.set(false);
   }
 
+  isVideoMediaUrl(url?: string | null): boolean {
+    if (!url) return false;
+    return /\.(mp4|webm|mov|m4v|ogg)(\?.*)?$/i.test(url) || url.includes('video');
+  }
+
+  getMediaUrl(path?: string | null): string {
+    if (!path) return '';
+    return this.exerciseApi.getMediaUrl(path);
+  }
+
+  getExerciseThumb(ex: ActiveSessionExercise): string | null {
+    if (ex.media_urls && ex.media_urls.length > 0) {
+      return this.getMediaUrl(ex.media_urls[0]);
+    }
+    if (ex.image_url) return this.getMediaUrl(ex.image_url);
+    return null;
+  }
+
   translateMuscleName(raw: string | null | undefined): string {
     if (!raw) return 'General';
     const key = raw.toLowerCase().trim();

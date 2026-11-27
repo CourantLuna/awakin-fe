@@ -181,10 +181,15 @@
     <div class="bg-white border border-stone-200/90 rounded-3xl p-4 shadow-sm space-y-3">
       <!-- Cabecera del ejercicio -->
       <div class="flex items-start gap-3">
+        @let thumb = getExerciseThumb(ex);
         <button type="button" (click)="inspectedExercise.set(ex)"
           class="w-16 h-16 rounded-2xl bg-stone-100 border border-stone-200 overflow-hidden shrink-0 flex items-center justify-center relative group cursor-pointer">
-          @if (ex.image_url) {
-          <img [src]="ex.image_url" [alt]="ex.exercise_name" class="w-full h-full object-cover" />
+          @if (thumb) {
+          @if (isVideoMediaUrl(thumb)) {
+          <video [src]="thumb" muted playsinline preload="metadata" class="w-full h-full object-cover"></video>
+          } @else {
+          <img [src]="thumb" [alt]="ex.exercise_name" class="w-full h-full object-cover" />
+          }
           <div
             class="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
             <i class="pi pi-play text-white text-xs"></i>
@@ -200,11 +205,24 @@
               class="text-sm font-black text-stone-900 uppercase tracking-tight leading-snug hover:text-awakin-sun transition-colors cursor-pointer">
               {{ exIdx + 1 }}. {{ ex.exercise_name }}
             </h3>
-            <button type="button" (click)="activeSession.removeExercise(exIdx)"
-              class="w-7 h-7 rounded-lg bg-stone-100 hover:bg-rose-50 text-stone-400 hover:text-rose-600 flex items-center justify-center shrink-0 cursor-pointer"
-              title="Quitar ejercicio">
-              <i class="pi pi-trash text-[10px]"></i>
-            </button>
+            <div class="flex items-center gap-1 shrink-0">
+              <button type="button" (click)="activeSession.moveExercise(exIdx, -1)" [disabled]="exIdx === 0"
+                class="w-7 h-7 rounded-lg bg-stone-100 hover:bg-stone-200 text-stone-500 disabled:opacity-30 flex items-center justify-center cursor-pointer"
+                title="Subir ejercicio">
+                <i class="pi pi-arrow-up text-[10px]"></i>
+              </button>
+              <button type="button" (click)="activeSession.moveExercise(exIdx, 1)"
+                [disabled]="exIdx === activeSession.sessionExercises().length - 1"
+                class="w-7 h-7 rounded-lg bg-stone-100 hover:bg-stone-200 text-stone-500 disabled:opacity-30 flex items-center justify-center cursor-pointer"
+                title="Bajar ejercicio">
+                <i class="pi pi-arrow-down text-[10px]"></i>
+              </button>
+              <button type="button" (click)="activeSession.removeExercise(exIdx)"
+                class="w-7 h-7 rounded-lg bg-stone-100 hover:bg-rose-50 text-stone-400 hover:text-rose-600 flex items-center justify-center cursor-pointer"
+                title="Quitar ejercicio">
+                <i class="pi pi-trash text-[10px]"></i>
+              </button>
+            </div>
           </div>
 
           <div class="flex items-center gap-1.5 flex-wrap mt-1">
@@ -369,7 +387,28 @@
     </div>
 
     <div class="p-4 overflow-y-auto space-y-4">
-      @if (ex.gif_url || ex.image_url) {
+      @let customMedia = ex.media_urls || [];
+      @if (customMedia.length > 1) {
+      <div class="w-full h-72 sm:h-80 rounded-2xl shadow-2xl overflow-hidden grid grid-cols-2 ">
+        @for (mUrl of customMedia.slice(0, 2); track mUrl) {
+        @if (isVideoMediaUrl(getMediaUrl(mUrl))) {
+        <video [src]="getMediaUrl(mUrl)" autoplay loop muted playsinline class="w-full h-full object-cover"></video>
+        } @else {
+        <img [src]="getMediaUrl(mUrl)" [alt]="ex.exercise_name" class="w-full h-full object-cover" />
+        }
+        }
+      </div>
+      } @else if (customMedia.length === 1) {
+      <div
+        class="w-full h-72 sm:h-80 rounded-2xl bg-stone-950 border border-stone-200 overflow-hidden flex items-center justify-center">
+        @if (isVideoMediaUrl(getMediaUrl(customMedia[0]))) {
+        <video [src]="getMediaUrl(customMedia[0])" autoplay loop muted playsinline
+          class="w-full h-full object-cover"></video>
+        } @else {
+        <img [src]="getMediaUrl(customMedia[0])" [alt]="ex.exercise_name" class="w-full h-full object-cover" />
+        }
+      </div>
+      } @else if (ex.gif_url || ex.image_url) {
       <div
         class="w-full h-64 rounded-2xl bg-stone-50 border border-stone-200 overflow-hidden flex items-center justify-center">
         <img [src]="ex.gif_url || ex.image_url" [alt]="ex.exercise_name" class="w-full h-full object-contain" />
@@ -393,18 +432,39 @@
         </div>
       </div>
 
-      @if (ex.instruction_steps && ex.instruction_steps.length > 0) {
-      <ol class="space-y-2 text-xs text-stone-600">
-        @for (step of ex.instruction_steps; track step; let i = $index) {
-        <li class="flex items-start gap-2">
-          <span
-            class="w-5 h-5 rounded-full bg-awakin-sun/15 text-stone-900 font-black text-[10px] flex items-center justify-center shrink-0">
-            {{ i + 1 }}
+      @if ((customMedia.length > 0 && (ex.gif_url || ex.image_url)) || (ex.instruction_steps &&
+      ex.instruction_steps.length > 0)) {
+      <div class="space-y-2.5">
+        <h4 class="text-xs font-black uppercase tracking-wider text-stone-700 flex items-center gap-1.5">
+          <i class="pi pi-info-circle text-awakin-sun"></i>
+          <span>Instrucciones de Ejecución</span>
+        </h4>
+        @if (customMedia.length > 0 && (ex.gif_url || ex.image_url)) {
+        <div class="rounded-2xl bg-stone-50 border border-stone-200/80 p-2.5 space-y-1.5">
+          <span class="text-[9px] font-black uppercase tracking-wider text-stone-400 block px-1">
+            Referencia técnica (Biblioteca)
           </span>
-          <span class="leading-relaxed">{{ step }}</span>
-        </li>
+          <div
+            class="w-full h-48 rounded-xl bg-white border border-stone-200/70 overflow-hidden flex items-center justify-center">
+            <img [src]="ex.gif_url || ex.image_url" [alt]="ex.exercise_name"
+              class="w-full h-full object-contain p-1.5" />
+          </div>
+        </div>
         }
-      </ol>
+        @if (ex.instruction_steps && ex.instruction_steps.length > 0) {
+        <ol class="space-y-2 text-xs text-stone-600">
+          @for (step of ex.instruction_steps; track step; let i = $index) {
+          <li class="flex items-start gap-2">
+            <span
+              class="w-5 h-5 rounded-full bg-awakin-sun/15 text-stone-900 font-black text-[10px] flex items-center justify-center shrink-0">
+              {{ i + 1 }}
+            </span>
+            <span class="leading-relaxed">{{ step }}</span>
+          </li>
+          }
+        </ol>
+        }
+      </div>
       }
     </div>
   </div>

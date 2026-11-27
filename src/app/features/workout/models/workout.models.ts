@@ -75,6 +75,7 @@ export interface WorkoutPlan {
   id: string;
   name: string;
   description?: string | null;
+  banner_url?: string | null;
   start_date: string;
   end_date: string;
   created_by?: string | null;
