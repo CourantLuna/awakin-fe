@@ -1,7 +1,9 @@
-import { Component, model, signal, computed, inject, OnInit, OnDestroy, effect } from '@angular/core';
+import { Component, model, signal, computed, inject, input, output, OnInit, OnDestroy, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
+import { forkJoin, of } from 'rxjs';
+import { catchError } from 'rxjs/operators';
 import { PrimeNGModule } from '../../../../shared/prime-ng.module';
 import { PopoverModule } from 'primeng/popover';
 import { DialogModule } from 'primeng/dialog';
@@ -30,11 +32,14 @@ export class ExerciseGalleryDrawerComponent implements OnInit, OnDestroy {
   private readonly athleteService = inject(AthleteService);
 
   isOpen = model<boolean>(false);
+  selectionMode = input<boolean>(false);
+  exercisePicked = output<ExerciseSummary>();
 
   // Estados de Búsqueda y Filtros
   searchQuery = signal<string>('');
-  selectedEquipment = signal<string>('all');
-  selectedMuscle = signal<MuscleRegion | null>(null);
+  selectedEquipments = signal<string[]>([]);
+  selectedMuscles = signal<MuscleRegion[]>([]);
+  selectedMuscleIds = computed(() => this.selectedMuscles().map((m) => m.id));
 
   // Estados de visualización del mapa corporal
   activeView = signal<'bodymap' | 'list'>('bodymap');
@@ -162,11 +167,20 @@ export class ExerciseGalleryDrawerComponent implements OnInit, OnDestroy {
   // Conteo de filtros activos
   activeFiltersCount = computed(() => {
     let count = 0;
-    if (this.selectedEquipment() && this.selectedEquipment() !== 'all') count++;
-    if (this.selectedMuscle()) count++;
+    count += this.selectedEquipments().length;
+    count += this.selectedMuscles().length;
     if (this.searchQuery().trim()) count++;
     return count;
   });
+
+  isEquipmentSelected(val: string): boolean {
+    const vals = this.selectedEquipments();
+    return val === 'all' ? vals.length === 0 : vals.includes(val);
+  }
+
+  getEquipmentMetaLabel(val: string): EquipmentMeta {
+    return this.equipmentList().find((e) => e.value === val) || getEquipmentMeta(val);
+  }
 
   totalPages = computed(() => {
     const total = this.totalExercises();
@@ -191,14 +205,18 @@ export class ExerciseGalleryDrawerComponent implements OnInit, OnDestroy {
   });
 
   selectedEquipmentMeta = computed(() => {
-    const val = this.selectedEquipment();
-    const list = this.equipmentList();
-    const found = list.find((e) => e.value === val);
-    return found || getEquipmentMeta(val);
+    const vals = this.selectedEquipments();
+    if (vals.length === 1) {
+      return this.equipmentList().find((e) => e.value === vals[0]) || getEquipmentMeta(vals[0]);
+    }
+    return getEquipmentMeta('all');
   });
 
   selectedEquipmentLabel = computed(() => {
-    return this.selectedEquipmentMeta().label;
+    const vals = this.selectedEquipments();
+    if (vals.length === 0) return 'Todos los Equipos';
+    if (vals.length === 1) return this.selectedEquipmentMeta().label;
+    return `${vals.length} equipos`;
   });
 
   sanitizeSvg(svg: string): SafeHtml {
@@ -218,9 +236,9 @@ export class ExerciseGalleryDrawerComponent implements OnInit, OnDestroy {
       this.currentPage.set(1);
     }
 
-    const muscle = this.selectedMuscle();
+    const muscles = this.selectedMuscles();
     const query = this.searchQuery().trim();
-    const equip = this.selectedEquipment();
+    const equips = this.selectedEquipments();
     const limit = this.pageSize();
 
     const handleSuccess = (res: any) => {
@@ -229,7 +247,6 @@ export class ExerciseGalleryDrawerComponent implements OnInit, OnDestroy {
       const totalPages = res.pagination?.totalPages ?? Math.ceil(total / limit);
 
       if (append) {
-        // Evitar duplicados por id
         const existingIds = new Set(this.exercises().map(e => e.id));
         const filteredNew = incoming.filter(e => !existingIds.has(e.id));
         this.exercises.set([...this.exercises(), ...filteredNew]);
@@ -252,30 +269,66 @@ export class ExerciseGalleryDrawerComponent implements OnInit, OnDestroy {
       this.isLoadingMore.set(false);
     };
 
-    if (muscle) {
-      // Búsqueda por región anatómica seleccionada en el Body Map
-      this.exerciseApi.getExercisesByBodyMap(
-        muscle.id,
-        page,
-        limit,
-        equip,
-        query || undefined
-      ).subscribe({
-        next: handleSuccess,
-        error: handleError
-      });
-    } else {
-      // Búsqueda general por texto o equipamiento
-      this.exerciseApi.searchExercises({
-        search: query || undefined,
-        equipment: equip !== 'all' ? equip : undefined,
-        page,
-        limit
-      }).subscribe({
-        next: handleSuccess,
-        error: handleError
-      });
+    if (muscles.length <= 1 && equips.length <= 1) {
+      const muscle = muscles[0];
+      const equip = equips[0] || 'all';
+      if (muscle) {
+        this.exerciseApi.getExercisesByBodyMap(
+          muscle.id,
+          page,
+          limit,
+          equip,
+          query || undefined
+        ).subscribe({ next: handleSuccess, error: handleError });
+      } else {
+        this.exerciseApi.searchExercises({
+          search: query || undefined,
+          equipment: equip !== 'all' ? equip : undefined,
+          page,
+          limit
+        }).subscribe({ next: handleSuccess, error: handleError });
+      }
+      return;
     }
+
+    const muscleIds = muscles.length > 0 ? muscles.map((m) => m.id) : [null];
+    const equipVals = equips.length > 0 ? equips : ['all'];
+    const requests = muscleIds.flatMap((mId) =>
+      equipVals.map((eqVal) =>
+        (mId
+          ? this.exerciseApi.getExercisesByBodyMap(mId, 1, limit, eqVal, query || undefined)
+          : this.exerciseApi.searchExercises({
+              search: query || undefined,
+              equipment: eqVal !== 'all' ? eqVal : undefined,
+              page: 1,
+              limit
+            })
+        ).pipe(catchError(() => of(null)))
+      )
+    );
+
+    forkJoin(requests).subscribe({
+      next: (responses) => {
+        const seen = new Set<string>();
+        const merged: ExerciseSummary[] = [];
+        for (const r of responses) {
+          for (const ex of r?.data || []) {
+            if (!seen.has(ex.id)) {
+              seen.add(ex.id);
+              merged.push(ex);
+            }
+          }
+        }
+        this.exercises.set(merged);
+        this.totalExercises.set(merged.length);
+        this.currentPage.set(1);
+        this.hasMorePages.set(false);
+        this.hasInitialLoaded.set(true);
+        this.isLoading.set(false);
+        this.isLoadingMore.set(false);
+      },
+      error: handleError
+    });
   }
 
   /**
@@ -333,22 +386,38 @@ export class ExerciseGalleryDrawerComponent implements OnInit, OnDestroy {
 
   // Handlers del Body Map
   onMuscleSelected(muscle: MuscleRegion): void {
-    if (this.selectedMuscle()?.id === muscle.id) {
-      this.selectedMuscle.set(null);
+    const current = [...this.selectedMuscles()];
+    const idx = current.findIndex((m) => m.id === muscle.id);
+    if (idx >= 0) {
+      current.splice(idx, 1);
     } else {
-      this.selectedMuscle.set(muscle);
+      current.push(muscle);
     }
+    this.selectedMuscles.set(current);
     this.fetchExercises();
   }
 
   onMuscleSelectionCleared(): void {
-    this.selectedMuscle.set(null);
+    this.selectedMuscles.set([]);
+    this.fetchExercises();
+  }
+
+  removeMuscleFilter(id: string): void {
+    this.selectedMuscles.set(this.selectedMuscles().filter((m) => m.id !== id));
     this.fetchExercises();
   }
 
   // Métodos de filtros
   setEquipment(eqValue: string): void {
-    this.selectedEquipment.set(eqValue);
+    if (eqValue === 'all') {
+      this.selectedEquipments.set([]);
+    } else {
+      const current = [...this.selectedEquipments()];
+      const idx = current.indexOf(eqValue);
+      if (idx >= 0) current.splice(idx, 1);
+      else current.push(eqValue);
+      this.selectedEquipments.set(current);
+    }
     this.fetchExercises();
   }
 
@@ -358,19 +427,24 @@ export class ExerciseGalleryDrawerComponent implements OnInit, OnDestroy {
   }
 
   clearMuscleFilter(): void {
-    this.selectedMuscle.set(null);
+    this.selectedMuscles.set([]);
     this.fetchExercises();
   }
 
   clearAllFilters(): void {
     this.searchQuery.set('');
-    this.selectedEquipment.set('all');
-    this.selectedMuscle.set(null);
+    this.selectedEquipments.set([]);
+    this.selectedMuscles.set([]);
     this.fetchExercises();
   }
 
   // Detalle del Ejercicio
   openExerciseDetail(exercise: ExerciseSummary): void {
+    if (this.selectionMode()) {
+      this.exercisePicked.emit(exercise);
+      this.close();
+      return;
+    }
     this.isLoadingDetail.set(true);
     // Mostrar versión rápida inicial
     this.activeDetail.set({

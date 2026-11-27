@@ -78,10 +78,10 @@
       <!-- Botón de Filtro por Equipamiento con Popover -->
       <button #equipTarget type="button" (click)="equipPopover.toggle($event, equipTarget)"
         class="h-9 px-3.5 rounded-xl border flex items-center gap-2 text-xs font-bold transition-all cursor-pointer shrink-0 shadow-2xs"
-        [class.bg-awakin-sun]="selectedEquipment() !== 'all'" [class.text-white]="selectedEquipment() !== 'all'"
-        [class.border-awakin-sun]="selectedEquipment() !== 'all'" [class.bg-stone-50]="selectedEquipment() === 'all'"
-        [class.text-stone-700]="selectedEquipment() === 'all'" [class.border-stone-200]="selectedEquipment() === 'all'"
-        [class.hover:bg-stone-100]="selectedEquipment() === 'all'">
+        [class.bg-awakin-sun]="selectedEquipments().length > 0" [class.text-white]="selectedEquipments().length > 0"
+        [class.border-awakin-sun]="selectedEquipments().length > 0" [class.bg-stone-50]="selectedEquipments().length === 0"
+        [class.text-stone-700]="selectedEquipments().length === 0" [class.border-stone-200]="selectedEquipments().length === 0"
+        [class.hover:bg-stone-100]="selectedEquipments().length === 0">
         <span class="inline-flex items-center justify-center shrink-0"
           [innerHTML]="sanitizeSvg(selectedEquipmentMeta().iconSvg)"></span>
         <span class="hidden sm:inline">Equipo:</span>
@@ -99,7 +99,7 @@
               <i class="pi pi-spin pi-spinner text-stone-400 text-xs"></i>
               }
             </div>
-            @if (selectedEquipment() !== 'all') {
+            @if (selectedEquipments().length > 0) {
             <button type="button" (click)="setEquipment('all'); equipPopover.hide()"
               class="text-[10px] font-bold text-awakin-sun hover:underline cursor-pointer">
               Restablecer
@@ -108,19 +108,20 @@
           </div>
           <div class="flex flex-col gap-1 max-h-72 overflow-y-auto pr-1">
             @for (eq of equipmentList(); track eq.value) {
-            <button type="button" (click)="setEquipment(eq.value); equipPopover.hide()"
+            @let isEqActive = isEquipmentSelected(eq.value);
+            <button type="button" (click)="setEquipment(eq.value); eq.value === 'all' ? equipPopover.hide() : null"
               class="w-full text-left px-2.5 py-2 rounded-xl text-xs font-semibold flex items-center justify-between transition-colors cursor-pointer group"
-              [class.bg-awakin-sun/10]="selectedEquipment() === eq.value"
-              [class.text-awakin-sun]="selectedEquipment() === eq.value"
-              [class.text-stone-700]="selectedEquipment() !== eq.value"
-              [class.hover:bg-stone-100]="selectedEquipment() !== eq.value">
+              [class.bg-awakin-sun/10]="isEqActive"
+              [class.text-awakin-sun]="isEqActive"
+              [class.text-stone-700]="!isEqActive"
+              [class.hover:bg-stone-100]="!isEqActive">
               <div class="flex items-center gap-2.5 min-w-0 pr-2">
                 <span class="w-6 h-6 rounded-lg flex items-center justify-center shrink-0 transition-colors"
-                  [class.bg-awakin-sun/15]="selectedEquipment() === eq.value"
-                  [class.text-awakin-sun]="selectedEquipment() === eq.value"
-                  [class.bg-stone-100]="selectedEquipment() !== eq.value"
-                  [class.text-stone-600]="selectedEquipment() !== eq.value"
-                  [class.group-hover:bg-stone-200]="selectedEquipment() !== eq.value"
+                  [class.bg-awakin-sun/15]="isEqActive"
+                  [class.text-awakin-sun]="isEqActive"
+                  [class.bg-stone-100]="!isEqActive"
+                  [class.text-stone-600]="!isEqActive"
+                  [class.group-hover:bg-stone-200]="!isEqActive"
                   [innerHTML]="sanitizeSvg(eq.iconSvg)">
                 </span>
                 <span class="truncate">{{ eq.label }}</span>
@@ -128,14 +129,14 @@
               <div class="flex items-center gap-1.5 shrink-0">
                 @if (eq.count !== undefined) {
                 <span class="text-[10px] font-bold px-1.5 py-0.5 rounded-full"
-                  [class.bg-awakin-sun/20]="selectedEquipment() === eq.value"
-                  [class.text-awakin-sun]="selectedEquipment() === eq.value"
-                  [class.bg-stone-100]="selectedEquipment() !== eq.value"
-                  [class.text-stone-400]="selectedEquipment() !== eq.value">
+                  [class.bg-awakin-sun/20]="isEqActive"
+                  [class.text-awakin-sun]="isEqActive"
+                  [class.bg-stone-100]="!isEqActive"
+                  [class.text-stone-400]="!isEqActive">
                   {{ eq.count }}
                 </span>
                 }
-                @if (selectedEquipment() === eq.value) {
+                @if (isEqActive) {
                 <i class="pi pi-check text-[11px] text-awakin-sun font-black"></i>
                 }
               </div>
@@ -152,25 +153,26 @@
       class="flex items-center gap-1.5 mt-2.5 pt-2 border-t border-stone-100 overflow-x-auto hide-scrollbar max-w-4xl mx-auto">
       <span class="text-[9px] font-black uppercase tracking-wider text-stone-400 shrink-0">Activos:</span>
 
-      @if (selectedMuscle()) {
+      @for (m of selectedMuscles(); track m.id) {
       <span
         class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-amber-500/15 text-amber-900 border border-amber-500/30 text-[10px] font-bold shrink-0">
         <i class="pi pi-user text-[8px]"></i>
-        <span>{{ selectedMuscle()?.name }}</span>
-        <button type="button" (click)="clearMuscleFilter()"
+        <span>{{ m.name }}</span>
+        <button type="button" (click)="removeMuscleFilter(m.id)"
           class="hover:text-red-600 transition-colors cursor-pointer ml-0.5">
           <i class="pi pi-times text-[8px]"></i>
         </button>
       </span>
       }
 
-      @if (selectedEquipment() !== 'all') {
+      @for (eqVal of selectedEquipments(); track eqVal) {
+      @let eqMeta = getEquipmentMetaLabel(eqVal);
       <span
         class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-blue-500/15 text-blue-900 border border-blue-500/30 text-[10px] font-bold shrink-0">
         <span class="w-3.5 h-3.5 inline-flex items-center justify-center text-blue-800"
-          [innerHTML]="sanitizeSvg(selectedEquipmentMeta().iconSvg)"></span>
-        <span>{{ selectedEquipmentLabel() }}</span>
-        <button type="button" (click)="setEquipment('all')"
+          [innerHTML]="sanitizeSvg(eqMeta.iconSvg)"></span>
+        <span>{{ eqMeta.label }}</span>
+        <button type="button" (click)="setEquipment(eqVal)"
           class="hover:text-red-600 transition-colors cursor-pointer ml-0.5">
           <i class="pi pi-times text-[8px]"></i>
         </button>
@@ -228,7 +230,7 @@
         <!-- Renderizado del BodyMapComponent -->
         <div class="relative z-10">
           <app-body-map [defaultGender]="bodyMapGender()" [initialView]="'front'" [anatomyMode]="bodyMapAnatomy()"
-            [selectedMuscleId]="selectedMuscle()?.id || null" (muscleSelected)="onMuscleSelected($event)"
+            [selectedMuscleIds]="selectedMuscleIds()" (muscleSelected)="onMuscleSelected($event)"
             (selectionCleared)="onMuscleSelectionCleared()">
           </app-body-map>
         </div>
@@ -239,8 +241,8 @@
         <div class="flex items-center justify-between mb-3 px-1">
           <div>
             <h3 class="text-xs font-black uppercase tracking-wider text-stone-900">
-              @if (selectedMuscle()) {
-              Ejercicios para {{ selectedMuscle()?.name }}
+              @if (selectedMuscles().length > 0) {
+              Ejercicios ({{ selectedMuscles().length }} {{ selectedMuscles().length === 1 ? 'músculo' : 'músculos' }})
               } @else {
               Ejercicios en AWAKIN API
               }
@@ -249,7 +251,7 @@
               {{ totalExercises() }} resultados encontrados
             </p>
           </div>
-          @if (selectedMuscle()) {
+          @if (selectedMuscles().length > 0) {
           <button type="button" (click)="clearMuscleFilter()"
             class="text-[10px] font-bold text-awakin-sun hover:underline cursor-pointer">
             Ver todo el catálogo

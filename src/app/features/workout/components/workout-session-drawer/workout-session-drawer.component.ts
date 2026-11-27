@@ -1,10 +1,12 @@
-import { Component, signal, inject } from '@angular/core';
+import { Component, computed, signal, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { DrawerModule } from 'primeng/drawer';
 import { DialogModule } from 'primeng/dialog';
 import { ExerciseApiService } from '../../services/exercise-api.service';
 import { ActiveWorkoutSessionService } from '../../services/active-workout-session.service';
+import { ThemeService } from '../../../../core/services/theme.service';
+import { AthleteService } from '../../../../core/services/athlete.service';
 import { ExerciseSummary } from '../../models/exercises.models';
 import {
   ActiveSessionExercise,
@@ -12,16 +14,32 @@ import {
   WorkoutSetType
 } from '../../models/workout.models';
 import { CustomExerciseModalComponent } from '../custom-exercise-modal/custom-exercise-modal.component';
+import { ExerciseGalleryDrawerComponent } from '../exercise-gallery-drawer/exercise-gallery-drawer.component';
+import {
+  WorkoutMiniBodyMapComponent,
+  WorkoutMuscleLegendItem,
+  getAwakinSunTone
+} from '../body-map/workout-mini-body-map.component';
 import { getEquipmentMeta } from '../exercise-gallery-drawer/equipment-icons';
 
 @Component({
   selector: 'app-workout-session-drawer',
   standalone: true,
-  imports: [CommonModule, FormsModule, DrawerModule, DialogModule, CustomExerciseModalComponent],
+  imports: [
+    CommonModule,
+    FormsModule,
+    DrawerModule,
+    DialogModule,
+    CustomExerciseModalComponent,
+    ExerciseGalleryDrawerComponent,
+    WorkoutMiniBodyMapComponent
+  ],
   templateUrl: './workout-session-drawer.component.html'
 })
 export class WorkoutSessionDrawerComponent {
   private readonly exerciseApi = inject(ExerciseApiService);
+  private readonly themeService = inject(ThemeService);
+  private readonly athleteService = inject(AthleteService);
   public readonly activeSession = inject(ActiveWorkoutSessionService);
 
   readonly setTypeLabels = WORKOUT_SET_TYPE_LABELS;
@@ -30,11 +48,58 @@ export class WorkoutSessionDrawerComponent {
   // Modales auxiliares dentro de la sesión
   inspectedExercise = signal<ActiveSessionExercise | null>(null);
   isCustomModalOpen = signal<boolean>(false);
+  isBodyMapPickerOpen = signal<boolean>(false);
   isLibraryPickerOpen = signal<boolean>(false);
   librarySearchQuery = signal<string>('');
   librarySearchResults = signal<ExerciseSummary[]>([]);
   isSearchingLibrary = signal<boolean>(false);
   private librarySearchTimer: any = null;
+
+  athleteGender = computed<'male' | 'female'>(() => {
+    const current = this.athleteService.currentAthlete();
+    const raw = (current?.gender || current?.sexo || current?.genero || '').toLowerCase().trim();
+    return raw === 'female' || raw === 'f' || raw === 'mujer' || raw === 'femenino' ? 'female' : 'male';
+  });
+
+  sessionMuscleBreakdown = computed<WorkoutMuscleLegendItem[]>(() => {
+    const exercises = this.activeSession.sessionExercises();
+    if (!exercises || exercises.length === 0) return [];
+    const map = new Map<string, number>();
+    for (const ex of exercises) {
+      const setsCount = ex.sets?.length || 1;
+      const target = this.translateMuscleName(ex.target_muscle || 'General');
+      map.set(target, (map.get(target) || 0) + setsCount);
+
+      const secWeight = Math.max(1, Math.round(setsCount * 0.5));
+      for (const sec of ex.secondary_muscles || []) {
+        const secKey = this.translateMuscleName(sec);
+        if (secKey && secKey !== 'General' && secKey !== target) {
+          map.set(secKey, (map.get(secKey) || 0) + secWeight);
+        }
+      }
+    }
+    const list = Array.from(map.entries())
+      .map(([muscle, sets]) => ({ muscle, sets }))
+      .sort((a, b) => b.sets - a.sets);
+    if (list.length === 0) return [];
+    const primary = this.themeService.kinPrimaryColor();
+    const secondary = this.themeService.kinSecondaryColor();
+    const maxSets = Math.max(...list.map((i) => i.sets), 1);
+    return list.map((item) => {
+      const tone = getAwakinSunTone(item.sets, maxSets, primary, secondary);
+      return {
+        muscle: item.muscle,
+        sets: item.sets,
+        color: tone.color,
+        levelLabel: tone.levelLabel
+      };
+    });
+  });
+
+  async onBodyMapExercisePicked(summary: ExerciseSummary): Promise<void> {
+    await this.activeSession.addLibraryExercise(summary);
+    this.isBodyMapPickerOpen.set(false);
+  }
 
   translateMuscleName(raw: string | null | undefined): string {
     if (!raw) return 'General';

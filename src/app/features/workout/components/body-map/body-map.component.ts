@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges, ViewEncapsulation } from '@angular/core';
+import { Component, ElementRef, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges, ViewEncapsulation, inject } from '@angular/core';
 import { BodyMapModelSvgComponent } from './svg/body-map-model-svg.component';
 
 export type BodyMapView = 'front' | 'back' | 'both';
@@ -95,6 +95,8 @@ export class BodyMapComponent implements OnInit, OnChanges {
   /** Tipo anatómico: advanced, standard o joints. */
   @Input() anatomyMode: BodyMapAnatomyMode = 'advanced';
   @Input() selectedMuscleId: string | null = null;
+  @Input() selectedMuscleIds: string[] = [];
+  private readonly elementRef = inject<ElementRef<HTMLElement>>(ElementRef);
   /** Función callback opcional que puede pasarse como Input */
   @Input() onMuscleSelected?: (muscle: MuscleRegion) => void;
   /** Permite forzar o anular la visualización del overlay flotante con el nombre del músculo */
@@ -137,13 +139,8 @@ export class BodyMapComponent implements OnInit, OnChanges {
     if (changes['anatomyMode'] && (this.anatomyMode === 'standard' || this.anatomyMode === 'advanced')) {
       this.lastMuscleMode = this.anatomyMode;
     }
-    if (changes['selectedMuscleId']) {
-      if (!this.selectedMuscleId) {
-        this.selectedElement?.classList.remove('is-selected');
-        this.selectedElement = null;
-      } else {
-        this.syncSelectedElementClass();
-      }
+    if (changes['selectedMuscleId'] || changes['selectedMuscleIds']) {
+      this.syncSelectedElementClass();
     }
   }
 
@@ -293,16 +290,18 @@ export class BodyMapComponent implements OnInit, OnChanges {
   }
 
   private syncSelectedElementClass(): void {
-    if (!this.selectedMuscleId) return;
     setTimeout(() => {
-      if (!this.selectedMuscleId) return;
-      const el = document.querySelector<SVGGElement>(
-        `[data-muscle-id="${this.selectedMuscleId}"]`
-      );
-      if (el) {
-        this.selectedElement?.classList.remove('is-selected');
-        el.classList.add('is-selected');
-        this.selectedElement = el;
+      const root = this.elementRef.nativeElement;
+      root.querySelectorAll('.body-map__region.is-selected').forEach((el) => el.classList.remove('is-selected'));
+      const ids = this.selectedMuscleIds?.length
+        ? this.selectedMuscleIds
+        : this.selectedMuscleId
+          ? [this.selectedMuscleId]
+          : [];
+      for (const id of ids) {
+        root.querySelectorAll<SVGGElement>(`[data-muscle-id="${id}"]`).forEach((el) => {
+          el.classList.add('is-selected');
+        });
       }
     }, 0);
   }
