@@ -1,5 +1,6 @@
 import { Component, input, model, output, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { DrawerModule } from 'primeng/drawer';
 import { WorkoutSetType } from '../../models/workout.models';
 
 export interface SetTypeOption {
@@ -68,7 +69,7 @@ export function getCompactSetDisplay(setType: string | undefined, setNumber: num
 @Component({
   selector: 'app-set-type-sheet',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, DrawerModule],
   templateUrl: './set-type-sheet.component.html',
 })
 export class SetTypeSheetComponent {
