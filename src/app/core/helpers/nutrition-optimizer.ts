@@ -105,11 +105,12 @@ export function formatQuantity(quantity: number, unit?: string, mode?: string): 
   const cleanMode = (mode || '').toLowerCase().trim();
 
   const isGrams =
-    cleanUnit === 'g' ||
-    cleanUnit === 'gramos' ||
-    cleanUnit === 'ml' ||
-    cleanUnit === 'mililitros' ||
-    cleanMode === 'g';
+    cleanMode !== 'portions' &&
+    (cleanUnit === 'g' ||
+      cleanUnit === 'gramos' ||
+      cleanUnit === 'ml' ||
+      cleanUnit === 'mililitros' ||
+      cleanMode === 'g');
 
   if (isGrams) {
     const rounded = Math.round(qty);
@@ -119,7 +120,7 @@ export function formatQuantity(quantity: number, unit?: string, mode?: string): 
 
   // Porciones / Unidades discretas
   const frac = toFraction(qty);
-  const displayUnit = unit ? unit : 'porción';
+  const displayUnit = unit && !isGramUnitType(unit) ? unit : 'porción';
   return `${frac} ${displayUnit}`;
 }
 
